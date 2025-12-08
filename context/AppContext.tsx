@@ -1,14 +1,6 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged, 
-  sendEmailVerification,
-  User as FirebaseUser 
-} from 'firebase/auth';
-import { 
   doc, 
   setDoc, 
   getDoc, 
@@ -51,7 +43,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // 1. Listen to Firebase Auth State Changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    // Use compat method: auth.onAuthStateChanged
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         // Fetch extended profile from Firestore
         const userDocRef = doc(db, "users", user.uid);
@@ -115,42 +108,46 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // 3. Auth Actions
   const login = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    // Use compat method: auth.signInWithEmailAndPassword
+    await auth.signInWithEmailAndPassword(email, password);
     // onAuthStateChanged will handle state update
   };
 
   const logout = async () => {
-    await signOut(auth);
+    // Use compat method: auth.signOut
+    await auth.signOut();
     // onAuthStateChanged will handle state update
   };
 
   const registerTeacher = async (data: any) => {
     try {
-      // A. Create Auth User
-      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      // A. Create Auth User using compat method
+      const userCredential = await auth.createUserWithEmailAndPassword(data.email, data.password);
       const user = userCredential.user;
 
-      // B. Send Verification Email
-      await sendEmailVerification(user);
+      if (user) {
+        // B. Send Verification Email using instance method
+        await user.sendEmailVerification();
 
-      // C. Determine Initial Role
-      // Logic: k12.tr emails get automatic TEACHER role (after verification), others get PENDING_TEACHER
-      const isK12 = data.email.endsWith('k12.tr');
-      const initialRole = isK12 ? UserRole.TEACHER : UserRole.PENDING_TEACHER;
+        // C. Determine Initial Role
+        // Logic: k12.tr emails get automatic TEACHER role (after verification), others get PENDING_TEACHER
+        const isK12 = data.email.endsWith('k12.tr');
+        const initialRole = isK12 ? UserRole.TEACHER : UserRole.PENDING_TEACHER;
 
-      // D. Create Firestore Profile
-      const newProfile: UserProfile = {
-        uid: user.uid,
-        email: data.email,
-        fullName: data.name,
-        role: initialRole,
-        school: data.school,
-        city: data.city,
-        createdAt: new Date().toISOString(),
-        emailVerified: false // Initially false
-      };
+        // D. Create Firestore Profile
+        const newProfile: UserProfile = {
+          uid: user.uid,
+          email: data.email,
+          fullName: data.name,
+          role: initialRole,
+          school: data.school,
+          city: data.city,
+          createdAt: new Date().toISOString(),
+          emailVerified: false // Initially false
+        };
 
-      await setDoc(doc(db, "users", user.uid), newProfile);
+        await setDoc(doc(db, "users", user.uid), newProfile);
+      }
 
     } catch (error) {
       console.error("Registration Error:", error);
@@ -163,22 +160,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           const email = "admin@reflectandshoot.com";
           const password = "Yarışma_2026";
           
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          // Use compat method
+          const userCredential = await auth.createUserWithEmailAndPassword(email, password);
           const user = userCredential.user;
 
-          const newProfile: UserProfile = {
-            uid: user.uid,
-            email: email,
-            fullName: "Sistem Yöneticisi",
-            role: UserRole.ADMIN,
-            school: "Reflect&Shoot HQ",
-            city: "Konya",
-            createdAt: new Date().toISOString(),
-            emailVerified: true // Admin is verified by default conceptually
-          };
+          if (user) {
+            const newProfile: UserProfile = {
+              uid: user.uid,
+              email: email,
+              fullName: "Sistem Yöneticisi",
+              role: UserRole.ADMIN,
+              school: "Reflect&Shoot HQ",
+              city: "Konya",
+              createdAt: new Date().toISOString(),
+              emailVerified: true // Admin is verified by default conceptually
+            };
 
-          await setDoc(doc(db, "users", user.uid), newProfile);
-          console.log("Admin user created successfully");
+            await setDoc(doc(db, "users", user.uid), newProfile);
+            console.log("Admin user created successfully");
+          }
       } catch (error: any) {
           if (error.code === 'auth/email-already-in-use') {
               throw new Error("Admin kullanıcısı zaten mevcut.");
@@ -189,7 +189,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const resendVerificationEmail = async () => {
     if (auth.currentUser) {
-      await sendEmailVerification(auth.currentUser);
+      // Use instance method
+      await auth.currentUser.sendEmailVerification();
     }
   };
 

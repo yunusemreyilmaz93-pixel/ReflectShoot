@@ -530,6 +530,95 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* Category Detail Modal - RE-ADDED */}
+      {selectedCategory && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn">
+          <div className="bg-slate-900 w-full max-w-2xl rounded-[2rem] border border-slate-700 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+            
+            {/* Header */}
+            <div className="relative p-8 pb-6 border-b border-slate-800 bg-slate-950/50">
+              <button 
+                onClick={() => setSelectedCategory(null)}
+                className="absolute top-6 right-6 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-rose-600 transition-all z-10"
+              >
+                <X size={20} />
+              </button>
+              <div className="flex items-center gap-5">
+                 <div className={`p-4 rounded-2xl ${selectedCategory.color === 'teal' ? 'bg-teal-900/20 text-teal-400' : 'bg-purple-900/20 text-purple-400'}`}>
+                     <selectedCategory.icon size={32} />
+                 </div>
+                 <div>
+                    <span className={`text-[10px] font-bold uppercase tracking-[0.2em] px-2 py-1 rounded border ${selectedCategory.color === 'teal' ? 'bg-teal-900/10 border-teal-500/20 text-teal-400' : 'bg-purple-900/10 border-purple-500/20 text-purple-400'}`}>
+                        {selectedCategory.badge}
+                    </span>
+                    <h3 className="text-3xl font-black text-white mt-2">{selectedCategory.title}</h3>
+                 </div>
+              </div>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="p-8 overflow-y-auto custom-scrollbar">
+                {/* Tech Specs */}
+                <div className="grid grid-cols-3 gap-4 mb-8">
+                    {selectedCategory.techSpecs.map((spec, i) => (
+                        <div key={i} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 text-center">
+                            <spec.icon size={20} className="mx-auto mb-2 text-slate-400"/>
+                            <span className="text-xs font-bold text-slate-300 block">{spec.label}</span>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="space-y-6">
+                    <div>
+                        <h4 className="flex items-center gap-2 text-sm font-bold text-white uppercase tracking-wider mb-3">
+                            <CheckCircle2 size={16} className="text-emerald-500"/> Kapsam ve İçerik
+                        </h4>
+                        <ul className="space-y-2">
+                            {selectedCategory.details.description.map((item, i) => (
+                                <li key={i} className="flex items-start text-slate-400 text-sm leading-relaxed">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2 mr-3 flex-shrink-0"></span>
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 className="flex items-center gap-2 text-sm font-bold text-white uppercase tracking-wider mb-3">
+                            <AlertTriangle size={16} className="text-amber-500"/> Dikkat Edilmesi Gerekenler
+                        </h4>
+                        <ul className="space-y-2">
+                            {selectedCategory.details.warnings.map((item, i) => (
+                                <li key={i} className="flex items-start text-slate-400 text-sm leading-relaxed">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50 mt-2 mr-3 flex-shrink-0"></span>
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-6 border-t border-slate-800 bg-slate-950 flex flex-col sm:flex-row gap-4">
+                <button 
+                    onClick={() => handleDownload(downloads[0])}
+                    className="flex-1 py-4 rounded-xl border border-slate-700 text-slate-300 font-bold hover:bg-slate-800 hover:text-white transition-all flex items-center justify-center gap-2"
+                >
+                    <Download size={18} /> Şartnameyi İndir
+                </button>
+                <Link 
+                    to="/apply"
+                    className="flex-1 py-4 rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 text-white font-bold hover:shadow-lg hover:shadow-rose-900/20 transition-all flex items-center justify-center gap-2"
+                >
+                    Hemen Başvur <ArrowRight size={18} />
+                </Link>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

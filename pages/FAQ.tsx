@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { ChevronDown, Search, MessageCircle, HelpCircle, PenTool, Award, Users, MapPin, Phone, Mail, Send, CheckCircle2, AlertCircle, Cpu, Clock, Trophy, Sparkles } from 'lucide-react';
 import { send } from '@emailjs/browser';
@@ -215,7 +216,7 @@ export const FAQ: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 -mt-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 -mt-24">
         
         {/* Categories Tabs - Moved Here floating over the sections */}
         <div className="flex flex-wrap justify-center gap-4 mb-16 animate-fadeIn delay-300">

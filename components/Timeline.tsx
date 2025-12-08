@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { 
   Calendar, 
@@ -52,39 +53,32 @@ const events: TimelineEvent[] = [
     color: 'teal'
   },
   {
-    date: '6 Nisan 2026',
-    title: 'Akademi Süreci Başlıyor',
-    description: 'Finalistler için özel sinema eğitimleri start alıyor.',
-    icon: BookOpen,
-    color: 'rose'
-  },
-  {
     date: '6, 8 ve 10 Nisan 2026',
     title: 'Online Akademi',
-    description: 'Senaryo, Kurgu ve Yönetmenlik üzerine uzman isimlerden yoğunlaştırılmış atölye eğitimleri.',
+    description: 'Finalistler için senaryo, kurgu ve yönetmenlik üzerine uzman isimlerden yoğunlaştırılmış atölye eğitimleri başlıyor.',
     icon: Mic2,
-    color: 'amber'
+    color: 'rose'
   },
   {
     date: '13 Nisan 2026',
     title: 'Geliştirme & Revize',
     description: 'Geri bildirimler doğrultusunda final eserlerinin geliştirme süreci başlıyor.',
     icon: Edit3,
-    color: 'teal'
+    color: 'amber'
   },
   {
     date: '13 Nisan – 4 Mayıs 2026',
     title: 'Final Video Teslimi',
     description: 'Filminin son halini, İngilizce dublaj ve Türkçe altyazı ile birlikte yükle.',
     icon: Upload,
-    color: 'rose'
+    color: 'teal'
   },
   {
     date: '11 Mayıs 2026',
     title: 'Sonuçların İlanı',
     description: 'Dereceye giren eserler web sitesi üzerinden açıklanıyor.',
     icon: CheckCircle2,
-    color: 'amber'
+    color: 'rose'
   },
   {
     date: '22 Mayıs 2026',

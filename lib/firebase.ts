@@ -1,5 +1,5 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -12,9 +12,11 @@ const firebaseConfig = {
   measurementId: "G-MJG60H46RS"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase with compat compatibility for Auth
+const app = firebase.initializeApp(firebaseConfig);
 
 // Initialize Services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Export compat auth instance to avoid "no exported member" errors from modular packages
+export const auth = app.auth();
+// Export modular firestore instance (cast app to any to satisfy type requirements if needed)
+export const db = getFirestore(app as any);
