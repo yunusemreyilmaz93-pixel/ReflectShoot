@@ -48,7 +48,7 @@ export const Finals: React.FC = () => {
                              </h3>
                              <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-2">Altın Kamera Ödülü</h2>
                              <div className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-500 mb-6 tracking-tight">
-                                30.000 TL
+                                40.000 TL
                              </div>
                              <p className="text-slate-600 text-lg leading-relaxed font-medium">
                                 Yaratıcılığı, teknik ustalığı ve sinematik anlatımıyla jüriyi en çok etkileyen birinci ekip bu büyük ödülün sahibi olur.
@@ -75,7 +75,7 @@ export const Finals: React.FC = () => {
                         </div>
                         <h3 className="text-slate-500 font-black text-xs uppercase tracking-widest mb-2">2. Ödül</h3>
                         <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">Gümüş Klaket Ödülü</h2>
-                        <div className="text-4xl font-black text-slate-600 mb-6">20.000 TL</div>
+                        <div className="text-4xl font-black text-slate-600 mb-6">30.000 TL</div>
                         <p className="text-slate-600 leading-relaxed font-medium">
                            Kurgusal bütünlük, sahne tasarımı ve anlatım başarısıyla ikinci seçilen ekip ödüllendirilir.
                            <span className="block font-bold text-slate-500 text-sm mt-3 px-3 py-1 bg-slate-100 rounded-full inline-block">+ Teknoloji Çeki</span>
@@ -92,7 +92,7 @@ export const Finals: React.FC = () => {
                         </div>
                         <h3 className="text-orange-800 font-black text-xs uppercase tracking-widest mb-2">3. Ödül</h3>
                         <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">Bronz Film Makarası</h2>
-                        <div className="text-4xl font-black text-orange-900 mb-6">10.000 TL</div>
+                        <div className="text-4xl font-black text-orange-900 mb-6">20.000 TL</div>
                         <p className="text-slate-600 leading-relaxed font-medium">
                            Teknik başarı, kamera kullanımı ve görsel anlatım gücüyle öne çıkan üçüncü ekip bu ödülü alır.
                         </p>
