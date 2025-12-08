@@ -379,11 +379,17 @@ export const Admin: React.FC = () => {
                                             </td>
                                             <td className="p-5">
                                                 {app.team.videoStatus === 'UPLOADED' ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <a href="#" className="text-teal-500 hover:text-teal-400 font-bold text-xs flex items-center gap-1 underline decoration-teal-500/30">
-                                                            <Film size={12}/> İzle
-                                                        </a>
-                                                        <span className="text-[10px] text-slate-600 px-1.5 py-0.5 bg-slate-800 rounded">{app.team.videoResolution || 'FHD'}</span>
+                                                    <div className="flex flex-col items-start gap-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <a href={app.team.videoUrl || "#"} target="_blank" rel="noopener noreferrer" className="text-teal-500 hover:text-teal-400 font-bold text-xs flex items-center gap-1 hover:underline">
+                                                                <Film size={12}/> İzle
+                                                            </a>
+                                                            <span className="text-slate-600">|</span>
+                                                            <a href={app.team.videoUrl || "#"} download className="text-rose-500 hover:text-rose-400 font-bold text-xs flex items-center gap-1 hover:underline">
+                                                                <Download size={12}/> İndir
+                                                            </a>
+                                                        </div>
+                                                        <span className="text-[10px] text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">{app.team.videoResolution || 'FHD'} • {app.team.videoSize}</span>
                                                     </div>
                                                 ) : (
                                                     <span className="text-slate-600 text-xs italic">Bekleniyor</span>
