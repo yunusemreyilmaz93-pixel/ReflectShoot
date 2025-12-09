@@ -10,8 +10,8 @@ import {
   onSnapshot,
   getFirestore 
 } from 'firebase/firestore';
-import { initializeApp, deleteApp } from 'firebase/app'; // For secondary app
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'; // For secondary app
+import firebase from 'firebase/compat/app'; // Use compat app to match lib/firebase.ts
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'; 
 import { auth, db } from '../lib/firebase';
 import { Application, ApplicationStatus, UserRole, EvaluationCriteria, UserProfile, JudgeEvaluation } from '../types';
 
@@ -170,9 +170,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
          };
          
          const appName = `SecondaryApp-${Date.now()}`;
-         secondaryApp = initializeApp(config, appName);
-         const secondaryAuth = getAuth(secondaryApp);
-         const secondaryDb = getFirestore(secondaryApp); // Use DB authenticated as the new user
+         // Use compat initialization
+         secondaryApp = firebase.initializeApp(config, appName);
+         // Modular Auth with compat app (casted to any to satisfy TS)
+         const secondaryAuth = getAuth(secondaryApp as any);
+         // Modular Firestore with compat app
+         const secondaryDb = getFirestore(secondaryApp as any); 
          
          // 2. Create user in secondary auth
          const userCredential = await createUserWithEmailAndPassword(secondaryAuth, data.email, data.password);
@@ -201,7 +204,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
      } finally {
         // 4. Cleanup
         if (secondaryApp) {
-            await deleteApp(secondaryApp);
+            await secondaryApp.delete();
         }
      }
   };
@@ -380,3 +383,4 @@ export const useAppContext = () => {
   if (!context) throw new Error("useAppContext must be used within AppProvider");
   return context;
 };
+    

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Instagram, Youtube, Twitter, Mail, MapPin, Phone } from 'lucide-react';
+import { Instagram, Youtube, Twitter, Mail, MapPin, Phone, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Footer: React.FC = () => {
@@ -28,7 +28,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2 text-sm">
               <li><Link to="/about" className="hover:text-teal-400">Yarışma Kuralları</Link></li>
               <li><Link to="/academy" className="hover:text-teal-400">Online Atölyeler</Link></li>
-              <li><Link to="/finals" className="hover:text-teal-400">Geçmiş Kazananlar</Link></li>
+              <li><Link to="/finals" className="hover:text-teal-400">Ödüller</Link></li>
               <li><Link to="/faq" className="hover:text-teal-400">Sıkça Sorulan Sorular</Link></li>
             </ul>
           </div>
@@ -51,8 +51,11 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
         </div>
-        <div className="border-t border-gray-800 mt-12 pt-8 text-sm text-center">
+        <div className="border-t border-gray-800 mt-12 pt-8 text-sm text-center flex flex-col items-center gap-3">
           <p>&copy; {new Date().getFullYear()} Reflect&Shoot Kısa Film Yarışması. Tüm hakları saklıdır.</p>
+          <p className="text-slate-600 text-xs flex items-center justify-center gap-1.5 opacity-80 hover:opacity-100 transition-all cursor-default font-medium">
+             Designed by Yunus Emre Yılmaz with <Heart size={12} className="fill-rose-600 text-rose-600 animate-pulse" />
+          </p>
         </div>
       </div>
     </footer>
