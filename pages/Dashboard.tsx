@@ -4,6 +4,7 @@ import { useAppContext } from '../context/AppContext';
 import { ApplicationStatus, Category, Theme } from '../types';
 import { CheckCircle, AlertCircle, Upload, Video, Award, Clock, Users, Plus, Trash2, Image as ImageIcon, Layout, ArrowRight, XCircle, Info, FileText, Printer, FileDown, Clapperboard, PenTool, Cpu, Star, Megaphone, Film, UserPlus, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 
 export const Dashboard: React.FC = () => {
   const { currentApplication, updateApplication, createApplication, currentUser } = useAppContext();
@@ -43,19 +44,6 @@ export const Dashboard: React.FC = () => {
         localStorage.setItem('teamStudentsDraft', JSON.stringify(students));
     }
   }, [teamForm, students, currentApplication]);
-
-
-  // Verse List
-  const verses = [
-    "Al-i İmran: 92", "Al-i İmran: 103", "Al-i İmran: 190-191",
-    "Ankebut: 41", "Araf: 27", "Asr: 1-3",
-    "Bakara: 138", "Bakara: 168", "Enfal: 46",
-    "Furkan: 63", "Hac: 42", "Hucurat: 10-11",
-    "İbrahim: 24", "İsra: 24", "İsra: 81",
-    "İnşirah: 5-9", "Kasas: 72", "Lokman: 18",
-    "Maide: 2", "Yasin: 82", "Yunus: 57",
-    "Zariyat: 50", "Zariyat: 55", "Zümer: 9"
-  ];
 
   // --- Team Creation Logic ---
   const handleTeamChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setTeamForm({...teamForm, [e.target.name]: e.target.value});
@@ -302,6 +290,20 @@ export const Dashboard: React.FC = () => {
     { date: '4 May 2026', label: 'Final' },
   ];
 
+  const renderVerseText = (text: string, isArabic: boolean) => {
+    if (!text) return null;
+    return text.split(VERSE_SPLITTER).map((part, index) => (
+      <React.Fragment key={index}>
+        {index > 0 && (
+          <span className={`mx-2 inline-block ${isArabic ? 'text-amber-500 text-xl' : 'text-amber-500/50 text-xs'} select-none`}>
+             {isArabic ? ' ۞ ' : ' ✦ '}
+          </span>
+        )}
+        {part}
+      </React.Fragment>
+    ));
+  };
+
   if (!currentApplication) {
     // RENDER: No Application -> Show "Film Set Creation" Wizard (Dark Cinematic Theme)
     return (
@@ -413,8 +415,27 @@ export const Dashboard: React.FC = () => {
                                         <label className="block text-sm font-bold text-amber-500 mb-2 flex items-center gap-2"><BookOpen size={16}/> Hangi Ayet?</label>
                                         <select name="selectedVerse" value={teamForm.selectedVerse} onChange={handleTeamChange} className="w-full bg-slate-900 border border-amber-500/30 rounded-xl p-3.5 outline-none text-white focus:border-amber-500">
                                             <option value="">Senaryonun temelini oluşturan ayeti seçiniz</option>
-                                            {verses.map(v => <option key={v} value={v}>{v}</option>)}
+                                            {versesList.map(v => <option key={v} value={v}>{v}</option>)}
                                         </select>
+                                        
+                                        {/* Dynamic Verse Display */}
+                                        {verseDetails[teamForm.selectedVerse] && (
+                                            <div className="mt-6 bg-slate-900/95 backdrop-blur-md rounded-2xl border border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.15)] p-6 text-center animate-fadeIn">
+                                                <p className="font-serif text-xl md:text-2xl text-amber-400 leading-loose drop-shadow-sm mb-4" dir="rtl">
+                                                    {renderVerseText(verseDetails[teamForm.selectedVerse].arabic, true)}
+                                                </p>
+                                                <div className="w-16 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent mx-auto mb-4"></div>
+                                                <p className="text-slate-200 text-sm italic font-light leading-relaxed font-serif">
+                                                    "{renderVerseText(verseDetails[teamForm.selectedVerse].turkish, false)}"
+                                                </p>
+                                                 {verseDetails[teamForm.selectedVerse].english && (
+                                                    <p className="text-slate-400 text-xs italic font-light leading-relaxed opacity-80 mt-2">
+                                                      "{renderVerseText(verseDetails[teamForm.selectedVerse].english, false)}"
+                                                    </p>
+                                                 )}
+                                            </div>
+                                        )}
+
                                         {formErrors.verse && <p className="text-rose-500 text-xs mt-1">{formErrors.verse}</p>}
                                     </div>
                                 )}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   CheckCircle2, 
@@ -18,20 +17,9 @@ import {
   Subtitles
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 
 export const About: React.FC = () => {
-  // Data for Verses (Same as Home)
-  const verses = [
-    "Al-i İmran: 92", "Al-i İmran: 103", "Al-i İmran: 190-191",
-    "Ankebut: 41", "Araf: 27", "Asr: 1-3",
-    "Bakara: 138", "Bakara: 168", "Enfal: 46",
-    "Furkan: 63", "Hac: 42", "Hucurat: 10-11",
-    "İbrahim: 24", "İsra: 24", "İsra: 81",
-    "İnşirah: 5-9", "Kasas: 72", "Lokman: 18",
-    "Maide: 2", "Yasin: 82", "Yunus: 57",
-    "Zariyat: 50", "Zariyat: 55", "Zümer: 9"
-  ];
-
   const criteria = [
     { label: "Senaryo ve Hikaye Anlatımı", percent: 30, color: "bg-teal-600", text: "text-teal-400", ring: "ring-teal-500/30" },
     { label: "Teknik Kalite (Görüntü & Ses)", percent: 25, color: "bg-amber-500", text: "text-amber-400", ring: "ring-amber-500/30" },
@@ -47,6 +35,20 @@ export const About: React.FC = () => {
     } else {
         alert(`${docName} İndiriliyor...`);
     }
+  };
+
+  const renderVerseText = (text: string, isArabic: boolean) => {
+    if (!text) return null;
+    return text.split(VERSE_SPLITTER).map((part, index) => (
+      <React.Fragment key={index}>
+        {index > 0 && (
+          <span className={`mx-2 inline-block ${isArabic ? 'text-amber-500 text-xl' : 'text-amber-500/50 text-xs'} select-none`}>
+             {isArabic ? ' ۞ ' : ' ✦ '}
+          </span>
+        )}
+        {part}
+      </React.Fragment>
+    ));
   };
 
   return (
@@ -66,7 +68,7 @@ export const About: React.FC = () => {
              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
                Reflect&Shoot Yarışma Hakkında
              </span>
-          </h1>
+           </h1>
           <p className="text-xl md:text-2xl text-slate-300 font-light max-w-3xl mx-auto leading-relaxed animate-fadeIn delay-200">
             İmam Hatip Lisesi gençliğinin vizöründen kadim değerlerimizi modern sinema diliyle yorumlayan prestijli bir kısa film yarışması.
           </p>
@@ -119,7 +121,7 @@ export const About: React.FC = () => {
       </section>
 
       {/* 3. Themes Section - Dark Cinematic (Seamless Integration) */}
-      <section className="py-24 bg-slate-900 relative overflow-hidden">
+      <section className="py-24 bg-slate-900 relative overflow-visible">
         {/* Cinematic Backgrounds */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(30,41,59,0.5)_0%,rgba(2,6,23,1)_100%)] pointer-events-none"></div>
         
@@ -141,8 +143,8 @@ export const About: React.FC = () => {
           <div className="space-y-12">
             
             {/* Ayetler - Fixed Layout */}
-            <div className="relative bg-slate-800 p-8 md:p-10 rounded-2xl shadow-2xl border-t-4 border-amber-500/50">
-               <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cardboard-flat.png')]"></div>
+            <div className="relative bg-slate-800 p-8 md:p-10 rounded-2xl shadow-2xl border-t-4 border-amber-500/50 overflow-visible">
+               <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cardboard-flat.png')] pointer-events-none"></div>
                
                <div className="relative z-10">
                    <div className="flex items-center gap-4 mb-8">
@@ -155,10 +157,31 @@ export const About: React.FC = () => {
                        </div>
                    </div>
                    
-                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                       {verses.map((verse, idx) => (
-                           <div key={idx} className="bg-slate-900/80 border border-slate-700 hover:border-amber-500/50 hover:bg-slate-900 transition-all cursor-default p-3 rounded-lg flex items-center justify-center text-center h-14 shadow-sm group">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                       {versesList.map((verse, idx) => (
+                           <div key={idx} className="bg-slate-900/80 border border-slate-700 hover:border-amber-500/50 hover:bg-slate-900 transition-all cursor-default p-4 rounded-lg flex items-center justify-center text-center shadow-sm group relative overflow-visible hover:z-50">
                                <span className="font-medium text-slate-300 text-sm group-hover:text-white transition-colors">{verse}</span>
+                               
+                               {/* Tooltip for specific verses */}
+                               {verseDetails[verse] && (
+                                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-[90vw] md:w-[400px] p-6 bg-slate-900/95 backdrop-blur-md rounded-2xl border border-amber-500/40 shadow-[0_0_40px_rgba(245,158,11,0.25)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto z-50 text-center transform -translate-y-2 mb-2">
+                                       <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-slate-900 border-r border-b border-amber-500/40 rotate-45"></div>
+                                       <div className="relative z-10 flex flex-col gap-4">
+                                           <p className="font-serif text-xl text-amber-400 leading-loose drop-shadow-sm" dir="rtl">
+                                              {renderVerseText(verseDetails[verse].arabic, true)}
+                                           </p>
+                                           <div className="w-16 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent mx-auto"></div>
+                                           <p className="text-slate-200 text-sm italic font-light leading-relaxed font-serif">
+                                             "{renderVerseText(verseDetails[verse].turkish, false)}"
+                                           </p>
+                                            {verseDetails[verse].english && (
+                                               <p className="text-slate-400 text-xs italic font-light leading-relaxed opacity-80">
+                                                 "{renderVerseText(verseDetails[verse].english, false)}"
+                                               </p>
+                                            )}
+                                       </div>
+                                   </div>
+                               )}
                            </div>
                        ))}
                    </div>
@@ -309,7 +332,7 @@ export const About: React.FC = () => {
                                  <div className={`w-3 h-3 rounded-full ${c.color} shadow-[0_0_8px_currentColor] flex-shrink-0`}></div>
                                  <div className="flex flex-col">
                                     <span className={`text-xs font-bold ${c.text}`}>{c.label}</span>
-                                    <span className="text-[10px] text-slate-500 font-medium">Etki Oranı: %{c.percent}</span>
+                                    <span className="text-xs text-slate-500 font-medium">Etki Oranı: %{c.percent}</span>
                                  </div>
                              </div>
                         ))}
