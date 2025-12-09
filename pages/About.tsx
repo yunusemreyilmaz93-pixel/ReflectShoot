@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   CheckCircle2, 
@@ -24,7 +25,8 @@ export const About: React.FC = () => {
     "Al-i İmran: 92", "Al-i İmran: 103", "Al-i İmran: 190-191",
     "Ankebut: 41", "Araf: 27", "Asr: 1-3",
     "Bakara: 138", "Bakara: 168", "Enfal: 46",
-    "Furkan: 63", "Hucurat: 10-11", "İsra: 81",
+    "Furkan: 63", "Hac: 42", "Hucurat: 10-11",
+    "İbrahim: 24", "İsra: 24", "İsra: 81",
     "İnşirah: 5-9", "Kasas: 72", "Lokman: 18",
     "Maide: 2", "Yasin: 82", "Yunus: 57",
     "Zariyat: 50", "Zariyat: 55", "Zümer: 9"
@@ -80,12 +82,12 @@ export const About: React.FC = () => {
                 <div className="bg-slate-800 p-8 md:p-10 rounded-2xl shadow-xl border border-slate-700 hover:border-slate-600 group hover:-translate-y-1 transition-all duration-300">
                     <div className="flex flex-col sm:flex-row items-start gap-8 mb-8">
                         <div className="w-24 h-24 flex-shrink-0 flex items-center justify-center p-2 bg-white rounded-xl border border-slate-600 shadow-md">
-                            <img src="20113118_yeni_logo_konyaihl.png" alt="Konya Anadolu İHL" className="w-full h-full object-contain" />
+                            <img src="https://i.postimg.cc/vB7yYxQc/20113118-yeni-logo-konyaihl.png" alt="Konya Anadolu İHL" className="w-full h-full object-contain" />
                         </div>
                         <div>
                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Düzenleyen Kurum</h3>
-                            <p className="text-2xl font-black text-white leading-none mb-1">Konya Anadolu</p>
-                            <p className="text-lg font-medium text-slate-400">İmam Hatip Lisesi</p>
+                            <p className="text-2xl font-black text-white leading-tight mb-1">Konya Anadolu İmam Hatip Lisesi</p>
+                            <p className="text-lg font-medium text-slate-400">Türkiye'nin Öncü Okulu</p>
                         </div>
                     </div>
                     <div className="w-full h-px bg-slate-700 mb-6"></div>
@@ -98,7 +100,7 @@ export const About: React.FC = () => {
                 <div className="bg-slate-800 p-8 md:p-10 rounded-2xl shadow-xl border border-slate-700 hover:border-slate-600 group hover:-translate-y-1 transition-all duration-300">
                     <div className="flex flex-col sm:flex-row items-start gap-8 mb-8">
                         <div className="w-24 h-24 flex-shrink-0 flex items-center justify-center p-2 bg-white rounded-xl border border-slate-600 shadow-md">
-                            <img src="timav-icon.png" alt="TİMAV Vakfı" className="w-full h-full object-contain" />
+                            <img src="https://i.postimg.cc/TwvGvJXp/timav-icon.png" alt="TİMAV Vakfı" className="w-full h-full object-contain" />
                         </div>
                         <div>
                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Ana Sponsor</h3>
@@ -250,7 +252,7 @@ export const About: React.FC = () => {
                         <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-700 hover:border-teal-500/30 transition-colors">
                             <Film className="text-slate-500 mb-3" size={24} />
                             <h4 className="font-bold text-white mb-1">Format & Süre</h4>
-                            <p className="text-sm text-slate-400">MP4/MOV, 2-3 Dakika</p>
+                            <p className="text-sm text-slate-400">MP4/MOV, 3-8 Dakika</p>
                         </div>
                         <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-700 hover:border-teal-500/30 transition-colors">
                             <Target className="text-slate-500 mb-3" size={24} />

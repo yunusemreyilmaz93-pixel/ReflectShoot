@@ -97,7 +97,8 @@ export const Home: React.FC = () => {
     "Al-i İmran: 92", "Al-i İmran: 103", "Al-i İmran: 190-191",
     "Ankebut: 41", "Araf: 27", "Asr: 1-3",
     "Bakara: 138", "Bakara: 168", "Enfal: 46",
-    "Furkan: 63", "Hucurat: 10-11", "İsra: 81",
+    "Furkan: 63", "Hac: 42", "Hucurat: 10-11",
+    "İbrahim: 24", "İsra: 24", "İsra: 81",
     "İnşirah: 5-9", "Kasas: 72", "Lokman: 18",
     "Maide: 2", "Yasin: 82", "Yunus: 57",
     "Zariyat: 50", "Zariyat: 55", "Zümer: 9"
@@ -114,7 +115,7 @@ export const Home: React.FC = () => {
       techSpecs: [
         { icon: Clapperboard, label: 'Kurmaca / Belgesel' },
         { icon: Layout, label: '1920x1080 FHD' },
-        { icon: CalendarDays, label: '2-3 Dakika' }
+        { icon: CalendarDays, label: '3-8 Dakika' }
       ],
       details: {
         description: [
@@ -139,7 +140,7 @@ export const Home: React.FC = () => {
       techSpecs: [
         { icon: Layout, label: 'Yapay Zeka' },
         { icon: Layout, label: '1920x1080 FHD' },
-        { icon: CalendarDays, label: '2-3 Dakika' }
+        { icon: CalendarDays, label: '3-8 Dakika' }
       ],
       details: {
         description: [
@@ -240,15 +241,24 @@ export const Home: React.FC = () => {
           </div>
 
           {/* Typography */}
-          <div className="animate-fadeInUp space-y-8 mb-16 relative z-20">
-            <h1 className="text-6xl md:text-9xl font-black text-white tracking-tighter leading-tight relative drop-shadow-2xl">
-              Oku, Anla, <br className="hidden md:block"/> 
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]">Anlat!</span>
-            </h1>
+          <div className="animate-fadeInUp space-y-8 mb-16 relative z-20 flex flex-col items-center">
+            <div className="text-center">
+                <h1 className="text-5xl md:text-8xl lg:text-9xl font-black text-white tracking-tighter leading-tight relative drop-shadow-2xl mb-2">
+                  Oku, Anla, <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]">Anlat!</span>
+                </h1>
+                <h2 className="text-2xl md:text-4xl lg:text-5xl font-black text-slate-400 tracking-tight mt-1 drop-shadow-lg flex items-center justify-center gap-2 md:gap-4">
+                  Read, Grasp, <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500/70 via-amber-400/70 to-amber-500/70">Narrate!</span>
+                </h2>
+            </div>
             
-            <p className="text-xl md:text-3xl font-light text-slate-300 tracking-tight max-w-3xl mx-auto">
-               Manayı Fikre, Fikri <span className="font-semibold text-white border-b-2 border-amber-500/50">Filme</span> Dönüştüren Yarışma.
-            </p>
+            <div className="text-center max-w-5xl mx-auto space-y-4 mt-8">
+                <p className="text-3xl md:text-5xl font-light italic text-slate-200 tracking-tight leading-relaxed">
+                   "Kelime iner, düşünce uyanır, <span className="font-semibold text-white border-b-2 border-amber-500/50 italic">mânâ açılır</span>."
+                </p>
+                <p className="text-xl md:text-3xl font-light italic text-slate-500 tracking-wide">
+                   "The word descends, thought awakens, <span className="font-semibold text-slate-300 border-b border-amber-500/30">meaning unfolds</span>."
+                </p>
+            </div>
           </div>
 
           {/* Buttons */}
@@ -319,7 +329,7 @@ export const Home: React.FC = () => {
       </div>
 
       {/* 2. Categories Section - Improved Visibility */}
-      <section id="categories" className="py-24 bg-slate-50 relative border-b border-slate-200">
+      <section id="categories" className="py-24 bg-slate-50 relative">
         <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-slate-200 to-transparent opacity-50"></div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -386,8 +396,6 @@ export const Home: React.FC = () => {
 
       {/* 3. Themes Section - Dark Cinematic (Matches About) */}
       <section className="py-24 bg-slate-950 relative overflow-hidden">
-        {/* Soft Transition */}
-        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-slate-50 to-slate-950 pointer-events-none z-10"></div>
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(30,41,59,0.4)_0%,rgba(2,6,23,1)_100%)]"></div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
@@ -484,7 +492,7 @@ export const Home: React.FC = () => {
                      Prodüksiyon Dosyaları
                   </h2>
                   <p className="text-slate-600 text-lg mb-8 font-light">
-                     Sete çıkmadan önce gerekli yasal izinleri ve şartnameyi buradan edinebilirsiniz.
+                     Sete çıkmadan önce gerekli yasal izinleri ve şartnameyi buradan indirebilirsiniz.
                   </p>
                   <div className="grid sm:grid-cols-3 gap-6">
                      {downloads.map((doc, i) => (
@@ -518,7 +526,7 @@ export const Home: React.FC = () => {
              Büyük <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500">Gala Gecesi</span>
           </h2>
           <p className="text-2xl text-rose-100/80 mb-12 max-w-3xl mx-auto font-light leading-relaxed">
-             Toplam <span className="text-white font-bold border-b border-white/30">150.000₺</span> değerinde ödül havuzu, teknoloji çekleri ve Altın Kamera heykelciği sahiplerini bekliyor.
+             Toplam <span className="text-white font-bold border-b border-white/30">200.000₺</span>'yi aşan ödül havuzu, teknoloji çekleri ve Altın Kamera heykelciği sahiplerini bekliyor.
           </p>
           
           <Link 

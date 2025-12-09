@@ -73,7 +73,7 @@ export const FAQ: React.FC = () => {
     { id: 6, category: 'Genel', question: "Başvuruyu iptal edersem yaptırım olur mu?", answer: "Hayır. Başvurunuzu iptal etmeniz durumunda herhangi bir yaptırım uygulanmaz." },
 
     // TEKNİK
-    { id: 7, category: 'Teknik', question: "Video teknik şartları nelerdir?", answer: "Video formatı MP4 veya MOV, minimum çözünürlük 1920×1080, süre 2–3 dakika olmalıdır." },
+    { id: 7, category: 'Teknik', question: "Video teknik şartları nelerdir?", answer: "Video formatı MP4 veya MOV, minimum çözünürlük 1920×1080, süre 3–8 dakika olmalıdır." },
     { id: 8, category: 'Teknik', question: "Canlı çekim kategorisinde telefon kamerası kullanmak serbest mi?", answer: "Evet. Telefon, DSLR veya profesyonel kamera kullanabilirsiniz. Önemli olan görüntü kalitesi ve teknik gerekliliklere uyumdur." },
     { id: 9, category: 'Teknik', question: "AI kategorisinde hangi araçları kullanabilirim?", answer: "Runway, Pika, ElevenLabs, D-ID, Sora benzeri üretim araçları serbesttir. Telif ihlali yapan, deepfake amaçlı veya etik dışı araçlar yasaktır." },
     { id: 10, category: 'Teknik', question: "Video çözünürülüğü minimum kaç olmalı?", answer: "En düşük 1920×1080 (Full HD) çözünürlük kabul edilir." },

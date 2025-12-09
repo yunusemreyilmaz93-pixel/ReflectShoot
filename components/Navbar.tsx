@@ -42,7 +42,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </div>
               <div className="flex flex-col">
                 <span className="font-black text-xl tracking-tight text-white group-hover:text-amber-400 transition-colors">Reflect&Shoot</span>
-                <span className="text-[10px] text-slate-400 font-bold tracking-[0.2em] group-hover:text-white transition-colors">OKU, DÜŞÜN, ANLAT</span>
+                <span className="text-[10px] text-slate-400 font-bold tracking-[0.2em] group-hover:text-white transition-colors">OKU, ANLA, ANLAT</span>
               </div>
             </Link>
           </div>

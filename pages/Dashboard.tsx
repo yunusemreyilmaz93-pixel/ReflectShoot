@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { ApplicationStatus, Category, Theme } from '../types';
@@ -49,7 +50,8 @@ export const Dashboard: React.FC = () => {
     "Al-i İmran: 92", "Al-i İmran: 103", "Al-i İmran: 190-191",
     "Ankebut: 41", "Araf: 27", "Asr: 1-3",
     "Bakara: 138", "Bakara: 168", "Enfal: 46",
-    "Furkan: 63", "Hucurat: 10-11", "İsra: 81",
+    "Furkan: 63", "Hac: 42", "Hucurat: 10-11",
+    "İbrahim: 24", "İsra: 24", "İsra: 81",
     "İnşirah: 5-9", "Kasas: 72", "Lokman: 18",
     "Maide: 2", "Yasin: 82", "Yunus: 57",
     "Zariyat: 50", "Zariyat: 55", "Zümer: 9"
