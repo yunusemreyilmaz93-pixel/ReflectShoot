@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool } from 'lucide-react';
@@ -12,7 +13,7 @@ const COMPETITION_PHASES = [
   { label: 'Finalistlerin Açıklanması', date: '2026-04-01T12:00:00' },
   { label: 'Akademi Başlangıcı', date: '2026-04-06T09:00:00' },
   { label: 'Final Video Teslimi', date: '2026-05-04T23:59:59' },
-  { label: 'Sonuçların İlanı', date: '2026-05-11T12:00:00' },
+  { label: 'Gala Daveti', date: '2026-05-11T12:00:00' }, // Updated
   { label: 'Büyük Final & Ödül Töreni', date: '2026-05-22T19:00:00' }
 ];
 

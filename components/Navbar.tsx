@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Film, LogOut, LayoutDashboard, UserCircle, UserPlus } from 'lucide-react';
+import { Menu, X, Film, LogOut, LayoutDashboard, UserCircle, UserPlus, Clapperboard } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { UserRole } from '../types';
 
@@ -30,6 +31,26 @@ export const Navbar: React.FC<NavbarProps> = () => {
   };
 
   const isActive = (path: string) => location.pathname === path;
+
+  const getDashboardLink = () => {
+    if (!currentUser) return "/login";
+    if (currentUser.role === UserRole.ADMIN) return "/admin";
+    if (currentUser.role === UserRole.JUDGE) return "/dashboard"; // Judges share dashboard route but see different UI
+    return "/dashboard";
+  };
+
+  const getDashboardLabel = () => {
+    if (!currentUser) return "Panelim";
+    if (currentUser.role === UserRole.ADMIN) return "Admin";
+    if (currentUser.role === UserRole.JUDGE) return "Jüri Paneli";
+    return "Panelim";
+  };
+
+  const getDashboardIcon = () => {
+     if (currentUser?.role === UserRole.ADMIN) return <UserCircle size={18}/>;
+     if (currentUser?.role === UserRole.JUDGE) return <Clapperboard size={18}/>;
+     return <LayoutDashboard size={18}/>;
+  };
 
   return (
     <nav className="bg-slate-950/90 backdrop-blur-md border-b border-white/5 text-white sticky top-0 z-50 transition-all duration-300">
@@ -66,11 +87,11 @@ export const Navbar: React.FC<NavbarProps> = () => {
               {currentUser ? (
                  <div className="flex items-center gap-3 ml-4 pl-4 border-l border-white/10">
                    <Link
-                      to={currentUser.role === UserRole.ADMIN ? "/admin" : "/dashboard"}
+                      to={getDashboardLink()}
                       className="bg-rose-600 hover:bg-rose-500 text-white px-5 py-2 rounded-full text-sm font-bold shadow-lg shadow-rose-900/20 flex items-center gap-2 transition-all hover:-translate-y-0.5"
                    >
-                     {currentUser.role === UserRole.ADMIN ? <UserCircle size={18}/> : <LayoutDashboard size={18}/>}
-                     {currentUser.role === UserRole.ADMIN ? "Admin" : "Panelim"}
+                     {getDashboardIcon()}
+                     {getDashboardLabel()}
                    </Link>
                    <button 
                       onClick={handleLogout}
@@ -130,11 +151,11 @@ export const Navbar: React.FC<NavbarProps> = () => {
             {currentUser ? (
               <>
               <Link
-                to={currentUser.role === UserRole.ADMIN ? "/admin" : "/dashboard"}
+                to={getDashboardLink()}
                 onClick={() => setIsOpen(false)}
                 className="block w-full text-center bg-rose-600 text-white px-4 py-3 rounded-xl text-base font-bold shadow-lg"
               >
-                {currentUser.role === UserRole.ADMIN ? "Admin Paneli" : "Yarışmacı Paneli"}
+                {getDashboardLabel()}
               </Link>
               <button
                 onClick={() => {

@@ -109,11 +109,11 @@ export const verseDetails: Record<string, VerseDetail> = {
     turkish: "Gerçekten, güçlükle beraber bir kolaylık vardır."+ VERSE_SPLITTER +"Öyleyse, bir işi bitirince diğerine koyul. Ancak Rabbine yönel ve yalvar.",
     english: "Surely with ˹that˺ hardship comes ˹more˺ ease."+ VERSE_SPLITTER +"So once you have fulfilled ˹your duty˺, strive ˹in devotion˺, turning to your Lord ˹alone˺ with hope."
   },
-   "Kasas: 72-73": { 
+  "Kasas: 72-73": { 
      arabic: "قُلْ اَرَاَيْتُمْ اِنْ جَعَلَ اللّٰهُ عَلَيْكُمُ النَّهَارَ سَرْمَداً اِلٰى يَوْمِ الْقِيٰمَةِ مَنْ اِلٰهٌ غَيْرُ اللّٰهِ يَأْتٖيكُمْ بِلَيْلٍ تَسْكُنُونَ فٖيهِؕ اَفَلَا تُبْصِرُونَ" + VERSE_SPLITTER + "وَمِنْ رَحْمَتِهٖ جَعَلَ لَكُمُ الَّيْلَ وَالنَّهَارَ لِتَسْكُنُوا فٖيهِ وَلِتَبْتَغُوا مِنْ فَضْلِهٖ وَلَعَلَّكُمْ تَشْكُرُونَ", 
      turkish: "De ki: \"Ne dersiniz? Allah, üzerinize gündüzü kıyamete kadar sürekli kılsaydı, Allah'tan başka hangi ilah size içinde dinleneceğiniz bir gece getirebilir? Hâlâ görmeyecek misiniz?\"" + VERSE_SPLITTER + "Allah, rahmetinden ötürü geceyi içinde dinlenesiniz; gündüzü de, lütfundan isteyesiniz ve şükredesiniz diye sizin için yarattı.",
      english: "Ask ˹them also˺, “Imagine if Allah were to make the day perpetual for you until the Day of Judgment, which god other than Allah could bring you night to rest in? Will you not then see?”" + VERSE_SPLITTER + "It ‘s out of His mercy that He has made for you the day and night so that you may rest ˹in the latter˺ and seek His bounty ˹in the former˺, and perhaps you will be grateful."
-   }, 
+  }, 
   "Lokman: 18": {
     "arabic": "وَلَا تُصَعِّرْ خَدَّكَ لِلنَّاسِ وَلَا تَمْشِ فِي الْاَرْضِ مَرَحاًؕ اِنَّ اللّٰهَ لَا يُحِبُّ كُلَّ مُخْتَالٍ فَخُورٍۚ",
     "turkish": "Küçümseyerek surat asıp insanlardan yüz çevirme ve yeryüzünde böbürlenerek yürüme! Çünkü Allah hiçbir kibirleneni, övüngeni sevmez.",

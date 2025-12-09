@@ -7,10 +7,13 @@ import {
   updateDoc, 
   collection, 
   query, 
-  onSnapshot 
+  onSnapshot,
+  getFirestore 
 } from 'firebase/firestore';
+import { initializeApp, deleteApp } from 'firebase/app'; // For secondary app
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'; // For secondary app
 import { auth, db } from '../lib/firebase';
-import { Application, ApplicationStatus, UserRole, EvaluationCriteria, UserProfile } from '../types';
+import { Application, ApplicationStatus, UserRole, EvaluationCriteria, UserProfile, JudgeEvaluation } from '../types';
 
 interface AppContextType {
   currentUser: UserProfile | null;
@@ -20,16 +23,19 @@ interface AppContextType {
   registerTeacher: (data: any) => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
   createDefaultAdmin: () => Promise<void>;
+  createJudgeAccount: (data: any) => Promise<void>; // NEW
   
   // Application Logic
   currentApplication: Application | null;
   createApplication: (data: any) => Promise<void>;
   updateApplication: (app: Application) => Promise<void>;
   mockAdminApplications: Application[]; 
-  gradeApplication: (appId: string, criteria: EvaluationCriteria, feedback: string) => Promise<void>;
+  gradeApplication: (appId: string, criteria: EvaluationCriteria, feedback: string, privateNote?: string) => Promise<void>;
   
   // Admin Logic
   updateUserRole: (uid: string, newRole: UserRole) => Promise<void>;
+  currentDate: Date;
+  setSimulatedDate: (date: Date) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -37,9 +43,14 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  
+  const [currentDate, setCurrentDate] = useState(new Date());
+
   const [allApplications, setAllApplications] = useState<Application[]>([]);
   const [currentApplication, setCurrentApplication] = useState<Application | null>(null);
+
+  const setSimulatedDate = (date: Date) => {
+    setCurrentDate(date);
+  };
 
   // 1. Listen to Firebase Auth State Changes
   useEffect(() => {
@@ -77,7 +88,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // 2. Real-time Applications Sync (Firestore)
   useEffect(() => {
     // SECURITY: Don't try to fetch data if user is not logged in.
-    // This prevents "Missing or insufficient permissions" errors for guests.
     if (!currentUser) {
         return;
     }
@@ -97,9 +107,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
          setCurrentApplication(userApp || null);
       }
     }, (error) => {
-        // Handle Permission Denied errors gracefully
         console.warn("Firestore subscription info:", error.code, error.message);
-        // We don't throw here to avoid crashing the app
     });
 
     return () => unsubscribe();
@@ -108,33 +116,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // 3. Auth Actions
   const login = async (email: string, password: string) => {
-    // Use compat method: auth.signInWithEmailAndPassword
     await auth.signInWithEmailAndPassword(email, password);
-    // onAuthStateChanged will handle state update
   };
 
   const logout = async () => {
-    // Use compat method: auth.signOut
     await auth.signOut();
-    // onAuthStateChanged will handle state update
   };
 
   const registerTeacher = async (data: any) => {
     try {
-      // A. Create Auth User using compat method
       const userCredential = await auth.createUserWithEmailAndPassword(data.email, data.password);
       const user = userCredential.user;
 
       if (user) {
-        // B. Send Verification Email using instance method
         await user.sendEmailVerification();
-
-        // C. Determine Initial Role
-        // Logic: k12.tr emails get automatic TEACHER role (after verification), others get PENDING_TEACHER
         const isK12 = data.email.endsWith('k12.tr');
         const initialRole = isK12 ? UserRole.TEACHER : UserRole.PENDING_TEACHER;
 
-        // D. Create Firestore Profile
         const newProfile: UserProfile = {
           uid: user.uid,
           email: data.email,
@@ -143,10 +141,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           school: data.school,
           city: data.city,
           createdAt: new Date().toISOString(),
-          emailVerified: false // Initially false
+          emailVerified: false 
         };
 
-        await setDoc(doc(db, "users", user.uid), newProfile);
+        // For registration, we are the user, so we can write to our own doc
+        const safeProfile = JSON.parse(JSON.stringify(newProfile));
+        await setDoc(doc(db, "users", user.uid), safeProfile);
       }
 
     } catch (error) {
@@ -155,12 +155,61 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  // Creates a Judge account without logging out the current Admin
+  const createJudgeAccount = async (data: any) => {
+     let secondaryApp;
+     try {
+         // 1. Initialize a secondary app instance with a unique name to avoid conflicts
+         const config = {
+            apiKey: "AIzaSyDM72RAVXZvb3cTOQf1DjwTAcAbpcrV2dE",
+            authDomain: "reflectandshoot.firebaseapp.com",
+            projectId: "reflectandshoot",
+            storageBucket: "reflectandshoot.firebasestorage.app",
+            messagingSenderId: "619798868982",
+            appId: "1:619798868982:web:a53e1fabdcf0c42f824dd7",
+         };
+         
+         const appName = `SecondaryApp-${Date.now()}`;
+         secondaryApp = initializeApp(config, appName);
+         const secondaryAuth = getAuth(secondaryApp);
+         const secondaryDb = getFirestore(secondaryApp); // Use DB authenticated as the new user
+         
+         // 2. Create user in secondary auth
+         const userCredential = await createUserWithEmailAndPassword(secondaryAuth, data.email, data.password);
+         const user = userCredential.user;
+         
+         if (user) {
+             // 3. Create Firestore profile
+             const newProfile: UserProfile = {
+                 uid: user.uid,
+                 email: data.email,
+                 fullName: data.fullName,
+                 role: UserRole.JUDGE,
+                 school: 'Reflect&Shoot Jury',
+                 city: 'Konya',
+                 createdAt: new Date().toISOString(),
+                 emailVerified: true // Judges created by admin are verified
+             };
+             
+             // Use secondaryDb to write, satisfying "auth.uid == resource.id" rule
+             const safeProfile = JSON.parse(JSON.stringify(newProfile));
+             await setDoc(doc(secondaryDb, "users", user.uid), safeProfile);
+         }
+     } catch (error) {
+         console.error("Error creating judge:", error);
+         throw error;
+     } finally {
+        // 4. Cleanup
+        if (secondaryApp) {
+            await deleteApp(secondaryApp);
+        }
+     }
+  };
+
   const createDefaultAdmin = async () => {
       try {
           const email = "admin@reflectandshoot.com";
           const password = "Yarışma_2026";
-          
-          // Use compat method
           const userCredential = await auth.createUserWithEmailAndPassword(email, password);
           const user = userCredential.user;
 
@@ -173,23 +222,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               school: "Reflect&Shoot HQ",
               city: "Konya",
               createdAt: new Date().toISOString(),
-              emailVerified: true // Admin is verified by default conceptually
+              emailVerified: true 
             };
-
-            await setDoc(doc(db, "users", user.uid), newProfile);
-            console.log("Admin user created successfully");
+            const safeProfile = JSON.parse(JSON.stringify(newProfile));
+            await setDoc(doc(db, "users", user.uid), safeProfile);
           }
       } catch (error: any) {
-          if (error.code === 'auth/email-already-in-use') {
-              throw new Error("Admin kullanıcısı zaten mevcut.");
-          }
+          if (error.code === 'auth/email-already-in-use') throw new Error("Admin kullanıcısı zaten mevcut.");
           throw error;
       }
   };
 
   const resendVerificationEmail = async () => {
     if (auth.currentUser) {
-      // Use instance method
       await auth.currentUser.sendEmailVerification();
     }
   };
@@ -197,18 +242,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateUserRole = async (uid: string, newRole: UserRole) => {
     const userRef = doc(db, "users", uid);
     await updateDoc(userRef, { role: newRole });
-    // If we updated the current user (rare admin case), update local state
     if (currentUser?.uid === uid) {
       setCurrentUser(prev => prev ? { ...prev, role: newRole } : null);
     }
   };
 
-  // 4. Application Logic (Firestore)
+  // 4. Application Logic
   const createApplication = async (data: any) => {
     if (!currentUser) return;
 
     const newApp: Application = {
-      id: `APP-${currentUser.uid}`, // Use UID to ensure one app per teacher easily
+      id: `APP-${currentUser.uid}`,
       teacher: {
         id: `T-${currentUser.uid}`,
         fullName: currentUser.fullName,
@@ -222,8 +266,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         name: data.teamName,
         category: data.category,
         theme: data.theme,
-        selectedVerse: data.selectedVerse,
-        logoUrl: data.logoFile ? URL.createObjectURL(data.logoFile) : undefined, // Note: Images normally go to Storage, keeping blob for now
+        // Conditional spread to avoid undefined values
+        ...(data.selectedVerse ? { selectedVerse: data.selectedVerse } : {}),
+        ...(data.logoFile ? { logoUrl: URL.createObjectURL(data.logoFile) } : {}),
         students: data.students.map((s: any, idx: number) => ({
           id: `S-${Date.now()}-${idx}`,
           firstName: s.firstName,
@@ -237,44 +282,71 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         isFinalStageComplete: false,
         videoSize: '0 MB',
         videoResolution: 'N/A',
-        virusScanStatus: 'CLEAN'
+        virusScanStatus: 'CLEAN',
+        isFinalist: false 
       },
       status: ApplicationStatus.DRAFT,
       submittedAt: new Date().toISOString()
     };
     
     try {
-      await setDoc(doc(db, "applications", newApp.id), newApp);
-      // State sync handled by onSnapshot
+      // Deep clean undefined values before sending to Firestore
+      const safeApp = JSON.parse(JSON.stringify(newApp));
+      await setDoc(doc(db, "applications", newApp.id), safeApp);
     } catch (error) {
       console.error("Error creating application:", error);
+      alert("Başvuru oluşturulurken bir hata oluştu. Lütfen tekrar deneyiniz.");
     }
   };
 
   const updateApplication = async (updatedApp: Application) => {
     try {
-      await setDoc(doc(db, "applications", updatedApp.id), updatedApp);
+      // Deep clean undefined values
+      const safeApp = JSON.parse(JSON.stringify(updatedApp));
+      await setDoc(doc(db, "applications", updatedApp.id), safeApp);
     } catch (error) {
        console.error("Error updating application:", error);
     }
   };
 
-  const gradeApplication = async (appId: string, criteria: EvaluationCriteria, feedback: string) => {
+  // UPDATED GRADING LOGIC FOR MULTI-JUDGE
+  const gradeApplication = async (appId: string, criteria: EvaluationCriteria, feedback: string, privateNote?: string) => {
+     if (!currentUser) return;
+     
      const targetApp = allApplications.find(a => a.id === appId);
      if(targetApp) {
-         const totalScore = criteria.script + criteria.technical + criteria.creativity + criteria.editing;
+         const score = criteria.script + criteria.technical + criteria.creativity + criteria.editing;
          
+         const newEvaluation: JudgeEvaluation = {
+             judgeId: currentUser.uid,
+             judgeName: currentUser.fullName,
+             criteriaScores: criteria,
+             feedback,
+             privateNote, // Optional confidential note
+             totalScore: score,
+             gradedAt: new Date().toISOString()
+         };
+
+         // Get existing evaluations or empty array
+         let evaluations = targetApp.judgeEvaluations || [];
+         
+         // Remove previous evaluation by this judge if exists (update logic)
+         evaluations = evaluations.filter(e => e.judgeId !== currentUser.uid);
+         
+         // Add new evaluation
+         evaluations.push(newEvaluation);
+
+         // Calculate Average Score
+         const sum = evaluations.reduce((acc, curr) => acc + curr.totalScore, 0);
+         const average = sum / evaluations.length;
+
          const updated: Application = {
              ...targetApp,
-             status: ApplicationStatus.GRADED,
-             evaluation: {
-                 score: totalScore,
-                 feedback,
-                 judgeName: "Jüri Heyeti",
-                 gradedAt: new Date().toISOString(),
-                 criteriaScores: criteria
-             }
+             status: ApplicationStatus.GRADED, // Considered graded if at least one judge graded
+             judgeEvaluations: evaluations,
+             finalScore: parseFloat(average.toFixed(2)) // Store with 2 decimals
          };
+         
          await updateApplication(updated);
      }
   };
@@ -288,12 +360,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       registerTeacher, 
       resendVerificationEmail,
       createDefaultAdmin,
+      createJudgeAccount,
       updateUserRole,
       currentApplication, 
       createApplication, 
       updateApplication,
       mockAdminApplications: allApplications,
-      gradeApplication
+      gradeApplication,
+      currentDate,
+      setSimulatedDate
     }}>
       {children}
     </AppContext.Provider>

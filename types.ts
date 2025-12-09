@@ -4,7 +4,8 @@ export enum UserRole {
   PENDING_TEACHER = 'PENDING_TEACHER', // Registered but email not verified or admin not approved
   TEACHER = 'TEACHER', // Approved and verified
   STUDENT = 'STUDENT',
-  ADMIN = 'ADMIN'
+  ADMIN = 'ADMIN',
+  JUDGE = 'JUDGE' // New Role
 }
 
 export interface UserProfile {
@@ -60,12 +61,15 @@ export interface EvaluationCriteria {
   editing: number;     // Kurgu & Montaj (20)
 }
 
-export interface Evaluation {
-  score: number; // Total 0-100
-  feedback: string;
+// Single evaluation by one judge
+export interface JudgeEvaluation {
+  judgeId: string;
   judgeName: string;
-  gradedAt: string;
   criteriaScores: EvaluationCriteria;
+  feedback: string;     // Public feedback visible to teacher eventually
+  privateNote?: string; // Private note ONLY for admin (e.g. "Copyright issue?")
+  totalScore: number;
+  gradedAt: string;
 }
 
 export interface Team {
@@ -87,6 +91,10 @@ export interface Team {
   // Stages
   isPreliminaryStageComplete: boolean;
   isFinalStageComplete: boolean;
+  
+  // Finals
+  isFinalist?: boolean; // NEW: Flag for finalists
+  finalistRank?: number; // NEW: Rank if applicable
 }
 
 export interface TeacherProfile {
@@ -104,5 +112,17 @@ export interface Application {
   team: Team;
   status: ApplicationStatus;
   submittedAt: string;
-  evaluation?: Evaluation;
+  
+  // Grading System
+  judgeEvaluations?: JudgeEvaluation[]; // Array of individual judge scores
+  finalScore?: number; // Average of all judge scores
+  
+  // Legacy support (optional, kept for type safety during migration)
+  evaluation?: {
+      score: number;
+      feedback: string;
+      judgeName: string;
+      gradedAt: string;
+      criteriaScores: EvaluationCriteria;
+  }; 
 }
