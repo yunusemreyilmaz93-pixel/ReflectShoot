@@ -39,7 +39,8 @@ export enum ApplicationStatus {
   APPROVED = 'Onaylandı',
   GRADED = 'Puanlandı',
   REJECTED = 'Reddedildi',
-  NEEDS_FIX = 'Düzeltme Gerekli'
+  NEEDS_FIX = 'Düzeltme Gerekli',
+  DISQUALIFIED = 'Diskalifiye'
 }
 
 export interface Student {
@@ -52,24 +53,25 @@ export interface Student {
   hasKvkkConsent: boolean;     // File uploaded
   parentalConsentUrl?: string; // Mock URL for admin view
   kvkkConsentUrl?: string;     // Mock URL for admin view
+  docStatus?: 'PENDING' | 'APPROVED' | 'REJECTED'; // New for admin review
 }
 
 export interface EvaluationCriteria {
-  script: number;      // Senaryo & Hikaye (30)
-  technical: number;   // Teknik Kalite (25)
-  creativity: number;  // Yaratıcılık (25)
-  editing: number;     // Kurgu & Montaj (20)
+  story: number;       // Hikaye / Senaryo (0-25)
+  technical: number;   // Teknik Kalite (0-25)
+  originality: number; // Özgünlük / Yaratıcılık (0-25)
+  themeFit: number;    // Tema Uyumu (0-25)
 }
 
-// Single evaluation by one judge
-export interface JudgeEvaluation {
-  judgeId: string;
-  judgeName: string;
-  criteriaScores: EvaluationCriteria;
-  feedback: string;     // Public feedback visible to teacher eventually
-  privateNote?: string; // Private note ONLY for admin (e.g. "Copyright issue?")
-  totalScore: number;
-  gradedAt: string;
+// Firestore Subcollection Structure: applications/{appId}/scores/{juryId}
+export interface ScoreDocument {
+  id?: string; // juryId (document ID)
+  juryId: string;
+  juryName: string; 
+  total: number;
+  criteria: EvaluationCriteria;
+  notes: string;
+  updatedAt: string;
 }
 
 export interface Team {
@@ -113,16 +115,33 @@ export interface Application {
   status: ApplicationStatus;
   submittedAt: string;
   
-  // Grading System
-  judgeEvaluations?: JudgeEvaluation[]; // Array of individual judge scores
-  finalScore?: number; // Average of all judge scores
-  
-  // Legacy support (optional, kept for type safety during migration)
-  evaluation?: {
-      score: number;
-      feedback: string;
-      judgeName: string;
-      gradedAt: string;
-      criteriaScores: EvaluationCriteria;
-  }; 
+  // Scoring & Stats
+  finalScore?: number; // Average of all jury scores (cached on parent)
+  juryCount?: number;  // How many juries graded this (cached on parent)
+  gradedBy?: string[]; // Array of Jury IDs who graded this (for UI filtering)
+}
+
+export interface SystemSettings {
+    dates: {
+        applicationStart: string;
+        applicationEnd: string;
+        videoUploadStart: string;
+        videoUploadEnd: string;
+        academyStart: string;
+        galaDate: string;
+    };
+    features: {
+        judgeSystemActive: boolean;
+        publicResultReveal: boolean;
+        allowNewRegistrations: boolean;
+    };
+}
+
+export interface LogEntry {
+    id: string;
+    action: string;
+    details: string;
+    performedBy: string; // Email
+    timestamp: string;
+    targetId?: string;
 }

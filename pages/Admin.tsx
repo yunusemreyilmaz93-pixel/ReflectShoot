@@ -1,432 +1,653 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search, Check, X, Eye, Award, FileText, Shield, Inbox, Download, Users, Film, School, Mail, AlertTriangle, Send, Clapperboard, Video, Cpu, Activity, PieChart, BarChart3, Clock, UserCheck, Star, Plus, Lock } from 'lucide-react';
-import { ApplicationStatus, Category, Application, EvaluationCriteria, Theme, UserRole, UserProfile } from '../types';
+import { 
+    Search, Check, X, Eye, Award, FileText, Shield, Inbox, Download, 
+    Users, Film, School, Mail, AlertTriangle, Send, Clapperboard, Video, 
+    Cpu, Activity, PieChart, BarChart3, Clock, UserCheck, Star, Plus, Lock, 
+    Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog
+} from 'lucide-react';
+import { ApplicationStatus, Category, Application, UserRole, LogEntry, SystemSettings, ScoreDocument } from '../types';
 import { useAppContext } from '../context/AppContext';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+
+// Helper for CSV Export
+const exportToCSV = (data: any[], filename: string) => {
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + data.map(e => Object.values(e).join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+// --- SUB-COMPONENTS ---
+
+interface SidebarProps {
+    activeTab: string;
+    setActiveTab: (tab: string) => void;
+    onLogout: () => void;
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }: SidebarProps) => {
+    const navItems = [
+        { id: 'DASHBOARD', icon: LayoutDashboard, label: 'Panel Özeti' },
+        { id: 'TEAMS', icon: Clapperboard, label: 'Takım Yönetimi' },
+        { id: 'USERS', icon: Users, label: 'Kullanıcılar & Jüri' },
+        { id: 'SETTINGS', icon: Settings, label: 'Ayarlar' },
+        { id: 'LOGS', icon: List, label: 'Denetim Kayıtları' },
+    ];
+
+    return (
+        <>
+            {/* Mobile Overlay */}
+            {isOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+                    onClick={onClose}
+                ></div>
+            )}
+
+            {/* Sidebar Container */}
+            <div className={`
+                fixed top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 
+                flex flex-col z-50 transition-transform duration-300 ease-in-out
+                ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
+                md:translate-x-0
+            `}>
+                <div className="p-6 flex items-center justify-between border-b border-slate-800">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-rose-600 p-2 rounded-lg">
+                            <Shield size={20} className="text-white"/>
+                        </div>
+                        <div>
+                            <h1 className="font-bold text-white tracking-tight leading-tight">Yönetici</h1>
+                            <p className="text-[10px] text-slate-500 font-medium">Reflect&Shoot Admin</p>
+                        </div>
+                    </div>
+                    {/* Mobile Close Button */}
+                    <button onClick={onClose} className="md:hidden text-slate-400 hover:text-white">
+                        <X size={20} />
+                    </button>
+                </div>
+                
+                <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+                    {navItems.map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => {
+                                setActiveTab(item.id);
+                                onClose(); // Close on mobile when clicked
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                                activeTab === item.id 
+                                ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' 
+                                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                            }`}
+                        >
+                            <item.icon size={18} />
+                            {item.label}
+                        </button>
+                    ))}
+                </nav>
+
+                <div className="p-4 border-t border-slate-800">
+                    <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-all">
+                        <LogOut size={18} />
+                        Çıkış Yap
+                    </button>
+                </div>
+            </div>
+        </>
+    );
+};
+
+const AdminDashboard = ({ apps }: { apps: Application[] }) => {
+    const totalApps = apps.length;
+    const finalists = apps.filter(a => a.team.isFinalist).length;
+    const liveAction = apps.filter(a => a.team.category === Category.LIVE_ACTION).length;
+    const aiAnim = apps.filter(a => a.team.category === Category.AI_ANIMATION).length;
+    const scoredApps = apps.filter(a => a.finalScore && a.finalScore > 0);
+    const avgScore = scoredApps.length > 0 
+        ? scoredApps.reduce((acc, curr) => acc + (curr.finalScore || 0), 0) / scoredApps.length 
+        : 0;
+    
+    // City Stats
+    const cities: Record<string, number> = {};
+    apps.forEach(app => {
+        const city = app.teacher.city || 'Belirtilmedi';
+        cities[city] = (cities[city] || 0) + 1;
+    });
+    const sortedCities = Object.entries(cities).sort((a,b) => b[1] - a[1]).slice(0, 5);
+
+    // Leaderboard (Top 5)
+    const leaderboard = [...scoredApps].sort((a,b) => (b.finalScore || 0) - (a.finalScore || 0)).slice(0, 5);
+
+    return (
+        <div className="space-y-6 animate-fadeIn">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500"><Inbox size={24}/></div>
+                        <span className="text-xs font-bold text-slate-500 bg-slate-900 px-2 py-1 rounded">Toplam</span>
+                    </div>
+                    <h3 className="text-3xl font-black text-white">{totalApps}</h3>
+                    <p className="text-slate-400 text-sm">Başvuru</p>
+                </div>
+                <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500"><Star size={24}/></div>
+                        <span className="text-xs font-bold text-slate-500 bg-slate-900 px-2 py-1 rounded">Final</span>
+                    </div>
+                    <h3 className="text-3xl font-black text-white">{finalists}</h3>
+                    <p className="text-slate-400 text-sm">Finalist Takım</p>
+                </div>
+                <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-500"><Activity size={24}/></div>
+                        <span className="text-xs font-bold text-slate-500 bg-slate-900 px-2 py-1 rounded">Skor</span>
+                    </div>
+                    <h3 className="text-3xl font-black text-white">{avgScore.toFixed(1)}</h3>
+                    <p className="text-slate-400 text-sm">Ortalama Puan</p>
+                </div>
+                <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="p-3 bg-rose-500/10 rounded-xl text-rose-500"><Video size={24}/></div>
+                        <span className="text-xs font-bold text-slate-500 bg-slate-900 px-2 py-1 rounded">Teslim</span>
+                    </div>
+                    <h3 className="text-3xl font-black text-white">{apps.filter(a => a.team.videoStatus === 'UPLOADED').length}</h3>
+                    <p className="text-slate-400 text-sm">Video Yüklendi</p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                 {/* Leaderboard */}
+                 <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                     <h3 className="font-bold text-white mb-6 flex items-center gap-2"><Award size={18} className="text-amber-500"/> Liderlik Tablosu (Top 5)</h3>
+                     <div className="space-y-3">
+                         {leaderboard.length > 0 ? leaderboard.map((app, idx) => (
+                             <div key={app.id} className="flex justify-between items-center p-4 bg-slate-900 rounded-xl border border-slate-800">
+                                 <div className="flex items-center gap-4">
+                                     <span className="font-black text-slate-600 text-lg w-6">#{idx + 1}</span>
+                                     <div>
+                                         <p className="font-bold text-white text-sm">{app.team.name}</p>
+                                         <p className="text-xs text-slate-500">{app.team.category} • {app.teacher.school}</p>
+                                     </div>
+                                 </div>
+                                 <div className="text-right">
+                                     <span className="block font-black text-amber-500 text-lg">{app.finalScore}</span>
+                                     <span className="text-[10px] text-slate-500 uppercase font-bold">{app.juryCount || 0} Jüri</span>
+                                 </div>
+                             </div>
+                         )) : (
+                             <div className="text-center py-8 text-slate-500 text-sm">Henüz puanlama yapılmadı.</div>
+                         )}
+                     </div>
+                 </div>
+
+                 {/* Top Cities */}
+                 <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                     <h3 className="font-bold text-white mb-6 flex items-center gap-2"><MapPin size={18} className="text-slate-400"/> Şehir Bazlı Başvurular</h3>
+                     <div className="space-y-3">
+                         {sortedCities.map(([city, count], idx) => (
+                             <div key={idx} className="flex justify-between items-center p-3 bg-slate-900 rounded-xl border border-slate-800">
+                                 <span className="text-slate-300 font-bold text-sm">{city}</span>
+                                 <span className="bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded border border-slate-700">{count} Takım</span>
+                             </div>
+                         ))}
+                     </div>
+                 </div>
+            </div>
+        </div>
+    );
+};
+
+// --- USER MANAGEMENT ---
+
+const AdminUsers = () => {
+    const { allUsers, updateUserRole } = useAppContext();
+    const [filter, setFilter] = useState('');
+
+    const filteredUsers = allUsers.filter(u => 
+        u.fullName.toLowerCase().includes(filter.toLowerCase()) || 
+        u.email.toLowerCase().includes(filter.toLowerCase())
+    );
+
+    return (
+        <div className="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden animate-fadeIn">
+            <div className="p-6 border-b border-slate-700 flex flex-col md:flex-row justify-between gap-4">
+                <h3 className="font-bold text-white flex items-center gap-2"><UserCog size={20}/> Kullanıcı ve Rol Yönetimi</h3>
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                    <input 
+                        type="text" 
+                        placeholder="İsim veya E-posta ara..." 
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:border-rose-500 outline-none w-full md:w-64"
+                    />
+                </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+                <table className="w-full text-left min-w-[700px]">
+                    <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase font-bold">
+                        <tr>
+                            <th className="p-4">Kullanıcı</th>
+                            <th className="p-4">Okul / Şehir</th>
+                            <th className="p-4">Mevcut Rol</th>
+                            <th className="p-4 text-right">Rol İşlemleri</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-700">
+                        {filteredUsers.map(user => (
+                            <tr key={user.uid} className="hover:bg-slate-700/20">
+                                <td className="p-4">
+                                    <div className="font-bold text-white text-sm">{user.fullName}</div>
+                                    <div className="text-xs text-slate-500">{user.email}</div>
+                                </td>
+                                <td className="p-4">
+                                    <div className="text-sm text-slate-300">{user.school || '-'}</div>
+                                    <div className="text-xs text-slate-500">{user.city || '-'}</div>
+                                </td>
+                                <td className="p-4">
+                                    <span className={`text-[10px] font-black uppercase px-2 py-1 rounded border ${
+                                        user.role === UserRole.ADMIN ? 'bg-rose-900/30 text-rose-400 border-rose-800' :
+                                        user.role === UserRole.JUDGE ? 'bg-amber-900/30 text-amber-400 border-amber-800' :
+                                        'bg-slate-800 text-slate-400 border-slate-700'
+                                    }`}>
+                                        {user.role}
+                                    </span>
+                                </td>
+                                <td className="p-4 text-right">
+                                    <div className="flex justify-end gap-2">
+                                        {user.role !== UserRole.TEACHER && (
+                                            <button onClick={() => updateUserRole(user.uid, UserRole.TEACHER)} className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded border border-slate-700">
+                                                Öğretmen Yap
+                                            </button>
+                                        )}
+                                        {user.role !== UserRole.JUDGE && (
+                                            <button onClick={() => updateUserRole(user.uid, UserRole.JUDGE)} className="px-3 py-1 bg-amber-900/20 hover:bg-amber-800/30 text-amber-500 hover:text-amber-400 text-xs rounded border border-amber-900/50">
+                                                Jüri Yap
+                                            </button>
+                                        )}
+                                        {user.role !== UserRole.ADMIN && (
+                                            <button onClick={() => updateUserRole(user.uid, UserRole.ADMIN)} className="px-3 py-1 bg-rose-900/20 hover:bg-rose-800/30 text-rose-500 hover:text-rose-400 text-xs rounded border border-rose-900/50">
+                                                Admin Yap
+                                            </button>
+                                        )}
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
+// --- TEAM MANAGEMENT ---
+
+const AdminTeams = ({ apps, onSelectApp }: { apps: Application[], onSelectApp: (app: Application) => void }) => {
+    const [filter, setFilter] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('ALL');
+
+    const filtered = apps.filter(app => {
+        const matchSearch = app.team.name.toLowerCase().includes(filter.toLowerCase()) || 
+                            app.teacher.school.toLowerCase().includes(filter.toLowerCase());
+        const matchCat = categoryFilter === 'ALL' || app.team.category === categoryFilter;
+        return matchSearch && matchCat;
+    });
+
+    const handleExport = () => {
+        const data = filtered.map(app => ({
+            TeamID: app.team.id,
+            Name: app.team.name,
+            Category: app.team.category,
+            School: app.teacher.school,
+            Teacher: app.teacher.fullName,
+            TeacherEmail: app.teacher.email,
+            Status: app.status,
+            Score: app.finalScore || 0,
+            Finalist: app.team.isFinalist ? 'YES' : 'NO'
+        }));
+        exportToCSV(data, 'ReflectShoot_Teams_Export.csv');
+    };
+
+    const getStatusColor = (status: ApplicationStatus) => {
+        switch(status) {
+            case ApplicationStatus.APPROVED: return "bg-green-500/10 text-green-400 border-green-500/20";
+            case ApplicationStatus.REJECTED: return "bg-red-500/10 text-red-400 border-red-500/20";
+            case ApplicationStatus.DISQUALIFIED: return "bg-red-900/20 text-red-600 border-red-900/40 line-through";
+            case ApplicationStatus.FINAL_SUBMITTED: return "bg-blue-500/10 text-blue-400 border-blue-500/20";
+            case ApplicationStatus.GRADED: return "bg-purple-500/10 text-purple-400 border-purple-500/20";
+            default: return "bg-slate-800 text-slate-400 border-slate-700";
+        }
+    };
+
+    return (
+        <div className="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden animate-fadeIn">
+            <div className="p-4 md:p-6 border-b border-slate-700 flex flex-col lg:flex-row justify-between gap-4">
+                <div className="flex flex-col md:flex-row gap-4 flex-1">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                        <input 
+                            type="text" 
+                            placeholder="Takım veya okul ara..." 
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-white focus:border-rose-500 outline-none text-sm"
+                        />
+                    </div>
+                    <select 
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                        className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:border-rose-500 outline-none text-sm w-full md:w-auto"
+                    >
+                        <option value="ALL">Tüm Kategoriler</option>
+                        <option value={Category.LIVE_ACTION}>Canlı Çekim</option>
+                        <option value={Category.AI_ANIMATION}>AI Animasyon</option>
+                    </select>
+                </div>
+                <button onClick={handleExport} className="flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-colors w-full lg:w-auto">
+                    <FileDown size={18} /> Excel İndir
+                </button>
+            </div>
+            
+            <div className="overflow-x-auto w-full">
+                <table className="w-full text-left min-w-[800px]">
+                    <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase font-bold">
+                        <tr>
+                            <th className="p-4">Takım</th>
+                            <th className="p-4">Kategori</th>
+                            <th className="p-4">Danışman & Okul</th>
+                            <th className="p-4">Durum</th>
+                            <th className="p-4 text-center">Puan</th>
+                            <th className="p-4 text-right">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-700">
+                        {filtered.map(app => (
+                            <tr key={app.id} className="hover:bg-slate-700/30 transition-colors">
+                                <td className="p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-xs font-bold text-slate-500 overflow-hidden flex-shrink-0">
+                                            {app.team.logoUrl ? <img src={app.team.logoUrl} className="w-full h-full object-cover"/> : app.team.name.substring(0,2)}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-white text-sm flex items-center gap-2">
+                                                {app.team.name}
+                                                {app.team.isFinalist && <Star size={12} className="text-amber-500 fill-amber-500"/>}
+                                            </div>
+                                            <div className="text-xs text-slate-500">ID: {app.team.id.slice(-6)}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="p-4">
+                                    <span className="text-xs font-bold text-slate-300 bg-slate-900 px-2 py-1 rounded border border-slate-700 whitespace-nowrap">
+                                        {app.team.category === Category.LIVE_ACTION ? <Video size={12} className="inline mr-1"/> : <Cpu size={12} className="inline mr-1"/>}
+                                        {app.team.category}
+                                    </span>
+                                </td>
+                                <td className="p-4">
+                                    <div className="text-sm text-slate-300 font-bold">{app.teacher.fullName}</div>
+                                    <div className="text-xs text-slate-500 truncate max-w-[150px]">{app.teacher.school}</div>
+                                </td>
+                                <td className="p-4">
+                                    <span className={`text-[10px] font-black uppercase px-2 py-1 rounded border whitespace-nowrap ${getStatusColor(app.status)}`}>
+                                        {app.status}
+                                    </span>
+                                </td>
+                                <td className="p-4 text-center">
+                                    <span className="font-black text-white">{app.finalScore || '-'}</span>
+                                    {app.juryCount ? <span className="text-[9px] text-slate-500 block">({app.juryCount} jüri)</span> : null}
+                                </td>
+                                <td className="p-4 text-right">
+                                    <button onClick={() => onSelectApp(app)} className="bg-slate-900 hover:bg-rose-600 text-slate-400 hover:text-white p-2 rounded-lg transition-colors">
+                                        <Eye size={18} />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
+// --- MAIN PAGE ---
 
 export const Admin: React.FC = () => {
-  const { mockAdminApplications, gradeApplication, updateApplication, updateUserRole, createJudgeAccount } = useAppContext();
-  const [activeTab, setActiveTab] = useState<'STUDIO' | 'TEACHERS' | 'JUDGES'>('STUDIO');
-  
-  // -- Studio Logic --
-  const [filterCategory, setFilterCategory] = useState('ALL');
-  const [searchTerm, setSearchTerm] = useState('');
+  const { allApplications, updateApplication, logAction, systemSettings, updateSystemSettings, auditLogs, logout, fetchJuryScores } = useAppContext();
+  const [activeTab, setActiveTab] = useState('DASHBOARD');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
-  const [detailApp, setDetailApp] = useState<Application | null>(null); 
-  
-  // -- Teacher Management Logic --
-  const [pendingTeachers, setPendingTeachers] = useState<UserProfile[]>([]);
-  const [loadingTeachers, setLoadingTeachers] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [appScores, setAppScores] = useState<ScoreDocument[]>([]);
 
-  // -- Judge Management Logic --
-  const [judges, setJudges] = useState<UserProfile[]>([]);
-  const [loadingJudges, setLoadingJudges] = useState(false);
-  const [newJudgeForm, setNewJudgeForm] = useState({ fullName: '', email: '', password: '' });
-  const [isCreatingJudge, setIsCreatingJudge] = useState(false);
-
+  // When selected app changes, fetch scores
   useEffect(() => {
-    if (activeTab === 'TEACHERS') {
-      fetchPendingTeachers();
-    } else if (activeTab === 'JUDGES') {
-      fetchJudges();
-    }
-  }, [activeTab]);
-
-  const fetchPendingTeachers = async () => {
-    setLoadingTeachers(true);
-    try {
-      const q = query(collection(db, "users"), where("role", "==", UserRole.PENDING_TEACHER));
-      const querySnapshot = await getDocs(q);
-      const teachers: UserProfile[] = [];
-      querySnapshot.forEach((doc) => {
-        teachers.push(doc.data() as UserProfile);
-      });
-      setPendingTeachers(teachers);
-    } catch (error) {
-      console.error("Error fetching teachers", error);
-    }
-    setLoadingTeachers(false);
-  };
-
-  const fetchJudges = async () => {
-      setLoadingJudges(true);
-      try {
-          const q = query(collection(db, "users"), where("role", "==", UserRole.JUDGE));
-          const querySnapshot = await getDocs(q);
-          const judgeList: UserProfile[] = [];
-          querySnapshot.forEach((doc) => {
-              judgeList.push(doc.data() as UserProfile);
-          });
-          setJudges(judgeList);
-      } catch (error) {
-          console.error("Error fetching judges", error);
+      if (selectedApp) {
+          fetchJuryScores(selectedApp.id).then(setAppScores);
+      } else {
+          setAppScores([]);
       }
-      setLoadingJudges(false);
-  };
+  }, [selectedApp]);
 
-  const approveTeacher = async (uid: string) => {
-    if (window.confirm("Bu öğretmeni onaylamak istediğinize emin misiniz?")) {
-       await updateUserRole(uid, UserRole.TEACHER);
-       fetchPendingTeachers(); // Refresh list
-    }
-  };
-
-  const handleCreateJudge = async (e: React.FormEvent) => {
-      e.preventDefault();
-      setIsCreatingJudge(true);
-      try {
-          await createJudgeAccount(newJudgeForm);
-          setNewJudgeForm({ fullName: '', email: '', password: '' });
-          fetchJudges(); // Refresh list
-          alert("Jüri hesabı başarıyla oluşturuldu.");
-      } catch (error) {
-          alert("Jüri oluşturulurken hata oluştu. E-posta kullanımda olabilir.");
-      }
-      setIsCreatingJudge(false);
+  // App Actions
+  const handleStatusChange = async (app: Application, newStatus: ApplicationStatus) => {
+      const updated = { ...app, status: newStatus };
+      await updateApplication(updated);
+      await logAction("UPDATE_STATUS", `Takım ${app.team.name} durumu ${newStatus} olarak güncellendi.`, app.id);
+      setSelectedApp(updated); 
   };
 
   const toggleFinalist = async (app: Application) => {
-      const newStatus = !app.team.isFinalist;
-      const confirmMsg = newStatus 
-          ? `${app.team.name} takımını FİNALİST olarak işaretlemek istediğinize emin misiniz?` 
-          : `${app.team.name} takımının finalistliğini kaldırmak istediğinize emin misiniz?`;
-      
-      if(window.confirm(confirmMsg)) {
-          const updated: Application = {
-              ...app,
-              team: {
-                  ...app.team,
-                  isFinalist: newStatus
-              }
-          };
-          await updateApplication(updated);
-      }
+      const newState = !app.team.isFinalist;
+      const updated = { ...app, team: { ...app.team, isFinalist: newState } };
+      await updateApplication(updated);
+      await logAction("TOGGLE_FINALIST", `${app.team.name} finalist durumu: ${newState ? 'EVET' : 'HAYIR'}`, app.id);
+      setSelectedApp(updated);
   };
 
-  // ... (Existing Helper Functions: getStatusBadge, handleUpdateStatus, etc.) ...
-  const getStatusBadge = (status: ApplicationStatus) => {
-    switch (status) {
-      case ApplicationStatus.GRADED: return <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">PUANLANDI</span>;
-      case ApplicationStatus.APPROVED: return <span className="bg-teal-500/10 text-teal-400 border border-teal-500/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">ONAYLANDI</span>;
-      case ApplicationStatus.FINAL_SUBMITTED: return <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">VİDEO YÜKLENDİ</span>;
-      case ApplicationStatus.PRELIMINARY_SUBMITTED: return <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">ÖN BAŞVURU</span>;
-      default: return <span className="bg-slate-800 text-slate-400 border border-slate-700 px-3 py-1 rounded-full text-[10px] uppercase font-bold">{status}</span>;
-    }
+  const handleSettingsUpdate = async (e: React.FormEvent) => {
+      e.preventDefault();
+      await updateSystemSettings(systemSettings); 
+      alert("Ayarlar güncellendi.");
   };
-
-  // --- Filter Logic & Sorting ---
-  const filteredApps = mockAdminApplications.filter(app => {
-      const matchCategory = filterCategory === 'ALL' || app.team.category === filterCategory;
-      const term = searchTerm.toLowerCase();
-      const matchSearch = 
-        app.teacher.school.toLowerCase().includes(term) || 
-        app.teacher.fullName.toLowerCase().includes(term) ||
-        app.team.name.toLowerCase().includes(term);
-      return matchCategory && matchSearch;
-  });
-
-  // Sort by average score (descending)
-  const sortedApps = [...filteredApps].sort((a, b) => {
-      const scoreA = a.finalScore || 0;
-      const scoreB = b.finalScore || 0;
-      return scoreB - scoreA;
-  });
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 md:p-8 font-sans text-slate-200 selection:bg-rose-500 selection:text-white">
-      {/* Background Texture */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }}></div>
+    <div className="min-h-screen bg-slate-950 flex font-sans text-slate-200 selection:bg-rose-500 selection:text-white">
+      <AdminSidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        onLogout={logout} 
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
       
-      <div className="max-w-7xl mx-auto relative z-10">
-        
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-10 border-b border-slate-800 pb-6 gap-6">
-            <div>
-                 <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
-                    <Clapperboard className="text-rose-500" /> Stüdyo Yönetimi
-                 </h1>
-                 <p className="text-slate-500 text-sm mt-1 font-medium">Reflect&Shoot Prodüksiyon Merkezi</p>
-            </div>
-        </div>
+      {/* Main Content */}
+      <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto w-full transition-all duration-300">
+          <header className="flex justify-between items-center mb-6 md:mb-8">
+              <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="md:hidden p-2 text-slate-400 hover:text-white bg-slate-800 rounded-lg"
+                  >
+                      <Menu size={24} />
+                  </button>
+                  <h2 className="text-xl md:text-2xl font-black text-white tracking-tight truncate">
+                      {activeTab === 'DASHBOARD' && 'Genel Bakış'}
+                      {activeTab === 'TEAMS' && 'Takım Yönetimi'}
+                      {activeTab === 'USERS' && 'Kullanıcılar & Jüri'}
+                      {activeTab === 'SETTINGS' && 'Sistem Ayarları'}
+                      {activeTab === 'LOGS' && 'Denetim Kayıtları'}
+                  </h2>
+              </div>
+          </header>
 
-        {/* Tab Switcher */}
-        <div className="flex space-x-4 mb-8">
-            <button 
-                onClick={() => setActiveTab('STUDIO')}
-                className={`px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'STUDIO' ? 'bg-slate-800 text-white shadow-lg border border-slate-700' : 'text-slate-500 hover:text-white'}`}
-            >
-                <Clapperboard size={18}/> Başvurular & Liderlik Tablosu
-            </button>
-            <button 
-                onClick={() => setActiveTab('TEACHERS')}
-                className={`px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'TEACHERS' ? 'bg-slate-800 text-white shadow-lg border border-slate-700' : 'text-slate-500 hover:text-white'}`}
-            >
-                <UserCheck size={18}/> Öğretmen Onayları
-                {pendingTeachers.length > 0 && <span className="bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-full">{pendingTeachers.length}</span>}
-            </button>
-            <button 
-                onClick={() => setActiveTab('JUDGES')}
-                className={`px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'JUDGES' ? 'bg-slate-800 text-white shadow-lg border border-slate-700' : 'text-slate-500 hover:text-white'}`}
-            >
-                <Shield size={18}/> Jüri Yönetimi
-            </button>
-        </div>
-
-        {/* --- JUDGES TAB --- */}
-        {activeTab === 'JUDGES' && (
-            <div className="grid md:grid-cols-3 gap-8 animate-scaleIn">
-                {/* Create Judge Form */}
-                <div className="md:col-span-1 bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-2xl h-fit">
-                    <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <Plus className="text-rose-500"/> Yeni Jüri Ekle
-                    </h2>
-                    <form onSubmit={handleCreateJudge} className="space-y-4">
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase">Ad Soyad</label>
-                            <input value={newJudgeForm.fullName} onChange={e => setNewJudgeForm({...newJudgeForm, fullName: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-rose-500 outline-none" required />
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase">E-posta</label>
-                            <input type="email" value={newJudgeForm.email} onChange={e => setNewJudgeForm({...newJudgeForm, email: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-rose-500 outline-none" required />
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase">Şifre</label>
-                            <input type="password" value={newJudgeForm.password} onChange={e => setNewJudgeForm({...newJudgeForm, password: e.target.value})} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-rose-500 outline-none" required minLength={6} />
-                        </div>
-                        <button type="submit" disabled={isCreatingJudge} className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50">
-                            {isCreatingJudge ? 'Oluşturuluyor...' : 'Jüri Üyesi Oluştur'}
-                        </button>
-                    </form>
+          <div className="w-full">
+            {activeTab === 'DASHBOARD' && <AdminDashboard apps={allApplications} />}
+            {activeTab === 'TEAMS' && <AdminTeams apps={allApplications} onSelectApp={setSelectedApp} />}
+            {activeTab === 'USERS' && <AdminUsers />}
+            
+            {activeTab === 'SETTINGS' && (
+                <div className="bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 max-w-2xl animate-fadeIn">
+                     <h3 className="font-bold text-white mb-6 border-b border-slate-700 pb-4">Yarışma Takvimi</h3>
+                     <form onSubmit={handleSettingsUpdate} className="space-y-6">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <div>
+                                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Başvuru Başlangıç</label>
+                                 <input type="datetime-local" defaultValue={systemSettings.dates.applicationStart} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-sm" />
+                             </div>
+                             <div>
+                                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Başvuru Bitiş</label>
+                                 <input type="datetime-local" defaultValue={systemSettings.dates.applicationEnd} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-sm" />
+                             </div>
+                         </div>
+                         <div className="pt-4">
+                             <button type="submit" className="w-full md:w-auto bg-rose-600 hover:bg-rose-500 text-white px-6 py-3 rounded-xl font-bold transition-all">
+                                 Ayarları Kaydet
+                             </button>
+                         </div>
+                     </form>
                 </div>
+            )}
 
-                {/* Judges List */}
-                <div className="md:col-span-2 bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-2xl">
-                     <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <Shield className="text-teal-500"/> Mevcut Jüriler
-                    </h2>
-                    <div className="space-y-2">
-                        {loadingJudges ? (
-                            <p>Yükleniyor...</p>
-                        ) : judges.map(judge => (
-                            <div key={judge.uid} className="flex justify-between items-center bg-slate-950 p-4 rounded-xl border border-slate-800">
-                                <div>
-                                    <p className="font-bold text-white">{judge.fullName}</p>
-                                    <p className="text-xs text-slate-500">{judge.email}</p>
-                                </div>
-                                <span className="bg-slate-800 text-slate-400 text-xs px-2 py-1 rounded">Jüri Yetkisi</span>
-                            </div>
-                        ))}
+            {activeTab === 'LOGS' && (
+                <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden animate-fadeIn">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left min-w-[600px]">
+                            <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase">
+                                <tr>
+                                    <th className="p-4">Zaman</th>
+                                    <th className="p-4">İşlem</th>
+                                    <th className="p-4">Detay</th>
+                                    <th className="p-4">Yapan</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-700">
+                                {auditLogs.map(log => (
+                                    <tr key={log.id} className="hover:bg-slate-700/20">
+                                        <td className="p-4 text-xs text-slate-500 font-mono whitespace-nowrap">{new Date(log.timestamp).toLocaleString('tr-TR')}</td>
+                                        <td className="p-4"><span className="bg-slate-900 text-white text-xs px-2 py-1 rounded border border-slate-700 font-bold whitespace-nowrap">{log.action}</span></td>
+                                        <td className="p-4 text-sm text-slate-300 min-w-[200px]">{log.details}</td>
+                                        <td className="p-4 text-xs text-slate-400 whitespace-nowrap">{log.performedBy}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </div>
-        )}
+            )}
+          </div>
+      </main>
 
-        {/* --- TEACHERS TAB --- */}
-        {activeTab === 'TEACHERS' && (
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl animate-scaleIn">
-                 <div className="p-6 border-b border-slate-800 bg-slate-950/50">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Shield className="text-amber-500"/> Bekleyen Öğretmen Onayları
-                    </h2>
-                 </div>
-                 {/* ... Teacher list mapping ... */}
-                 {pendingTeachers.length === 0 ? (
-                     <div className="p-12 text-center text-slate-500"><Check size={48} className="mx-auto mb-4"/>Bekleyen onay yok.</div>
-                 ) : (
-                    <table className="w-full text-left">
-                        <tbody className="divide-y divide-slate-800">
-                            {pendingTeachers.map(teacher => (
-                                <tr key={teacher.uid}>
-                                    <td className="p-4 text-white">{teacher.fullName}</td>
-                                    <td className="p-4 text-right">
-                                        <button onClick={() => approveTeacher(teacher.uid)} className="bg-teal-600 px-4 py-2 rounded text-white text-xs font-bold">Onayla</button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                 )}
-            </div>
-        )}
+      {/* Team Detail Modal */}
+      {selectedApp && (
+          <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex justify-end animate-fadeIn">
+              <div className="w-full max-w-2xl bg-slate-900 h-full border-l border-slate-700 p-6 md:p-8 overflow-y-auto shadow-2xl relative">
+                  <button onClick={() => setSelectedApp(null)} className="absolute top-4 right-4 bg-slate-800 p-2 rounded-full text-slate-400 hover:text-white hover:bg-rose-600 transition-all z-10">
+                      <X size={20} />
+                  </button>
 
-        {/* --- STUDIO TAB (Leaderboard) --- */}
-        {activeTab === 'STUDIO' && (
-            <>
-                {/* Applications List */}
-                <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl animate-scaleIn">
-                    {sortedApps.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-950/50 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
-                                        <th className="p-5 font-bold">Takım & Kategori</th>
-                                        <th className="p-5 font-bold">Danışman</th>
-                                        <th className="p-5 font-bold">Durum</th>
-                                        <th className="p-5 font-bold text-center">Ortalama Puan</th>
-                                        <th className="p-5 font-bold text-right">İşlemler</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-800">
-                                    {sortedApps.map((app) => (
-                                        <tr key={app.id} className="hover:bg-slate-800/50 transition-colors group">
-                                            <td className="p-5">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 font-bold overflow-hidden relative">
-                                                        {app.team.logoUrl ? <img src={app.team.logoUrl} className="w-full h-full object-cover"/> : app.team.name.substring(0,2).toUpperCase()}
-                                                        {app.team.isFinalist && (
-                                                            <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
-                                                                <Star size={20} className="text-amber-400 fill-amber-400 drop-shadow-lg"/>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-white text-sm">{app.team.name}</p>
-                                                        {app.team.isFinalist && <span className="bg-amber-500 text-slate-900 text-[9px] font-black px-1.5 py-0.5 rounded">FİNALİST</span>}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="p-5">
-                                                <p className="font-bold text-slate-300 text-sm">{app.teacher.fullName}</p>
-                                                <p className="text-xs text-slate-500">{app.teacher.school}</p>
-                                            </td>
-                                            <td className="p-5">
-                                                {getStatusBadge(app.status)}
-                                            </td>
-                                            <td className="p-5 text-center">
-                                                {app.finalScore ? (
-                                                    <div>
-                                                        <span className="text-2xl font-black text-rose-500">{app.finalScore}</span>
-                                                        <p className="text-[10px] text-slate-500">{app.judgeEvaluations?.length || 0} Jüri Oyu</p>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-slate-600 text-xs">-</span>
-                                                )}
-                                            </td>
-                                            <td className="p-5 text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <button 
-                                                        onClick={() => toggleFinalist(app)}
-                                                        className={`p-2 rounded-lg transition-colors ${app.team.isFinalist ? 'bg-amber-500 text-slate-900 hover:bg-amber-400' : 'bg-slate-800 text-slate-500 hover:text-amber-500 hover:bg-slate-700'}`}
-                                                        title={app.team.isFinalist ? "Finalistliği Kaldır" : "Finalist Yap"}
-                                                    >
-                                                        <Star size={16} className={app.team.isFinalist ? 'fill-current' : ''}/>
-                                                    </button>
-                                                    <button 
-                                                    onClick={() => setDetailApp(app)}
-                                                    className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg transition-colors"
-                                                    title="Detaylar"
-                                                    >
-                                                        <Eye size={16}/>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <div className="p-12 text-center text-slate-500">Başvuru bulunamadı.</div>
-                    )}
-                </div>
-            </>
-        )}
-      </div>
-
-      {/* Read-Only Detail Modal & Voting Breakdown */}
-      {detailApp && (
-           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-               <div className="bg-slate-900 border border-slate-700 w-full max-w-4xl rounded-2xl shadow-2xl relative overflow-hidden animate-scaleIn max-h-[90vh] overflow-y-auto custom-scrollbar">
-                   <div className="bg-slate-800 p-6 border-b border-slate-700 flex justify-between items-center sticky top-0 z-10">
-                      <h3 className="font-bold text-white text-xl flex items-center gap-2">
-                          <FileText className="text-slate-400"/> Başvuru Detayı & Puanlar
-                      </h3>
-                      <button onClick={() => setDetailApp(null)} className="text-slate-400 hover:text-white transition-colors">
-                          <X size={24}/>
-                      </button>
+                  <div className="mb-8 pb-8 border-b border-slate-800 mt-8 md:mt-0">
+                      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-4">
+                          {selectedApp.team.logoUrl && <img src={selectedApp.team.logoUrl} className="w-20 h-20 rounded-xl object-cover bg-slate-800 border border-slate-700" />}
+                          <div>
+                              <h2 className="text-2xl md:text-3xl font-black text-white leading-tight">{selectedApp.team.name}</h2>
+                              <p className="text-slate-400 text-sm mt-1">{selectedApp.teacher.school}</p>
+                          </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                          <span className="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full font-bold">{selectedApp.team.category}</span>
+                          <span className="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full font-bold">{selectedApp.teacher.city}</span>
+                          <span className={`text-xs px-3 py-1 rounded-full font-bold text-white ${selectedApp.team.isFinalist ? 'bg-amber-500' : 'bg-slate-700'}`}>
+                              {selectedApp.team.isFinalist ? 'FİNALİST' : 'Aday'}
+                          </span>
+                      </div>
                   </div>
-                  <div className="p-8 space-y-8">
-                       {/* Team Info */}
-                       <div className="grid grid-cols-2 gap-4">
-                           <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                               <span className="text-xs text-slate-500 block mb-1">Takım Adı</span>
-                               <span className="text-white font-bold">{detailApp.team.name}</span>
-                           </div>
-                           <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                               <span className="text-xs text-slate-500 block mb-1">Video</span>
-                               <a href={detailApp.team.videoUrl} target="_blank" className="text-teal-500 hover:underline text-sm font-bold flex items-center gap-1"><Film size={14}/> İzle</a>
-                           </div>
-                       </div>
-                       
-                       {/* Judge Breakdown */}
-                       <div>
-                           <h4 className="text-rose-500 font-bold uppercase text-xs tracking-widest mb-4 border-b border-slate-800 pb-2">Jüri Değerlendirmeleri</h4>
-                           {detailApp.judgeEvaluations && detailApp.judgeEvaluations.length > 0 ? (
-                               <div className="grid grid-cols-1 gap-4">
-                                   {detailApp.judgeEvaluations.map((ev, idx) => (
-                                       <div key={idx} className="bg-slate-950 p-5 rounded-xl border border-slate-800 relative group">
-                                           <div className="flex justify-between items-center mb-3">
-                                               <div className="flex items-center gap-2">
-                                                   <span className="text-white font-bold text-sm">{ev.judgeName}</span>
-                                                   {ev.privateNote && (
-                                                       <span className="bg-amber-500/10 text-amber-500 text-[9px] px-2 py-0.5 rounded flex items-center gap-1 border border-amber-500/20">
-                                                           <Lock size={8}/> Özel Not Var
-                                                       </span>
-                                                   )}
-                                               </div>
-                                               <span className="bg-rose-900/30 text-rose-400 px-2 py-0.5 rounded text-xs font-black">{ev.totalScore} Puan</span>
-                                           </div>
-                                           
-                                           <div className="grid grid-cols-4 gap-2 text-xs text-slate-500 mb-4">
-                                               <div className="text-center bg-slate-900 rounded p-1.5 border border-slate-800">Senaryo<br/><span className="text-white font-bold text-lg">{ev.criteriaScores.script}</span></div>
-                                               <div className="text-center bg-slate-900 rounded p-1.5 border border-slate-800">Teknik<br/><span className="text-white font-bold text-lg">{ev.criteriaScores.technical}</span></div>
-                                               <div className="text-center bg-slate-900 rounded p-1.5 border border-slate-800">Yaratıcılık<br/><span className="text-white font-bold text-lg">{ev.criteriaScores.creativity}</span></div>
-                                               <div className="text-center bg-slate-900 rounded p-1.5 border border-slate-800">Kurgu<br/><span className="text-white font-bold text-lg">{ev.criteriaScores.editing}</span></div>
-                                           </div>
 
-                                           {ev.feedback && (
-                                               <div className="mb-2">
-                                                   <span className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Geri Bildirim:</span>
-                                                   <p className="text-xs text-slate-300 italic bg-slate-900/50 p-3 rounded-lg border border-slate-800">"{ev.feedback}"</p>
-                                               </div>
-                                           )}
-                                           
-                                           {ev.privateNote && (
-                                               <div className="mt-3 border-t border-slate-800 pt-2">
-                                                    <span className="text-[10px] text-amber-500 uppercase font-bold flex items-center gap-1 mb-1"><Lock size={10}/> Admin'e Özel Not:</span>
-                                                    <p className="text-xs text-amber-200/80 bg-amber-900/20 p-3 rounded-lg border border-amber-900/30">"{ev.privateNote}"</p>
-                                               </div>
-                                           )}
-                                       </div>
-                                   ))}
-                               </div>
-                           ) : (
-                               <p className="text-slate-500 text-sm">Henüz puanlama yapılmamış.</p>
-                           )}
-                           
-                           {detailApp.finalScore && (
-                               <div className="mt-6 bg-rose-600/10 border border-rose-500/30 p-6 rounded-2xl text-center shadow-lg">
-                                   <p className="text-xs text-rose-400 font-bold uppercase tracking-widest mb-1">Genel Ortalama Puan</p>
-                                   <p className="text-5xl font-black text-rose-500">{detailApp.finalScore}</p>
-                               </div>
-                           )}
-                       </div>
+                  {/* Scoring Section */}
+                  <div className="mb-8">
+                      <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 flex items-center gap-2"><Star size={16}/> Jüri Puanları</h3>
+                      {appScores.length > 0 ? (
+                          <div className="space-y-3">
+                              {appScores.map((score, i) => (
+                                  <div key={i} className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                                      <div className="flex justify-between items-center mb-2">
+                                          <span className="font-bold text-white text-sm">{score.juryName}</span>
+                                          <span className="text-lg font-black text-amber-500">{score.total}</span>
+                                      </div>
+                                      <div className="grid grid-cols-4 gap-2 text-[10px] text-slate-500 mb-2">
+                                          <div>Hikaye: {score.criteria.story}</div>
+                                          <div>Teknik: {score.criteria.technical}</div>
+                                          <div>Özgünlük: {score.criteria.originality}</div>
+                                          <div>Tema: {score.criteria.themeFit}</div>
+                                      </div>
+                                      {score.notes && (
+                                          <p className="text-xs text-slate-400 italic border-t border-slate-800 pt-2 mt-2">"{score.notes}"</p>
+                                      )}
+                                  </div>
+                              ))}
+                              <div className="flex justify-between items-center bg-slate-800 p-4 rounded-xl">
+                                  <span className="font-bold text-white">Ortalama Puan</span>
+                                  <span className="text-2xl font-black text-green-500">{selectedApp.finalScore}</span>
+                              </div>
+                          </div>
+                      ) : (
+                          <div className="text-slate-500 text-sm italic">Henüz puanlama yapılmamış.</div>
+                      )}
                   </div>
-               </div>
-           </div>
+
+                  {/* Video Section */}
+                  <div className="mb-8">
+                      <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 flex items-center gap-2"><Video size={16}/> Proje Dosyaları</h3>
+                      {selectedApp.team.videoUrl ? (
+                          <div className="bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
+                              <video controls className="w-full aspect-video" src={selectedApp.team.videoUrl}></video>
+                              <div className="p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                                  <div className="text-center sm:text-left">
+                                      <p className="text-white font-bold text-sm">Final Video</p>
+                                      <p className="text-xs text-slate-500">{selectedApp.team.videoSize} • {selectedApp.team.videoResolution}</p>
+                                  </div>
+                                  <a href={selectedApp.team.videoUrl} download className="w-full sm:w-auto bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2">
+                                      <Download size={14} /> İndir
+                                  </a>
+                              </div>
+                          </div>
+                      ) : (
+                          <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 border-dashed text-center text-slate-500 text-sm">
+                              Henüz video yüklenmemiş.
+                          </div>
+                      )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="mt-auto pt-6 border-t border-slate-800 pb-10 md:pb-0">
+                      <h3 className="text-sm font-bold text-slate-500 uppercase mb-4">Yönetim İşlemleri</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                           <button onClick={() => toggleFinalist(selectedApp)} className={`p-4 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transition-all ${selectedApp.team.isFinalist ? 'bg-amber-500/10 text-amber-500 border border-amber-500/50' : 'bg-slate-800 text-slate-400 hover:bg-amber-500 hover:text-black'}`}>
+                               <Star size={24} className={selectedApp.team.isFinalist ? "fill-current" : ""}/>
+                               {selectedApp.team.isFinalist ? "Finalistliği Kaldır" : "Finalist Yap"}
+                           </button>
+                           <button 
+                             onClick={() => handleStatusChange(selectedApp, ApplicationStatus.DISQUALIFIED)}
+                             className="bg-slate-800 hover:bg-red-900/30 text-slate-400 hover:text-red-500 p-4 rounded-xl font-bold flex flex-col items-center justify-center gap-2 border border-slate-800 hover:border-red-500/30 transition-all"
+                           >
+                               <Trash2 size={24} />
+                               Diskalifiye Et
+                           </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
       )}
-
-      <style>{`
-        @keyframes scaleIn {
-            from { transform: scale(0.95); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-        .animate-scaleIn {
-            animation: scaleIn 0.2s ease-out forwards;
-        }
-      `}</style>
     </div>
   );
 };

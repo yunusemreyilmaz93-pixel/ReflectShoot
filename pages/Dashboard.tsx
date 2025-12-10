@@ -1,15 +1,13 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { ApplicationStatus, Category, Theme, UserRole, Application, EvaluationCriteria } from '../types';
-import { CheckCircle, AlertCircle, Upload, Video, Award, Clock, Users, Trash2, Image as ImageIcon, XCircle, Info, FileDown, Clapperboard, Star, Megaphone, Film, UserPlus, BookOpen, Lock, PartyPopper, RefreshCw, Trophy, HeartHandshake, Cpu, Play, X, Sliders } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
-import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
+import { ApplicationStatus, Category, Theme, UserRole } from '../types';
+import { CheckCircle, AlertCircle, Upload, Video, Award, Clock, Users, FileDown, Clapperboard, Film, UserPlus, BookOpen, Trophy, HeartHandshake, Cpu } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { versesList, VERSE_SPLITTER } from '../data/verses';
 
 export const Dashboard: React.FC = () => {
-  const { currentApplication, updateApplication, createApplication, currentUser, mockAdminApplications, gradeApplication, currentDate } = useAppContext();
+  const { currentApplication, updateApplication, createApplication, currentUser, currentDate } = useAppContext();
   const [uploading, setUploading] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   // -- Time Constants --
   const VIDEO_UPLOAD_START_DATE = new Date('2026-02-16T00:00:00');
@@ -36,17 +34,10 @@ export const Dashboard: React.FC = () => {
   const isRevisePhase = currentDate >= REVISE_UPLOAD_START && currentDate <= REVISE_UPLOAD_END;
   const isGalaPhase = currentDate >= GALA_DATE;
 
-  // -- Judge Logic State --
-  const [selectedVideoApp, setSelectedVideoApp] = useState<Application | null>(null);
-  const [criteria, setCriteria] = useState<EvaluationCriteria>({ script: 0, technical: 0, creativity: 0, editing: 0 });
-  const [feedback, setFeedback] = useState('');
-  const [privateNote, setPrivateNote] = useState(''); // NEW for admin
-
   // -- Team Creation State --
   const [isCreating, setIsCreating] = useState(false);
   const [teamForm, setTeamForm] = useState({ name: '', category: Category.LIVE_ACTION, theme: Theme.AYET, selectedVerse: '' });
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   
   const [students, setStudents] = useState<{firstName: string; lastName: string; grade: string}[]>([
       { firstName: '', lastName: '', grade: '' },
@@ -86,187 +77,6 @@ export const Dashboard: React.FC = () => {
     }
   }, [teamForm, students, currentApplication, currentUser]);
 
-  // --- JUDGE SCREENING ROOM LOGIC ---
-  if (currentUser?.role === UserRole.JUDGE) {
-      
-      // Filter only videos that are UPLOADED
-      const videosToWatch = mockAdminApplications.filter(app => app.team.videoStatus === 'UPLOADED');
-      
-      const openJudgeModal = (app: Application) => {
-          setSelectedVideoApp(app);
-          // Check if this judge has already graded this app
-          const existingEval = app.judgeEvaluations?.find(e => e.judgeId === currentUser.uid);
-          if (existingEval) {
-              setCriteria(existingEval.criteriaScores);
-              setFeedback(existingEval.feedback);
-              setPrivateNote(existingEval.privateNote || '');
-          } else {
-              setCriteria({ script: 0, technical: 0, creativity: 0, editing: 0 });
-              setFeedback('');
-              setPrivateNote('');
-          }
-      };
-
-      const submitJudgeGrade = async () => {
-          if (selectedVideoApp) {
-              await gradeApplication(selectedVideoApp.id, criteria, feedback, privateNote);
-              setSelectedVideoApp(null);
-          }
-      };
-
-      const totalScore = criteria.script + criteria.technical + criteria.creativity + criteria.editing;
-
-      return (
-          <div className="bg-slate-950 min-h-screen text-white font-sans selection:bg-rose-600">
-               {/* Header */}
-               <div className="sticky top-20 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 px-8 py-6 flex justify-between items-center">
-                   <div>
-                       <h1 className="text-3xl font-black tracking-tight text-white flex items-center gap-3">
-                           <Film className="text-rose-500" /> Screening Room
-                       </h1>
-                       <p className="text-slate-500 text-sm mt-1">Hoş geldiniz, {currentUser.fullName}. Değerlendirmelerinizi bekleyen {videosToWatch.length} film var.</p>
-                   </div>
-                   <div className="flex gap-4">
-                       <div className="bg-slate-900 px-4 py-2 rounded-lg border border-slate-800 text-xs font-bold text-slate-400">
-                           Kör Puanlama Sistemi Aktif
-                       </div>
-                   </div>
-               </div>
-
-               {/* Grid */}
-               <div className="max-w-[1600px] mx-auto p-8">
-                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                       {videosToWatch.map(app => {
-                           const myGrade = app.judgeEvaluations?.find(e => e.judgeId === currentUser.uid);
-                           return (
-                               <div 
-                                key={app.id} 
-                                onClick={() => openJudgeModal(app)}
-                                className="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 hover:border-rose-500 hover:scale-105 transition-all duration-300 cursor-pointer group relative shadow-2xl"
-                               >
-                                   {/* Thumbnail Placeholder */}
-                                   <div className="aspect-video bg-slate-950 relative flex items-center justify-center overflow-hidden">
-                                       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10"></div>
-                                       {app.team.logoUrl ? (
-                                           <img src={app.team.logoUrl} className="w-full h-full object-cover opacity-50 group-hover:opacity-80 transition-opacity" />
-                                       ) : (
-                                           <Video size={48} className="text-slate-700" />
-                                       )}
-                                       <div className="absolute z-20 bg-white/10 p-3 rounded-full backdrop-blur-sm group-hover:scale-110 transition-transform">
-                                           <Play className="fill-white text-white" size={24} />
-                                       </div>
-                                       
-                                       {myGrade && (
-                                           <div className="absolute top-3 right-3 z-20 bg-green-500 text-black text-xs font-black px-2 py-1 rounded shadow-lg">
-                                               {myGrade.totalScore} PUAN
-                                           </div>
-                                       )}
-                                   </div>
-
-                                   <div className="p-5">
-                                       <h3 className="font-bold text-lg text-white mb-1 truncate">{app.team.name}</h3>
-                                       <div className="flex justify-between items-center text-xs text-slate-400">
-                                            <span>{app.team.category}</span>
-                                            <span className="flex items-center gap-1"><Clock size={12}/> {app.team.videoSize}</span>
-                                       </div>
-                                   </div>
-                               </div>
-                           );
-                       })}
-                   </div>
-               </div>
-
-               {/* Modal */}
-               {selectedVideoApp && (
-                   <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4">
-                       <div className="w-full max-w-6xl h-[90vh] bg-slate-900 rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-2xl border border-slate-800 relative">
-                           <button onClick={() => setSelectedVideoApp(null)} className="absolute top-4 right-4 z-50 bg-black/50 p-2 rounded-full text-white hover:bg-rose-600 transition-colors">
-                               <X size={24} />
-                           </button>
-
-                           {/* Video Player Side */}
-                           <div className="flex-1 bg-black flex items-center justify-center relative">
-                                <video controls className="w-full h-full max-h-[80vh] object-contain" src={selectedVideoApp.team.videoUrl}></video>
-                           </div>
-
-                           {/* Grading Side */}
-                           <div className="w-full md:w-[400px] bg-slate-900 border-l border-slate-800 p-8 overflow-y-auto custom-scrollbar">
-                               <div className="mb-8">
-                                   <h2 className="text-2xl font-black text-white mb-2">{selectedVideoApp.team.name}</h2>
-                                   <p className="text-slate-400 text-sm">{selectedVideoApp.team.theme} • {selectedVideoApp.team.category}</p>
-                               </div>
-
-                               <div className="space-y-6 mb-8">
-                                   <div className="flex items-center gap-2 text-rose-500 font-bold uppercase tracking-widest text-xs mb-4">
-                                       <Sliders size={14} /> Puanlama Kriterleri
-                                   </div>
-                                   {[
-                                       { id: 'script', label: 'Senaryo & Hikaye', max: 30, desc: 'Olay örgüsü, karakter derinliği ve diyalog.' },
-                                       { id: 'technical', label: 'Teknik Kalite', max: 25, desc: 'Görüntü, ışık, ses ve kamera kullanımı.' },
-                                       { id: 'creativity', label: 'Yaratıcılık', max: 25, desc: 'Özgünlük, sanatsal bakış açısı ve yorum.' },
-                                       { id: 'editing', label: 'Kurgu & Montaj', max: 20, desc: 'Ritim, geçişler ve bütünlük.' }
-                                   ].map((c) => (
-                                       <div key={c.id}>
-                                           <div className="flex justify-between mb-2">
-                                               <label className="text-sm font-bold text-slate-300">{c.label}</label>
-                                               <span className="text-xs font-bold text-rose-400">{criteria[c.id as keyof EvaluationCriteria]} / {c.max}</span>
-                                           </div>
-                                           <input 
-                                             type="range" 
-                                             min="0" 
-                                             max={c.max} 
-                                             value={criteria[c.id as keyof EvaluationCriteria]}
-                                             onChange={(e) => setCriteria({...criteria, [c.id]: parseInt(e.target.value)})}
-                                             className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500"
-                                           />
-                                       </div>
-                                   ))}
-                               </div>
-
-                               <div className="mb-6">
-                                   <label className="block text-sm font-bold text-slate-300 mb-2">Değerlendirme Notu</label>
-                                   <textarea 
-                                      value={feedback}
-                                      onChange={(e) => setFeedback(e.target.value)}
-                                      className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-slate-300 text-sm focus:border-rose-500 outline-none h-24 resize-none"
-                                      placeholder="Ekip için geri bildiriminiz..."
-                                   ></textarea>
-                               </div>
-                               
-                               <div className="mb-8">
-                                   <label className="block text-sm font-bold text-slate-300 mb-2 flex items-center gap-2">
-                                       <Lock size={14} className="text-rose-500"/> Admin'e Özel Not (Gizli)
-                                   </label>
-                                   <div className="bg-rose-900/10 border border-rose-900/30 rounded-xl p-1">
-                                       <textarea 
-                                          value={privateNote}
-                                          onChange={(e) => setPrivateNote(e.target.value)}
-                                          className="w-full bg-transparent border-none p-3 text-rose-200 text-sm focus:ring-0 outline-none h-20 resize-none placeholder-rose-700/50"
-                                          placeholder="Telif, etik ihlal veya özel durumlar..."
-                                       ></textarea>
-                                   </div>
-                                   <p className="text-[10px] text-slate-500 mt-1">* Bu notu sadece admin görebilir, takıma iletilmez.</p>
-                               </div>
-
-                               <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center mb-6">
-                                   <p className="text-xs text-slate-500 font-bold uppercase mb-1">Toplam Puan</p>
-                                   <p className="text-4xl font-black text-white">{totalScore}</p>
-                               </div>
-
-                               <button 
-                                 onClick={submitJudgeGrade}
-                                 className="w-full bg-rose-600 hover:bg-rose-500 text-white py-4 rounded-xl font-bold shadow-lg shadow-rose-900/20 transition-all"
-                               >
-                                   Puanı Kaydet
-                               </button>
-                           </div>
-                       </div>
-                   </div>
-               )}
-          </div>
-      );
-  }
-
   // --- TEACHER & STUDENT DASHBOARD LOGIC START ---
 
   const handleTeamChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setTeamForm({...teamForm, [e.target.name]: e.target.value});
@@ -279,10 +89,6 @@ export const Dashboard: React.FC = () => {
 
   const addStudent = () => {
       if(students.length < 6) setStudents([...students, { firstName: '', lastName: '', grade: '' }]);
-  };
-
-  const removeStudent = (index: number) => {
-      if(students.length > 3) setStudents(students.filter((_, i) => i !== index));
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,7 +124,6 @@ export const Dashboard: React.FC = () => {
                           if (blob) {
                               const newFile = new File([blob], "team_logo_128.png", { type: 'image/png' });
                               setLogoFile(newFile);
-                              setLogoPreview(URL.createObjectURL(newFile));
                               setFormErrors({...formErrors, logo: ''});
                           }
                       }, 'image/png');
@@ -560,14 +365,12 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-800 ring-1 ring-white/5">
-                     {/* Form content same as before ... */}
                      <div className="bg-gradient-to-r from-rose-950 to-rose-900 px-8 py-6 border-b border-rose-900 flex items-center justify-between">
                          <h2 className="text-xl font-bold text-white flex items-center"><Film className="mr-3 text-rose-400"/> Film Seti Kurulum Sihirbazı</h2>
                          <div className="text-xs font-bold text-rose-200 bg-white/10 px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">Adım 1/2</div>
                     </div>
                     
                     <form onSubmit={handleSubmitTeam} className="p-8 md:p-10 space-y-12">
-                         {/* ... (Identical form fields as previous version) ... */}
                           <section>
                             <h3 className="text-lg font-bold text-white border-b border-slate-800 pb-4 mb-8 flex items-center gap-3">
                                 <span className="w-7 h-7 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs border border-slate-700 font-bold">1</span>
@@ -663,10 +466,9 @@ export const Dashboard: React.FC = () => {
     );
   }
 
-  const { team, status, evaluation } = currentApplication;
+  const { team, status } = currentApplication;
   const isFinalist = team.isFinalist;
 
-  // --- REGULAR DASHBOARD (TEACHER) ---
   return (
     <div className="bg-gray-50 min-h-screen pb-12">
       <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept={activeContext?.type === 'video' ? 'video/mp4,video/quicktime' : 'application/pdf'} />
@@ -755,7 +557,6 @@ export const Dashboard: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-8">
-                  {/* ... (Existing Doc Stage JSX) ... */}
                    <div className={`bg-white rounded-3xl shadow-lg p-8 border border-gray-100 relative overflow-hidden transition-all duration-300 ${team.isPreliminaryStageComplete ? 'border-l-8 border-l-green-500' : ''}`}>
                       <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center">
                           <span className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center mr-4 text-sm font-bold shadow-md">1</span>
@@ -781,7 +582,6 @@ export const Dashboard: React.FC = () => {
                       </div>
                   </div>
 
-                  {/* Stage 2: Video Submission */}
                   <div className={`bg-white rounded-3xl shadow-lg p-8 border border-gray-100 transition-all duration-300 ${!team.isPreliminaryStageComplete ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                       <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center justify-between">
                           <div className="flex items-center">
@@ -849,9 +649,7 @@ export const Dashboard: React.FC = () => {
                   </div>
               </div>
 
-              {/* Sidebar */}
               <div className="space-y-6">
-                  {/* Status Box */}
                   <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
                       <h3 className="font-bold text-gray-900 mb-6 flex items-center"><Clock className="mr-2 text-teal-500" size={20} /> Takvim</h3>
                       <div className="space-y-6 relative pl-2">

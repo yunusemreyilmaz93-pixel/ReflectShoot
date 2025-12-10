@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Film, LogOut, LayoutDashboard, UserCircle, UserPlus, Clapperboard } from 'lucide-react';
+import { Menu, X, Film, LogOut, LayoutDashboard, UserCircle, UserPlus, Clapperboard, Video } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { UserRole } from '../types';
 
@@ -35,7 +35,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
   const getDashboardLink = () => {
     if (!currentUser) return "/login";
     if (currentUser.role === UserRole.ADMIN) return "/admin";
-    if (currentUser.role === UserRole.JUDGE) return "/dashboard"; // Judges share dashboard route but see different UI
+    if (currentUser.role === UserRole.JUDGE) return "/jury"; 
     return "/dashboard";
   };
 
@@ -48,7 +48,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
   const getDashboardIcon = () => {
      if (currentUser?.role === UserRole.ADMIN) return <UserCircle size={18}/>;
-     if (currentUser?.role === UserRole.JUDGE) return <Clapperboard size={18}/>;
+     if (currentUser?.role === UserRole.JUDGE) return <Video size={18}/>;
      return <LayoutDashboard size={18}/>;
   };
 
