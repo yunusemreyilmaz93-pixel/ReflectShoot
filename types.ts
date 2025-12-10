@@ -34,9 +34,9 @@ export enum Theme {
 export enum ApplicationStatus {
   DRAFT = 'Taslak',
   PRELIMINARY_SUBMITTED = 'Ön Başvuru Yapıldı',
-  FINAL_SUBMITTED = 'Final Dosyaları Yüklendi',
+  FINAL_SUBMITTED = 'Video İnceleniyor', // Updated label logic in UI
   UNDER_REVIEW = 'Değerlendiriliyor',
-  APPROVED = 'Onaylandı',
+  APPROVED = 'Onaylandı', // Video Published
   GRADED = 'Puanlandı',
   REJECTED = 'Reddedildi',
   NEEDS_FIX = 'Düzeltme Gerekli',
@@ -84,8 +84,9 @@ export interface Team {
   students: Student[];
   
   // Submission Files
-  videoUrl?: string;
-  videoStatus: 'PENDING' | 'UPLOADED' | 'ERROR';
+  submissionDownloadUrl?: string; // The link teacher pasted (Drive/WeTransfer)
+  videoUrl?: string; // The YouTube Embed URL (Admin sets this)
+  videoStatus: 'PENDING' | 'SUBMITTED_LINK' | 'UPLOADED' | 'ERROR';
   videoSize?: string; // For Admin view
   videoResolution?: string; // For Admin view
   virusScanStatus?: 'PENDING' | 'CLEAN' | 'INFECTED'; // Cloud Storage AV Scan

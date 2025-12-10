@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Play, Heart, Share2, Award, Clock } from 'lucide-react';
 import { Application, ApplicationStatus } from '../types';
+import { getYouTubeEmbedUrl } from '../lib/videoUtils';
 
 export const PublicVote: React.FC = () => {
   const { allApplications, submitPublicVote, showToast, systemSettings } = useAppContext();
@@ -118,7 +119,12 @@ export const PublicVote: React.FC = () => {
                <div className="w-full max-w-5xl bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800 relative flex flex-col">
                    <div className="aspect-video bg-black relative">
                         {activeVideo.team.videoUrl ? (
-                            <video controls autoPlay className="w-full h-full" src={activeVideo.team.videoUrl}></video>
+                            <iframe 
+                                src={getYouTubeEmbedUrl(activeVideo.team.videoUrl) || ""} 
+                                className="w-full h-full" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowFullScreen
+                            ></iframe>
                         ) : (
                             <div className="flex items-center justify-center h-full text-slate-500">Video yüklenemedi.</div>
                         )}

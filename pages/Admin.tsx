@@ -4,11 +4,12 @@ import {
     Search, Check, X, Eye, Award, FileText, Shield, Inbox, Download, 
     Users, Film, School, Mail, AlertTriangle, Send, Clapperboard, Video, 
     Cpu, Activity, PieChart, BarChart3, Clock, UserCheck, Star, Plus, Lock, 
-    Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog, MessageSquare
+    Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog, MessageSquare, ExternalLink, Link as LinkIcon, Save, Youtube
 } from 'lucide-react';
 import { ApplicationStatus, Category, Application, UserRole, LogEntry, SystemSettings, ScoreDocument } from '../types';
 import { useAppContext } from '../context/AppContext';
 import { ChatArea } from '../components/ChatArea';
+import { getYouTubeEmbedUrl } from '../lib/videoUtils';
 
 // Helper for CSV Export
 const exportToCSV = (data: any[], filename: string) => {
@@ -23,8 +24,7 @@ const exportToCSV = (data: any[], filename: string) => {
     document.body.removeChild(link);
 };
 
-// --- SUB-COMPONENTS ---
-
+// ... (Sidebar and Skeleton components remain unchanged) ...
 // Skeleton Loader Component
 const AdminSkeleton = () => {
     return (
@@ -175,8 +175,8 @@ const AdminDashboard = ({ apps }: { apps: Application[] }) => {
                         <div className="p-3 bg-rose-500/10 rounded-xl text-rose-500"><Video size={24}/></div>
                         <span className="text-xs font-bold text-slate-500 bg-slate-900 px-2 py-1 rounded">Teslim</span>
                     </div>
-                    <h3 className="text-3xl font-black text-white">{apps.filter(a => a.team.videoStatus === 'UPLOADED').length}</h3>
-                    <p className="text-slate-400 text-sm">Video Yüklendi</p>
+                    <h3 className="text-3xl font-black text-white">{apps.filter(a => a.team.videoStatus === 'UPLOADED' || a.team.videoStatus === 'SUBMITTED_LINK').length}</h3>
+                    <p className="text-slate-400 text-sm">Video Teslim</p>
                 </div>
             </div>
 
@@ -222,8 +222,7 @@ const AdminDashboard = ({ apps }: { apps: Application[] }) => {
     );
 };
 
-// --- USER MANAGEMENT ---
-
+// ... (AdminUsers component remains unchanged) ...
 const AdminUsers = () => {
     const { allUsers, updateUserRole, showToast } = useAppContext();
     const [filter, setFilter] = useState('');
@@ -449,18 +448,23 @@ const AdminTeams = ({ apps, onSelectApp }: { apps: Application[], onSelectApp: (
 // --- MAIN PAGE ---
 
 export const Admin: React.FC = () => {
-  const { allApplications, updateApplication, logAction, systemSettings, updateSystemSettings, auditLogs, logout, fetchJuryScores, loading } = useAppContext();
+  const { allApplications, updateApplication, logAction, systemSettings, updateSystemSettings, auditLogs, logout, fetchJuryScores, loading, showToast } = useAppContext();
   const [activeTab, setActiveTab] = useState('DASHBOARD');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appScores, setAppScores] = useState<ScoreDocument[]>([]);
+  
+  // YouTube Link State
+  const [youtubeLinkInput, setYoutubeLinkInput] = useState('');
 
   // When selected app changes, fetch scores
   useEffect(() => {
       if (selectedApp) {
           fetchJuryScores(selectedApp.id).then(setAppScores);
+          setYoutubeLinkInput(selectedApp.team.videoUrl || '');
       } else {
           setAppScores([]);
+          setYoutubeLinkInput('');
       }
   }, [selectedApp]);
 
@@ -478,6 +482,32 @@ export const Admin: React.FC = () => {
       await updateApplication(updated);
       await logAction("TOGGLE_FINALIST", `${app.team.name} finalist durumu: ${newState ? 'EVET' : 'HAYIR'}`, app.id);
       setSelectedApp(updated);
+  };
+
+  const saveYoutubeLink = async () => {
+      if (!selectedApp) return;
+      
+      const embedUrl = getYouTubeEmbedUrl(youtubeLinkInput);
+      
+      if (!embedUrl) {
+          showToast('Geçersiz YouTube linki.', 'error');
+          return;
+      }
+
+      const updated = { 
+          ...selectedApp, 
+          team: { 
+              ...selectedApp.team, 
+              videoUrl: youtubeLinkInput, // Store original link for edit input
+              videoStatus: 'UPLOADED' as const 
+          },
+          status: ApplicationStatus.APPROVED // Video is published
+      };
+      
+      await updateApplication(updated);
+      await logAction("VIDEO_PUBLISH", `${selectedApp.team.name} videosu YouTube linki olarak eklendi.`, selectedApp.id);
+      setSelectedApp(updated);
+      showToast('Video linki kaydedildi ve yayınlandı.', 'success');
   };
 
   const handleSettingsUpdate = async (e: React.FormEvent) => {
@@ -526,6 +556,7 @@ export const Admin: React.FC = () => {
                     
                     {activeTab === 'SETTINGS' && (
                         <div className="bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 max-w-2xl animate-fadeIn">
+                             {/* ... Settings Form ... */}
                              <h3 className="font-bold text-white mb-6 border-b border-slate-700 pb-4">Yarışma Takvimi</h3>
                              <form onSubmit={handleSettingsUpdate} className="space-y-6">
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -563,6 +594,7 @@ export const Admin: React.FC = () => {
 
                     {activeTab === 'LOGS' && (
                         <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden animate-fadeIn">
+                            {/* ... Logs Table ... */}
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left min-w-[600px]">
                                     <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase">
@@ -621,6 +653,69 @@ export const Admin: React.FC = () => {
                   <div className="mb-8">
                        <ChatArea appId={selectedApp.id} />
                   </div>
+                  
+                  {/* VIDEO MANAGEMENT SECTION (NEW) */}
+                  <div className="mb-8 bg-slate-950 p-6 rounded-xl border border-slate-800">
+                      <h3 className="text-sm font-bold text-white uppercase mb-4 flex items-center gap-2"><Video size={16} className="text-rose-500"/> Video İşlemleri</h3>
+                      
+                      {/* Teacher Submission Link Display */}
+                      {selectedApp.team.submissionDownloadUrl && (
+                          <div className="mb-6 p-4 bg-blue-900/20 border border-blue-900/50 rounded-xl">
+                              <label className="text-xs font-bold text-blue-400 uppercase mb-2 flex items-center gap-2">
+                                  <LinkIcon size={12}/> Öğretmen Teslim Linki
+                              </label>
+                              <div className="flex gap-2">
+                                  <input 
+                                    readOnly 
+                                    value={selectedApp.team.submissionDownloadUrl}
+                                    className="flex-1 bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs text-slate-300 font-mono"
+                                  />
+                                  <a 
+                                    href={selectedApp.team.submissionDownloadUrl} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded text-xs font-bold flex items-center gap-2"
+                                  >
+                                      <ExternalLink size={14}/> Aç
+                                  </a>
+                              </div>
+                              <p className="text-[10px] text-slate-500 mt-2">
+                                  * Bu linkten videoyu indirin, YouTube kanalına "Liste Dışı" yükleyin ve aşağıdaki alana ekleyin.
+                              </p>
+                          </div>
+                      )}
+
+                      {/* YouTube Link Input */}
+                      <div>
+                           <label className="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-2">
+                               <Youtube size={14} className="text-red-500"/> YouTube Linki Tanımla
+                           </label>
+                           <div className="flex gap-2">
+                               <input 
+                                  value={youtubeLinkInput}
+                                  onChange={(e) => setYoutubeLinkInput(e.target.value)}
+                                  placeholder="https://youtu.be/..."
+                                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-rose-500 outline-none"
+                               />
+                               <button 
+                                 onClick={saveYoutubeLink}
+                                 className="bg-slate-800 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold transition-colors flex items-center gap-2"
+                               >
+                                   <Save size={16} /> Kaydet
+                               </button>
+                           </div>
+                           {selectedApp.team.videoUrl && (
+                               <div className="mt-4 rounded-lg overflow-hidden border border-slate-800">
+                                   <iframe 
+                                      src={getYouTubeEmbedUrl(selectedApp.team.videoUrl) || ""} 
+                                      className="w-full aspect-video" 
+                                      allowFullScreen
+                                   ></iframe>
+                               </div>
+                           )}
+                      </div>
+                  </div>
+
 
                   {/* Scoring Section */}
                   <div className="mb-8">
@@ -651,29 +746,6 @@ export const Admin: React.FC = () => {
                           </div>
                       ) : (
                           <div className="text-slate-500 text-sm italic">Henüz puanlama yapılmamış.</div>
-                      )}
-                  </div>
-
-                  {/* Video Section */}
-                  <div className="mb-8">
-                      <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 flex items-center gap-2"><Video size={16}/> Proje Dosyaları</h3>
-                      {selectedApp.team.videoUrl ? (
-                          <div className="bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
-                              <video controls className="w-full aspect-video" src={selectedApp.team.videoUrl}></video>
-                              <div className="p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                                  <div className="text-center sm:text-left">
-                                      <p className="text-white font-bold text-sm">Final Video</p>
-                                      <p className="text-xs text-slate-500">{selectedApp.team.videoSize} • {selectedApp.team.videoResolution}</p>
-                                  </div>
-                                  <a href={selectedApp.team.videoUrl} download className="w-full sm:w-auto bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-2">
-                                      <Download size={14} /> İndir
-                                  </a>
-                              </div>
-                          </div>
-                      ) : (
-                          <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 border-dashed text-center text-slate-500 text-sm">
-                              Henüz video yüklenmemiş.
-                          </div>
                       )}
                   </div>
 

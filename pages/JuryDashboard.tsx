@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Application, EvaluationCriteria, Theme, Category } from '../types';
 import { Video, Play, X, Sliders, CheckCircle, Clock, Save, AlertCircle } from 'lucide-react';
+import { getYouTubeEmbedUrl } from '../lib/videoUtils';
 
 export const JuryDashboard: React.FC = () => {
   const { allApplications, submitScore, currentUser } = useAppContext();
@@ -34,6 +35,9 @@ export const JuryDashboard: React.FC = () => {
   };
 
   const totalScore = criteria.story + criteria.technical + criteria.originality + criteria.themeFit;
+  
+  // Helper for embed
+  const embedUrl = selectedApp?.team.videoUrl ? getYouTubeEmbedUrl(selectedApp.team.videoUrl) : null;
 
   return (
     <div className="bg-slate-950 min-h-screen text-slate-200 font-sans selection:bg-rose-500 selection:text-white pb-20">
@@ -127,12 +131,17 @@ export const JuryDashboard: React.FC = () => {
 
                    {/* Left: Video Player */}
                    <div className="flex-1 bg-black flex items-center justify-center relative group">
-                        {selectedApp.team.videoUrl ? (
-                            <video controls className="w-full h-full max-h-[40vh] lg:max-h-full object-contain" src={selectedApp.team.videoUrl}></video>
+                        {embedUrl ? (
+                            <iframe 
+                                src={embedUrl} 
+                                className="w-full h-full" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowFullScreen
+                            ></iframe>
                         ) : (
                             <div className="text-center">
                                 <Video size={64} className="text-slate-700 mx-auto mb-4"/>
-                                <p className="text-slate-500">Video kaynağı bulunamadı.</p>
+                                <p className="text-slate-500">Video kaynağı bulunamadı veya henüz yüklenmedi.</p>
                             </div>
                         )}
                    </div>

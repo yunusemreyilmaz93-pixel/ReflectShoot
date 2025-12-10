@@ -2,14 +2,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { ApplicationStatus, Category, Theme, UserRole } from '../types';
-import { CheckCircle, AlertCircle, Upload, Video, Award, Clock, Users, FileDown, Clapperboard, Film, UserPlus, BookOpen, Trophy, HeartHandshake, Cpu } from 'lucide-react';
+import { CheckCircle, AlertCircle, Upload, Video, Award, Clock, Users, FileDown, Clapperboard, Film, UserPlus, BookOpen, Trophy, HeartHandshake, Cpu, Link as LinkIcon, ExternalLink, Play, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { versesList, VERSE_SPLITTER } from '../data/verses';
+import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { ChatArea } from '../components/ChatArea';
 import { CertificateGenerator } from '../components/CertificateGenerator';
+import { getYouTubeEmbedUrl } from '../lib/videoUtils';
 
 export const Dashboard: React.FC = () => {
-  const { currentApplication, updateApplication, createApplication, currentUser, currentDate } = useAppContext();
+  const { currentApplication, updateApplication, createApplication, currentUser, currentDate, showToast } = useAppContext();
   const [uploading, setUploading] = useState<string | null>(null);
 
   // -- Time Constants --
@@ -51,7 +52,12 @@ export const Dashboard: React.FC = () => {
 
   // -- Upload State --
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeContext, setActiveContext] = useState<{type: 'kvkk' | 'parent' | 'video', studentId?: string} | null>(null);
+  const [activeContext, setActiveContext] = useState<{type: 'kvkk' | 'parent', studentId?: string} | null>(null);
+
+  // -- Link Submission State --
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [submissionLink, setSubmissionLink] = useState('');
+  const [isSubmittingLink, setIsSubmittingLink] = useState(false);
 
   // -- Finalist Reveal Modal State --
   const [showRevealModal, setShowRevealModal] = useState(false);
@@ -98,43 +104,39 @@ export const Dashboard: React.FC = () => {
       if (e.target.files && e.target.files[0]) {
           const file = e.target.files[0];
           
-          if (file.type !== 'image/png' && file.type !== 'image/jpeg') {
-              alert('Sadece PNG veya JPEG formatında dosya yükleyebilirsiniz.');
+          // 1. Format Check
+          if (file.type !== 'image/png') {
+              alert('HATA: Logo sadece PNG formatında olabilir.');
+              e.target.value = ''; // Reset input
+              setLogoFile(null);
               return;
           }
 
-          // Auto-Crop & Resize Logic (128x128)
-          const reader = new FileReader();
-          reader.onload = (readerEvent) => {
-              const img = new Image();
-              img.onload = () => {
-                  const canvas = document.createElement('canvas');
-                  canvas.width = 128;
-                  canvas.height = 128;
-                  const ctx = canvas.getContext('2d');
-                  
-                  if (ctx) {
-                      ctx.fillStyle = '#FFFFFF';
-                      ctx.fillRect(0, 0, 128, 128);
+          const img = new Image();
+          const objectUrl = URL.createObjectURL(file);
+          
+          img.onload = () => {
+              // 2. Dimension Check (Strict 128x128)
+              if (img.width !== 128 || img.height !== 128) {
+                  alert(`HATA: Logo boyutları tam olarak 128x128 piksel olmalıdır.\nSizin görseliniz: ${img.width}x${img.height} piksel.`);
+                  e.target.value = ''; // Reset input
+                  setLogoFile(null);
+                  URL.revokeObjectURL(objectUrl);
+                  return;
+              }
 
-                      const ratio = Math.max(128 / img.width, 128 / img.height);
-                      const centerShift_x = (128 - img.width * ratio) / 2;
-                      const centerShift_y = (128 - img.height * ratio) / 2;
-                      
-                      ctx.drawImage(img, 0, 0, img.width, img.height, centerShift_x, centerShift_y, img.width * ratio, img.height * ratio);
-                      
-                      canvas.toBlob((blob) => {
-                          if (blob) {
-                              const newFile = new File([blob], "team_logo_128.png", { type: 'image/png' });
-                              setLogoFile(newFile);
-                              setFormErrors({...formErrors, logo: ''});
-                          }
-                      }, 'image/png');
-                  }
-              };
-              img.src = readerEvent.target?.result as string;
+              // Success
+              setLogoFile(file);
+              setFormErrors({...formErrors, logo: ''});
+              URL.revokeObjectURL(objectUrl);
           };
-          reader.readAsDataURL(file);
+
+          img.onerror = () => {
+              alert('Görsel dosyası okunamadı.');
+              URL.revokeObjectURL(objectUrl);
+          };
+
+          img.src = objectUrl;
       }
   };
 
@@ -233,29 +235,8 @@ export const Dashboard: React.FC = () => {
       }
   };
 
-  // --- Upload Logic ---
-  const handleUploadClick = (type: 'kvkk' | 'parent' | 'video', studentId?: string) => {
-      // DATE CHECK FOR VIDEO
-      if (type === 'video') {
-         // REVISE PHASE LOGIC
-         if (isRevisePhase) {
-             if (!currentApplication?.team.isFinalist) {
-                 alert('Revize yükleme hakkı sadece finalistler içindir.');
-                 return;
-             }
-         } else {
-             // NORMAL PHASE LOGIC
-             if (currentDate > VIDEO_UPLOAD_END_DATE) {
-                 alert('Video yükleme süresi sona ermiştir.');
-                 return;
-             }
-             if (currentDate < VIDEO_UPLOAD_START_DATE) {
-                 alert('Video yükleme sistemi 16 Şubat\'ta açılacaktır.');
-                 return;
-             }
-         }
-      }
-
+  // --- Upload Logic (Documents) ---
+  const handleUploadClick = (type: 'kvkk' | 'parent', studentId?: string) => {
       if (uploading) return;
       setActiveContext({ type, studentId });
       if (fileInputRef.current) {
@@ -269,27 +250,19 @@ export const Dashboard: React.FC = () => {
         const { type, studentId } = activeContext;
         const file = e.target.files[0];
         
-        if ((type === 'kvkk' || type === 'parent') && file.type !== 'application/pdf') {
+        if (file.type !== 'application/pdf') {
             alert('Lütfen sadece PDF formatında belge yükleyiniz.');
             return;
         }
 
         const uploadKey = studentId ? `${type}-${studentId}` : type;
-        
         setUploading(uploadKey);
         
         setTimeout(() => {
             if (!currentApplication) return;
             let updatedApp = { ...currentApplication };
             
-            if (type === 'video') {
-                updatedApp.team.videoStatus = 'UPLOADED';
-                updatedApp.team.isFinalStageComplete = true;
-                updatedApp.status = ApplicationStatus.FINAL_SUBMITTED;
-                updatedApp.team.videoUrl = file.name;
-                updatedApp.team.videoSize = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
-                updatedApp.team.videoResolution = '1920x1080 (FHD)'; 
-            } else if (studentId) {
+            if (studentId) {
                 updatedApp.team.students = updatedApp.team.students.map(s => {
                     if (s.id === studentId) {
                         return {
@@ -319,11 +292,60 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  // --- Link Submission Logic ---
+  const openLinkModal = () => {
+    // DATE CHECK
+    if (isRevisePhase) {
+        if (!currentApplication?.team.isFinalist) {
+            showToast('Revize yükleme hakkı sadece finalistler içindir.', 'error');
+            return;
+        }
+    } else {
+        if (currentDate > VIDEO_UPLOAD_END_DATE) {
+            showToast('Video teslim süresi sona ermiştir.', 'error');
+            return;
+        }
+        if (currentDate < VIDEO_UPLOAD_START_DATE) {
+            showToast('Video yükleme sistemi 16 Şubat\'ta açılacaktır.', 'info');
+            return;
+        }
+    }
+    setShowLinkModal(true);
+  };
+
+  const handleSubmitLink = async () => {
+      if(!submissionLink) {
+          showToast('Lütfen geçerli bir link giriniz.', 'error');
+          return;
+      }
+      
+      setIsSubmittingLink(true);
+      
+      try {
+          if(!currentApplication) return;
+          const updatedApp = { ...currentApplication };
+          
+          updatedApp.team.submissionDownloadUrl = submissionLink;
+          updatedApp.team.videoStatus = 'SUBMITTED_LINK';
+          updatedApp.team.isFinalStageComplete = true; // Teacher's part is done
+          updatedApp.status = ApplicationStatus.FINAL_SUBMITTED; // "Video İnceleniyor"
+          
+          await updateApplication(updatedApp);
+          setShowLinkModal(false);
+          showToast('Video linki başarıyla teslim edildi. Teknik ekip tarafından incelenecek.', 'success');
+      } catch(e) {
+          showToast('Bir hata oluştu.', 'error');
+      } finally {
+          setIsSubmittingLink(false);
+      }
+  };
+
+
   const getStatusBadge = (status: ApplicationStatus) => {
     switch(status) {
         case ApplicationStatus.DRAFT: return <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold border border-gray-300">Taslak</span>;
         case ApplicationStatus.PRELIMINARY_SUBMITTED: return <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold border border-yellow-200">Evraklar Tamam</span>;
-        case ApplicationStatus.FINAL_SUBMITTED: return <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold border border-blue-200">Video Yüklendi</span>;
+        case ApplicationStatus.FINAL_SUBMITTED: return <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold border border-blue-200">Video İnceleniyor</span>;
         case ApplicationStatus.APPROVED: return <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold border border-green-200">Onaylandı</span>;
         case ApplicationStatus.GRADED: return <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-bold border border-purple-200">Puanlandı</span>;
         default: return <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-bold">{status}</span>;
@@ -332,30 +354,62 @@ export const Dashboard: React.FC = () => {
 
   const timelineEvents = [
     { date: '13 Şub 2026', label: 'Son Başvuru' },
-    { date: '16 Şub 2026', label: 'Video Yükleme Başlangıç' },
+    { date: '16 Şub 2026', label: 'Video Teslim Başlangıç' },
     { date: '20 Mar 2026', label: 'Son Video Teslim' },
     { date: '1 Nis 2026', label: 'Finalist Açıklanması' },
     { date: '6 Nis 2026', label: 'Akademi Başlangıcı' },
   ];
 
-  const renderVerseText = (text: string, isArabic: boolean) => {
-    if (!text) return null;
-    return text.split(VERSE_SPLITTER).map((part, index) => (
-      <React.Fragment key={index}>
-        {index > 0 && (
-          <span className={`mx-2 inline-block ${isArabic ? 'text-amber-500 text-xl' : 'text-amber-500/50 text-xs'} select-none`}>
-             {isArabic ? ' ۞ ' : ' ✦ '}
-          </span>
-        )}
-        {part}
-      </React.Fragment>
-    ));
+  const renderVersePreview = () => {
+      const verse = teamForm.selectedVerse;
+      if (!verse || !verseDetails[verse]) return null;
+      
+      const detail = verseDetails[verse];
+      const renderText = (text: string, isArabic: boolean) => {
+        return text.split(VERSE_SPLITTER).map((part, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && <span className={`mx-2 inline-block ${isArabic ? 'text-amber-500 text-xl' : 'text-amber-500/50 text-xs'}`}>{isArabic ? ' ۞ ' : ' ✦ '}</span>}
+            {part}
+          </React.Fragment>
+        ));
+      };
+
+      // Cinematic Card Style from Home.tsx
+      return (
+          <div className="mt-6 relative w-full p-6 bg-slate-900 rounded-2xl border border-amber-500/40 shadow-[0_0_40px_rgba(245,158,11,0.15)] animate-fadeIn overflow-hidden group">
+                <div className="absolute -bottom-10 -right-10 text-amber-500/5 rotate-12">
+                    <BookOpen size={150} />
+                </div>
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+                
+                <div className="relative z-10 flex flex-col gap-4 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                        <span className="text-amber-500 text-xs font-bold uppercase tracking-[0.3em] flex items-center gap-2 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                            <BookOpen size={12}/> Seçilen Ayet
+                        </span>
+                    </div>
+                    <p className="font-serif text-xl md:text-2xl text-amber-400 leading-loose drop-shadow-sm" dir="rtl">
+                        {renderText(detail.arabic, true)}
+                    </p>
+                    <div className="w-16 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent mx-auto"></div>
+                    <p className="text-slate-200 text-sm italic font-light leading-relaxed font-serif">
+                        "{renderText(detail.turkish, false)}"
+                    </p>
+                    {detail.english && (
+                        <p className="text-slate-400 text-xs italic font-light leading-relaxed opacity-80">
+                            "{renderText(detail.english, false)}"
+                        </p>
+                    )}
+                </div>
+          </div>
+      );
   };
 
   // If user is a Student or Teacher but no application exists
   if (!currentApplication) {
     return (
         <div className="bg-slate-950 min-h-screen py-16 px-4 sm:px-6 lg:px-8 font-sans selection:bg-rose-600 selection:text-white relative overflow-hidden">
+            {/* Same Welcome UI ... */}
             <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }}></div>
             
             <div className="max-w-4xl mx-auto relative z-10">
@@ -420,17 +474,29 @@ export const Dashboard: React.FC = () => {
                                     </div>
                                 </div>
                                 {teamForm.theme === Theme.AYET && (
-                                    <div className="bg-amber-900/10 p-5 rounded-xl border border-amber-900/30">
+                                    <div className="bg-amber-900/10 p-5 rounded-xl border border-amber-900/30 transition-all">
                                         <label className="block text-sm font-bold text-amber-500 mb-2 flex items-center gap-2"><BookOpen size={16}/> Hangi Ayet?</label>
                                         <select name="selectedVerse" value={teamForm.selectedVerse} onChange={handleTeamChange} className="w-full bg-slate-900 border border-amber-500/30 rounded-xl p-3.5 outline-none text-white focus:border-amber-500">
                                             <option value="">Senaryonun temelini oluşturan ayeti seçiniz</option>
                                             {versesList.map(v => <option key={v} value={v}>{v}</option>)}
                                         </select>
+                                        
+                                        {/* Cinematic Verse Preview */}
+                                        {renderVersePreview()}
                                     </div>
                                 )}
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Yapım Logosu</label>
-                                    <input type="file" onChange={handleLogoUpload} accept="image/png, image/jpeg" className="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-rose-900 file:text-rose-100 hover:file:bg-rose-800"/>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Yapım Logosu (128x128 PNG Zorunlu)</label>
+                                    <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 border-dashed text-center">
+                                        <input type="file" onChange={handleLogoUpload} accept="image/png" className="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-rose-900 file:text-rose-100 hover:file:bg-rose-800"/>
+                                        <div className="mt-4 p-4 bg-rose-900/20 rounded-lg border border-rose-900/50 flex items-start gap-3 text-left">
+                                            <AlertTriangle size={20} className="text-rose-500 flex-shrink-0 mt-0.5"/>
+                                            <div className="text-xs text-rose-300 leading-relaxed">
+                                                <strong className="block text-rose-400 mb-1">DİKKAT: Katı Format Kuralı</strong>
+                                                Yükleyeceğiniz logo dosyası kesinlikle <strong>PNG formatında</strong> ve tam olarak <strong>128x128 piksel</strong> boyutunda olmalıdır. Aksi takdirde sistem dosyayı reddeder.
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </section>
@@ -471,15 +537,17 @@ export const Dashboard: React.FC = () => {
 
   const { team, status } = currentApplication;
   const isFinalist = team.isFinalist;
+  const youtubeEmbedUrl = team.videoUrl ? getYouTubeEmbedUrl(team.videoUrl) : null;
 
   return (
     <div className="bg-gray-50 min-h-screen pb-12">
-      <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept={activeContext?.type === 'video' ? 'video/mp4,video/quicktime' : 'application/pdf'} />
+      <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="application/pdf" />
 
       {/* REVEAL MODAL */}
       {showRevealModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl animate-fadeIn">
-              <div className={`relative w-full max-w-3xl bg-white rounded-3xl p-10 md:p-14 text-center shadow-2xl overflow-hidden border-8 ${isFinalist ? 'border-amber-400' : 'border-slate-200'}`}>
+              {/* ... existing modal code ... */}
+               <div className={`relative w-full max-w-3xl bg-white rounded-3xl p-10 md:p-14 text-center shadow-2xl overflow-hidden border-8 ${isFinalist ? 'border-amber-400' : 'border-slate-200'}`}>
                    {isFinalist ? (
                        <>
                            <div className="w-32 h-32 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce shadow-xl">
@@ -508,6 +576,52 @@ export const Dashboard: React.FC = () => {
                            </button>
                        </>
                    )}
+              </div>
+          </div>
+      )}
+      
+      {/* LINK SUBMISSION MODAL */}
+      {showLinkModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+              <div className="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl relative">
+                   <button onClick={() => setShowLinkModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                       <ExternalLink size={20} className="rotate-180"/> {/* Close Icon */}
+                   </button>
+                   <div className="text-center mb-6">
+                       <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                           <LinkIcon size={32} />
+                       </div>
+                       <h3 className="text-2xl font-black text-slate-900">Video Teslimi</h3>
+                       <p className="text-slate-500 text-sm mt-2">
+                           Videonuzu Google Drive, WeTransfer veya Dropbox gibi bir servise yükleyip, <strong>indirme bağlantısını</strong> buraya yapıştırın.
+                       </p>
+                   </div>
+                   
+                   <div className="space-y-4">
+                       <div>
+                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">İndirme Bağlantısı</label>
+                           <input 
+                              type="url" 
+                              value={submissionLink}
+                              onChange={(e) => setSubmissionLink(e.target.value)}
+                              placeholder="https://drive.google.com/..."
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none focus:border-blue-500 text-slate-900"
+                           />
+                       </div>
+                       
+                       <div className="bg-amber-50 p-3 rounded-lg border border-amber-100 text-xs text-amber-800 flex gap-2">
+                           <AlertCircle size={16} className="flex-shrink-0" />
+                           Linkin herkese açık olduğundan veya şifre gerektirmediğinden emin olunuz.
+                       </div>
+
+                       <button 
+                         onClick={handleSubmitLink} 
+                         disabled={isSubmittingLink}
+                         className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold shadow-lg transition-all disabled:opacity-70"
+                       >
+                           {isSubmittingLink ? 'Gönderiliyor...' : 'Linki Gönder'}
+                       </button>
+                   </div>
               </div>
           </div>
       )}
@@ -604,22 +718,21 @@ export const Dashboard: React.FC = () => {
                       ) : (
                          <>
                             {isBeforeUploadPhase && (
-                                <div className="ml-0 sm:ml-14 bg-slate-900 text-white rounded-2xl p-8 relative overflow-hidden group shadow-2xl border-4 border-double border-amber-500/50">
-                                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none"></div>
+                                <div className="ml-0 sm:ml-14 bg-white border border-gray-200 text-slate-800 rounded-2xl p-8 relative overflow-hidden group shadow-lg">
                                      <div className="relative z-10 text-center">
-                                         <h3 className="text-2xl font-black text-white mb-2">Motor! Şimdi Sahne Sizin.</h3>
-                                         <p className="text-slate-300 mb-6 text-lg font-light max-w-lg mx-auto">
-                                             Yükleme ekranı <span className="text-amber-400 font-bold border-b border-amber-500/50">16 Şubat 2026</span> tarihinde açılacaktır.
+                                         <h3 className="text-2xl font-black text-slate-900 mb-2">Motor! Şimdi Sahne Sizin.</h3>
+                                         <p className="text-slate-500 mb-6 text-lg font-light max-w-lg mx-auto">
+                                             Yükleme ekranı <span className="text-amber-600 font-bold border-b border-amber-200">16 Şubat 2026</span> tarihinde açılacaktır.
                                          </p>
-                                         <div className="mt-8 pt-6 border-t border-white/10">
-                                            <p className="text-amber-400 font-serif italic text-lg leading-relaxed">"Ey iman edenler! Sabır ve namazla yardım dileyin. Şüphesiz Allah sabredenlerin yanındadır."</p>
-                                            <div className="flex items-center justify-center gap-2 mt-3 text-amber-500/60 text-xs font-bold uppercase tracking-widest"><BookOpen size={14} /> Bakara: 153</div>
+                                         <div className="mt-8 pt-6 border-t border-gray-100">
+                                            <p className="text-amber-600 font-serif italic text-lg leading-relaxed">"Ey iman edenler! Sabır ve namazla yardım dileyin. Şüphesiz Allah sabredenlerin yanındadır."</p>
+                                            <div className="flex items-center justify-center gap-2 mt-3 text-amber-600/60 text-xs font-bold uppercase tracking-widest"><BookOpen size={14} /> Bakara: 153</div>
                                         </div>
                                      </div>
                                 </div>
                             )}
 
-                            {isAfterFirstDeadline && !isRevisePhase && team.videoStatus !== 'UPLOADED' && (
+                            {isAfterFirstDeadline && !isRevisePhase && team.videoStatus !== 'UPLOADED' && team.videoStatus !== 'SUBMITTED_LINK' && (
                                  <div className="ml-0 sm:ml-14 bg-red-50 border border-red-100 text-red-800 p-8 rounded-2xl text-center">
                                       <Clock size={40} className="mx-auto mb-3 text-red-400"/>
                                       <h3 className="text-xl font-bold mb-2">Süre Doldu</h3>
@@ -627,24 +740,50 @@ export const Dashboard: React.FC = () => {
                                  </div>
                             )}
 
-                            {((isVideoUploadPhase) || (isRevisePhase && isFinalist) || (team.videoStatus === 'UPLOADED')) && (
+                            {((isVideoUploadPhase) || (isRevisePhase && isFinalist) || (team.videoStatus === 'UPLOADED' || team.videoStatus === 'SUBMITTED_LINK')) && (
                                 <div 
-                                    className={`ml-0 sm:ml-14 border-2 border-dashed rounded-2xl p-10 text-center transition-all group cursor-pointer relative ${isGalaPhase ? 'border-gray-200 bg-gray-50 opacity-80 pointer-events-none' : 'border-gray-300 bg-gray-50 hover:bg-white hover:border-teal-500'}`} 
-                                    onClick={() => !isGalaPhase && (!isAfterFirstDeadline || isRevisePhase) && handleUploadClick('video')}
+                                    className={`ml-0 sm:ml-14 border-2 border-dashed rounded-2xl p-10 text-center transition-all group relative ${isGalaPhase ? 'border-gray-200 bg-gray-50 opacity-80 pointer-events-none' : 'border-gray-300 bg-white'}`} 
                                 >
                                     {team.videoStatus === 'UPLOADED' ? (
                                         <div className="py-2">
-                                            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><CheckCircle size={40} /></div>
+                                            {/* Final YouTube Embed or Uploaded Success */}
+                                            {youtubeEmbedUrl ? (
+                                                <div className="mb-4 rounded-xl overflow-hidden shadow-lg">
+                                                     <iframe 
+                                                        src={youtubeEmbedUrl} 
+                                                        className="w-full aspect-video" 
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                        allowFullScreen
+                                                     ></iframe>
+                                                </div>
+                                            ) : (
+                                                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><CheckCircle size={40} /></div>
+                                            )}
                                             <h3 className="text-xl font-bold text-gray-900">{isRevisePhase && isFinalist ? "Revize Video Yüklendi" : "Video Başarıyla Yüklendi"}</h3>
-                                            <p className="text-sm text-gray-500 mb-6 font-medium">Dosya: {team.videoUrl || 'video.mp4'}</p>
+                                            {youtubeEmbedUrl && <p className="text-sm text-green-600 mt-2 font-medium">Yayınlandı</p>}
+                                        </div>
+                                    ) : team.videoStatus === 'SUBMITTED_LINK' ? (
+                                        <div className="py-2">
+                                             <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><Clock size={40} /></div>
+                                             <h3 className="text-xl font-bold text-gray-900">İnceleniyor...</h3>
+                                             <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto">
+                                                 Video linkiniz alındı. Teknik ekibimiz dosyayı kontrol edip sisteme yükleyecektir.
+                                             </p>
+                                             <div className="mt-4 bg-slate-100 p-2 rounded text-xs text-slate-500 truncate max-w-xs mx-auto border border-gray-200">
+                                                 {team.submissionDownloadUrl}
+                                             </div>
                                         </div>
                                     ) : (
                                         (!isAfterFirstDeadline || isRevisePhase) && !isGalaPhase && (
-                                            <div>
-                                                <div className="w-20 h-20 bg-white text-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-md border border-gray-100">
-                                                    {uploading === 'video' ? <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div> : <Video size={36} />}
+                                            <div 
+                                                onClick={openLinkModal}
+                                                className="cursor-pointer hover:bg-slate-50 hover:border-blue-500 p-4 -m-4 rounded-2xl transition-all"
+                                            >
+                                                <div className="w-20 h-20 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-md border border-gray-100">
+                                                    <LinkIcon size={36} />
                                                 </div>
-                                                <h3 className="text-xl font-bold text-gray-900">{isRevisePhase ? "Final Kurguyu Yükle (Revize)" : "Video Dosyası Yükle"}</h3>
+                                                <h3 className="text-xl font-bold text-gray-900">{isRevisePhase ? "Revize Linki Gönder" : "Video Linki Teslim Et"}</h3>
+                                                <p className="text-sm text-slate-500 mt-2">Drive, WeTransfer veya Dropbox linki</p>
                                             </div>
                                         )
                                     )}
@@ -670,8 +809,8 @@ export const Dashboard: React.FC = () => {
                       </div>
                   </div>
                   
-                  {/* Chat Area on Dashboard */}
-                  <ChatArea appId={currentApplication.id} />
+                  {/* Chat Area on Dashboard - LIGHT MODE (Fixed Prop Passing) */}
+                  <ChatArea appId={currentApplication.id} theme="light" />
 
               </div>
           </div>
