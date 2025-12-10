@@ -16,9 +16,9 @@ import {
   getDocs
 } from 'firebase/firestore';
 import firebase from 'firebase/compat/app'; 
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'; 
+import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'; 
 import { auth, db } from '../lib/firebase';
-import { Application, ApplicationStatus, UserRole, EvaluationCriteria, UserProfile, SystemSettings, LogEntry, ScoreDocument } from '../types';
+import { Application, ApplicationStatus, UserRole, EvaluationCriteria, UserProfile, SystemSettings, LogEntry, ScoreDocument, ToastMessage } from '../types';
 
 interface AppContextType {
   currentUser: UserProfile | null;
@@ -28,6 +28,7 @@ interface AppContextType {
   logout: () => Promise<void>;
   registerTeacher: (data: any) => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>; // New
   
   // Application Logic
   currentApplication: Application | null;
@@ -49,6 +50,11 @@ interface AppContextType {
   updateSystemSettings: (settings: SystemSettings) => Promise<void>;
   auditLogs: LogEntry[];
   logAction: (action: string, details: string, targetId?: string) => Promise<void>;
+
+  // UI
+  toasts: ToastMessage[];
+  showToast: (message: string, type: 'success' | 'error' | 'info') => void;
+  removeToast: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -81,9 +87,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
   const [auditLogs, setAuditLogs] = useState<LogEntry[]>([]);
+  
+  // Toast State
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const setSimulatedDate = (date: Date) => {
     setCurrentDate(date);
+  };
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const id = Date.now().toString();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+        removeToast(id);
+    }, 4000); // Auto remove after 4 seconds
+  };
+
+  const removeToast = (id: string) => {
+      setToasts((prev) => prev.filter(t => t.id !== id));
   };
 
   // 1. Listen to Firebase Auth State Changes
@@ -205,6 +226,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     await auth.signOut();
   };
 
+  const resetPassword = async (email: string) => {
+      await auth.sendPasswordResetEmail(email);
+  };
+
   const registerTeacher = async (data: any) => {
     try {
       const userCredential = await auth.createUserWithEmailAndPassword(data.email, data.password);
@@ -289,9 +314,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       const safeApp = JSON.parse(JSON.stringify(newApp));
       await setDoc(doc(db, "applications", newApp.id), safeApp);
+      showToast('Takım başarıyla oluşturuldu!', 'success');
     } catch (error) {
       console.error("Error creating application:", error);
-      alert("Başvuru oluşturulurken bir hata oluştu.");
+      showToast('Takım oluşturulurken hata oluştu.', 'error');
     }
   };
 
@@ -299,8 +325,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       const safeApp = JSON.parse(JSON.stringify(updatedApp));
       await setDoc(doc(db, "applications", updatedApp.id), safeApp);
+      showToast('Başvuru güncellendi.', 'success');
     } catch (error) {
        console.error("Error updating application:", error);
+       showToast('Güncelleme sırasında hata oluştu.', 'error');
     }
   };
 
@@ -349,6 +377,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
 
       await logAction("SUBMIT_SCORE", `Puan verildi: ${totalScore} (Takım: ${appId})`, appId);
+      showToast('Puan başarıyla kaydedildi!', 'success');
   };
 
   const fetchJuryScores = async (appId: string): Promise<ScoreDocument[]> => {
@@ -363,6 +392,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await setDoc(doc(db, "system", "config"), settings);
       setSystemSettings(settings);
       await logAction("UPDATE_SETTINGS", "Sistem ayarları güncellendi.");
+      showToast('Sistem ayarları kaydedildi.', 'success');
   };
 
   const logAction = async (action: string, details: string, targetId?: string) => {
@@ -393,6 +423,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       logout, 
       registerTeacher, 
       resendVerificationEmail,
+      resetPassword,
       updateUserRole,
       currentApplication, 
       createApplication, 
@@ -405,7 +436,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       systemSettings,
       updateSystemSettings,
       auditLogs,
-      logAction
+      logAction,
+      toasts,
+      showToast,
+      removeToast
     }}>
       {children}
     </AppContext.Provider>

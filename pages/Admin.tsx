@@ -24,6 +24,23 @@ const exportToCSV = (data: any[], filename: string) => {
 
 // --- SUB-COMPONENTS ---
 
+// Skeleton Loader Component
+const AdminSkeleton = () => {
+    return (
+        <div className="space-y-6 animate-pulse">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {[1,2,3,4].map(i => (
+                    <div key={i} className="bg-slate-800/50 rounded-2xl h-32 border border-slate-700/50"></div>
+                ))}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-slate-800/50 rounded-2xl h-80 border border-slate-700/50"></div>
+                <div className="bg-slate-800/50 rounded-2xl h-80 border border-slate-700/50"></div>
+            </div>
+        </div>
+    );
+};
+
 interface SidebarProps {
     activeTab: string;
     setActiveTab: (tab: string) => void;
@@ -209,13 +226,22 @@ const AdminDashboard = ({ apps }: { apps: Application[] }) => {
 // --- USER MANAGEMENT ---
 
 const AdminUsers = () => {
-    const { allUsers, updateUserRole } = useAppContext();
+    const { allUsers, updateUserRole, showToast } = useAppContext();
     const [filter, setFilter] = useState('');
 
     const filteredUsers = allUsers.filter(u => 
         u.fullName.toLowerCase().includes(filter.toLowerCase()) || 
         u.email.toLowerCase().includes(filter.toLowerCase())
     );
+    
+    const handleRoleUpdate = async (uid: string, role: UserRole) => {
+        try {
+            await updateUserRole(uid, role);
+            showToast(`Kullanıcı rolü ${role} olarak güncellendi`, 'success');
+        } catch (e) {
+            showToast('Rol güncellenirken hata oluştu', 'error');
+        }
+    };
 
     return (
         <div className="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden animate-fadeIn">
@@ -266,17 +292,17 @@ const AdminUsers = () => {
                                 <td className="p-4 text-right">
                                     <div className="flex justify-end gap-2">
                                         {user.role !== UserRole.TEACHER && (
-                                            <button onClick={() => updateUserRole(user.uid, UserRole.TEACHER)} className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded border border-slate-700">
+                                            <button onClick={() => handleRoleUpdate(user.uid, UserRole.TEACHER)} className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded border border-slate-700">
                                                 Öğretmen Yap
                                             </button>
                                         )}
                                         {user.role !== UserRole.JUDGE && (
-                                            <button onClick={() => updateUserRole(user.uid, UserRole.JUDGE)} className="px-3 py-1 bg-amber-900/20 hover:bg-amber-800/30 text-amber-500 hover:text-amber-400 text-xs rounded border border-amber-900/50">
+                                            <button onClick={() => handleRoleUpdate(user.uid, UserRole.JUDGE)} className="px-3 py-1 bg-amber-900/20 hover:bg-amber-800/30 text-amber-500 hover:text-amber-400 text-xs rounded border border-amber-900/50">
                                                 Jüri Yap
                                             </button>
                                         )}
                                         {user.role !== UserRole.ADMIN && (
-                                            <button onClick={() => updateUserRole(user.uid, UserRole.ADMIN)} className="px-3 py-1 bg-rose-900/20 hover:bg-rose-800/30 text-rose-500 hover:text-rose-400 text-xs rounded border border-rose-900/50">
+                                            <button onClick={() => handleRoleUpdate(user.uid, UserRole.ADMIN)} className="px-3 py-1 bg-rose-900/20 hover:bg-rose-800/30 text-rose-500 hover:text-rose-400 text-xs rounded border border-rose-900/50">
                                                 Admin Yap
                                             </button>
                                         )}
@@ -424,7 +450,7 @@ const AdminTeams = ({ apps, onSelectApp }: { apps: Application[], onSelectApp: (
 // --- MAIN PAGE ---
 
 export const Admin: React.FC = () => {
-  const { allApplications, updateApplication, logAction, systemSettings, updateSystemSettings, auditLogs, logout, fetchJuryScores } = useAppContext();
+  const { allApplications, updateApplication, logAction, systemSettings, updateSystemSettings, auditLogs, logout, fetchJuryScores, loading } = useAppContext();
   const [activeTab, setActiveTab] = useState('DASHBOARD');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -458,7 +484,6 @@ export const Admin: React.FC = () => {
   const handleSettingsUpdate = async (e: React.FormEvent) => {
       e.preventDefault();
       await updateSystemSettings(systemSettings); 
-      alert("Ayarlar güncellendi.");
   };
 
   return (
@@ -492,58 +517,64 @@ export const Admin: React.FC = () => {
           </header>
 
           <div className="w-full">
-            {activeTab === 'DASHBOARD' && <AdminDashboard apps={allApplications} />}
-            {activeTab === 'TEAMS' && <AdminTeams apps={allApplications} onSelectApp={setSelectedApp} />}
-            {activeTab === 'USERS' && <AdminUsers />}
-            
-            {activeTab === 'SETTINGS' && (
-                <div className="bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 max-w-2xl animate-fadeIn">
-                     <h3 className="font-bold text-white mb-6 border-b border-slate-700 pb-4">Yarışma Takvimi</h3>
-                     <form onSubmit={handleSettingsUpdate} className="space-y-6">
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                             <div>
-                                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Başvuru Başlangıç</label>
-                                 <input type="datetime-local" defaultValue={systemSettings.dates.applicationStart} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-sm" />
-                             </div>
-                             <div>
-                                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Başvuru Bitiş</label>
-                                 <input type="datetime-local" defaultValue={systemSettings.dates.applicationEnd} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-sm" />
-                             </div>
-                         </div>
-                         <div className="pt-4">
-                             <button type="submit" className="w-full md:w-auto bg-rose-600 hover:bg-rose-500 text-white px-6 py-3 rounded-xl font-bold transition-all">
-                                 Ayarları Kaydet
-                             </button>
-                         </div>
-                     </form>
-                </div>
-            )}
+            {loading ? (
+                <AdminSkeleton />
+            ) : (
+                <>
+                    {activeTab === 'DASHBOARD' && <AdminDashboard apps={allApplications} />}
+                    {activeTab === 'TEAMS' && <AdminTeams apps={allApplications} onSelectApp={setSelectedApp} />}
+                    {activeTab === 'USERS' && <AdminUsers />}
+                    
+                    {activeTab === 'SETTINGS' && (
+                        <div className="bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 max-w-2xl animate-fadeIn">
+                             <h3 className="font-bold text-white mb-6 border-b border-slate-700 pb-4">Yarışma Takvimi</h3>
+                             <form onSubmit={handleSettingsUpdate} className="space-y-6">
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                     <div>
+                                         <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Başvuru Başlangıç</label>
+                                         <input type="datetime-local" defaultValue={systemSettings.dates.applicationStart} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-sm" />
+                                     </div>
+                                     <div>
+                                         <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Başvuru Bitiş</label>
+                                         <input type="datetime-local" defaultValue={systemSettings.dates.applicationEnd} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-sm" />
+                                     </div>
+                                 </div>
+                                 <div className="pt-4">
+                                     <button type="submit" className="w-full md:w-auto bg-rose-600 hover:bg-rose-500 text-white px-6 py-3 rounded-xl font-bold transition-all">
+                                         Ayarları Kaydet
+                                     </button>
+                                 </div>
+                             </form>
+                        </div>
+                    )}
 
-            {activeTab === 'LOGS' && (
-                <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden animate-fadeIn">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left min-w-[600px]">
-                            <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase">
-                                <tr>
-                                    <th className="p-4">Zaman</th>
-                                    <th className="p-4">İşlem</th>
-                                    <th className="p-4">Detay</th>
-                                    <th className="p-4">Yapan</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-700">
-                                {auditLogs.map(log => (
-                                    <tr key={log.id} className="hover:bg-slate-700/20">
-                                        <td className="p-4 text-xs text-slate-500 font-mono whitespace-nowrap">{new Date(log.timestamp).toLocaleString('tr-TR')}</td>
-                                        <td className="p-4"><span className="bg-slate-900 text-white text-xs px-2 py-1 rounded border border-slate-700 font-bold whitespace-nowrap">{log.action}</span></td>
-                                        <td className="p-4 text-sm text-slate-300 min-w-[200px]">{log.details}</td>
-                                        <td className="p-4 text-xs text-slate-400 whitespace-nowrap">{log.performedBy}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                    {activeTab === 'LOGS' && (
+                        <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden animate-fadeIn">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left min-w-[600px]">
+                                    <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase">
+                                        <tr>
+                                            <th className="p-4">Zaman</th>
+                                            <th className="p-4">İşlem</th>
+                                            <th className="p-4">Detay</th>
+                                            <th className="p-4">Yapan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-700">
+                                        {auditLogs.map(log => (
+                                            <tr key={log.id} className="hover:bg-slate-700/20">
+                                                <td className="p-4 text-xs text-slate-500 font-mono whitespace-nowrap">{new Date(log.timestamp).toLocaleString('tr-TR')}</td>
+                                                <td className="p-4"><span className="bg-slate-900 text-white text-xs px-2 py-1 rounded border border-slate-700 font-bold whitespace-nowrap">{log.action}</span></td>
+                                                <td className="p-4 text-sm text-slate-300 min-w-[200px]">{log.details}</td>
+                                                <td className="p-4 text-xs text-slate-400 whitespace-nowrap">{log.performedBy}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
           </div>
       </main>

@@ -2,23 +2,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
-import { Lock, Mail, ArrowRight, AlertCircle, ShieldCheck, CheckCircle } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, ShieldCheck, CheckCircle, X } from 'lucide-react';
 import { UserRole } from '../types';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false); // Local loading state for button feedback
-  const { login, resendVerificationEmail, currentUser, loading: contextLoading } = useAppContext();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const { login, resendVerificationEmail, currentUser, loading: contextLoading, showToast, resetPassword } = useAppContext();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [showResend, setShowResend] = useState(false);
-  const [resendSuccess, setResendSuccess] = useState(false);
+
+  // Forgot Password Modal State
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   const registeredSuccess = searchParams.get('registered') === 'true';
 
-  // Role-based redirection when user is loaded
   useEffect(() => {
     if (!contextLoading && currentUser) {
       if (currentUser.role === UserRole.ADMIN) {
@@ -31,29 +33,27 @@ export const Login: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setShowResend(false);
     setIsLoggingIn(true);
 
     if (email && password) {
       try {
           await login(email, password);
-          // Redirect handled by useEffect
       } catch (err: any) {
           console.error(err);
-          setIsLoggingIn(false); // Only stop loading on error, otherwise wait for redirect
+          setIsLoggingIn(false);
           if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-              setError('E-posta veya şifre hatalı.');
+              showToast('E-posta veya şifre hatalı.', 'error');
           } else if (err.code === 'auth/too-many-requests') {
-              setError('Çok fazla başarısız deneme. Lütfen daha sonra tekrar deneyin.');
+              showToast('Çok fazla başarısız deneme. Lütfen daha sonra tekrar deneyin.', 'error');
           } else if (err.code === 'auth/user-disabled') {
-              setError('Bu hesap devre dışı bırakılmıştır.');
+              showToast('Bu hesap devre dışı bırakılmıştır.', 'error');
           } else {
-              setError('Giriş başarısız: ' + err.message);
+              showToast('Giriş başarısız: ' + err.message, 'error');
           }
       }
     } else {
-        setError('Lütfen tüm alanları doldurunuz.');
+        showToast('Lütfen tüm alanları doldurunuz.', 'error');
         setIsLoggingIn(false);
     }
   };
@@ -61,14 +61,37 @@ export const Login: React.FC = () => {
   const handleResend = async () => {
       try {
           await resendVerificationEmail();
-          setResendSuccess(true);
+          showToast("Doğrulama maili gönderildi!", 'success');
       } catch (e) {
-          setError("Doğrulama maili gönderilemedi. Lütfen bir süre bekleyip tekrar deneyin.");
+          showToast("Doğrulama maili gönderilemedi.", 'error');
       }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if(!resetEmail) {
+        showToast('Lütfen e-posta adresinizi giriniz.', 'error');
+        return;
+    }
+    setIsResetting(true);
+    try {
+        await resetPassword(resetEmail);
+        showToast('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.', 'success');
+        setShowForgotModal(false);
+        setResetEmail('');
+    } catch (e: any) {
+        if(e.code === 'auth/user-not-found') {
+            showToast('Bu e-posta adresiyle kayıtlı kullanıcı bulunamadı.', 'error');
+        } else {
+            showToast('Bir hata oluştu. Lütfen tekrar deneyiniz.', 'error');
+        }
+    } finally {
+        setIsResetting(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans relative">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-10">
         <div className="mx-auto h-20 w-20 bg-gradient-to-br from-rose-900 to-rose-800 rounded-2xl flex items-center justify-center shadow-xl transform rotate-3 mb-6 border border-white/10">
              <ShieldCheck className="h-10 w-10 text-amber-400" />
@@ -93,26 +116,11 @@ export const Login: React.FC = () => {
 
           <form className="space-y-6" onSubmit={handleLogin}>
             
-            {error && (
-                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-r-lg text-sm shadow-sm font-medium animate-fadeIn">
-                    <div className="flex items-center">
-                         <AlertCircle size={20} className="mr-3 flex-shrink-0"/>
-                         {error}
-                    </div>
-                </div>
-            )}
-            
-            {showResend && !resendSuccess && (
+            {showResend && (
                 <div className="text-center">
                     <button type="button" onClick={handleResend} className="text-sm text-rose-600 font-bold underline hover:text-rose-800">
                         Doğrulama mailini tekrar gönder
                     </button>
-                </div>
-            )}
-            
-            {resendSuccess && (
-                 <div className="text-center text-sm text-green-600 font-bold bg-green-50 p-2 rounded">
-                    Doğrulama maili gönderildi!
                 </div>
             )}
 
@@ -174,9 +182,9 @@ export const Login: React.FC = () => {
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-bold text-rose-600 hover:text-rose-500">
+                <button type="button" onClick={() => setShowForgotModal(true)} className="font-bold text-rose-600 hover:text-rose-500">
                   Şifremi Unuttum
-                </a>
+                </button>
               </div>
             </div>
 
@@ -214,6 +222,44 @@ export const Login: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* FORGOT PASSWORD MODAL */}
+      {showForgotModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+              <div className="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl relative">
+                  <button onClick={() => setShowForgotModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                      <X size={20} />
+                  </button>
+                  <div className="text-center mb-6">
+                      <div className="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-500">
+                          <Lock size={24} />
+                      </div>
+                      <h3 className="text-2xl font-black text-slate-900">Şifre Sıfırlama</h3>
+                      <p className="text-slate-500 text-sm mt-2">
+                          Kayıtlı e-posta adresinizi girin, size bir sıfırlama bağlantısı gönderelim.
+                      </p>
+                  </div>
+                  <form onSubmit={handleResetPassword}>
+                      <input 
+                         type="email" 
+                         required
+                         value={resetEmail}
+                         onChange={(e) => setResetEmail(e.target.value)}
+                         placeholder="E-posta Adresi"
+                         className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 mb-4 outline-none focus:border-rose-500"
+                      />
+                      <button 
+                        type="submit" 
+                        disabled={isResetting}
+                        className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-rose-600 transition-colors disabled:opacity-70"
+                      >
+                          {isResetting ? 'Gönderiliyor...' : 'Sıfırlama Linki Gönder'}
+                      </button>
+                  </form>
+              </div>
+          </div>
+      )}
+
       <style>{`
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }

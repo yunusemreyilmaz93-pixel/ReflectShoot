@@ -6,7 +6,7 @@ import { useAppContext } from '../context/AppContext';
 
 export const Apply: React.FC = () => {
   const navigate = useNavigate();
-  const { registerTeacher } = useAppContext();
+  const { registerTeacher, showToast } = useAppContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -54,7 +54,10 @@ export const Apply: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {
+        showToast('Lütfen formdaki hataları gideriniz.', 'error');
+        return;
+    }
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -68,18 +71,20 @@ export const Apply: React.FC = () => {
             password: formData.password
         });
         
-        // Redirect to login page with a success flag or message
-        // Since we require email verification, we shouldn't auto-login to dashboard
+        showToast('Kayıt başarılı! Yönlendiriliyorsunuz...', 'success');
         navigate('/login?registered=true');
         
     } catch (error: any) {
         console.error(error);
         if (error.code === 'auth/email-already-in-use') {
             setSubmitError("Bu e-posta adresi zaten kullanımda.");
+            showToast("Bu e-posta adresi zaten kullanımda.", 'error');
         } else if (error.code === 'auth/weak-password') {
             setSubmitError("Şifre çok zayıf.");
+            showToast("Şifre çok zayıf.", 'error');
         } else {
             setSubmitError("Kayıt sırasında bir hata oluştu: " + error.message);
+            showToast("Kayıt başarısız.", 'error');
         }
     } finally {
         setIsSubmitting(false);

@@ -13,15 +13,54 @@ import { Finals } from './pages/Finals';
 import { Gallery } from './pages/Gallery';
 import { Admin } from './pages/Admin';
 import { FAQ } from './pages/FAQ';
-import { JuryDashboard } from './pages/JuryDashboard'; // New Import
+import { JuryDashboard } from './pages/JuryDashboard'; 
 import { AppProvider, useAppContext } from './context/AppContext';
 import { UserRole } from './types';
-import { ShieldAlert, Mail } from 'lucide-react';
+import { ShieldAlert, Mail, CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
+};
+
+// --- Toast Component ---
+const ToastContainer = () => {
+  const { toasts, removeToast } = useAppContext();
+
+  return (
+    <div className="fixed top-24 right-4 z-[100] flex flex-col gap-3 pointer-events-none">
+      {toasts.map((toast) => (
+        <div 
+          key={toast.id}
+          className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-md animate-slideIn transition-all min-w-[300px] ${
+            toast.type === 'success' ? 'bg-green-900/90 border-green-700 text-white' : 
+            toast.type === 'error' ? 'bg-red-900/90 border-red-700 text-white' : 
+            'bg-slate-900/90 border-slate-700 text-white'
+          }`}
+        >
+           {toast.type === 'success' && <CheckCircle2 size={20} className="text-green-400" />}
+           {toast.type === 'error' && <AlertCircle size={20} className="text-red-400" />}
+           {toast.type === 'info' && <Info size={20} className="text-blue-400" />}
+           
+           <span className="text-sm font-medium flex-1">{toast.message}</span>
+           
+           <button onClick={() => removeToast(toast.id)} className="text-white/50 hover:text-white transition-colors">
+              <X size={16} />
+           </button>
+        </div>
+      ))}
+      <style>{`
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slideIn {
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+    </div>
+  );
 };
 
 const ProtectedRoute = ({ children, allowedRoles }: { children?: React.ReactNode, allowedRoles?: UserRole[] }) => {
@@ -87,6 +126,7 @@ const AppRoutes: React.FC = () => {
     <div className="flex flex-col min-h-screen">
       <ScrollToTop />
       <Navbar />
+      <ToastContainer />
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<Home />} />

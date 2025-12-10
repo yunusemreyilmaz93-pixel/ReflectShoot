@@ -145,3 +145,10 @@ export interface LogEntry {
     timestamp: string;
     targetId?: string;
 }
+
+// NEW: Toast Notification Type
+export interface ToastMessage {
+  id: string;
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
