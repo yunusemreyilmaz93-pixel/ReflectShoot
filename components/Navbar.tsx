@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Film, LogOut, LayoutDashboard, UserCircle, UserPlus, Clapperboard, Video } from 'lucide-react';
+import { Menu, X, Film, LogOut, LayoutDashboard, UserCircle, UserPlus, Clapperboard, Video, Vote } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { UserRole } from '../types';
+import { NotificationBell } from './NotificationBell';
 
 interface NavbarProps {
   isAdmin?: boolean; 
@@ -12,18 +13,22 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { currentUser, logout } = useAppContext();
+  const { currentUser, logout, systemSettings } = useAppContext();
   const location = useLocation();
   const navigate = useNavigate();
 
   const navLinks = [
     { name: 'Ana Sayfa', path: '/' },
     { name: 'Hakkında', path: '/about' },
-    { name: 'SSS', path: '/faq' },
     { name: 'Akademi', path: '/academy' },
     { name: 'Galeri', path: '/gallery' },
     { name: 'Ödüller', path: '/finals' },
   ];
+
+  // Add Public Vote link if active
+  if (systemSettings.features.publicVotingActive) {
+      navLinks.splice(3, 0, { name: 'Halk Oylaması', path: '/vote' });
+  }
 
   const handleLogout = () => {
     logout();
@@ -86,6 +91,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
               {currentUser ? (
                  <div className="flex items-center gap-3 ml-4 pl-4 border-l border-white/10">
+                   <NotificationBell />
+                   
                    <Link
                       to={getDashboardLink()}
                       className="bg-rose-600 hover:bg-rose-500 text-white px-5 py-2 rounded-full text-sm font-bold shadow-lg shadow-rose-900/20 flex items-center gap-2 transition-all hover:-translate-y-0.5"
@@ -121,6 +128,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
           </div>
           
           <div className="-mr-2 flex md:hidden">
+            {currentUser && <div className="mr-2"><NotificationBell /></div>}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-white hover:bg-white/10 focus:outline-none transition-colors"

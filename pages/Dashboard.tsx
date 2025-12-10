@@ -1,9 +1,12 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { ApplicationStatus, Category, Theme, UserRole } from '../types';
 import { CheckCircle, AlertCircle, Upload, Video, Award, Clock, Users, FileDown, Clapperboard, Film, UserPlus, BookOpen, Trophy, HeartHandshake, Cpu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { versesList, VERSE_SPLITTER } from '../data/verses';
+import { ChatArea } from '../components/ChatArea';
+import { CertificateGenerator } from '../components/CertificateGenerator';
 
 export const Dashboard: React.FC = () => {
   const { currentApplication, updateApplication, createApplication, currentUser, currentDate } = useAppContext();
@@ -550,9 +553,12 @@ export const Dashboard: React.FC = () => {
                    <div className="bg-teal-50 p-3 rounded-full text-teal-600 border border-teal-100"><CheckCircle size={24} /></div>
                    <p className="text-slate-800 font-bold text-lg">Takımınız başarıyla oluşturulmuştur.</p>
               </div>
-              <button onClick={printTeacherGuide} className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 px-6 rounded-xl flex items-center text-sm transition-colors border border-slate-200 shadow-sm">
-                  <FileDown size={18} className="mr-2" /> Görev Rehberi İndir (PDF)
-              </button>
+              <div className="flex gap-3">
+                  <CertificateGenerator />
+                  <button onClick={printTeacherGuide} className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 px-6 rounded-xl flex items-center text-sm transition-colors border border-slate-200 shadow-sm">
+                      <FileDown size={18} className="mr-2" /> Görev Rehberi İndir (PDF)
+                  </button>
+              </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -663,6 +669,10 @@ export const Dashboard: React.FC = () => {
                              ))}
                       </div>
                   </div>
+                  
+                  {/* Chat Area on Dashboard */}
+                  <ChatArea appId={currentApplication.id} />
+
               </div>
           </div>
       </div>

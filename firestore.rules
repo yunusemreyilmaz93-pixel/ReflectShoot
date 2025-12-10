@@ -1,0 +1,82 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function hasRole(role) {
+      return isSignedIn() && getUserData().role == role;
+    }
+
+    // 1. USERS
+    match /users/{userId} {
+      // Allow reading user profiles (needed for admin lists, chat names etc)
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (request.auth.uid == userId || hasRole('ADMIN'));
+    }
+
+    // 2. APPLICATIONS
+    match /applications/{appId} {
+      allow read: if isSignedIn() && (
+        hasRole('ADMIN') || 
+        hasRole('JUDGE') || 
+        (hasRole('TEACHER') && resource.data.teacher.email == request.auth.token.email)
+      );
+      
+      allow create: if hasRole('TEACHER') || hasRole('ADMIN');
+      // Judge needs update permission to write aggregated scores to the parent doc
+      allow update: if hasRole('ADMIN') || (hasRole('TEACHER') && resource.data.teacher.email == request.auth.token.email) || hasRole('JUDGE');
+      
+      // SUBCOLLECTION: SCORES
+      match /scores/{juryId} {
+        allow read: if hasRole('ADMIN') || (hasRole('JUDGE') && request.auth.uid == juryId);
+        allow write: if hasRole('JUDGE') && request.auth.uid == juryId;
+      }
+
+      // SUBCOLLECTION: MESSAGES
+      match /messages/{msgId} {
+        // Teacher sees messages for their app, Admin sees all
+        allow read: if hasRole('ADMIN') || (hasRole('TEACHER') && get(/databases/$(database)/documents/applications/$(appId)).data.teacher.email == request.auth.token.email);
+        allow create: if hasRole('ADMIN') || hasRole('TEACHER');
+      }
+    }
+
+    // 3. NOTIFICATIONS
+    match /notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      // Anyone can create a notification (e.g. Teacher triggers 'New App' notification for Admin)
+      allow create: if isSignedIn();
+      // Users can update (mark as read) their own notifications
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // 4. PUBLIC VOTES
+    match /public_votes/{voteId} {
+      // Public Voting: Allow creation by anyone (anonymous)
+      allow create: if true;
+      // Allow reading to check for duplicates client-side
+      allow read: if true;
+    }
+
+    // 5. AUDIT LOGS
+    match /auditLogs/{logId} {
+      allow read: if hasRole('ADMIN');
+      allow create: if isSignedIn();
+    }
+
+    // 6. SYSTEM SETTINGS
+    match /system/{document=**} {
+      allow read: if true;
+      allow write: if hasRole('ADMIN');
+    }
+  }
+}

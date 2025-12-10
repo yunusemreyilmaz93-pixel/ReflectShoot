@@ -4,10 +4,11 @@ import {
     Search, Check, X, Eye, Award, FileText, Shield, Inbox, Download, 
     Users, Film, School, Mail, AlertTriangle, Send, Clapperboard, Video, 
     Cpu, Activity, PieChart, BarChart3, Clock, UserCheck, Star, Plus, Lock, 
-    Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog
+    Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog, MessageSquare
 } from 'lucide-react';
 import { ApplicationStatus, Category, Application, UserRole, LogEntry, SystemSettings, ScoreDocument } from '../types';
 import { useAppContext } from '../context/AppContext';
+import { ChatArea } from '../components/ChatArea';
 
 // Helper for CSV Export
 const exportToCSV = (data: any[], filename: string) => {
@@ -125,8 +126,6 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }: Si
 const AdminDashboard = ({ apps }: { apps: Application[] }) => {
     const totalApps = apps.length;
     const finalists = apps.filter(a => a.team.isFinalist).length;
-    const liveAction = apps.filter(a => a.team.category === Category.LIVE_ACTION).length;
-    const aiAnim = apps.filter(a => a.team.category === Category.AI_ANIMATION).length;
     const scoredApps = apps.filter(a => a.finalScore && a.finalScore > 0);
     const avgScore = scoredApps.length > 0 
         ? scoredApps.reduce((acc, curr) => acc + (curr.finalScore || 0), 0) / scoredApps.length 
@@ -539,6 +538,20 @@ export const Admin: React.FC = () => {
                                          <input type="datetime-local" defaultValue={systemSettings.dates.applicationEnd} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-sm" />
                                      </div>
                                  </div>
+                                 
+                                 <div className="pt-4 border-t border-slate-800">
+                                     <h4 className="text-white font-bold mb-4">Özellikler</h4>
+                                     <div className="flex items-center gap-2 mb-4">
+                                         <input 
+                                            type="checkbox" 
+                                            checked={systemSettings.features.publicVotingActive}
+                                            onChange={(e) => updateSystemSettings({...systemSettings, features: {...systemSettings.features, publicVotingActive: e.target.checked}})}
+                                            className="w-5 h-5 rounded border-slate-700 bg-slate-900 accent-rose-600"
+                                         />
+                                         <label className="text-slate-300 text-sm">Halk Oylaması Aktif</label>
+                                     </div>
+                                 </div>
+
                                  <div className="pt-4">
                                      <button type="submit" className="w-full md:w-auto bg-rose-600 hover:bg-rose-500 text-white px-6 py-3 rounded-xl font-bold transition-all">
                                          Ayarları Kaydet
@@ -581,7 +594,7 @@ export const Admin: React.FC = () => {
 
       {/* Team Detail Modal */}
       {selectedApp && (
-          <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex justify-end animate-fadeIn">
+          <div className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-sm flex justify-end animate-fadeIn">
               <div className="w-full max-w-2xl bg-slate-900 h-full border-l border-slate-700 p-6 md:p-8 overflow-y-auto shadow-2xl relative">
                   <button onClick={() => setSelectedApp(null)} className="absolute top-4 right-4 bg-slate-800 p-2 rounded-full text-slate-400 hover:text-white hover:bg-rose-600 transition-all z-10">
                       <X size={20} />
@@ -602,6 +615,11 @@ export const Admin: React.FC = () => {
                               {selectedApp.team.isFinalist ? 'FİNALİST' : 'Aday'}
                           </span>
                       </div>
+                  </div>
+
+                  {/* Messaging Section */}
+                  <div className="mb-8">
+                       <ChatArea appId={selectedApp.id} />
                   </div>
 
                   {/* Scoring Section */}

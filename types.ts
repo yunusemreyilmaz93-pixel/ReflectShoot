@@ -97,6 +97,9 @@ export interface Team {
   // Finals
   isFinalist?: boolean; // NEW: Flag for finalists
   finalistRank?: number; // NEW: Rank if applicable
+  
+  // Public Voting
+  publicVotes?: number;
 }
 
 export interface TeacherProfile {
@@ -129,11 +132,14 @@ export interface SystemSettings {
         videoUploadEnd: string;
         academyStart: string;
         galaDate: string;
+        publicVoteStart?: string;
+        publicVoteEnd?: string;
     };
     features: {
         judgeSystemActive: boolean;
         publicResultReveal: boolean;
         allowNewRegistrations: boolean;
+        publicVotingActive?: boolean;
     };
 }
 
@@ -151,4 +157,34 @@ export interface ToastMessage {
   id: string;
   message: string;
   type: 'success' | 'error' | 'info';
+}
+
+// NEW: Notification System
+export interface Notification {
+  id: string;
+  userId: string; // Who receives it
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  read: boolean;
+  createdAt: string;
+  link?: string; // Optional link to redirect
+}
+
+// NEW: Messaging System
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderRole: UserRole;
+  text: string;
+  createdAt: string;
+}
+
+// NEW: Vote
+export interface PublicVote {
+  id: string;
+  appId: string;
+  voterFingerprint: string; // Simple client-side hash
+  timestamp: string;
 }

@@ -13,12 +13,13 @@ import {
   orderBy,
   limit,
   where,
-  getDocs
+  getDocs,
+  increment
 } from 'firebase/firestore';
 import firebase from 'firebase/compat/app'; 
 import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'; 
 import { auth, db } from '../lib/firebase';
-import { Application, ApplicationStatus, UserRole, EvaluationCriteria, UserProfile, SystemSettings, LogEntry, ScoreDocument, ToastMessage } from '../types';
+import { Application, ApplicationStatus, UserRole, EvaluationCriteria, UserProfile, SystemSettings, LogEntry, ScoreDocument, ToastMessage, Notification, ChatMessage } from '../types';
 
 interface AppContextType {
   currentUser: UserProfile | null;
@@ -28,7 +29,7 @@ interface AppContextType {
   logout: () => Promise<void>;
   registerTeacher: (data: any) => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>; // New
+  resetPassword: (email: string) => Promise<void>;
   
   // Application Logic
   currentApplication: Application | null;
@@ -55,6 +56,17 @@ interface AppContextType {
   toasts: ToastMessage[];
   showToast: (message: string, type: 'success' | 'error' | 'info') => void;
   removeToast: (id: string) => void;
+
+  // Notifications
+  notifications: Notification[];
+  markNotificationAsRead: (id: string) => Promise<void>;
+  sendNotification: (userId: string, title: string, message: string, type: 'info' | 'success' | 'warning' | 'error') => Promise<void>;
+
+  // Chat
+  sendMessage: (appId: string, text: string) => Promise<void>;
+  
+  // Public Vote
+  submitPublicVote: (appId: string, fingerprint: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -67,12 +79,15 @@ const DEFAULT_SETTINGS: SystemSettings = {
     videoUploadStart: '2026-02-16T00:00:00',
     videoUploadEnd: '2026-03-20T23:59:59',
     academyStart: '2026-04-06T09:00:00',
-    galaDate: '2026-05-11T19:00:00'
+    galaDate: '2026-05-11T19:00:00',
+    publicVoteStart: '2026-05-01T00:00:00',
+    publicVoteEnd: '2026-05-10T23:59:59'
   },
   features: {
     judgeSystemActive: true,
     publicResultReveal: false,
-    allowNewRegistrations: true
+    allowNewRegistrations: true,
+    publicVotingActive: true
   }
 };
 
@@ -90,6 +105,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   
   // Toast State
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Notification State
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const setSimulatedDate = (date: Date) => {
     setCurrentDate(date);
@@ -143,7 +161,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     if (!currentUser) return;
 
-    // A) Fetch Applications - ROLE AWARE TO FIX PERMISSION DENIED
+    // A) Fetch Applications - ROLE AWARE
     let qApps;
     if (currentUser.role === UserRole.ADMIN) {
         // Admin sees all
@@ -174,7 +192,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
          setCurrentApplication(userApp || null);
       }
     }, (error) => {
-        console.error("Application Sync Error (Permission?):", error);
+        console.warn("Application Sync Warning (Check Permissions):", error.message);
     });
 
     // B) System Settings Sync (Everyone reads)
@@ -183,11 +201,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if(docSnap.exists()) {
             setSystemSettings(docSnap.data() as SystemSettings);
         } else {
-            setDoc(settingsRef, DEFAULT_SETTINGS); 
+            setDoc(settingsRef, DEFAULT_SETTINGS).catch(e => console.warn("Failed to init settings", e.message)); 
         }
+    }).catch(e => console.warn("Settings fetch warning", e.message));
+
+    // C) Notifications Sync
+    const qNotifs = query(collection(db, "notifications"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(20));
+    const unsubNotifs = onSnapshot(qNotifs, (snap) => {
+        const notifs: Notification[] = [];
+        snap.forEach(d => notifs.push({ id: d.id, ...d.data() } as Notification));
+        setNotifications(notifs);
+    }, (error) => {
+        console.warn("Notifications Sync Warning (Missing Rules or Index):", error.message);
     });
 
-    // C) Admin Specific Streams
+    // D) Admin Specific Streams
     let unsubLogs = () => {};
     let unsubUsers = () => {};
 
@@ -198,6 +226,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             const logs: LogEntry[] = [];
             snap.forEach(d => logs.push({ id: d.id, ...d.data() } as LogEntry));
             setAuditLogs(logs);
+        }, (error) => {
+            console.warn("Audit Logs Sync Warning:", error.message);
         });
 
         // Fetch Users
@@ -206,6 +236,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             const users: UserProfile[] = [];
             snap.forEach(d => users.push(d.data() as UserProfile));
             setAllUsers(users);
+        }, (error) => {
+            console.warn("Users Sync Warning:", error.message);
         });
     }
 
@@ -213,6 +245,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         unsubApps();
         unsubLogs();
         unsubUsers();
+        unsubNotifs();
     };
   }, [currentUser]);
 
@@ -271,6 +304,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const userRef = doc(db, "users", uid);
     await updateDoc(userRef, { role: newRole });
     await logAction("UPDATE_ROLE", `Kullanıcı rolü güncellendi: ${newRole}`, uid);
+    
+    // Notify User
+    await sendNotification(uid, "Rol Güncellemesi", `Hesap yetkiniz ${newRole} olarak güncellendi.`, "success");
   };
 
   const createApplication = async (data: any) => {
@@ -315,6 +351,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const safeApp = JSON.parse(JSON.stringify(newApp));
       await setDoc(doc(db, "applications", newApp.id), safeApp);
       showToast('Takım başarıyla oluşturuldu!', 'success');
+      
+      // Notify Admin
+      const admins = allUsers.filter(u => u.role === UserRole.ADMIN);
+      admins.forEach(admin => {
+          sendNotification(admin.uid, "Yeni Başvuru", `${currentUser.fullName} yeni bir takım oluşturdu: ${data.teamName}`, "info");
+      });
+
     } catch (error) {
       console.error("Error creating application:", error);
       showToast('Takım oluşturulurken hata oluştu.', 'error');
@@ -326,6 +369,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const safeApp = JSON.parse(JSON.stringify(updatedApp));
       await setDoc(doc(db, "applications", updatedApp.id), safeApp);
       showToast('Başvuru güncellendi.', 'success');
+
+      // Check for specific triggers for Notifications
+      if (updatedApp.status === ApplicationStatus.FINAL_SUBMITTED) {
+           const admins = allUsers.filter(u => u.role === UserRole.ADMIN);
+           admins.forEach(admin => {
+               sendNotification(admin.uid, "Video Yüklendi", `${updatedApp.team.name} final videosunu yükledi.`, "success");
+           });
+      }
+      
+      // Notify Teacher if status changed by Admin
+      if (currentUser?.role === UserRole.ADMIN) {
+           const teacherId = updatedApp.id.replace("APP-", ""); // Assuming ID structure
+           sendNotification(teacherId, "Durum Güncellemesi", `Başvuru durumunuz güncellendi: ${updatedApp.status}`, "info");
+           if (updatedApp.team.isFinalist) {
+               sendNotification(teacherId, "TEBRİKLER!", "Takımınız FİNALİST olmaya hak kazandı!", "success");
+           }
+      }
+
     } catch (error) {
        console.error("Error updating application:", error);
        showToast('Güncelleme sırasında hata oluştu.', 'error');
@@ -373,17 +434,80 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           finalScore: avg,
           juryCount: count,
           gradedBy: gradedBy,
-          status: ApplicationStatus.GRADED // Mark as graded if at least one score exists
+          status: ApplicationStatus.GRADED 
       });
 
       await logAction("SUBMIT_SCORE", `Puan verildi: ${totalScore} (Takım: ${appId})`, appId);
       showToast('Puan başarıyla kaydedildi!', 'success');
+
+      // Notify Admins
+      const admins = allUsers.filter(u => u.role === UserRole.ADMIN);
+      admins.forEach(admin => {
+           sendNotification(admin.uid, "Jüri Puanlaması", `${currentUser.fullName} bir takımı puanladı (${totalScore}).`, "info");
+      });
   };
 
   const fetchJuryScores = async (appId: string): Promise<ScoreDocument[]> => {
       const q = query(collection(db, "applications", appId, "scores"));
       const snapshot = await getDocs(q);
       return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreDocument));
+  };
+
+  // --- NOTIFICATIONS ---
+  const sendNotification = async (userId: string, title: string, message: string, type: 'info' | 'success' | 'warning' | 'error') => {
+      try {
+          await addDoc(collection(db, "notifications"), {
+              userId,
+              title,
+              message,
+              type,
+              read: false,
+              createdAt: new Date().toISOString()
+          });
+      } catch (e) {
+          console.error("Notification Error:", e);
+      }
+  };
+
+  const markNotificationAsRead = async (id: string) => {
+      await updateDoc(doc(db, "notifications", id), { read: true });
+  };
+
+  // --- MESSAGING ---
+  const sendMessage = async (appId: string, text: string) => {
+      if (!currentUser) return;
+      const msg: ChatMessage = {
+          id: `MSG-${Date.now()}`,
+          senderId: currentUser.uid,
+          senderName: currentUser.fullName,
+          senderRole: currentUser.role,
+          text,
+          createdAt: new Date().toISOString()
+      };
+      
+      await addDoc(collection(db, "applications", appId, "messages"), msg);
+  };
+
+  // --- PUBLIC VOTE ---
+  const submitPublicVote = async (appId: string, fingerprint: string) => {
+      // Check existing vote
+      const q = query(collection(db, "public_votes"), where("appId", "==", appId), where("voterFingerprint", "==", fingerprint));
+      const snap = await getDocs(q);
+      
+      if (!snap.empty) {
+          throw new Error("Bu video için zaten oy kullandınız.");
+      }
+
+      await addDoc(collection(db, "public_votes"), {
+          appId,
+          voterFingerprint: fingerprint,
+          timestamp: new Date().toISOString()
+      });
+
+      // Increment counter on app document
+      await updateDoc(doc(db, "applications", appId), {
+          "team.publicVotes": increment(1)
+      });
   };
 
   // --- SYSTEM ---
@@ -439,7 +563,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       logAction,
       toasts,
       showToast,
-      removeToast
+      removeToast,
+      notifications,
+      markNotificationAsRead,
+      sendNotification,
+      sendMessage,
+      submitPublicVote
     }}>
       {children}
     </AppContext.Provider>
