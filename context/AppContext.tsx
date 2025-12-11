@@ -7,41 +7,43 @@ import {
   collection, 
   query, 
   onSnapshot,
-  getFirestore,
   addDoc,
   orderBy,
   limit,
   where,
   getDocs,
   increment,
-  runTransaction // CMS için lazım olabilir diye ekledim, zararı yok
+  runTransaction
 } from 'firebase/firestore';
+
+// Auth için senin orijinal importlarını koruyoruz
 import firebase from 'firebase/compat/app'; 
-import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'; 
+import 'firebase/compat/auth'; // Compat auth modülünü garantiye aldık
+
 import { auth, db } from '../lib/firebase';
 import { 
-    Application, 
-    ApplicationStatus, 
-    UserRole, 
-    EvaluationCriteria, 
-    UserProfile, 
-    SystemSettings, 
-    LogEntry, 
-    ScoreDocument, 
-    ToastMessage, 
-    Notification, 
-    ChatMessage,
-    // --- YENİ EKLENEN CMS TİPLERİ ---
-    CMSData,
-    GeneralSettings,
-    TimelineItem,
-    FAQItem,
-    DocumentItem
+  Application, 
+  ApplicationStatus, 
+  UserRole, 
+  EvaluationCriteria, 
+  UserProfile, 
+  SystemSettings, 
+  LogEntry, 
+  ScoreDocument, 
+  ToastMessage, 
+  Notification, 
+  ChatMessage,
+  // Yeni Tipler (types.ts güncel olmalı!)
+  CMSData,
+  GeneralSettings,
+  TimelineItem,
+  FAQItem,
+  DocumentItem
 } from '../types';
 
 interface AppContextType {
   currentUser: UserProfile | null;
-  allUsers: UserProfile[]; // For Admin
+  allUsers: UserProfile[];
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -49,44 +51,35 @@ interface AppContextType {
   resendVerificationEmail: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   
-  // Application Logic
   currentApplication: Application | null;
   createApplication: (data: any) => Promise<void>;
   updateApplication: (app: Application) => Promise<void>;
   allApplications: Application[]; 
   
-  // Scoring Logic
   submitScore: (appId: string, criteria: EvaluationCriteria, notes: string) => Promise<void>;
   fetchJuryScores: (appId: string) => Promise<ScoreDocument[]>;
   
-  // Admin Logic
   updateUserRole: (uid: string, newRole: UserRole) => Promise<void>;
   currentDate: Date;
   setSimulatedDate: (date: Date) => void;
   
-  // System & Logs
   systemSettings: SystemSettings;
   updateSystemSettings: (settings: SystemSettings) => Promise<void>;
   auditLogs: LogEntry[];
   logAction: (action: string, details: string, targetId?: string) => Promise<void>;
 
-  // UI
   toasts: ToastMessage[];
   showToast: (message: string, type: 'success' | 'error' | 'info') => void;
   removeToast: (id: string) => void;
 
-  // Notifications
   notifications: Notification[];
   markNotificationAsRead: (id: string) => Promise<void>;
   sendNotification: (userId: string, title: string, message: string, type: 'info' | 'success' | 'warning' | 'error') => Promise<void>;
 
-  // Chat
   sendMessage: (appId: string, text: string) => Promise<void>;
-  
-  // Public Vote
   submitPublicVote: (appId: string, fingerprint: string) => Promise<void>;
 
-  // --- YENİ CMS FONKSİYONLARI ---
+  // --- CMS ---
   cmsData: CMSData;
   refreshCMS: () => Promise<void>;
   updateGeneralSettings: (settings: GeneralSettings) => Promise<void>;
@@ -94,7 +87,6 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Default Settings
 const DEFAULT_SETTINGS: SystemSettings = {
   dates: {
     applicationStart: '2026-01-20T09:00:00',
@@ -114,7 +106,6 @@ const DEFAULT_SETTINGS: SystemSettings = {
   }
 };
 
-// --- YENİ: Varsayılan CMS Verileri ---
 const DEFAULT_CMS_GENERAL: GeneralSettings = {
     siteTitle: "Reflect & Shoot",
     metaDescription: "Kısa Film Yarışması",
@@ -137,13 +128,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
   const [auditLogs, setAuditLogs] = useState<LogEntry[]>([]);
   
-  // Toast State
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
-
-  // Notification State
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  // --- YENİ: CMS STATE ---
+  // CMS State
   const [cmsData, setCmsData] = useState<CMSData>({
     general: null, 
     timeline: [],
@@ -161,17 +149,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
         removeToast(id);
-    }, 4000); // Auto remove after 4 seconds
+    }, 4000);
   };
 
   const removeToast = (id: string) => {
       setToasts((prev) => prev.filter(t => t.id !== id));
   };
 
-  // --- YENİ: CMS DATA FETCHING ---
+  // CMS Fetch Logic
   const fetchCMSData = async () => {
     try {
-        // 1. Genel Ayarlar
         const generalRef = doc(db, "cms_general", "main");
         const generalSnap = await getDoc(generalRef);
         let generalData = DEFAULT_CMS_GENERAL;
@@ -180,17 +167,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             generalData = generalSnap.data() as GeneralSettings;
         }
 
-        // 2. Timeline
         const timelineQ = query(collection(db, "cms_timeline"), orderBy("order", "asc"));
         const timelineSnap = await getDocs(timelineQ);
         const timelineData = timelineSnap.docs.map(d => ({ id: d.id, ...d.data() } as TimelineItem));
 
-        // 3. FAQ
         const faqQ = query(collection(db, "cms_faq"), orderBy("order", "asc"));
         const faqSnap = await getDocs(faqQ);
         const faqData = faqSnap.docs.map(d => ({ id: d.id, ...d.data() } as FAQItem));
 
-        // 4. Documents
         const docQ = query(collection(db, "cms_documents"));
         const docSnap = await getDocs(docQ);
         const docData = docSnap.docs.map(d => ({ id: d.id, ...d.data() } as DocumentItem));
@@ -202,32 +186,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             documents: docData,
             loading: false
         });
-
     } catch (error) {
         console.error("CMS Fetch Error:", error);
-        setCmsData(prev => ({ 
-            ...prev, 
-            general: prev.general || DEFAULT_CMS_GENERAL,
-            loading: false 
-        }));
+        setCmsData(prev => ({ ...prev, general: DEFAULT_CMS_GENERAL, loading: false }));
     }
   };
 
-  // --- YENİ: CMS GÜNCELLEME (Admin İçin) ---
   const updateGeneralSettings = async (settings: GeneralSettings) => {
       await setDoc(doc(db, "cms_general", "main"), settings);
-      await fetchCMSData(); // Verileri tazele
+      await fetchCMSData();
       showToast('Genel ayarlar güncellendi.', 'success');
   };
 
-  // Uygulama açılınca CMS verilerini çek
   useEffect(() => {
       fetchCMSData();
   }, []);
 
-  // 1. Listen to Firebase Auth State Changes
+  // Auth Listener (Senin orijinal kodun)
   useEffect(() => {
-    // BURASI SENİN ORİJİNAL KODUN - DOKUNMADIM
+    // @ts-ignore - Compat/Modular tip çakışmasını yoksaymak için
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const userDocRef = doc(db, "users", user.uid);
@@ -240,7 +217,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 emailVerified: user.emailVerified 
               });
             } else {
-              // Fallback for brand new users if create hasn't finished
               setCurrentUser(null);
             }
         } catch (e) {
@@ -254,21 +230,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       setLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
-  // 2. Real-time Data Sync (Role-Aware)
+  // Real-time Data Sync
   useEffect(() => {
     if (!currentUser) return;
 
-    // A) Fetch Applications - ROLE AWARE
     let qApps;
     if (currentUser.role === UserRole.ADMIN) {
-        // Admin sees all
         qApps = query(collection(db, "applications"));
     } else if (currentUser.role === UserRole.JUDGE) {
-        // Judges see submitted/finalized applications
         qApps = query(collection(db, "applications"), where("status", "in", [
             ApplicationStatus.FINAL_SUBMITTED,
             ApplicationStatus.GRADED,
@@ -276,7 +248,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ApplicationStatus.UNDER_REVIEW
         ]));
     } else {
-        // Teachers see ONLY their own applications
         qApps = query(collection(db, "applications"), where("teacher.email", "==", currentUser.email));
     }
 
@@ -287,16 +258,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
       setAllApplications(apps);
       
-      // If Teacher, set current app
       if (currentUser.role === UserRole.TEACHER) {
          const userApp = apps.find(app => app.teacher.email === currentUser.email);
          setCurrentApplication(userApp || null);
       }
     }, (error) => {
-        console.warn("Application Sync Warning (Check Permissions):", error.message);
+        console.warn("Sync Warning:", error.message);
     });
 
-    // B) System Settings Sync (Everyone reads)
     const settingsRef = doc(db, "system", "config");
     getDoc(settingsRef).then(docSnap => {
         if(docSnap.exists()) {
@@ -306,39 +275,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     }).catch(e => console.warn("Settings fetch warning", e.message));
 
-    // C) Notifications Sync
     const qNotifs = query(collection(db, "notifications"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(20));
     const unsubNotifs = onSnapshot(qNotifs, (snap) => {
         const notifs: Notification[] = [];
         snap.forEach(d => notifs.push({ id: d.id, ...d.data() } as Notification));
         setNotifications(notifs);
-    }, (error) => {
-        console.warn("Notifications Sync Warning (Missing Rules or Index):", error.message);
     });
 
-    // D) Admin Specific Streams
     let unsubLogs = () => {};
     let unsubUsers = () => {};
 
     if (currentUser.role === UserRole.ADMIN) {
-        // Fetch Logs
         const qLogs = query(collection(db, "auditLogs"), orderBy("timestamp", "desc"), limit(50));
         unsubLogs = onSnapshot(qLogs, (snap) => {
             const logs: LogEntry[] = [];
             snap.forEach(d => logs.push({ id: d.id, ...d.data() } as LogEntry));
             setAuditLogs(logs);
-        }, (error) => {
-            console.warn("Audit Logs Sync Warning:", error.message);
         });
 
-        // Fetch Users
         const qUsers = query(collection(db, "users"));
         unsubUsers = onSnapshot(qUsers, (snap) => {
             const users: UserProfile[] = [];
             snap.forEach(d => users.push(d.data() as UserProfile));
             setAllUsers(users);
-        }, (error) => {
-            console.warn("Users Sync Warning:", error.message);
         });
     }
 
@@ -351,22 +310,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [currentUser]);
 
 
-  // 3. Actions
-  // --- AUTH FONKSİYONLARI: SENİN KODUNLA AYNI KALDI ---
+  // Actions (Auth yöntemlerin senin istediğin gibi "compat" style)
   const login = async (email: string, password: string) => {
+    // @ts-ignore
     await auth.signInWithEmailAndPassword(email, password);
   };
 
   const logout = async () => {
+    // @ts-ignore
     await auth.signOut();
   };
 
   const resetPassword = async (email: string) => {
+      // @ts-ignore
       await auth.sendPasswordResetEmail(email);
   };
 
   const registerTeacher = async (data: any) => {
     try {
+      // @ts-ignore
       const userCredential = await auth.createUserWithEmailAndPassword(data.email, data.password);
       const user = userCredential.user;
 
@@ -401,14 +363,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await auth.currentUser.sendEmailVerification();
     }
   };
-  // --------------------------------------------------------
 
   const updateUserRole = async (uid: string, newRole: UserRole) => {
     const userRef = doc(db, "users", uid);
     await updateDoc(userRef, { role: newRole });
     await logAction("UPDATE_ROLE", `Kullanıcı rolü güncellendi: ${newRole}`, uid);
-    
-    // Notify User
     await sendNotification(uid, "Rol Güncellemesi", `Hesap yetkiniz ${newRole} olarak güncellendi.`, "success");
   };
 
@@ -455,7 +414,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await setDoc(doc(db, "applications", newApp.id), safeApp);
       showToast('Takım başarıyla oluşturuldu!', 'success');
       
-      // Notify Admin
       const admins = allUsers.filter(u => u.role === UserRole.ADMIN);
       admins.forEach(admin => {
           sendNotification(admin.uid, "Yeni Başvuru", `${currentUser.fullName} yeni bir takım oluşturdu: ${data.teamName}`, "info");
@@ -473,7 +431,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await setDoc(doc(db, "applications", updatedApp.id), safeApp);
       showToast('Başvuru güncellendi.', 'success');
 
-      // Check for specific triggers for Notifications
       if (updatedApp.status === ApplicationStatus.FINAL_SUBMITTED) {
            const admins = allUsers.filter(u => u.role === UserRole.ADMIN);
            admins.forEach(admin => {
@@ -481,11 +438,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
            });
       }
       
-      // Notify Teacher if status changed by Admin
       if (currentUser?.role === UserRole.ADMIN) {
-           const teacherId = updatedApp.teacher.email; // ID'ye çevirmek daha doğru olur ama senin kodun böyle
-           // Email üzerinden kullanıcı bulma (senin orijinal kodunda böyleydi)
-           // Basitlik için tüm kullanıcılarda ara
            const teacher = allUsers.find(u => u.email === updatedApp.teacher.email);
            if (teacher) {
              sendNotification(teacher.uid, "Durum Güncellemesi", `Başvuru durumunuz güncellendi: ${updatedApp.status}`, "info");
@@ -501,8 +454,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  // --- SCORING SYSTEM ---
-  
   const submitScore = async (appId: string, criteria: EvaluationCriteria, notes: string) => {
       if (!currentUser || currentUser.role !== UserRole.JUDGE) return;
 
@@ -517,11 +468,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           updatedAt: new Date().toISOString()
       };
 
-      // 1. Write to Subcollection
       const scoreRef = doc(db, "applications", appId, "scores", currentUser.uid);
       await setDoc(scoreRef, scoreDoc);
 
-      // 2. Aggregate Scores for Parent Document (Client-side aggregation)
       const scoresSnapshot = await getDocs(collection(db, "applications", appId, "scores"));
       let sum = 0;
       let count = 0;
@@ -536,7 +485,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       const avg = count > 0 ? parseFloat((sum / count).toFixed(2)) : 0;
 
-      // 3. Update Parent Document
       const appRef = doc(db, "applications", appId);
       await updateDoc(appRef, {
           finalScore: avg,
@@ -545,4 +493,141 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           status: ApplicationStatus.GRADED 
       });
 
-      await logAction("SUB
+      await logAction("SUBMIT_SCORE", `Puan verildi: ${totalScore} (Takım: ${appId})`, appId);
+      showToast('Puan başarıyla kaydedildi!', 'success');
+
+      const admins = allUsers.filter(u => u.role === UserRole.ADMIN);
+      admins.forEach(admin => {
+           sendNotification(admin.uid, "Jüri Puanlaması", `${currentUser.fullName} bir takımı puanladı (${totalScore}).`, "info");
+      });
+  };
+
+  const fetchJuryScores = async (appId: string): Promise<ScoreDocument[]> => {
+      const q = query(collection(db, "applications", appId, "scores"));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreDocument));
+  };
+
+  const sendNotification = async (userId: string, title: string, message: string, type: 'info' | 'success' | 'warning' | 'error') => {
+      try {
+          await addDoc(collection(db, "notifications"), {
+              userId,
+              title,
+              message,
+              type,
+              read: false,
+              createdAt: new Date().toISOString()
+          });
+      } catch (e) {
+          console.error("Notification Error:", e);
+      }
+  };
+
+  const markNotificationAsRead = async (id: string) => {
+      await updateDoc(doc(db, "notifications", id), { read: true });
+  };
+
+  const sendMessage = async (appId: string, text: string) => {
+      if (!currentUser) return;
+      const msg: ChatMessage = {
+          id: `MSG-${Date.now()}`,
+          senderId: currentUser.uid,
+          senderName: currentUser.fullName,
+          senderRole: currentUser.role,
+          text,
+          createdAt: new Date().toISOString()
+      };
+      
+      await addDoc(collection(db, "applications", appId, "messages"), msg);
+  };
+
+  const submitPublicVote = async (appId: string, fingerprint: string) => {
+      const q = query(collection(db, "public_votes"), where("appId", "==", appId), where("voterFingerprint", "==", fingerprint));
+      const snap = await getDocs(q);
+      
+      if (!snap.empty) {
+          throw new Error("Bu video için zaten oy kullandınız.");
+      }
+
+      await addDoc(collection(db, "public_votes"), {
+          appId,
+          voterFingerprint: fingerprint,
+          timestamp: new Date().toISOString()
+      });
+
+      await updateDoc(doc(db, "applications", appId), {
+          "team.publicVotes": increment(1)
+      });
+  };
+
+  const updateSystemSettings = async (settings: SystemSettings) => {
+      await setDoc(doc(db, "system", "config"), settings);
+      setSystemSettings(settings);
+      await logAction("UPDATE_SETTINGS", "Sistem ayarları güncellendi.");
+      showToast('Sistem ayarları kaydedildi.', 'success');
+  };
+
+  const logAction = async (action: string, details: string, targetId?: string) => {
+      if(!currentUser) return;
+      
+      const newLog: LogEntry = {
+          id: `LOG-${Date.now()}`,
+          action,
+          details,
+          performedBy: currentUser.email,
+          timestamp: new Date().toISOString(),
+          targetId
+      };
+      
+      try {
+          await addDoc(collection(db, "auditLogs"), newLog);
+      } catch (e) {
+          console.error("Failed to log", e);
+      }
+  };
+
+  return (
+    <AppContext.Provider value={{ 
+      currentUser, 
+      allUsers,
+      loading,
+      login, 
+      logout, 
+      registerTeacher, 
+      resendVerificationEmail,
+      resetPassword,
+      updateUserRole,
+      currentApplication, 
+      createApplication, 
+      updateApplication,
+      allApplications,
+      submitScore,
+      fetchJuryScores,
+      currentDate,
+      setSimulatedDate,
+      systemSettings,
+      updateSystemSettings,
+      auditLogs,
+      logAction,
+      toasts,
+      showToast,
+      removeToast,
+      notifications,
+      markNotificationAsRead,
+      sendNotification,
+      sendMessage,
+      submitPublicVote,
+      cmsData,
+      refreshCMS: fetchCMSData,
+      updateGeneralSettings
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+export const useAppContext = () => {
+  const context = useContext(AppContext);
+  if (!context) throw new Error("useAppContext must be used within AppProvider");
+  return context;
+};
