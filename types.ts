@@ -189,3 +189,84 @@ export interface PublicVote {
   voterFingerprint: string; // Simple client-side hash
   timestamp: string;
 }
+
+// ... (Mevcut kodların aynen kalsın) ...
+
+// --- CMS (CONTENT MANAGEMENT SYSTEM) TYPES ---
+// Bu bölüm, Admin panelinden yönetilecek dinamik içerikler içindir.
+
+export interface SocialLinks {
+  instagram: string;
+  twitter: string;
+  youtube: string;
+  facebook?: string;
+}
+
+export interface ContactInfo {
+  phone: string;
+  email: string;
+  address: string;
+  mapUrl?: string; // Google Maps embed linki için opsiyonel
+}
+
+// cms_general: Genel site ayarları, başlıklar ve iletişim bilgileri
+export interface GeneralSettings {
+  siteTitle: string;       // Örn: "Reflect & Shoot"
+  metaDescription: string; // SEO için açıklama
+  heroTitle: string;       // Örn: "Oku, Anla, Anlat!"
+  heroSubtitle: string;    // Örn: "Hikayeni Hangi Yolla Sahneye Taşıyacaksın?"
+  social: SocialLinks;
+  contact: ContactInfo;
+  stats: {
+    teams: string;    // "27" (String tutuyoruz ki "10+" gibi yazabilesin)
+    schools: string;  // "10+"
+    students: string; // "150+"
+  };
+}
+
+// cms_timeline: Ana sayfadaki süreç takvimi
+export interface TimelineItem {
+  id: string;
+  date: string;        // Örn: "20 Ocak 2026"
+  title: string;       // Örn: "Başvuruların Başlaması"
+  description: string; // Örn: "Takımını kur ve başvurunu yap."
+  iconType: 'apply' | 'video' | 'academy' | 'gala' | 'vote' | 'default'; // İkon seçimi için
+  order: number;       // Sıralama (1, 2, 3...)
+  isActive: boolean;   // Şu anki aktif aşama mı? (Yanıp sönme efekti için)
+}
+
+// cms_faq: Sıkça Sorulan Sorular
+export interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+  category: 'general' | 'technical' | 'rules';
+  order: number;
+}
+
+// cms_documents: Şartname, Veli İzin Belgesi vb.
+export interface DocumentItem {
+  id: string;
+  title: string; // Örn: "Yarışma Şartnamesi"
+  url: string;   // Firebase Storage linki
+  type: 'pdf' | 'doc' | 'image';
+  updatedAt: string;
+}
+
+// cms_gallery: (Opsiyonel) Galeri resimleri
+export interface GalleryItem {
+  id: string;
+  url: string;
+  caption?: string;
+  year: string; // "2024", "2025"
+  category: 'gala' | 'academy' | 'behind_scenes';
+}
+
+// AppContext içinde kullanılacak ana veri yapısı
+export interface CMSData {
+  general: GeneralSettings | null;
+  timeline: TimelineItem[];
+  faqs: FAQItem[];
+  documents: DocumentItem[];
+  loading: boolean;
+}
