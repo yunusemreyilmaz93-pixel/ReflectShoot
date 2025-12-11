@@ -23,6 +23,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
     { name: 'Akademi', path: '/academy' },
     { name: 'Galeri', path: '/gallery' },
     { name: 'Ödüller', path: '/finals' },
+    { name: 'SSS', path: '/faq' },
   ];
 
   // Add Public Vote link if active
