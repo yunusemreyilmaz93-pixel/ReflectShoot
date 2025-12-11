@@ -4,12 +4,12 @@ import {
     Users, Film, School, Mail, AlertTriangle, Send, Clapperboard, Video, 
     Cpu, Activity, PieChart, BarChart3, Clock, UserCheck, Star, Plus, Lock, 
     Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog, MessageSquare, ExternalLink, Link as LinkIcon, Save, Youtube,
-    LayoutTemplate // <-- YENİ: İkon eklendi
+    LayoutTemplate
 } from 'lucide-react';
 import { ApplicationStatus, Category, Application, UserRole, LogEntry, SystemSettings, ScoreDocument } from '../types';
 import { useAppContext } from '../context/AppContext';
 import { ChatArea } from '../components/ChatArea';
-import { CMSPanel } from '../components/CMSPanel'; // <-- YENİ: CMS Paneli import edildi
+import { CMSPanel } from '../components/CMSPanel';
 import { getYouTubeEmbedUrl } from '../lib/videoUtils';
 
 // Helper for CSV Export
@@ -55,8 +55,8 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }: Si
         { id: 'DASHBOARD', icon: LayoutDashboard, label: 'Panel Özeti' },
         { id: 'TEAMS', icon: Clapperboard, label: 'Takım Yönetimi' },
         { id: 'USERS', icon: Users, label: 'Kullanıcılar & Jüri' },
-        { id: 'CMS', icon: LayoutTemplate, label: 'İçerik Yönetimi' }, // <-- YENİ: CMS Sekmesi
-        { id: 'SETTINGS', icon: Settings, label: 'Sistem Ayarları' },
+        { id: 'CMS', icon: LayoutTemplate, label: 'İçerik Yönetimi' },
+        { id: 'SETTINGS', icon: Settings, label: 'Ayarlar' },
         { id: 'LOGS', icon: List, label: 'Denetim Kayıtları' },
     ];
 
@@ -99,7 +99,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }: Si
                             key={item.id}
                             onClick={() => {
                                 setActiveTab(item.id);
-                                onClose(); // Close on mobile when clicked
+                                onClose();
                             }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
                                 activeTab === item.id 
@@ -223,7 +223,6 @@ const AdminDashboard = ({ apps }: { apps: Application[] }) => {
     );
 };
 
-// ... (AdminUsers component remains unchanged) ...
 const AdminUsers = () => {
     const { allUsers, updateUserRole, showToast } = useAppContext();
     const [filter, setFilter] = useState('');
@@ -315,8 +314,6 @@ const AdminUsers = () => {
         </div>
     );
 };
-
-// --- TEAM MANAGEMENT ---
 
 const AdminTeams = ({ apps, onSelectApp }: { apps: Application[], onSelectApp: (app: Application) => void }) => {
     const [filter, setFilter] = useState('');
@@ -446,8 +443,6 @@ const AdminTeams = ({ apps, onSelectApp }: { apps: Application[], onSelectApp: (
     );
 };
 
-// --- MAIN PAGE ---
-
 export const Admin: React.FC = () => {
   const { allApplications, updateApplication, logAction, systemSettings, updateSystemSettings, auditLogs, logout, fetchJuryScores, loading, showToast } = useAppContext();
   const [activeTab, setActiveTab] = useState('DASHBOARD');
@@ -526,7 +521,6 @@ export const Admin: React.FC = () => {
         onClose={() => setIsSidebarOpen(false)}
       />
       
-      {/* Main Content */}
       <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto w-full transition-all duration-300">
           <header className="flex justify-between items-center mb-6 md:mb-8">
               <div className="flex items-center gap-3">
@@ -540,7 +534,7 @@ export const Admin: React.FC = () => {
                       {activeTab === 'DASHBOARD' && 'Genel Bakış'}
                       {activeTab === 'TEAMS' && 'Takım Yönetimi'}
                       {activeTab === 'USERS' && 'Kullanıcılar & Jüri'}
-                      {activeTab === 'CMS' && 'İçerik Yönetimi'} {/* <-- YENİ: Başlık eklendi */}
+                      {activeTab === 'CMS' && 'İçerik Yönetimi'}
                       {activeTab === 'SETTINGS' && 'Sistem Ayarları'}
                       {activeTab === 'LOGS' && 'Denetim Kayıtları'}
                   </h2>
@@ -555,11 +549,10 @@ export const Admin: React.FC = () => {
                     {activeTab === 'DASHBOARD' && <AdminDashboard apps={allApplications} />}
                     {activeTab === 'TEAMS' && <AdminTeams apps={allApplications} onSelectApp={setSelectedApp} />}
                     {activeTab === 'USERS' && <AdminUsers />}
-                    {activeTab === 'CMS' && <CMSPanel />} {/* <-- YENİ: Panel burada gösteriliyor */}
+                    {activeTab === 'CMS' && <CMSPanel />}
                     
                     {activeTab === 'SETTINGS' && (
                         <div className="bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 max-w-2xl animate-fadeIn">
-                             {/* ... Settings Form ... */}
                              <h3 className="font-bold text-white mb-6 border-b border-slate-700 pb-4">Yarışma Takvimi</h3>
                              <form onSubmit={handleSettingsUpdate} className="space-y-6">
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -597,7 +590,6 @@ export const Admin: React.FC = () => {
 
                     {activeTab === 'LOGS' && (
                         <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden animate-fadeIn">
-                            {/* ... Logs Table ... */}
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left min-w-[600px]">
                                     <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase">
@@ -627,7 +619,6 @@ export const Admin: React.FC = () => {
           </div>
       </main>
 
-      {/* Team Detail Modal */}
       {selectedApp && (
           <div className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-sm flex justify-end animate-fadeIn">
               <div className="w-full max-w-2xl bg-slate-900 h-full border-l border-slate-700 p-6 md:p-8 overflow-y-auto shadow-2xl relative">
@@ -652,16 +643,13 @@ export const Admin: React.FC = () => {
                       </div>
                   </div>
 
-                  {/* Messaging Section */}
                   <div className="mb-8">
                         <ChatArea appId={selectedApp.id} />
                   </div>
                   
-                  {/* VIDEO MANAGEMENT SECTION */}
                   <div className="mb-8 bg-slate-950 p-6 rounded-xl border border-slate-800">
                       <h3 className="text-sm font-bold text-white uppercase mb-4 flex items-center gap-2"><Video size={16} className="text-rose-500"/> Video İşlemleri</h3>
                       
-                      {/* Teacher Submission Link Display */}
                       {selectedApp.team.submissionDownloadUrl && (
                           <div className="mb-6 p-4 bg-blue-900/20 border border-blue-900/50 rounded-xl">
                               <label className="text-xs font-bold text-blue-400 uppercase mb-2 flex items-center gap-2">
@@ -688,7 +676,6 @@ export const Admin: React.FC = () => {
                           </div>
                       )}
 
-                      {/* YouTube Link Input */}
                       <div>
                            <label className="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-2">
                                <Youtube size={14} className="text-red-500"/> YouTube Linki Tanımla
@@ -719,8 +706,6 @@ export const Admin: React.FC = () => {
                       </div>
                   </div>
 
-
-                  {/* Scoring Section */}
                   <div className="mb-8">
                       <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 flex items-center gap-2"><Star size={16}/> Jüri Puanları</h3>
                       {appScores.length > 0 ? (
@@ -744,4 +729,33 @@ export const Admin: React.FC = () => {
                               ))}
                               <div className="flex justify-between items-center bg-slate-800 p-4 rounded-xl">
                                   <span className="font-bold text-white">Ortalama Puan</span>
-                                  <span
+                                  <span className="text-2xl font-black text-green-500">{selectedApp.finalScore}</span>
+                              </div>
+                          </div>
+                      ) : (
+                          <div className="text-slate-500 text-sm italic">Henüz puanlama yapılmamış.</div>
+                      )}
+                  </div>
+
+                  <div className="mt-auto pt-6 border-t border-slate-800 pb-10 md:pb-0">
+                      <h3 className="text-sm font-bold text-slate-500 uppercase mb-4">Yönetim İşlemleri</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                           <button onClick={() => toggleFinalist(selectedApp)} className={`p-4 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transition-all ${selectedApp.team.isFinalist ? 'bg-amber-500/10 text-amber-500 border border-amber-500/50' : 'bg-slate-800 text-slate-400 hover:bg-amber-500 hover:text-black'}`}>
+                               <Star size={24} className={selectedApp.team.isFinalist ? "fill-current" : ""}/>
+                               {selectedApp.team.isFinalist ? "Finalistliği Kaldır" : "Finalist Yap"}
+                           </button>
+                           <button 
+                             onClick={() => handleStatusChange(selectedApp, ApplicationStatus.DISQUALIFIED)}
+                             className="bg-slate-800 hover:bg-red-900/30 text-slate-400 hover:text-red-500 p-4 rounded-xl font-bold flex flex-col items-center justify-center gap-2 border border-slate-800 hover:border-red-500/30 transition-all"
+                           >
+                               <Trash2 size={24} />
+                               Diskalifiye Et
+                           </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
+    </div>
+  );
+};
