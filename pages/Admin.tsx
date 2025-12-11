@@ -1,14 +1,15 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
     Search, Check, X, Eye, Award, FileText, Shield, Inbox, Download, 
     Users, Film, School, Mail, AlertTriangle, Send, Clapperboard, Video, 
     Cpu, Activity, PieChart, BarChart3, Clock, UserCheck, Star, Plus, Lock, 
-    Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog, MessageSquare, ExternalLink, Link as LinkIcon, Save, Youtube
+    Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog, MessageSquare, ExternalLink, Link as LinkIcon, Save, Youtube,
+    LayoutTemplate // <-- YENİ: İkon eklendi
 } from 'lucide-react';
 import { ApplicationStatus, Category, Application, UserRole, LogEntry, SystemSettings, ScoreDocument } from '../types';
 import { useAppContext } from '../context/AppContext';
 import { ChatArea } from '../components/ChatArea';
+import { CMSPanel } from '../components/CMSPanel'; // <-- YENİ: CMS Paneli import edildi
 import { getYouTubeEmbedUrl } from '../lib/videoUtils';
 
 // Helper for CSV Export
@@ -24,7 +25,6 @@ const exportToCSV = (data: any[], filename: string) => {
     document.body.removeChild(link);
 };
 
-// ... (Sidebar and Skeleton components remain unchanged) ...
 // Skeleton Loader Component
 const AdminSkeleton = () => {
     return (
@@ -55,7 +55,8 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }: Si
         { id: 'DASHBOARD', icon: LayoutDashboard, label: 'Panel Özeti' },
         { id: 'TEAMS', icon: Clapperboard, label: 'Takım Yönetimi' },
         { id: 'USERS', icon: Users, label: 'Kullanıcılar & Jüri' },
-        { id: 'SETTINGS', icon: Settings, label: 'Ayarlar' },
+        { id: 'CMS', icon: LayoutTemplate, label: 'İçerik Yönetimi' }, // <-- YENİ: CMS Sekmesi
+        { id: 'SETTINGS', icon: Settings, label: 'Sistem Ayarları' },
         { id: 'LOGS', icon: List, label: 'Denetim Kayıtları' },
     ];
 
@@ -539,6 +540,7 @@ export const Admin: React.FC = () => {
                       {activeTab === 'DASHBOARD' && 'Genel Bakış'}
                       {activeTab === 'TEAMS' && 'Takım Yönetimi'}
                       {activeTab === 'USERS' && 'Kullanıcılar & Jüri'}
+                      {activeTab === 'CMS' && 'İçerik Yönetimi'} {/* <-- YENİ: Başlık eklendi */}
                       {activeTab === 'SETTINGS' && 'Sistem Ayarları'}
                       {activeTab === 'LOGS' && 'Denetim Kayıtları'}
                   </h2>
@@ -553,6 +555,7 @@ export const Admin: React.FC = () => {
                     {activeTab === 'DASHBOARD' && <AdminDashboard apps={allApplications} />}
                     {activeTab === 'TEAMS' && <AdminTeams apps={allApplications} onSelectApp={setSelectedApp} />}
                     {activeTab === 'USERS' && <AdminUsers />}
+                    {activeTab === 'CMS' && <CMSPanel />} {/* <-- YENİ: Panel burada gösteriliyor */}
                     
                     {activeTab === 'SETTINGS' && (
                         <div className="bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 max-w-2xl animate-fadeIn">
@@ -574,10 +577,10 @@ export const Admin: React.FC = () => {
                                      <h4 className="text-white font-bold mb-4">Özellikler</h4>
                                      <div className="flex items-center gap-2 mb-4">
                                          <input 
-                                            type="checkbox" 
-                                            checked={systemSettings.features.publicVotingActive}
-                                            onChange={(e) => updateSystemSettings({...systemSettings, features: {...systemSettings.features, publicVotingActive: e.target.checked}})}
-                                            className="w-5 h-5 rounded border-slate-700 bg-slate-900 accent-rose-600"
+                                             type="checkbox" 
+                                             checked={systemSettings.features.publicVotingActive}
+                                             onChange={(e) => updateSystemSettings({...systemSettings, features: {...systemSettings.features, publicVotingActive: e.target.checked}})}
+                                             className="w-5 h-5 rounded border-slate-700 bg-slate-900 accent-rose-600"
                                          />
                                          <label className="text-slate-300 text-sm">Halk Oylaması Aktif</label>
                                      </div>
@@ -651,10 +654,10 @@ export const Admin: React.FC = () => {
 
                   {/* Messaging Section */}
                   <div className="mb-8">
-                       <ChatArea appId={selectedApp.id} />
+                        <ChatArea appId={selectedApp.id} />
                   </div>
                   
-                  {/* VIDEO MANAGEMENT SECTION (NEW) */}
+                  {/* VIDEO MANAGEMENT SECTION */}
                   <div className="mb-8 bg-slate-950 p-6 rounded-xl border border-slate-800">
                       <h3 className="text-sm font-bold text-white uppercase mb-4 flex items-center gap-2"><Video size={16} className="text-rose-500"/> Video İşlemleri</h3>
                       
@@ -707,9 +710,9 @@ export const Admin: React.FC = () => {
                            {selectedApp.team.videoUrl && (
                                <div className="mt-4 rounded-lg overflow-hidden border border-slate-800">
                                    <iframe 
-                                      src={getYouTubeEmbedUrl(selectedApp.team.videoUrl) || ""} 
-                                      className="w-full aspect-video" 
-                                      allowFullScreen
+                                     src={getYouTubeEmbedUrl(selectedApp.team.videoUrl) || ""} 
+                                     className="w-full aspect-video" 
+                                     allowFullScreen
                                    ></iframe>
                                </div>
                            )}
@@ -741,34 +744,4 @@ export const Admin: React.FC = () => {
                               ))}
                               <div className="flex justify-between items-center bg-slate-800 p-4 rounded-xl">
                                   <span className="font-bold text-white">Ortalama Puan</span>
-                                  <span className="text-2xl font-black text-green-500">{selectedApp.finalScore}</span>
-                              </div>
-                          </div>
-                      ) : (
-                          <div className="text-slate-500 text-sm italic">Henüz puanlama yapılmamış.</div>
-                      )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="mt-auto pt-6 border-t border-slate-800 pb-10 md:pb-0">
-                      <h3 className="text-sm font-bold text-slate-500 uppercase mb-4">Yönetim İşlemleri</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                           <button onClick={() => toggleFinalist(selectedApp)} className={`p-4 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transition-all ${selectedApp.team.isFinalist ? 'bg-amber-500/10 text-amber-500 border border-amber-500/50' : 'bg-slate-800 text-slate-400 hover:bg-amber-500 hover:text-black'}`}>
-                               <Star size={24} className={selectedApp.team.isFinalist ? "fill-current" : ""}/>
-                               {selectedApp.team.isFinalist ? "Finalistliği Kaldır" : "Finalist Yap"}
-                           </button>
-                           <button 
-                             onClick={() => handleStatusChange(selectedApp, ApplicationStatus.DISQUALIFIED)}
-                             className="bg-slate-800 hover:bg-red-900/30 text-slate-400 hover:text-red-500 p-4 rounded-xl font-bold flex flex-col items-center justify-center gap-2 border border-slate-800 hover:border-red-500/30 transition-all"
-                           >
-                               <Trash2 size={24} />
-                               Diskalifiye Et
-                           </button>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      )}
-    </div>
-  );
-};
+                                  <span
