@@ -4,32 +4,168 @@ import {
   BookOpen, Clapperboard, Download, 
   ChevronRight, CheckCircle2, Award, Star, Film, 
   Camera, PenTool, Scissors, Play, Wand2, Layers, 
-  Mic2, Settings, MessageCircle, Music, Tv, Users, MonitorPlay, Lightbulb, FileText, Share2, Video
+  Mic2, Settings, MessageCircle, Music, Tv, Users, MonitorPlay, Lightbulb, FileText, Share2, Video, Cpu, Link as LinkIcon, Calendar, Lock
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { CMSAcademyItem } from '../types';
+
+// Extended type for local resources
+interface AcademyItemWithTag extends CMSAcademyItem {
+    subTag?: 'Genel' | 'Yapay Zeka' | 'Canlı Çekim';
+}
+
+// 12 Free Resources
+const STATIC_PREP_RESOURCES: AcademyItemWithTag[] = [
+  {
+    id: 'static-1',
+    title: 'Senaryo Yazım Formatı',
+    description: 'Endüstri standardı senaryo formatı (Fransız/Amerikan). Sahne başlığı, eylem ve diyalog yazım kuralları.',
+    type: 'PDF',
+    url: 'https://www.senaryo.org/wp-content/uploads/2023/01/Senaryo-Sablonu.pdf',
+    category: 'Hazırlık',
+    subTag: 'Genel'
+  },
+  {
+    id: 'static-2',
+    title: 'Storyboard Şablonu',
+    description: 'Çekim öncesi görsel planlama için kare kare çizim şablonu. Kamera açılarını ve hareketlerini not alın.',
+    type: 'PDF',
+    url: '#',
+    category: 'Hazırlık',
+    subTag: 'Genel'
+  },
+  {
+    id: 'static-3',
+    title: 'Çekim Ölçekleri Rehberi',
+    description: 'Geniş plan, detay plan, omuz plan... Hangi ölçek ne zaman kullanılır? Görsel anlatım dili rehberi.',
+    type: 'PDF',
+    url: '#',
+    category: 'Hazırlık',
+    subTag: 'Canlı Çekim'
+  },
+  {
+    id: 'static-4',
+    title: 'AI Prompt Mühendisliği',
+    description: 'Midjourney ve DALL-E için etkili prompt yazma teknikleri. Işık, stil ve lens parametreleri sözlüğü.',
+    type: 'LINK',
+    url: '#',
+    category: 'Hazırlık',
+    subTag: 'Yapay Zeka'
+  },
+  {
+    id: 'static-5',
+    title: 'Film Analizi Formu',
+    description: 'İzlediğiniz filmleri veya kendi senaryonuzu analiz ederken kullanabileceğiniz dramatik yapı çözümleme formu.',
+    type: 'PDF',
+    url: '#',
+    category: 'Hazırlık',
+    subTag: 'Genel'
+  },
+  {
+    id: 'static-6',
+    title: 'Kurgu Terimleri Sözlüğü',
+    description: 'Kuleshov etkisi, J-Cut, L-Cut gibi temel kurgu terimleri ve kullanım amaçları.',
+    type: 'PDF',
+    url: '#',
+    category: 'Hazırlık',
+    subTag: 'Genel'
+  },
+  {
+    id: 'static-7',
+    title: 'Ses Kayıt & Mikrofon',
+    description: 'Temiz ses almanın püf noktaları. Mikrofon konumlandırma ve ortam sesi yönetimi.',
+    type: 'VIDEO',
+    url: '#',
+    category: 'Hazırlık',
+    subTag: 'Canlı Çekim'
+  },
+  {
+    id: 'static-8',
+    title: 'Runway Gen-2 Rehberi',
+    description: 'Metinden videoya (Text-to-Video) ve Resimden videoya (Image-to-Video) oluşturma teknikleri.',
+    type: 'VIDEO',
+    url: '#',
+    category: 'Hazırlık',
+    subTag: 'Yapay Zeka'
+  },
+  {
+    id: 'static-9',
+    title: 'Telifsiz Kaynaklar Listesi',
+    description: 'Projelerinizde yasal olarak kullanabileceğiniz ücretsiz müzik, ses efekti ve stok video siteleri.',
+    type: 'LINK',
+    url: '#',
+    category: 'Hazırlık',
+    subTag: 'Genel'
+  },
+  {
+    id: 'static-10',
+    title: 'Prodüksiyon Takvimi',
+    description: 'Çekim günlerini planlamak ve kaynakları yönetmek için hazır planlama dosyası.',
+    type: 'PDF',
+    url: '#',
+    category: 'Hazırlık',
+    subTag: 'Canlı Çekim'
+  },
+  {
+    id: 'static-11',
+    title: 'Sinematik Işık Kurulumu',
+    description: 'Üç nokta ışık tekniği (Key, Fill, Back Light) ve doğal ışığı verimli kullanma yöntemleri.',
+    type: 'VIDEO',
+    url: '#',
+    category: 'Hazırlık',
+    subTag: 'Canlı Çekim'
+  },
+  {
+    id: 'static-12',
+    title: 'AI Seslendirme Araçları',
+    description: 'ElevenLabs ve Adobe Podcast kullanarak karakter seslendirme ve ses kalitesini iyileştirme rehberi.',
+    type: 'LINK',
+    url: '#',
+    category: 'Hazırlık',
+    subTag: 'Yapay Zeka'
+  }
+];
 
 export const Academy: React.FC = () => {
   const { cmsAcademy } = useAppContext();
-  const [activeWorkshop, setActiveWorkshop] = useState<'AI' | 'LIVE'>('AI');
-
-  // Group Academy Items
-  const prepItems = cmsAcademy.filter(i => i.category === 'Hazırlık');
-  const prodItems = cmsAcademy.filter(i => i.category === 'Prodüksiyon');
-  const postItems = cmsAcademy.filter(i => i.category === 'Post-Prodüksiyon');
-
+  
+  // Group Academy Items & Merge with Static
+  const prepItems: AcademyItemWithTag[] = [...cmsAcademy.filter(i => i.category === 'Hazırlık'), ...STATIC_PREP_RESOURCES];
+  
   // Fallback for demo if CMS is empty
-  const hasContent = cmsAcademy.length > 0;
+  const hasContent = prepItems.length > 0;
 
   const renderIcon = (type: string) => {
       switch(type) {
           case 'PDF': return <FileText size={80} />;
           case 'VIDEO': return <Video size={80} />;
+          case 'LINK': return <LinkIcon size={80} />;
           default: return <BookOpen size={80} />;
       }
   };
 
+  const getSubTagColor = (tag?: string) => {
+      switch(tag) {
+          case 'Yapay Zeka': return 'bg-purple-900/50 text-purple-300 border-purple-500/30';
+          case 'Canlı Çekim': return 'bg-teal-900/50 text-teal-300 border-teal-500/30';
+          default: return 'bg-amber-900/30 text-amber-300 border-amber-500/30';
+      }
+  };
+
+  const getSubTagIcon = (tag?: string) => {
+      switch(tag) {
+          case 'Yapay Zeka': return <Cpu size={12} className="mr-1"/>;
+          case 'Canlı Çekim': return <Camera size={12} className="mr-1"/>;
+          default: return <BookOpen size={12} className="mr-1"/>;
+      }
+  };
+
   const handleOpen = (url: string) => {
-      window.open(url, '_blank');
+      if (url && url !== '#') {
+          window.open(url, '_blank');
+      } else {
+          alert('Bu kaynak yakında erişime açılacaktır.');
+      }
   };
 
   return (
@@ -83,77 +219,176 @@ export const Academy: React.FC = () => {
                     <div className="col-span-3 text-center py-10 text-slate-500">İçerik yükleniyor veya henüz eklenmemiş.</div>
                 )}
                 {prepItems.map((item, idx) => (
-                    <div key={idx} onClick={() => handleOpen(item.url)} className="cursor-pointer group bg-slate-800/50 p-8 rounded-2xl border border-slate-700 shadow-lg hover:shadow-2xl hover:border-teal-500/50 hover:bg-slate-800 transition-all duration-300 relative overflow-hidden">
+                    <div key={idx} onClick={() => handleOpen(item.url)} className="cursor-pointer group bg-slate-800/50 p-8 rounded-2xl border border-slate-700 shadow-lg hover:shadow-2xl hover:border-teal-500/50 hover:bg-slate-800 transition-all duration-300 relative overflow-hidden flex flex-col h-full">
                         <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 text-white">
                             {renderIcon(item.type)}
                         </div>
-                        <div className="flex items-center gap-3 mb-4">
-                            <span className="px-3 py-1 rounded-full bg-slate-900 text-slate-400 border border-slate-700 text-xs font-bold uppercase tracking-wider group-hover:bg-teal-900/30 group-hover:text-teal-400 group-hover:border-teal-500/30 transition-colors">
+                        
+                        <div className="flex items-center gap-2 mb-4">
+                            <span className="px-3 py-1 rounded-full bg-slate-950 text-slate-400 border border-slate-700 text-[10px] font-bold uppercase tracking-wider group-hover:bg-slate-900 transition-colors">
                                 {item.type}
                             </span>
+                            {/* Sub Tag Badge */}
+                            {(item.subTag || item.category === 'Hazırlık') && (
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center ${getSubTagColor(item.subTag)}`}>
+                                    {getSubTagIcon(item.subTag)}
+                                    {item.subTag || 'Genel'}
+                                </span>
+                            )}
                         </div>
-                        <h3 className="font-bold text-white text-xl mb-3 group-hover:text-teal-400 transition-colors">{item.title}</h3>
-                        <p className="text-slate-400 leading-relaxed mb-6">
+
+                        <h3 className="font-bold text-white text-xl mb-3 group-hover:text-teal-400 transition-colors leading-tight">
+                            {item.title}
+                        </h3>
+                        <p className="text-slate-400 text-sm leading-relaxed mb-6 flex-1">
                             {item.description}
                         </p>
-                        <button className="text-slate-500 font-bold text-sm flex items-center gap-2 group-hover:text-teal-500 transition-colors">
-                            Kaynağı İncele <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                        </button>
+                        
+                        <div className="mt-auto pt-4 border-t border-slate-700/50">
+                            <button className="text-slate-500 font-bold text-xs uppercase tracking-widest flex items-center gap-2 group-hover:text-teal-500 transition-colors">
+                                Kaynağı İncele <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        </div>
                     </div>
                 ))}
              </div>
          </div>
       </section>
 
-      {/* 4. LEVEL 2: PRODUCTION & POST (CMS Driven) */}
+      {/* 4. LEVEL 2: FINALIST ACADEMY SCHEDULE (New Feature) */}
       <div className="bg-slate-900 text-slate-300 relative overflow-hidden pb-32 pt-10 border-t border-slate-800">
           <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }}></div>
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-rose-600/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
               
-              <div className="text-center mb-24">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800 border border-slate-700 text-amber-400 text-sm font-bold tracking-widest uppercase mb-6 shadow-[0_0_15px_rgba(251,191,36,0.1)]">
-                      <Star size={14} className="fill-current" /> İleri Seviye Kaynaklar
+              <div className="text-center mb-16">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-900/30 border border-rose-500/30 text-rose-400 text-xs font-bold tracking-widest uppercase mb-6 shadow-lg">
+                      <Star size={14} className="fill-current" /> Sadece Finalistler İçin
                   </div>
-                  <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight mb-4 drop-shadow-2xl">
-                    Prodüksiyon & Post
+                  <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight mb-6 drop-shadow-2xl">
+                    Finalistlere Özel Akademi
                   </h2>
+                  <p className="text-xl text-slate-400 max-w-3xl mx-auto font-light leading-relaxed">
+                      Finale kalan <span className="text-teal-400 font-bold">10 Canlı Çekim</span> ve <span className="text-purple-400 font-bold">10 Yapay Zeka</span> ekibi için, 
+                      sektör profesyonelleriyle gerçekleştirilecek 3 günlük yoğunlaştırılmış online atölye programı.
+                  </p>
               </div>
 
-              {/* Prod & Post Grid */}
-              <div className="grid md:grid-cols-2 gap-12">
-                  {/* Prodüksiyon Column */}
-                  <div>
-                      <h3 className="text-2xl font-bold text-white mb-6 border-b border-slate-700 pb-2 flex items-center gap-3">
-                          <Camera size={24} className="text-rose-500" /> Prodüksiyon
-                      </h3>
-                      <div className="space-y-4">
-                          {prodItems.map((item, idx) => (
-                              <div key={idx} onClick={() => handleOpen(item.url)} className="bg-slate-800/40 border border-slate-700 hover:border-rose-500/50 p-5 rounded-xl cursor-pointer hover:bg-slate-800 transition-all group">
-                                  <h4 className="font-bold text-white mb-1 group-hover:text-rose-400 transition-colors">{item.title}</h4>
-                                  <p className="text-sm text-slate-400">{item.description}</p>
-                              </div>
-                          ))}
-                          {prodItems.length === 0 && <p className="text-slate-500 italic">Yakında eklenecek.</p>}
+              {/* Schedule Grid */}
+              <div className="grid md:grid-cols-3 gap-8 relative">
+                  
+                  {/* Connection Line (Desktop) */}
+                  <div className="absolute top-12 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-rose-900/50 to-transparent hidden md:block -z-10"></div>
+
+                  {/* Day 1 */}
+                  <div className="bg-slate-800/50 border border-slate-700 p-8 rounded-3xl relative overflow-hidden group hover:bg-slate-800 hover:border-amber-500/50 transition-all duration-300">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-amber-500/10 transition-colors"></div>
+                      
+                      <div className="flex justify-between items-start mb-6">
+                          <div className="bg-amber-900/30 text-amber-500 px-4 py-1.5 rounded-lg text-sm font-bold border border-amber-500/30">
+                              6 Nisan
+                          </div>
+                          <div className="p-3 bg-slate-900 rounded-xl text-slate-400 group-hover:text-white border border-slate-800 transition-colors">
+                              <BookOpen size={24} />
+                          </div>
+                      </div>
+                      
+                      <h3 className="text-2xl font-black text-white mb-2 leading-tight">Hikaye & Senaryo</h3>
+                      <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-6">Online • 20:00 - 22:00</p>
+                      
+                      <ul className="space-y-4 mb-8">
+                          <li className="flex items-start text-sm text-slate-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 mr-3 flex-shrink-0 shadow-[0_0_5px_rgba(245,158,11,0.5)]"></span>
+                              Senaryo Matematiği ve Çatışma
+                          </li>
+                          <li className="flex items-start text-sm text-slate-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 mr-3 flex-shrink-0"></span>
+                              Karakter Derinliği Oluşturma
+                          </li>
+                          <li className="flex items-start text-sm text-slate-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 mr-3 flex-shrink-0"></span>
+                              Tema ve Mesaj Dengesi
+                          </li>
+                      </ul>
+
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-t border-slate-700/50 pt-4">
+                          <Lock size={12} className="text-rose-500"/> Sadece Davetliler
                       </div>
                   </div>
 
-                  {/* Post-Prodüksiyon Column */}
-                  <div>
-                      <h3 className="text-2xl font-bold text-white mb-6 border-b border-slate-700 pb-2 flex items-center gap-3">
-                          <MonitorPlay size={24} className="text-amber-500" /> Post-Prodüksiyon
-                      </h3>
-                      <div className="space-y-4">
-                          {postItems.map((item, idx) => (
-                              <div key={idx} onClick={() => handleOpen(item.url)} className="bg-slate-800/40 border border-slate-700 hover:border-amber-500/50 p-5 rounded-xl cursor-pointer hover:bg-slate-800 transition-all group">
-                                  <h4 className="font-bold text-white mb-1 group-hover:text-amber-400 transition-colors">{item.title}</h4>
-                                  <p className="text-sm text-slate-400">{item.description}</p>
-                              </div>
-                          ))}
-                          {postItems.length === 0 && <p className="text-slate-500 italic">Yakında eklenecek.</p>}
+                  {/* Day 2 */}
+                  <div className="bg-slate-800/50 border border-slate-700 p-8 rounded-3xl relative overflow-hidden group hover:bg-slate-800 hover:border-teal-500/50 transition-all duration-300 transform md:-translate-y-4">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-teal-500/10 transition-colors"></div>
+                      
+                      <div className="flex justify-between items-start mb-6">
+                          <div className="bg-teal-900/30 text-teal-400 px-4 py-1.5 rounded-lg text-sm font-bold border border-teal-500/30">
+                              8 Nisan
+                          </div>
+                          <div className="p-3 bg-slate-900 rounded-xl text-slate-400 group-hover:text-white border border-slate-800 transition-colors">
+                              <Camera size={24} />
+                          </div>
+                      </div>
+                      
+                      <h3 className="text-2xl font-black text-white mb-2 leading-tight">Görüntü & Teknik</h3>
+                      <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-6">Online • 20:00 - 22:00</p>
+                      
+                      <ul className="space-y-4 mb-8">
+                          <li className="flex items-start text-sm text-slate-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-teal-500 mt-2 mr-3 flex-shrink-0 shadow-[0_0_5px_rgba(20,184,166,0.5)]"></span>
+                              Sinematografik Aydınlatma (Live)
+                          </li>
+                          <li className="flex items-start text-sm text-slate-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-teal-500 mt-2 mr-3 flex-shrink-0"></span>
+                              İleri Seviye Prompt Yazımı (AI)
+                          </li>
+                          <li className="flex items-start text-sm text-slate-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-teal-500 mt-2 mr-3 flex-shrink-0"></span>
+                              Görsel Tutarlılık ve Stil
+                          </li>
+                      </ul>
+
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-t border-slate-700/50 pt-4">
+                          <Lock size={12} className="text-rose-500"/> Sadece Davetliler
                       </div>
                   </div>
+
+                  {/* Day 3 */}
+                  <div className="bg-slate-800/50 border border-slate-700 p-8 rounded-3xl relative overflow-hidden group hover:bg-slate-800 hover:border-purple-500/50 transition-all duration-300">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-purple-500/10 transition-colors"></div>
+                      
+                      <div className="flex justify-between items-start mb-6">
+                          <div className="bg-purple-900/30 text-purple-400 px-4 py-1.5 rounded-lg text-sm font-bold border border-purple-500/30">
+                              10 Nisan
+                          </div>
+                          <div className="p-3 bg-slate-900 rounded-xl text-slate-400 group-hover:text-white border border-slate-800 transition-colors">
+                              <Scissors size={24} />
+                          </div>
+                      </div>
+                      
+                      <h3 className="text-2xl font-black text-white mb-2 leading-tight">Kurgu & Ses</h3>
+                      <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-6">Online • 20:00 - 22:00</p>
+                      
+                      <ul className="space-y-4 mb-8">
+                          <li className="flex items-start text-sm text-slate-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 mr-3 flex-shrink-0 shadow-[0_0_5px_rgba(168,85,247,0.5)]"></span>
+                              Ritmik Kurgu Teknikleri
+                          </li>
+                          <li className="flex items-start text-sm text-slate-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 mr-3 flex-shrink-0"></span>
+                              Ses Tasarımı ve Foley
+                          </li>
+                          <li className="flex items-start text-sm text-slate-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 mr-3 flex-shrink-0"></span>
+                              Renk Düzenleme (Color Grading)
+                          </li>
+                      </ul>
+
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-t border-slate-700/50 pt-4">
+                          <Lock size={12} className="text-rose-500"/> Sadece Davetliler
+                      </div>
+                  </div>
+
               </div>
 
           </div>

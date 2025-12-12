@@ -18,8 +18,15 @@ import {
   increment,
   writeBatch
 } from 'firebase/firestore';
-import firebase from 'firebase/compat/app'; 
-import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'; 
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  signOut,
+  onAuthStateChanged 
+} from 'firebase/auth'; 
 import { auth, db } from '../lib/firebase';
 import { Application, ApplicationStatus, UserRole, EvaluationCriteria, UserProfile, SystemSettings, LogEntry, ScoreDocument, ToastMessage, Notification, ChatMessage, CMSGeneral, CMSFaqItem, CMSGalleryItem, NotificationTarget, CMSAcademyItem, CMSTimelineItem, CMSPrize, CMSLinks } from '../types';
 
@@ -134,6 +141,37 @@ const DEFAULT_CMS_LINKS: CMSLinks = {
     posterUrl: ''
 };
 
+// Default FAQs - UPDATED (20 Items)
+const DEFAULT_CMS_FAQS: CMSFaqItem[] = [
+    // --- GENEL KATEGORİSİ ---
+    { id: 'gen1', category: 'Genel', question: 'Yarışmaya kimler katılabilir?', answer: 'Türkiye genelindeki tüm İmam Hatip Lisesi öğrencileri yarışmaya katılabilir. Öğrencilerin örgün eğitimde aktif kaydı bulunmalıdır.', order: 1 },
+    { id: 'gen2', category: 'Genel', question: 'Takımlar kaç kişiden oluşmalıdır?', answer: 'Takımlar en az 3, en fazla 6 öğrenciden oluşmalı ve her takımın başında mutlaka bir danışman öğretmen bulunmalıdır.', order: 2 },
+    { id: 'gen3', category: 'Genel', question: 'Katılım ücretli mi?', answer: 'Hayır, Reflect&Shoot kısa film yarışmasına katılım tamamen ücretsizdir.', order: 3 },
+    { id: 'gen4', category: 'Genel', question: 'Bir öğretmen birden fazla takıma danışmanlık yapabilir mi?', answer: 'Evet, bir danışman öğretmen aynı okuldan birden fazla takıma rehberlik edebilir. Ancak her takım için ayrı başvuru yapılmalıdır.', order: 4 },
+    { id: 'gen5', category: 'Genel', question: 'Bir öğrenci birden fazla takımda yer alabilir mi?', answer: 'Hayır, bir öğrenci yalnızca tek bir takımda ve tek bir projede görev alabilir.', order: 5 },
+    
+    // --- TEKNİK KATEGORİSİ ---
+    { id: 'tech1', category: 'Teknik', question: 'Profesyonel kamera zorunlu mu?', answer: 'Hayır, yüksek çözünürlüklü (en az 1080p) çekim yapan cep telefonu kameraları ile çekilen filmler de kabul edilmektedir. Önemli olan hikaye, kurgu ve anlatım dilidir.', order: 6 },
+    { id: 'tech2', category: 'Teknik', question: 'Film süresi ne kadar olmalı?', answer: 'Filmler jenerik dahil en az 3, en fazla 8 dakika uzunluğunda olmalıdır. Bu süre sınırlarına uymayan eserler değerlendirmeye alınmaz.', order: 7 },
+    { id: 'tech3', category: 'Teknik', question: 'Hangi dosya formatında teslim etmeliyiz?', answer: 'Videolar MP4 veya MOV formatında, en az 1920x1080 (Full HD) çözünürlükte ve yatay formatta (16:9) olmalıdır.', order: 8 },
+    { id: 'tech4', category: 'Teknik', question: 'Filmin dili ne olmalıdır?', answer: 'Filmin seslendirmesi veya konuşma dili İngilizce olmalı, mutlaka Türkçe altyazı eklenmelidir. Sessiz filmlerde de ara yazılar (varsa) İngilizce olmalıdır.', order: 9 },
+    { id: 'tech5', category: 'Teknik', question: 'Müzik kullanımında telif haklarına dikkat etmeli miyiz?', answer: 'Evet, kullanılan müzikler ya özgün bestelenmiş olmalı ya da telifsiz (royalty-free) kütüphanelerden lisansına uygun şekilde alınmalıdır. Telif ihlali diskalifiye sebebidir.', order: 10 },
+    { id: 'tech6', category: 'Teknik', question: 'Yapay Zeka (AI) araçları kullanılabilir mi?', answer: '"Yapay Zeka Animasyon" kategorisinde ana üretim aracı olarak kullanılabilir. "Canlı Çekim" kategorisinde ise sadece post-prodüksiyon (renk, ses temizleme vb.) aşamasında yardımcı araç olarak kullanılabilir, ana görüntüler gerçek çekim olmalıdır.', order: 11 },
+
+    // --- SÜREÇ & TESLİM KATEGORİSİ ---
+    { id: 'proc1', category: 'Süreç & Teslim', question: 'Son başvuru tarihi nedir?', answer: 'Takım oluşturma ve ön başvuru işlemleri 13 Şubat 2026 tarihine kadar tamamlanmalıdır.', order: 12 },
+    { id: 'proc2', category: 'Süreç & Teslim', question: 'Videomuzu nereye yükleyeceğiz?', answer: 'Video dosyanızı Google Drive, WeTransfer veya Dropbox gibi bir bulut servisine yükleyip, indirme linkini Danışman Öğretmen paneli üzerinden sisteme gireceksiniz.', order: 13 },
+    { id: 'proc3', category: 'Süreç & Teslim', question: 'Başvuruyu tamamladıktan sonra takım bilgilerini değiştirebilir miyiz?', answer: 'Başvurunuz "Onaylandı" statüsüne geçene kadar değişiklik yapabilirsiniz. Onaylandıktan sonra sadece yönetici izni ile kritik değişiklikler yapılabilir.', order: 14 },
+    { id: 'proc4', category: 'Süreç & Teslim', question: 'Senaryo metnini göndermemiz gerekiyor mu?', answer: 'İlk aşamada sadece filmin kendisi (video dosyası) talep edilmektedir. Ancak jüri gerekli görürse finalistlerden senaryo dökümü isteyebilir.', order: 15 },
+    { id: 'proc5', category: 'Süreç & Teslim', question: 'Video linki şifreli olabilir mi?', answer: 'Hayır, paylaştığınız linkin "bağlantıya sahip olan herkes görüntüleyebilir" ayarında olması gerekmektedir. Şifreli linkler değerlendirmeye alınamaz.', order: 16 },
+    
+    // --- ÖDÜLLER & DEĞERLENDİRME KATEGORİSİ ---
+    { id: 'awd1', category: 'Ödüller & Değerlendirme', question: 'Değerlendirme kriterleri nelerdir?', answer: 'Projeler; Senaryo/Hikaye (%30), Teknik Kalite (%25), Özgünlük/Yaratıcılık (%25) ve Kurgu/Montaj (%20) olmak üzere 100 puan üzerinden değerlendirilir.', order: 17 },
+    { id: 'awd2', category: 'Ödüller & Değerlendirme', question: 'Ödüller ne zaman verilecek?', answer: 'Ödüller, 22 Mayıs 2026 tarihinde düzenlenecek olan Gala gecesinde sahiplerini bulacaktır.', order: 18 },
+    { id: 'awd3', category: 'Ödüller & Değerlendirme', question: 'Halk oylaması sonucu etkiliyor mu?', answer: 'Halk oylaması, jüri puanlamasından bağımsız olarak "En İyi Seyirci Ödülü"nü belirler. Ana derecelendirme (1., 2., 3.) sadece jüri puanlarıyla belirlenir.', order: 19 },
+    { id: 'awd4', category: 'Ödüller & Değerlendirme', question: 'Para ödülleri kime ödenir?', answer: 'Para ödülleri, takımı temsilen Danışman Öğretmen\'e veya okul idaresinin belirlediği hesaba yatırılır. Ödülün ekip içindeki dağılımı takımın sorumluluğundadır.', order: 20 }
+];
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -149,7 +187,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // CMS State
   const [cmsGeneral, setCmsGeneral] = useState<CMSGeneral>(DEFAULT_CMS_GENERAL);
   const [cmsLinks, setCmsLinks] = useState<CMSLinks>(DEFAULT_CMS_LINKS);
-  const [cmsFaqs, setCmsFaqs] = useState<CMSFaqItem[]>([]);
+  const [cmsFaqs, setCmsFaqs] = useState<CMSFaqItem[]>(DEFAULT_CMS_FAQS);
   const [cmsGallery, setCmsGallery] = useState<CMSGalleryItem[]>([]);
   const [cmsAcademy, setCmsAcademy] = useState<CMSAcademyItem[]>([]);
   const [cmsTimeline, setCmsTimeline] = useState<CMSTimelineItem[]>([]);
@@ -179,7 +217,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // 1. Listen to Firebase Auth State Changes
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    // Modular: onAuthStateChanged(auth, callback)
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const userDocRef = doc(db, "users", user.uid);
         try {
@@ -233,7 +272,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const unsubFaqs = onSnapshot(qFaqs, (snap) => {
         const faqs: CMSFaqItem[] = [];
         snap.forEach(d => faqs.push({ id: d.id, ...d.data() } as CMSFaqItem));
-        setCmsFaqs(faqs);
+        // Use defaults if DB is empty
+        if (faqs.length === 0) {
+            setCmsFaqs(DEFAULT_CMS_FAQS);
+        } else {
+            setCmsFaqs(faqs);
+        }
     });
 
     // D) CMS Gallery
@@ -375,26 +419,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [currentUser]);
 
 
-  // 3. Actions (Login, Logout, etc... - EXISTING CODE KEPT)
+  // 3. Actions (Login, Logout, etc... - MODULAR SDK FIXES)
   const login = async (email: string, password: string) => {
-    await auth.signInWithEmailAndPassword(email, password);
+    // Modular: signInWithEmailAndPassword(auth, email, password)
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
   const logout = async () => {
-    await auth.signOut();
+    // Modular: signOut(auth)
+    await signOut(auth);
   };
 
   const resetPassword = async (email: string) => {
-      await auth.sendPasswordResetEmail(email);
+      // Modular: sendPasswordResetEmail(auth, email)
+      await sendPasswordResetEmail(auth, email);
   };
 
   const registerTeacher = async (data: any) => {
     try {
-      const userCredential = await auth.createUserWithEmailAndPassword(data.email, data.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       const user = userCredential.user;
 
       if (user) {
-        await user.sendEmailVerification();
+        // Modular: sendEmailVerification(user)
+        await sendEmailVerification(user);
         const isK12 = data.email.endsWith('k12.tr');
         const initialRole = isK12 ? UserRole.TEACHER : UserRole.PENDING_TEACHER;
 
@@ -421,7 +469,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const resendVerificationEmail = async () => {
     if (auth.currentUser) {
-      await auth.currentUser.sendEmailVerification();
+      // Modular: sendEmailVerification(user)
+      await sendEmailVerification(auth.currentUser);
     }
   };
 
