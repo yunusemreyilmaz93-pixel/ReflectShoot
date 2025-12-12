@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool } from 'lucide-react';
 import { Timeline } from '../components/Timeline';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
+import { useAppContext } from '../context/AppContext';
 
 // Competition Schedule Configuration
 const COMPETITION_PHASES = [
@@ -84,6 +85,7 @@ interface CategoryData {
 }
 
 export const Home: React.FC = () => {
+  const { cmsLinks } = useAppContext();
   const [activePhase, setActivePhase] = useState(getNextPhase());
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
 
@@ -162,22 +164,20 @@ export const Home: React.FC = () => {
   ];
 
   const downloads = [
-    { id: 'spec', title: "Yarışma Şartnamesi", size: "2.4 MB", type: "PDF" },
-    { id: 'parental', title: "Veli İzin Belgesi", size: "367 KB", type: "PDF" },
-    { id: 'kvkk', title: "KVKK Aydınlatma Metni", size: "180 KB", type: "PDF" }
+    { id: 'spec', title: "Yarışma Şartnamesi", size: "PDF", link: cmsLinks.specUrl },
+    { id: 'parental', title: "Veli İzin Belgesi", size: "PDF", link: cmsLinks.parentalUrl },
+    { id: 'kvkk', title: "KVKK Aydınlatma Metni", size: "PDF", link: cmsLinks.kvkkUrl }
   ];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
-  const handleDownload = (doc: { id: string, title: string }) => {
-    if (doc.id === 'parental') {
-        window.open("https://dosya.co/mndjfbhnto6e/Veli_İzin_Belgesi.pdf.html", "_blank");
-    } else if (doc.id === 'kvkk') {
-        window.open("https://dosya.co/f695f8863w00/Açık_Rıza_Metni.pdf.html", "_blank");
+  const handleDownload = (link: string) => {
+    if (link) {
+        window.open(link, "_blank");
     } else {
-        alert(`${doc.title} İndiriliyor...`);
+        alert("Link henüz eklenmemiş.");
     }
   };
 
@@ -277,7 +277,7 @@ export const Home: React.FC = () => {
              </Link>
              
              <button 
-               onClick={() => handleDownload(downloads[0])}
+               onClick={() => handleDownload(cmsLinks.specUrl)}
                className="px-10 py-5 border border-white/20 text-slate-300 hover:text-white hover:border-white/50 rounded-full font-bold transition-all duration-300 hover:bg-white/5 flex items-center justify-center gap-2 w-full sm:w-auto"
              >
                 <Download size={20}/> Şartnameyi İndir
@@ -520,10 +520,10 @@ export const Home: React.FC = () => {
                   </p>
                   <div className="grid sm:grid-cols-3 gap-6">
                      {downloads.map((doc, i) => (
-                        <button key={i} onClick={() => handleDownload(doc)} className="flex flex-col items-center p-6 rounded-2xl border border-slate-200 hover:border-rose-500 hover:bg-rose-50 transition-all group bg-slate-50 text-center shadow-sm hover:shadow-[0_10px_30px_rgba(225,29,72,0.1)]">
+                        <button key={i} onClick={() => handleDownload(doc.link)} className="flex flex-col items-center p-6 rounded-2xl border border-slate-200 hover:border-rose-500 hover:bg-rose-50 transition-all group bg-slate-50 text-center shadow-sm hover:shadow-[0_10px_30px_rgba(225,29,72,0.1)]">
                            <Download size={28} className="text-slate-400 group-hover:text-rose-600 mb-3 transition-colors"/>
                            <span className="font-bold text-slate-900 text-sm">{doc.title}</span>
-                           <span className="text-xs text-slate-500 mt-1">{doc.type} • {doc.size}</span>
+                           <span className="text-xs text-slate-500 mt-1">{doc.size}</span>
                         </button>
                      ))}
                   </div>
@@ -635,7 +635,7 @@ export const Home: React.FC = () => {
             {/* Footer Actions */}
             <div className="p-6 border-t border-slate-800 bg-slate-950 flex flex-col sm:flex-row gap-4">
                 <button 
-                    onClick={() => handleDownload(downloads[0])}
+                    onClick={() => handleDownload(cmsLinks.specUrl)}
                     className="flex-1 py-4 rounded-xl border border-slate-700 text-slate-300 font-bold hover:bg-slate-800 hover:text-white transition-all flex items-center justify-center gap-2"
                 >
                     <Download size={18} /> Şartnameyi İndir

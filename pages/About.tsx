@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   CheckCircle2, 
@@ -18,8 +19,11 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
+import { useAppContext } from '../context/AppContext';
 
 export const About: React.FC = () => {
+  const { cmsLinks } = useAppContext();
+
   const criteria = [
     { label: "Senaryo ve Hikaye Anlatımı", percent: 30, color: "bg-teal-600", text: "text-teal-400", ring: "ring-teal-500/30" },
     { label: "Teknik Kalite (Görüntü & Ses)", percent: 25, color: "bg-amber-500", text: "text-amber-400", ring: "ring-amber-500/30" },
@@ -27,13 +31,11 @@ export const About: React.FC = () => {
     { label: "Kurgu ve Montaj", percent: 20, color: "bg-rose-600", text: "text-rose-400", ring: "ring-rose-500/30" },
   ];
 
-  const handleDownload = (docName: string) => {
-    if (docName === "KVKK Aydınlatma Metni") {
-        window.open("https://dosya.co/f695f8863w00/Açık_Rıza_Metni.pdf.html", "_blank");
-    } else if (docName === "Veli İzin Belgesi") {
-        window.open("https://dosya.co/mndjfbhnto6e/Veli_İzin_Belgesi.pdf.html", "_blank");
+  const handleDownload = (link: string) => {
+    if (link) {
+        window.open(link, "_blank");
     } else {
-        alert(`${docName} İndiriliyor...`);
+        alert("Link henüz eklenmemiş.");
     }
   };
 
@@ -348,19 +350,19 @@ export const About: React.FC = () => {
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
                     {[
-                        { name: "Yarışma Şartnamesi", size: "2.4 MB", type: "PDF" },
-                        { name: "Veli İzin Belgesi", size: "367 KB", type: "PDF" },
-                        { name: "KVKK Aydınlatma Metni", size: "180 KB", type: "PDF" },
-                        { name: "Afiş ve Görseller", size: "15 MB", type: "ZIP" }
+                        { name: "Yarışma Şartnamesi", size: "PDF", link: cmsLinks.specUrl },
+                        { name: "Veli İzin Belgesi", size: "PDF", link: cmsLinks.parentalUrl },
+                        { name: "KVKK Aydınlatma Metni", size: "PDF", link: cmsLinks.kvkkUrl },
+                        { name: "Afiş ve Görseller", size: "ZIP", link: cmsLinks.posterUrl }
                     ].map((doc, i) => (
-                        <button key={i} onClick={() => handleDownload(doc.name)} className="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 hover:border-rose-500/50 hover:bg-slate-800/80 transition-all flex items-center justify-between group text-left">
+                        <button key={i} onClick={() => handleDownload(doc.link)} className="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 hover:border-rose-500/50 hover:bg-slate-800/80 transition-all flex items-center justify-between group text-left">
                             <div className="flex items-center gap-4">
                                 <div className="bg-slate-900 p-4 rounded-xl group-hover:bg-rose-900/20 group-hover:text-rose-500 transition-colors text-slate-500 border border-slate-700">
                                     <FileText size={24} />
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-white text-base group-hover:text-rose-400 transition-colors">{doc.name}</h4>
-                                    <p className="text-xs text-slate-500 font-medium mt-1">{doc.type} • {doc.size}</p>
+                                    <p className="text-xs text-slate-500 font-medium mt-1">{doc.size}</p>
                                 </div>
                             </div>
                             <div className="w-10 h-10 rounded-full border border-slate-700 flex items-center justify-center group-hover:bg-rose-600 group-hover:border-rose-600 group-hover:text-white transition-all text-slate-500">

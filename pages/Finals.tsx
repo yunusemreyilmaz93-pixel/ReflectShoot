@@ -1,7 +1,27 @@
+
 import React from 'react';
 import { Trophy, Clapperboard, Film, Star, Zap, Award } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
 
 export const Finals: React.FC = () => {
+  const { cmsPrizes } = useAppContext();
+
+  // Find prizes by ID, or use fallback if not set
+  const getPrize = (id: string, defaultTitle: string, defaultReward: string, defaultDesc: string) => {
+      const p = cmsPrizes.find(item => item.id === id);
+      return {
+          title: p?.title || defaultTitle,
+          reward: p?.reward || defaultReward,
+          description: p?.description || defaultDesc
+      };
+  };
+
+  const rank1 = getPrize('rank1', 'Altın Kamera Ödülü', '40.000 TL', 'Yaratıcılığı, teknik ustalığı ve sinematik anlatımıyla jüriyi en çok etkileyen birinci ekip bu büyük ödülün sahibi olur.');
+  const rank2 = getPrize('rank2', 'Gümüş Klaket Ödülü', '30.000 TL', 'Kurgusal bütünlük, sahne tasarımı ve anlatım başarısıyla ikinci seçilen ekip ödüllendirilir.');
+  const rank3 = getPrize('rank3', 'Bronz Film Makarası', '20.000 TL', 'Teknik başarı, kamera kullanımı ve görsel anlatım gücüyle öne çıkan üçüncü ekip bu ödülü alır.');
+  const mention = getPrize('mention', 'Mansiyon Ödülü', 'Sürpriz Ödül', 'Gelecek vadeden, potansiyeli yüksek ve özgün sinematik yaklaşıma sahip ekibe verilen özel teşvik ödülü.');
+  const special = getPrize('special', 'Jüri Özel Ödülü', 'Sanatsal Cesaret Ödülü', 'Klasik anlatımın dışına çıkarak cesur, yenilikçi ve etkileyici bir yaklaşım sergileyen ekibe verilen özel jüri plaketi.');
+
   return (
     <div className="min-h-screen bg-slate-950 font-sans relative overflow-hidden text-white selection:bg-amber-500 selection:text-black">
       
@@ -46,12 +66,12 @@ export const Finals: React.FC = () => {
                              <h3 className="text-amber-600 font-black text-sm uppercase tracking-widest mb-2 flex items-center justify-center md:justify-start gap-2">
                                 <Star size={14} className="fill-current"/> 1. Ödül
                              </h3>
-                             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-2">Altın Kamera Ödülü</h2>
+                             <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-2">{rank1.title}</h2>
                              <div className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-500 mb-6 tracking-tight">
-                                40.000 TL
+                                {rank1.reward}
                              </div>
                              <p className="text-slate-600 text-lg leading-relaxed font-medium">
-                                Yaratıcılığı, teknik ustalığı ve sinematik anlatımıyla jüriyi en çok etkileyen birinci ekip bu büyük ödülün sahibi olur.
+                                {rank1.description}
                                 <br/><span className="text-amber-600 font-bold text-sm mt-3 block inline-block px-3 py-1 bg-amber-50 rounded-full border border-amber-100">+ Altın Kamera Heykeli + Teknoloji Çeki</span>
                              </p>
                          </div>
@@ -74,10 +94,10 @@ export const Finals: React.FC = () => {
                             <Clapperboard size={40} className="text-slate-500" />
                         </div>
                         <h3 className="text-slate-500 font-black text-xs uppercase tracking-widest mb-2">2. Ödül</h3>
-                        <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">Gümüş Klaket Ödülü</h2>
-                        <div className="text-4xl font-black text-slate-600 mb-6">30.000 TL</div>
+                        <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">{rank2.title}</h2>
+                        <div className="text-4xl font-black text-slate-600 mb-6">{rank2.reward}</div>
                         <p className="text-slate-600 leading-relaxed font-medium">
-                           Kurgusal bütünlük, sahne tasarımı ve anlatım başarısıyla ikinci seçilen ekip ödüllendirilir.
+                           {rank2.description}
                            <span className="block font-bold text-slate-500 text-sm mt-3 px-3 py-1 bg-slate-100 rounded-full inline-block">+ Teknoloji Çeki</span>
                         </p>
                     </div>
@@ -91,10 +111,10 @@ export const Finals: React.FC = () => {
                             <Film size={40} className="text-orange-800" />
                         </div>
                         <h3 className="text-orange-800 font-black text-xs uppercase tracking-widest mb-2">3. Ödül</h3>
-                        <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">Bronz Film Makarası</h2>
-                        <div className="text-4xl font-black text-orange-900 mb-6">20.000 TL</div>
+                        <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">{rank3.title}</h2>
+                        <div className="text-4xl font-black text-orange-900 mb-6">{rank3.reward}</div>
                         <p className="text-slate-600 leading-relaxed font-medium">
-                           Teknik başarı, kamera kullanımı ve görsel anlatım gücüyle öne çıkan üçüncü ekip bu ödülü alır.
+                           {rank3.description}
                         </p>
                     </div>
                 </div>
@@ -110,10 +130,10 @@ export const Finals: React.FC = () => {
                              <Award size={32} />
                          </div>
                          <div>
-                             <h3 className="text-teal-600 font-bold text-xs uppercase tracking-widest mb-1">Mansiyon Ödülü</h3>
-                             <h4 className="text-xl font-black text-slate-900 mb-2">Sürpriz Ödül</h4>
+                             <h3 className="text-teal-600 font-bold text-xs uppercase tracking-widest mb-1">{mention.title}</h3>
+                             <h4 className="text-xl font-black text-slate-900 mb-2">{mention.reward}</h4>
                              <p className="text-slate-600 text-sm leading-relaxed font-medium">
-                                Gelecek vadeden, potansiyeli yüksek ve özgün sinematik yaklaşıma sahip ekibe verilen özel teşvik ödülü.
+                                {mention.description}
                              </p>
                          </div>
                      </div>
@@ -126,10 +146,10 @@ export const Finals: React.FC = () => {
                              <Zap size={32} />
                          </div>
                          <div>
-                             <h3 className="text-rose-600 font-bold text-xs uppercase tracking-widest mb-1">Jüri Özel Ödülü</h3>
-                             <h4 className="text-xl font-black text-slate-900 mb-2">Sanatsal Cesaret Ödülü</h4>
+                             <h3 className="text-rose-600 font-bold text-xs uppercase tracking-widest mb-1">{special.title}</h3>
+                             <h4 className="text-xl font-black text-slate-900 mb-2">{special.reward}</h4>
                              <p className="text-slate-600 text-sm leading-relaxed font-medium">
-                                Klasik anlatımın dışına çıkarak cesur, yenilikçi ve etkileyici bir yaklaşım sergileyen ekibe verilen özel jüri plaketi.
+                                {special.description}
                              </p>
                          </div>
                      </div>

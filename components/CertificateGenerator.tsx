@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Award } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
@@ -35,7 +36,7 @@ export const CertificateGenerator: React.FC = () => {
 
            /* Tam A4 sayfa – lacivert kenarlıklı zemin */
            .page {
-             width: 297mm;
+             width: 297mm; 
              height: 210mm;
              background: #020617;
              display: flex;

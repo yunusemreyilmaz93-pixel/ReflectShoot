@@ -2,18 +2,19 @@
 import React, { useState, useRef } from 'react';
 import { ChevronDown, Search, MessageCircle, HelpCircle, PenTool, Award, Users, MapPin, Phone, Mail, Send, CheckCircle2, AlertCircle, Cpu, Clock, Trophy, Sparkles } from 'lucide-react';
 import { send } from '@emailjs/browser';
-
-type FAQCategory = 'Genel' | 'Teknik' | 'Süreç & Teslim' | 'Ödüller & Değerlendirme';
+import { useAppContext } from '../context/AppContext';
+import { FAQCategory } from '../types';
 
 interface FAQItem {
-  id: number;
+  id: string;
   category: FAQCategory;
   question: string;
   answer: string;
 }
 
 export const FAQ: React.FC = () => {
-  const [openId, setOpenId] = useState<number | null>(null);
+  const { cmsGeneral, cmsFaqs } = useAppContext();
+  const [openId, setOpenId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<FAQCategory | 'Tümü'>('Tümü');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -63,34 +64,8 @@ export const FAQ: React.FC = () => {
       setContactForm({ ...contactForm, [e.target.name]: e.target.value });
   };
 
-  const faqs: FAQItem[] = [
-    // GENEL
-    { id: 1, category: 'Genel', question: "Başvuru süreci nasıl işler?", answer: "Başvurunuzu takım danışman öğretmeniniz ile birlikte oluşturur, takım bilgilerini ve gerekli belgeleri sisteme yüklersiniz. Başvurunuz onaylandıktan sonra video teslim tarihine kadar hazırlık sürecine geçersiniz." },
-    { id: 2, category: 'Genel', question: "Takıma kaç kişi dahil olabilir?", answer: "Her takım 1 danışman öğretmen + 3 ila 6 öğrenci ile oluşturulabilir." },
-    { id: 3, category: 'Genel', question: "Birden fazla kategoride başvuru yapabilir miyiz?", answer: "Hayır. Her takım yalnızca 1 kategori seçebilir: Canlı Çekim veya Yapay Zeka Animasyon." },
-    { id: 4, category: 'Genel', question: "Takım adını sonradan değiştirebilir miyiz?", answer: "Hayır. Takım adı başvuru sırasında belirlenir ve daha sonra düzenlenemez." },
-    { id: 5, category: 'Genel', question: "Hangi öğrenciler başvuru yapabilir?", answer: "Sadece Türkiye’de İmam Hatip Lisesi öğrencileri yarışmaya katılabilir." },
-    { id: 6, category: 'Genel', question: "Başvuruyu iptal edersem yaptırım olur mu?", answer: "Hayır. Başvurunuzu iptal etmeniz durumunda herhangi bir yaptırım uygulanmaz." },
-
-    // TEKNİK
-    { id: 7, category: 'Teknik', question: "Video teknik şartları nelerdir?", answer: "Video formatı MP4 veya MOV, minimum çözünürlük 1920×1080, süre 3–8 dakika olmalıdır." },
-    { id: 8, category: 'Teknik', question: "Canlı çekim kategorisinde telefon kamerası kullanmak serbest mi?", answer: "Evet. Telefon, DSLR veya profesyonel kamera kullanabilirsiniz. Önemli olan görüntü kalitesi ve teknik gerekliliklere uyumdur." },
-    { id: 9, category: 'Teknik', question: "AI kategorisinde hangi araçları kullanabilirim?", answer: "Runway, Pika, ElevenLabs, D-ID, Sora benzeri üretim araçları serbesttir. Telif ihlali yapan, deepfake amaçlı veya etik dışı araçlar yasaktır." },
-    { id: 10, category: 'Teknik', question: "Video çözünürülüğü minimum kaç olmalı?", answer: "En düşük 1920×1080 (Full HD) çözünürlük kabul edilir." },
-    { id: 11, category: 'Teknik', question: "Videoda dış ses (narration) kullanabilir miyiz?", answer: "Evet. Dış ses kullanımında telif içermeyen veya kendi kaydettiğiniz sesler tercih edilmelidir." },
-
-    // SÜREÇ & TESLİM
-    { id: 12, category: 'Süreç & Teslim', question: "Teslim tarihini kaçırırsam ne olur?", answer: "Sistem kapanınca yükleme yapılamaz. Süre uzatımı yoktur. Bu nedenle teslim tarihinden önce yükleme yapmanız önemlidir." },
-    { id: 13, category: 'Süreç & Teslim', question: "Finalist eğitimlerine katılım zorunlu mu?", answer: "Evet. Finalist eğitim programına tam katılım, sürecin bir parçasıdır ve final değerlendirmesinde önemlidir." },
-    { id: 14, category: 'Süreç & Teslim', question: "Video yüklerken hata alırsam ne yapmalıyım?", answer: "Önce dosya boyutunu, formatını ve internet bağlantınızı kontrol edin. Sorun devam ederse “Bize Ulaşın” bölümünden teknik destek talebi oluşturun." },
-    { id: 15, category: 'Süreç & Teslim', question: "Telefonla çekim yapabilir miyiz?", answer: "Evet. Çekim kalitesi yeterli olduğu sürece telefonla çekim serbesttir." },
-
-    // ÖDÜLLER & DEĞERLENDİRME
-    { id: 16, category: 'Ödüller & Değerlendirme', question: "Jüri değerlendirmesi hangi kriterlere göre yapılır?", answer: "Senaryo ve hikaye kurgusu, Temaya uygunluk, Teknik kalite (görüntü, ses, kurgu), Yaratıcılık ve Sinematografik anlatım gücü kriterlerine göre puanlama yapılır." },
-    { id: 17, category: 'Ödüller & Değerlendirme', question: "Ödüller nakit olarak mı veriliyor?", answer: "Evet. Ödüller yarışma sonunda takımlara nakdi olarak teslim edilir." },
-    { id: 18, category: 'Ödüller & Değerlendirme', question: "Ödüller takım üyeleri arasında nasıl paylaştırılıyor?", answer: "Ödül tutarı takımın kendisine verilir. Paylaşım, takım öğrencileri ve danışman öğretmenin kendi içinde yapacağı bir tercihtir." },
-    { id: 19, category: 'Ödüller & Değerlendirme', question: "AI kategorisinde hangi araçları kullanamayız?", answer: "Telif hakkı ihlali yapan, güvenlik riski taşıyan veya etik dışı içerik üreten modeller yasaktır. Ayrıca politik içerik, yüz manipülasyonu veya deepfake türü üretimler kabul edilmez." }
-  ];
+  // Use Dynamic FAQs from Context (or default empty if loading)
+  const faqs = cmsFaqs;
 
   const filteredFaqs = faqs.filter(faq => {
     const matchesCategory = activeCategory === 'Tümü' || faq.category === activeCategory;
@@ -98,7 +73,7 @@ export const FAQ: React.FC = () => {
     return matchesCategory && matchesSearch;
   });
 
-  const toggleFAQ = (id: number) => {
+  const toggleFAQ = (id: string) => {
     setOpenId(openId === id ? null : id);
   };
 
@@ -314,9 +289,7 @@ export const FAQ: React.FC = () => {
                                 <div>
                                     <h4 className="font-bold text-white text-sm uppercase tracking-wide opacity-60 mb-1">Adres</h4>
                                     <p className="text-slate-300 leading-relaxed font-light">
-                                        Şemsi Tebrizi Mah. Vali İzzetbey Cd.,<br/> 
-                                        Bölüm Sk. No:2, 42050<br/> 
-                                        Karatay / Konya
+                                        {cmsGeneral.contactAddress}
                                     </p>
                                 </div>
                             </div>
@@ -328,7 +301,7 @@ export const FAQ: React.FC = () => {
                                 <div>
                                     <h4 className="font-bold text-white text-sm uppercase tracking-wide opacity-60 mb-1">Telefon</h4>
                                     <p className="text-slate-300 font-light">
-                                        (0332) 351 28 02
+                                        {cmsGeneral.contactPhone}
                                     </p>
                                 </div>
                             </div>
@@ -339,8 +312,8 @@ export const FAQ: React.FC = () => {
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-white text-sm uppercase tracking-wide opacity-60 mb-1">E-posta</h4>
-                                    <a href="mailto:reflect_shoot@proton.me" className="text-teal-400 hover:text-teal-300 transition-colors block font-medium">
-                                        reflect_shoot@proton.me
+                                    <a href={`mailto:${cmsGeneral.contactEmail}`} className="text-teal-400 hover:text-teal-300 transition-colors block font-medium">
+                                        {cmsGeneral.contactEmail}
                                     </a>
                                 </div>
                             </div>

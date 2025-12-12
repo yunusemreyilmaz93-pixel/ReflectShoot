@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Check, X, Info, CheckCircle2, AlertTriangle, AlertOctagon } from 'lucide-react';
+import { Bell, Check, Info, CheckCircle2, AlertTriangle, AlertOctagon } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { Notification } from '../types';
 
 export const NotificationBell: React.FC = () => {
   const { notifications, markNotificationAsRead } = useAppContext();

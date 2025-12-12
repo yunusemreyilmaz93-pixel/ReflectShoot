@@ -1,24 +1,23 @@
+
 import React, { useState } from 'react';
 import { X, ZoomIn, Camera, Film } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
 
 export const Gallery: React.FC = () => {
+  const { cmsGallery } = useAppContext();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Mock images using picsum to simulate award ceremony photos
-  const images = [
-    { id: 1, src: "https://picsum.photos/800/600?random=101", alt: "Ödül Töreni Açılış Konuşması" },
-    { id: 2, src: "https://picsum.photos/600/900?random=102", alt: "Kırmızı Halı Geçişi" }, 
-    { id: 3, src: "https://picsum.photos/800/500?random=103", alt: "Birinci Olan Takım" },
-    { id: 4, src: "https://picsum.photos/900/600?random=104", alt: "Jüri Üyeleri Değerlendirmede" },
-    { id: 5, src: "https://picsum.photos/600/600?random=105", alt: "Plaket Takdimi" }, 
-    { id: 6, src: "https://picsum.photos/800/600?random=106", alt: "Sahne Arkası Heyecanı" },
-    { id: 7, src: "https://picsum.photos/800/500?random=107", alt: "Seyirci Coşkusu" },
-    { id: 8, src: "https://picsum.photos/600/1000?random=108", alt: "Altın Kamera Ödülü" }, 
-    { id: 9, src: "https://picsum.photos/800/600?random=109", alt: "Toplu Hatıra Fotoğrafı" },
-    { id: 10, src: "https://picsum.photos/700/500?random=110", alt: "Yönetmenler Söyleşisi" },
-    { id: 11, src: "https://picsum.photos/600/800?random=111", alt: "Afiş Sergisi" },
-    { id: 12, src: "https://picsum.photos/800/600?random=112", alt: "Gala Yemeği" },
+  // Fallback images if CMS is empty (Initial State)
+  const fallbackImages = [
+    { id: '1', src: "https://picsum.photos/800/600?random=101", alt: "Ödül Töreni Açılış Konuşması", category: 'Gala 2025', year: '2025' },
+    { id: '2', src: "https://picsum.photos/600/900?random=102", alt: "Kırmızı Halı Geçişi", category: 'Gala 2025', year: '2025' }, 
+    { id: '3', src: "https://picsum.photos/800/500?random=103", alt: "Birinci Olan Takım", category: 'Gala 2025', year: '2025' },
+    { id: '4', src: "https://picsum.photos/900/600?random=104", alt: "Jüri Üyeleri Değerlendirmede", category: 'Gala 2025', year: '2025' },
+    { id: '5', src: "https://picsum.photos/600/600?random=105", alt: "Plaket Takdimi", category: 'Gala 2025', year: '2025' }, 
+    { id: '6', src: "https://picsum.photos/800/600?random=106", alt: "Sahne Arkası Heyecanı", category: 'Gala 2025', year: '2025' }
   ];
+
+  const images = cmsGallery.length > 0 ? cmsGallery : fallbackImages;
 
   return (
     <div className="bg-slate-900 min-h-screen font-sans relative overflow-hidden">
@@ -39,7 +38,7 @@ export const Gallery: React.FC = () => {
              </span>
            </h1>
            <p className="text-xl md:text-2xl text-slate-300 max-w-2xl mx-auto font-light leading-relaxed animate-fadeIn delay-200">
-             Geçen yılın ödül töreninden objektifimize yansıyan kareler, heyecan dolu dakikalar ve zafer anları.
+             Geçen yılların ödül törenlerinden objektifimize yansıyan kareler, heyecan dolu dakikalar ve zafer anları.
            </p>
         </div>
       </div>
@@ -66,9 +65,10 @@ export const Gallery: React.FC = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
                         <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                            <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-widest mb-1">
-                              <Camera size={14} /> 2025 Gala
+                              <Camera size={14} /> {img.year}
                            </div>
                            <p className="text-white text-lg font-bold leading-tight">{img.alt}</p>
+                           <span className="text-xs text-slate-400 mt-1 block">{img.category}</span>
                         </div>
                         <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
                              <ZoomIn size={20} className="text-white"/>

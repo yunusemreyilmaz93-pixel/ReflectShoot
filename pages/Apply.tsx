@@ -6,7 +6,7 @@ import { useAppContext } from '../context/AppContext';
 
 export const Apply: React.FC = () => {
   const navigate = useNavigate();
-  const { registerTeacher, showToast } = useAppContext();
+  const { registerTeacher, showToast, cmsLinks } = useAppContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -107,6 +107,11 @@ export const Apply: React.FC = () => {
                               <li>Organizasyonun kurallara aykırı içerikleri kaldırma hakkı bulunduğunu</li>
                           </ul>
                           <p className="font-bold">kabul ederim.</p>
+                          {cmsLinks.kvkkUrl && (
+                              <div className="mt-4 pt-4 border-t">
+                                  <a href={cmsLinks.kvkkUrl} target="_blank" className="text-teal-600 hover:underline font-bold">KVKK Metnini İncele</a>
+                              </div>
+                          )}
                       </div>
                   )
               });

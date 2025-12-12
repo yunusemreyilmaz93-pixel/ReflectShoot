@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Film
 } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
 
 interface TimelineEvent {
   date: string;
@@ -23,7 +24,8 @@ interface TimelineEvent {
   color: string; // 'rose' | 'teal' | 'amber'
 }
 
-const events: TimelineEvent[] = [
+// Fallback events
+const fallbackEvents: TimelineEvent[] = [
   {
     date: '20 Ocak 2026',
     title: 'Başvuruların Başlaması',
@@ -50,27 +52,6 @@ const events: TimelineEvent[] = [
     title: 'Finalistlerin Açıklanması',
     description: 'Ön jüri değerlendirmesi tamamlanıyor. Finale kalmaya hak kazanan takımlar duyuruluyor.',
     icon: Star,
-    color: 'teal'
-  },
-  {
-    date: '6, 8 ve 10 Nisan 2026',
-    title: 'Online Akademi',
-    description: 'Finalistler için senaryo, kurgu ve yönetmenlik üzerine uzman isimlerden yoğunlaştırılmış atölye eğitimleri başlıyor.',
-    icon: Mic2,
-    color: 'rose'
-  },
-  {
-    date: '13 Nisan 2026',
-    title: 'Geliştirme & Revize',
-    description: 'Geri bildirimler doğrultusunda final eserlerinin geliştirme süreci başlıyor.',
-    icon: Edit3,
-    color: 'amber'
-  },
-  {
-    date: '13 Nisan – 4 Mayıs 2026',
-    title: 'Final Video Teslimi',
-    description: 'Filminin son halini, İngilizce dublaj ve Türkçe altyazı ile birlikte yükle.',
-    icon: Upload,
     color: 'teal'
   },
   {
@@ -134,7 +115,7 @@ const TimelineItem: React.FC<{ event: TimelineEvent; index: number }> = ({ event
     },
   };
 
-  const currentColors = colorClasses[event.color as keyof typeof colorClasses];
+  const currentColors = colorClasses[event.color as keyof typeof colorClasses] || colorClasses.teal;
 
   return (
     <div 
@@ -189,7 +170,7 @@ const MobileTimelineItem: React.FC<{ event: TimelineEvent; index: number }> = ({
     rose: { text: 'text-rose-400', border: 'border-rose-500' },
     amber: { text: 'text-amber-400', border: 'border-amber-500' },
   };
-  const currentColors = colorClasses[event.color as keyof typeof colorClasses];
+  const currentColors = colorClasses[event.color as keyof typeof colorClasses] || colorClasses.teal;
 
   return (
     <div 
@@ -218,6 +199,17 @@ const MobileTimelineItem: React.FC<{ event: TimelineEvent; index: number }> = ({
 };
 
 export const Timeline: React.FC = () => {
+  const { cmsTimeline } = useAppContext();
+
+  // Convert CMS items to View Model
+  const events = cmsTimeline.length > 0 ? cmsTimeline.map((item, index) => ({
+      date: item.date,
+      title: item.title,
+      description: item.description,
+      icon: Calendar,
+      color: ['teal', 'rose', 'amber'][index % 3] // Cyclic colors
+  })) : fallbackEvents;
+
   return (
     <section className="bg-slate-950 py-24 overflow-hidden relative">
       {/* Film Grain & Texture */}
@@ -252,7 +244,7 @@ export const Timeline: React.FC = () => {
           <div className="absolute left-1/2 transform -translate-x-1/2 top-0 bottom-0 w-0.5 bg-slate-800"></div>
 
           {events.map((event, index) => (
-            <TimelineItem key={index} event={event} index={index} />
+            <TimelineItem key={index} event={event as any} index={index} />
           ))}
           
           {/* Bottom Fade */}
@@ -263,7 +255,7 @@ export const Timeline: React.FC = () => {
         <div className="md:hidden relative">
            <div className="absolute left-0 top-0 bottom-0 w-px bg-slate-800 ml-4"></div>
           {events.map((event, index) => (
-            <MobileTimelineItem key={index} event={event} index={index} />
+            <MobileTimelineItem key={index} event={event as any} index={index} />
           ))}
         </div>
       </div>

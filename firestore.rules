@@ -18,32 +18,29 @@ service cloud.firestore {
 
     // 1. USERS
     match /users/{userId} {
-      // Allow reading user profiles (needed for admin lists, chat names etc)
       allow read: if isSignedIn();
       allow write: if isSignedIn() && (request.auth.uid == userId || hasRole('ADMIN'));
     }
 
     // 2. APPLICATIONS
     match /applications/{appId} {
-      allow read: if isSignedIn() && (
+      // Allow read if Admin, Judge, Owner, OR if it's a Finalist (for Public Vote)
+      allow read: if (isSignedIn() && (
         hasRole('ADMIN') || 
         hasRole('JUDGE') || 
         (hasRole('TEACHER') && resource.data.teacher.email == request.auth.token.email)
-      );
+      )) || (resource.data.team.isFinalist == true);
       
       allow create: if hasRole('TEACHER') || hasRole('ADMIN');
-      // Judge needs update permission to write aggregated scores to the parent doc
       allow update: if hasRole('ADMIN') || (hasRole('TEACHER') && resource.data.teacher.email == request.auth.token.email) || hasRole('JUDGE');
       
-      // SUBCOLLECTION: SCORES
+      // SUBCOLLECTIONS
       match /scores/{juryId} {
         allow read: if hasRole('ADMIN') || (hasRole('JUDGE') && request.auth.uid == juryId);
         allow write: if hasRole('JUDGE') && request.auth.uid == juryId;
       }
 
-      // SUBCOLLECTION: MESSAGES
       match /messages/{msgId} {
-        // Teacher sees messages for their app, Admin sees all
         allow read: if hasRole('ADMIN') || (hasRole('TEACHER') && get(/databases/$(database)/documents/applications/$(appId)).data.teacher.email == request.auth.token.email);
         allow create: if hasRole('ADMIN') || hasRole('TEACHER');
       }
@@ -51,19 +48,14 @@ service cloud.firestore {
 
     // 3. NOTIFICATIONS
     match /notifications/{notificationId} {
-      // Users can read their own notifications
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      // Anyone can create a notification (e.g. Teacher triggers 'New App' notification for Admin)
       allow create: if isSignedIn();
-      // Users can update (mark as read) their own notifications
       allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // 4. PUBLIC VOTES
     match /public_votes/{voteId} {
-      // Public Voting: Allow creation by anyone (anonymous)
       allow create: if true;
-      // Allow reading to check for duplicates client-side
       allow read: if true;
     }
 
@@ -78,5 +70,23 @@ service cloud.firestore {
       allow read: if true;
       allow write: if hasRole('ADMIN');
     }
+
+    // 7. CMS CONTENT (Dynamic Match for all cms_ collections)
+    match /{path=**}/cms_general/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /{path=**}/cms_faqs/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /{path=**}/cms_gallery/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /{path=**}/cms_academy/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /{path=**}/cms_timeline/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /{path=**}/cms_prizes/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /{path=**}/cms_links/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    
+    // Direct match as fallback
+    match /cms_general/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_faqs/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_gallery/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_academy/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_timeline/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_prizes/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_links/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
   }
 }

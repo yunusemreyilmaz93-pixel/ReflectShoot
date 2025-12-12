@@ -2,8 +2,11 @@
 import React from 'react';
 import { Instagram, Youtube, Twitter, Mail, MapPin, Phone, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAppContext } from '../context/AppContext';
 
 export const Footer: React.FC = () => {
+  const { cmsGeneral } = useAppContext();
+
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -13,13 +16,12 @@ export const Footer: React.FC = () => {
                <span className="text-2xl font-bold text-white">Reflect<span className="text-teal-500">&</span>Shoot</span>
             </div>
             <p className="text-sm leading-relaxed mb-6 max-w-sm">
-              Gençlerin vizöründen dünyayı anlama ve anlatma çabası. 
-              Asrın idrakini sinemanın diliyle buluşturan lise kısa film yarışması.
+              {cmsGeneral.footerText}
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="hover:text-teal-400 transition-colors"><Instagram size={24} /></a>
-              <a href="#" className="hover:text-teal-400 transition-colors"><Twitter size={24} /></a>
-              <a href="#" className="hover:text-teal-400 transition-colors"><Youtube size={24} /></a>
+              {cmsGeneral.socialInstagram !== '#' && <a href={cmsGeneral.socialInstagram} target="_blank" rel="noreferrer" className="hover:text-teal-400 transition-colors"><Instagram size={24} /></a>}
+              {cmsGeneral.socialTwitter !== '#' && <a href={cmsGeneral.socialTwitter} target="_blank" rel="noreferrer" className="hover:text-teal-400 transition-colors"><Twitter size={24} /></a>}
+              {cmsGeneral.socialYoutube !== '#' && <a href={cmsGeneral.socialYoutube} target="_blank" rel="noreferrer" className="hover:text-teal-400 transition-colors"><Youtube size={24} /></a>}
             </div>
           </div>
           
@@ -37,16 +39,16 @@ export const Footer: React.FC = () => {
             <h3 className="text-lg font-semibold text-white mb-4">İletişim</h3>
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-3">
-                <MapPin size={18} className="text-teal-500 mt-0.5" />
-                <span>Şemsi Tebrizi Mah. Vali İzzetbey Cd.,<br/>Bölüm Sk. No:2, 42050 Karatay/Konya</span>
+                <MapPin size={18} className="text-teal-500 mt-0.5 flex-shrink-0" />
+                <span>{cmsGeneral.contactAddress}</span>
               </li>
               <li className="flex items-center gap-3">
-                <Phone size={18} className="text-teal-500" />
-                <span>(0332) 351 28 02</span>
+                <Phone size={18} className="text-teal-500 flex-shrink-0" />
+                <span>{cmsGeneral.contactPhone}</span>
               </li>
               <li className="flex items-center gap-3">
-                <Mail size={18} className="text-teal-500" />
-                <span>reflect_shoot@proton.me</span>
+                <Mail size={18} className="text-teal-500 flex-shrink-0" />
+                <span>{cmsGeneral.contactEmail}</span>
               </li>
             </ul>
           </div>

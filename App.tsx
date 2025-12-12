@@ -14,7 +14,7 @@ import { Gallery } from './pages/Gallery';
 import { Admin } from './pages/Admin';
 import { FAQ } from './pages/FAQ';
 import { JuryDashboard } from './pages/JuryDashboard'; 
-import { PublicVote } from './pages/PublicVote'; // Import
+import { PublicVote } from './pages/PublicVote'; // Importapp.auth
 import { AppProvider, useAppContext } from './context/AppContext';
 import { UserRole } from './types';
 import { ShieldAlert, Mail, CheckCircle2, AlertCircle, Info, X } from 'lucide-react';

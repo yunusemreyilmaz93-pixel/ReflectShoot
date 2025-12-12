@@ -14,6 +14,11 @@ export const JuryDashboard: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Filter apps assigned to this jury
+  const myAssignedApps = allApplications.filter(app => 
+      app.assignedJuryIds?.includes(currentUser?.uid || '')
+  );
+
   // Determine if already graded by this user
   const isGradedByMe = (app: Application) => {
       return app.gradedBy?.includes(currentUser?.uid || '');
@@ -48,7 +53,7 @@ export const JuryDashboard: React.FC = () => {
               <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
                   <Video className="text-rose-500" /> Jüri Değerlendirme Paneli
               </h1>
-              <p className="text-slate-500 text-sm mt-1">Hoş geldiniz, {currentUser?.fullName}. Kör puanlama sistemi aktiftir.</p>
+              <p className="text-slate-500 text-sm mt-1">Hoş geldiniz, {currentUser?.fullName}. Size atanan eserler aşağıdadır.</p>
           </div>
           <div className="flex gap-4">
                <div className="bg-slate-900 px-4 py-2 rounded-lg border border-slate-800 text-xs font-bold text-slate-400 flex items-center gap-2">
@@ -70,7 +75,12 @@ export const JuryDashboard: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-              {allApplications.map(app => {
+              {myAssignedApps.length === 0 ? (
+                  <div className="col-span-full text-center py-20 text-slate-500">
+                      Size atanmış bir eser bulunmamaktadır.
+                  </div>
+              ) : (
+                  myAssignedApps.map(app => {
                    const graded = isGradedByMe(app);
                    return (
                        <div 
@@ -115,7 +125,8 @@ export const JuryDashboard: React.FC = () => {
                            </div>
                        </div>
                    );
-              })}
+              })
+              )}
           </div>
       </div>
 
