@@ -189,35 +189,163 @@ const DEFAULT_CMS_FAQS: CMSFaqItem[] = [
     }
 ];
 
-// DEFAULT ACADEMY ITEMS (Consolidated Categories)
+// DEFAULT ACADEMY ITEMS (Expanded Starter Pack)
 const DEFAULT_CMS_ACADEMY: CMSAcademyItem[] = [
-    // Senaryo & Tema (Amber)
-    { id: 'def1', title: 'Kahramanın Yolculuğu ve Maneviyat', description: 'Joseph Campbell’in monomit yapısının İslami anlatı geleneğiyle harmanlanması.', category: 'Senaryo & Tema', type: 'PDF', url: '#', isStarterPack: true },
-    { id: 'def2', title: 'Ayetlerden Senaryoya: Uyarlama Rehberi', description: 'Soyut manevi kavramların somut film sahnelerine dönüştürülmesi.', category: 'Senaryo & Tema', type: 'VIDEO', url: '#', isStarterPack: false },
+    // --- 1. SENARYO & TEMA ---
+    { 
+        id: 'def1', 
+        title: 'Kahramanın Yolculuğu ve Maneviyat', 
+        description: 'Joseph Campbell’in monomit yapısının İslami anlatı geleneğiyle harmanlanması.', 
+        category: 'Senaryo & Tema', 
+        type: 'PDF', 
+        url: '#', 
+        isStarterPack: true 
+    },
+    { 
+        id: 'sen2', 
+        title: 'Ayetlerden Senaryoya: Uyarlama Rehberi', 
+        description: 'Soyut manevi kavramların somut film sahnelerine dönüştürülmesi.', 
+        category: 'Senaryo & Tema', 
+        type: 'VIDEO', 
+        url: '#', 
+        isStarterPack: true 
+    },
+    { 
+        id: 'sen3', 
+        title: 'Karakter Yaratma: Derinlik ve Dönüşüm', 
+        description: 'İzleyicinin bağ kurabileceği, yaşayan ve dönüşen karakterler yazma teknikleri.', 
+        category: 'Senaryo & Tema', 
+        type: 'PDF', 
+        url: '#', 
+        isStarterPack: true 
+    },
+    { 
+        id: 'sen4', 
+        title: 'Diyalog Yazımı: Az Söz Çok Şey', 
+        description: 'Sahneyi sürükleyen, doğal ve alt metni güçlü diyaloglar nasıl yazılır?', 
+        category: 'Senaryo & Tema', 
+        type: 'VIDEO', 
+        url: '#', 
+        isStarterPack: true 
+    },
     
-    // Çekim & Ses (Emerald)
-    { id: 'def3', title: 'Sinematik Işık ve Kompozisyon', description: 'Duyguyu güçlendirmek için ışık kullanımı ve 1/3 kuralı.', category: 'Çekim & Ses', type: 'VIDEO', url: '#', isStarterPack: true },
-    { id: 'def4', title: 'Ses Tasarımı: Filmin Gizli Kahramanı', description: 'Diyalog, atmosfer ve foley seslerinin katmanlı kullanımı.', category: 'Çekim & Ses', type: 'PDF', url: '#', isStarterPack: true },
+    // --- 2. TEKNİK & KURGU ---
+    { 
+        id: 'def2', 
+        title: 'DaVinci Resolve ile Renk Düzenleme', 
+        description: 'Filminize profesyonel bir atmosfer katmak için temel renk teorisi.', 
+        category: 'Teknik & Kurgu', 
+        type: 'LINK', 
+        url: '#', 
+        isStarterPack: true 
+    },
+    { 
+        id: 'tek2', 
+        title: 'Sinematik Işık ve Kompozisyon', 
+        description: 'Doğal ve yapay ışıkla atmosfer yaratma, 1/3 kuralı ve kadraj estetiği.', 
+        category: 'Teknik & Kurgu', 
+        type: 'VIDEO', 
+        url: '#', 
+        isStarterPack: true 
+    },
+    { 
+        id: 'tek3', 
+        title: 'Ses Tasarımı: Filmin Gizli Kahramanı', 
+        description: 'Diyalog, atmosfer sesleri ve foley kullanımı ile filmin duygu dünyasını inşa etmek.', 
+        category: 'Teknik & Kurgu', 
+        type: 'PDF', 
+        url: '#', 
+        isStarterPack: true 
+    },
+    { 
+        id: 'tek4', 
+        title: 'Kurguda Ritm ve Duygu Akışı', 
+        description: 'Kesme teknikleri (J-Cut, L-Cut) ile hikaye anlatımını güçlendirmek.', 
+        category: 'Teknik & Kurgu', 
+        type: 'VIDEO', 
+        url: '#', 
+        isStarterPack: true 
+    },
 
-    // Kurgu & Montaj (Indigo)
-    { id: 'def5', title: 'Kurguda Ritm ve Duygu Akışı', description: 'Kesme teknikleri (J-Cut, L-Cut) ile hikaye anlatımını güçlendirmek.', category: 'Kurgu & Montaj', type: 'VIDEO', url: '#', isStarterPack: false },
-    { id: 'def6', title: 'DaVinci Resolve ile Renk Düzenleme', description: 'Filminize profesyonel bir atmosfer katmak için temel renk teorisi.', category: 'Kurgu & Montaj', type: 'LINK', url: '#', isStarterPack: false },
+    // --- 3. YAPAY ZEKA ---
+    { 
+        id: 'def3', 
+        title: 'Midjourney ile Storyboard Oluşturma', 
+        description: 'Senaryonuzu görselleştirmek için AI araçlarını kullanma rehberi.', 
+        category: 'Yapay Zeka', 
+        type: 'PDF', 
+        url: '#', 
+        isStarterPack: true 
+    },
+    { 
+        id: 'ai2', 
+        title: 'Runway Gen-2 ile Video Üretimi', 
+        description: 'Metinden videoya (Text-to-Video) üretim teknikleri ve prompt ipuçları.', 
+        category: 'Yapay Zeka', 
+        type: 'VIDEO', 
+        url: '#', 
+        isStarterPack: true 
+    },
+    { 
+        id: 'ai3', 
+        title: 'Suno AI ile Film Müziği Besteleme', 
+        description: 'Filminizin duygusuna uygun özgün müzikleri yapay zeka ile üretme rehberi.', 
+        category: 'Yapay Zeka', 
+        type: 'LINK', 
+        url: '#', 
+        isStarterPack: true 
+    },
+    { 
+        id: 'ai4', 
+        title: 'AI Destekli Seslendirme ve Lip Sync', 
+        description: 'ElevenLabs ve HeyGen kullanarak karakterlerinizi konuşturun.', 
+        category: 'Yapay Zeka', 
+        type: 'PDF', 
+        url: '#', 
+        isStarterPack: true 
+    },
 
-    // Yapay Zeka (Purple)
-    { id: 'def7', title: 'Midjourney ile Storyboard Oluşturma', description: 'Senaryonuzu görselleştirmek için AI araçlarını kullanma rehberi.', category: 'Yapay Zeka', type: 'PDF', url: '#', isStarterPack: true },
-    { id: 'def8', title: 'Runway Gen-2 ile Video Üretimi', description: 'Metinden videoya (Text-to-Video) üretim teknikleri ve ipuçları.', category: 'Yapay Zeka', type: 'VIDEO', url: '#', isStarterPack: false },
-
-    // Yarışma Rehberi (Rose)
-    { id: 'def9', title: 'Teknik Şartname ve Teslim Kriterleri', description: 'Diskalifiye olmamak için dikkat etmeniz gereken teknik kurallar.', category: 'Yarışma Rehberi', type: 'PDF', url: '#', isStarterPack: true },
-    { id: 'def10', title: 'Set Çantası Kontrol Listesi', description: 'Çekim gününde ihtiyacınız olacak ekipman ve belgeler listesi.', category: 'Yarışma Rehberi', type: 'PDF', url: '#', isStarterPack: true },
-
-    // İlham & Analiz (Cyan)
-    { id: 'def11', title: 'Ödüllü Kısa Film Analizleri', description: 'Geçmiş yıllarda dereceye giren filmlerin sahne sahne analizi.', category: 'İlham & Analiz', type: 'VIDEO', url: '#', isStarterPack: false },
-    { id: 'def12', title: 'Usta Yönetmenlerden Tavsiyeler', description: 'Mecid Mecidi ve Nuri Bilge Ceylan sinemasından notlar.', category: 'İlham & Analiz', type: 'LINK', url: '#', isStarterPack: false },
+    // --- 4. İLHAM & REHBER ---
+    { 
+        id: 'def4', 
+        title: 'Teknik Şartname ve Teslim Kriterleri', 
+        description: 'Diskalifiye olmamak için dikkat etmeniz gereken teknik kurallar.', 
+        category: 'İlham & Rehber', 
+        type: 'PDF', 
+        url: '#', 
+        isStarterPack: true 
+    },
+    { 
+        id: 'reh2', 
+        title: 'Set Çantası Kontrol Listesi', 
+        description: 'Çekim gününde ihtiyacınız olacak ekipman, yedek parça ve belge listesi.', 
+        category: 'İlham & Rehber', 
+        type: 'PDF', 
+        url: '#', 
+        isStarterPack: true 
+    },
+    { 
+        id: 'reh3', 
+        title: 'Ödüllü Kısa Film Analizleri', 
+        description: 'Geçmiş yıllarda dereceye giren filmlerin sahne sahne analizi.', 
+        category: 'İlham & Rehber', 
+        type: 'VIDEO', 
+        url: '#', 
+        isStarterPack: true 
+    },
+    { 
+        id: 'reh4', 
+        title: 'Usta Yönetmenlerden Tavsiyeler', 
+        description: 'Mecid Mecidi ve Nuri Bilge Ceylan sinemasından notlar.', 
+        category: 'İlham & Rehber', 
+        type: 'LINK', 
+        url: '#', 
+        isStarterPack: true 
+    },
 
     // FINALIST CONTENT (Locked for others)
     { id: 'fin1', title: 'İleri Düzey Senaryo Doktorluğu', description: 'Finalist projelerin senaryoları üzerinde birebir analiz teknikleri.', category: 'Senaryo & Tema', type: 'VIDEO', url: '#', isFinalistContent: true },
-    { id: 'fin2', title: 'Festival Stratejileri ve Dağıtım', description: 'Filminizi uluslararası festivallere nasıl gönderirsiniz?', category: 'Yarışma Rehberi', type: 'PDF', url: '#', isFinalistContent: true }
+    { id: 'fin2', title: 'Festival Stratejileri ve Dağıtım', description: 'Filminizi uluslararası festivallere nasıl gönderirsiniz?', category: 'İlham & Rehber', type: 'PDF', url: '#', isFinalistContent: true }
 ];
 
 interface AppContextType {

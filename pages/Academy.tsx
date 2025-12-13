@@ -1,20 +1,52 @@
 
 import React, { useState } from 'react';
 import { 
-  BookOpen, Film, Video, Link as LinkIcon, FileText, Search, Sparkles, Sprout, Lock, Star, Calendar, Mic2, MonitorPlay, Sliders, CheckCircle2, Download, AlertCircle, PlayCircle, Camera, Scissors
+  BookOpen, Film, Video, Link as LinkIcon, FileText, Search, Sprout, Star, PlayCircle, ChevronRight, Bookmark, Library,
+  CheckCircle2, Lock, Camera, MonitorPlay, Scissors, Download
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { CMSAcademyItem } from '../types';
 
-// Category Color Mapping
-const categoryStyles: Record<string, { bg: string, text: string, border: string, shadow: string }> = {
-    'Senaryo & Tema': { bg: 'bg-amber-500', text: 'text-amber-400', border: 'border-amber-500', shadow: 'shadow-amber-500/20' },
-    'Çekim & Ses': { bg: 'bg-emerald-500', text: 'text-emerald-400', border: 'border-emerald-500', shadow: 'shadow-emerald-500/20' },
-    'Kurgu & Montaj': { bg: 'bg-indigo-500', text: 'text-indigo-400', border: 'border-indigo-500', shadow: 'shadow-indigo-500/20' },
-    'Yapay Zeka': { bg: 'bg-purple-500', text: 'text-purple-400', border: 'border-purple-500', shadow: 'shadow-purple-500/20' },
-    'Yarışma Rehberi': { bg: 'bg-rose-500', text: 'text-rose-400', border: 'border-rose-500', shadow: 'shadow-rose-500/20' },
-    'İlham & Analiz': { bg: 'bg-cyan-500', text: 'text-cyan-400', border: 'border-cyan-500', shadow: 'shadow-cyan-500/20' },
-    'Default': { bg: 'bg-slate-500', text: 'text-slate-400', border: 'border-slate-500', shadow: 'shadow-slate-500/20' }
+// Category Color Mapping - High Contrast for Dark Mode
+const categoryStyles: Record<string, { bg: string, text: string, border: string, shadow: string, hoverText: string }> = {
+    'Senaryo & Tema': { bg: 'bg-amber-500', text: 'text-amber-400', hoverText: 'group-hover:text-amber-400', border: 'border-amber-500', shadow: 'shadow-amber-500/20' },
+    'Teknik & Kurgu': { bg: 'bg-emerald-500', text: 'text-emerald-400', hoverText: 'group-hover:text-emerald-400', border: 'border-emerald-500', shadow: 'shadow-emerald-500/20' },
+    'Yapay Zeka': { bg: 'bg-purple-500', text: 'text-purple-400', hoverText: 'group-hover:text-purple-400', border: 'border-purple-500', shadow: 'shadow-purple-500/20' },
+    'İlham & Rehber': { bg: 'bg-cyan-500', text: 'text-cyan-400', hoverText: 'group-hover:text-cyan-400', border: 'border-cyan-500', shadow: 'shadow-cyan-500/20' },
+    'Default': { bg: 'bg-slate-500', text: 'text-slate-400', hoverText: 'group-hover:text-slate-400', border: 'border-slate-500', shadow: 'shadow-slate-500/20' }
+};
+
+// Title-Based Image Mapping for Unique Cards
+const getTitleImage = (title: string): string => {
+    const map: Record<string, string> = {
+        // Senaryo & Tema
+        'Kahramanın Yolculuğu ve Maneviyat': 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=800', // Path/Journey
+        'Ayetlerden Senaryoya: Uyarlama Rehberi': 'https://images.unsplash.com/photo-1628147879590-33230b924296?auto=format&fit=crop&q=80&w=800', // Quran/Book
+        'Karakter Yaratma: Derinlik ve Dönüşüm': 'https://images.unsplash.com/photo-1535905557558-afc4877a26fc?auto=format&fit=crop&q=80&w=800', // Silhouette/Person
+        'Diyalog Yazımı: Az Söz Çok Şey': 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800', // Writing/Script
+        
+        // Teknik & Kurgu
+        'DaVinci Resolve ile Renk Düzenleme': 'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=800&auto=format&fit=crop', // Color Grading
+        'Sinematik Işık ve Kompozisyon': 'https://images.unsplash.com/photo-1550948537-130a1ce83314?auto=format&fit=crop&q=80&w=800', // Neon Light
+        'Ses Tasarımı: Filmin Gizli Kahramanı': 'https://images.unsplash.com/photo-1590845947698-8924d7409b56?auto=format&fit=crop&q=80&w=800', // Microphone
+        'Kurguda Ritm ve Duygu Akışı': 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44c?auto=format&fit=crop&q=80&w=800', // Film Editing
+        
+        // Yapay Zeka
+        'Midjourney ile Storyboard Oluşturma': 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=800', // AI Art
+        'Runway Gen-2 ile Video Üretimi': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800', // Abstract Tech
+        'Suno AI ile Film Müziği Besteleme': 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&q=80&w=800', // Music/Sound wave
+        'AI Destekli Seslendirme ve Lip Sync': 'https://images.unsplash.com/photo-1589903308904-7166d310922f?auto=format&fit=crop&q=80&w=800', // Microphone/Lip
+        
+        // İlham & Rehber
+        'Teknik Şartname ve Teslim Kriterleri': 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800', // Meeting/Checklist
+        'Set Çantası Kontrol Listesi': 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=800', // Camera Bag
+        'Ödüllü Kısa Film Analizleri': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=800', // Cinema Theater
+        'Usta Yönetmenlerden Tavsiyeler': 'https://images.unsplash.com/photo-1515634928627-2a4e0dae3ddf?auto=format&fit=crop&q=80&w=800', // Director Chair
+        
+        // Finalist
+        'İleri Düzey Senaryo Doktorluğu': 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800', // Writing Hand
+        'Festival Stratejileri ve Dağıtım': 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=800' // Red Carpet/Film Strip
+    };
+    return map[title] || 'https://images.unsplash.com/photo-1478720568477-152d9b164e63?auto=format&fit=crop&q=80&w=800'; // Default Starry Sky
 };
 
 export const Academy: React.FC = () => {
@@ -23,44 +55,31 @@ export const Academy: React.FC = () => {
   // -- Filter State --
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('Tümü');
-  const [showStarterPack, setShowStarterPack] = useState(false);
 
+  // Consolidated Filter Options
   const filterOptions = [
       'Tümü',
       'Senaryo & Tema',
-      'Çekim & Ses',
-      'Kurgu & Montaj',
+      'Teknik & Kurgu',
       'Yapay Zeka',
-      'Yarışma Rehberi',
-      'İlham & Analiz'
+      'İlham & Rehber'
   ];
 
   const isFinalist = currentApplication?.team.isFinalist;
 
   // -- Filter Logic --
-  // We only use CMS for the General Items now, as Finalist section is static layout
   const generalItems = cmsAcademy.filter(i => {
-      if (i.isFinalistContent) return false; // Don't show in main grid
+      if (i.isFinalistContent) return false;
 
       const q = searchQuery.toLowerCase();
       const matchesSearch = i.title.toLowerCase().includes(q) || i.description.toLowerCase().includes(q);
       
       const matchesFilter = activeFilter === 'Tümü' || i.category === activeFilter;
-      const matchesStarter = showStarterPack ? i.isStarterPack : true;
-
-      return matchesSearch && matchesFilter && matchesStarter;
+      
+      return matchesSearch && matchesFilter;
   });
   
   const hasContent = generalItems.length > 0;
-
-  const renderIcon = (type: string) => {
-      switch(type) {
-          case 'PDF': return <FileText size={80} />;
-          case 'VIDEO': return <Video size={80} />;
-          case 'LINK': return <LinkIcon size={80} />;
-          default: return <BookOpen size={80} />;
-      }
-  };
 
   const handleOpen = (url: string) => {
       if (url && url !== '#') {
@@ -70,10 +89,23 @@ export const Academy: React.FC = () => {
       }
   };
 
+  const handleCategoryClick = (e: React.MouseEvent, category: string) => {
+      e.stopPropagation(); // Prevent opening the link
+      setActiveFilter(category);
+      document.getElementById('resources-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const clearFilters = () => {
       setSearchQuery('');
       setActiveFilter('Tümü');
-      setShowStarterPack(false);
+  };
+
+  const getMicroCopy = (cat: string) => {
+      if(cat === 'İlham & Rehber') return { text: "Yarışma kuralları ve ipuçları", color: "text-cyan-400" };
+      if(cat === 'Teknik & Kurgu') return { text: "Teknik puanı artıran içerikler", color: "text-emerald-400" };
+      if(cat === 'Yapay Zeka') return { text: "AI kategorisi için önerilir", color: "text-purple-400" };
+      if(cat === 'Senaryo & Tema') return { text: "Hikaye puanını artıran içerikler", color: "text-amber-400" };
+      return { text: "Jüri Değerlendirme Kriteri", color: "text-slate-400" };
   };
 
   return (
@@ -94,77 +126,95 @@ export const Academy: React.FC = () => {
                 </span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed mb-10 font-light animate-fadeIn delay-200">
-                Fikirden perdeye uzanan yolculukta ihtiyacınız olan <span className="font-semibold text-white">teknik</span> ve <span className="font-semibold text-white">teorik</span> donanım.
+                Yarışma sürecinde size rehberlik edecek temel eğitim içerikleri.
             </p>
         </div>
       </div>
 
-      {/* 2. Sticky Search & Filter Bar (Temel Hazırlık Seti) */}
-      <div className="sticky top-20 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800 shadow-lg">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      {/* 2. Simplified Filter Bar */}
+      <div className="sticky top-20 z-30 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 shadow-2xl transition-all">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
               
-              <div className="flex items-center gap-2 mb-4">
-                  <BookOpen size={20} className="text-teal-500" />
-                  <h2 className="text-lg font-bold text-white">Temel Hazırlık Seti</h2>
-              </div>
-              <p className="text-slate-400 text-xs mb-4">Yarışmaya başvuran herkesin erişimine açık, sinemanın ABC'sini oluşturan kaynak kütüphanesi.</p>
+              <div className="flex flex-col gap-6">
+                  {/* Secondary Filters & Search */}
+                  <div className="flex flex-col md:flex-row gap-4 items-center">
+                      
+                      {/* Search */}
+                      <div className="relative w-full md:w-64 flex-shrink-0">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                          <input 
+                            type="text" 
+                            placeholder="Konu ara..." 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none transition-colors"
+                          />
+                      </div>
 
-              <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                  
-                  {/* Search */}
-                  <div className="relative w-full md:w-1/3">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                      <input 
-                        type="text" 
-                        placeholder="Kaynak ara..." 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:border-teal-500 outline-none transition-colors shadow-sm"
-                      />
+                      <div className="w-px h-8 bg-slate-800 hidden md:block"></div>
+
+                      {/* Horizontal Categories - Added padding-right to fix clipping */}
+                      <div className="flex items-center gap-2 w-full overflow-x-auto pb-2 scrollbar-hide pr-12">
+                          {filterOptions.map(opt => {
+                              const styles = categoryStyles[opt] || categoryStyles['Default'];
+                              const isActive = activeFilter === opt;
+                              
+                              if (opt === 'Tümü') {
+                                  return (
+                                      <button
+                                        key={opt}
+                                        onClick={() => setActiveFilter('Tümü')}
+                                        className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-xs font-bold transition-all border ${isActive ? 'bg-slate-200 text-slate-900 border-white' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500'}`}
+                                      >
+                                          Tümü
+                                      </button>
+                                  );
+                              }
+
+                              return (
+                                  <button
+                                    key={opt}
+                                    onClick={() => setActiveFilter(opt)}
+                                    className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-xs font-bold transition-all border flex items-center gap-2 ${isActive ? `${styles.bg} text-white border-transparent shadow-lg` : `bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-white`}`}
+                                  >
+                                      {opt}
+                                  </button>
+                              );
+                          })}
+                          {/* Invisible spacer to ensure last item isn't flush with edge */}
+                          <div className="w-4 flex-shrink-0"></div>
+                      </div>
                   </div>
-
-                  {/* Starter Pack Toggle */}
-                  <button 
-                      onClick={() => setShowStarterPack(!showStarterPack)}
-                      className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all border ${showStarterPack ? 'bg-green-600 text-white border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.4)]' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-green-500/50 hover:text-green-400'}`}
-                  >
-                      <Sprout size={18} />
-                      Yeni Başlayanlar için
-                  </button>
-              </div>
-
-              {/* Categories Scrollable - Color Coded Pills */}
-              <div className="mt-4 flex gap-2 overflow-x-auto pb-2 no-scrollbar mask-gradient">
-                  {filterOptions.map(opt => {
-                      const styles = categoryStyles[opt] || categoryStyles['Default'];
-                      const isActive = activeFilter === opt;
-                      return (
-                          <button
-                            key={opt}
-                            onClick={() => setActiveFilter(opt)}
-                            className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold transition-all border flex items-center gap-2 ${isActive ? `${styles.bg} text-white border-transparent ${styles.shadow}` : `bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-white`}`}
-                          >
-                              {activeFilter === opt && <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>}
-                              {opt}
-                          </button>
-                      );
-                  })}
               </div>
           </div>
       </div>
 
-      {/* 3. Cards Grid (General Items Only) */}
-      <section className="py-12">
-         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* 3. Cards Grid */}
+      <section id="resources-grid" className="py-12 bg-slate-900 relative">
+         {/* Subtle Grid Background */}
+         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
+
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
              
-             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+             {/* Section Title */}
+             <div className="mb-8">
+                 <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                     <Sprout className="text-green-500"/> Yarışmaya Hazırlık Seti
+                 </h2>
+                 <p className="text-slate-400 text-sm mt-1">
+                     Başlangıç seviyesindeki ekipler için seçilmiş temel ve zorunlu içerikler.
+                 </p>
+             </div>
+
+             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {!hasContent && (
-                    <div className="col-span-full py-24 text-center bg-slate-800/30 rounded-3xl border border-slate-700 border-dashed flex flex-col items-center">
-                        <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                    <div className="col-span-full py-24 text-center bg-slate-800/30 rounded-3xl border border-slate-700 border-dashed flex flex-col items-center animate-fadeIn">
+                        <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4 border border-slate-700">
                             <Search size={32} className="text-slate-500"/>
                         </div>
-                        <h3 className="text-white font-bold text-xl mb-2">Aradığınız kriterlere uygun kaynak bulunamadı.</h3>
-                        <button onClick={clearFilters} className="mt-6 px-8 py-3 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold transition-colors shadow-lg">
+                        <h3 className="text-white font-bold text-xl mb-2">Kaynak Bulunamadı</h3>
+                        <p className="text-slate-500 text-sm mb-6">Seçilen kriterlere uygun içerik mevcut değil.</p>
+                        <button onClick={clearFilters} className="px-8 py-3 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold transition-colors shadow-lg flex items-center gap-2">
                             Filtreleri Temizle
                         </button>
                     </div>
@@ -172,48 +222,74 @@ export const Academy: React.FC = () => {
                 
                 {generalItems.map((item, idx) => {
                     const styles = categoryStyles[item.category] || categoryStyles['Default'];
-                    return (
-                        <div key={idx} onClick={() => handleOpen(item.url)} className={`cursor-pointer group bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden flex flex-col h-full transform hover:-translate-y-1 hover:${styles.border.replace('border-', 'border-opacity-50 ')}`}>
-                            {/* Icon Background */}
-                            <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 text-white pointer-events-none">
-                                {renderIcon(item.type)}
-                            </div>
-                            
-                            <div className="flex flex-wrap items-center gap-2 mb-4">
-                                <span className="px-3 py-1 rounded-full bg-slate-950 text-slate-400 border border-slate-700 text-[10px] font-bold uppercase tracking-wider group-hover:bg-slate-900 transition-colors">
-                                    {item.type}
-                                </span>
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${styles.border.replace('border-', 'border-opacity-30 ')} ${styles.text.replace('text-', 'text-opacity-90 ')} ${styles.bg.replace('bg-', 'bg-opacity-10 ')}`}>
-                                    {item.category}
-                                </span>
-                                {item.isStarterPack && (
-                                    <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-green-900/30 text-green-400 border border-green-900/30 text-[10px] font-bold uppercase tracking-wider">
-                                        <Sprout size={10}/> Başlangıç
-                                    </span>
-                                )}
-                            </div>
+                    const microCopy = getMicroCopy(item.category);
+                    const imageUrl = getTitleImage(item.title);
 
-                            <h3 className={`font-bold text-white text-xl mb-3 transition-colors leading-tight group-hover:${styles.text}`}>
-                                {item.title}
-                            </h3>
-                            <p className="text-slate-400 text-sm leading-relaxed mb-6 flex-1 line-clamp-3">
-                                {item.description}
-                            </p>
+                    return (
+                        <div 
+                            key={idx} 
+                            onClick={() => handleOpen(item.url)} 
+                            className={`group relative flex flex-col bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] hover:border-slate-600`}
+                        >
+                            {/* Hover Gradient Overlay */}
+                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${styles.bg.replace('bg-', 'from-').replace('500', '900/10')} to-transparent pointer-events-none z-0`}></div>
+
+                            {/* Image Visual */}
+                            <div className={`relative overflow-hidden h-48`}>
+                                <img 
+                                    src={imageUrl} 
+                                    alt={item.title} 
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100" 
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
+                                
+                                <div className="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-sm p-2 rounded-full border border-white/10 text-white z-10 shadow-lg">
+                                    {item.type === 'VIDEO' ? <PlayCircle size={18}/> : item.type === 'PDF' ? <FileText size={18}/> : <LinkIcon size={18}/>}
+                                </div>
+                            </div>
                             
-                            <div className="mt-auto pt-4 border-t border-slate-700/50 flex justify-between items-center">
-                                <span className="text-slate-500 text-xs font-mono opacity-60">ID: {item.id}</span>
-                                <button className={`font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-colors ${styles.text}`}>
-                                    İncele <Sparkles size={14} />
-                                </button>
+                            {/* Content */}
+                            <div className={`p-8 flex flex-col flex-1 relative z-10 bg-slate-900`}>
+                                <div className="flex flex-wrap items-center gap-2 mb-4">
+                                    <span 
+                                        onClick={(e) => handleCategoryClick(e, item.category)}
+                                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${styles.border} ${styles.text} bg-slate-950 cursor-pointer hover:bg-slate-800 transition-colors z-20`}
+                                    >
+                                        {item.category}
+                                    </span>
+                                </div>
+
+                                <h3 className={`font-bold text-white mb-3 transition-colors leading-tight ${styles.hoverText} text-xl`}>
+                                    {item.title}
+                                </h3>
+                                <p className="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-3 font-light">
+                                    {item.description}
+                                </p>
+                                
+                                <div className="mt-auto pt-6 border-t border-slate-800 flex items-center justify-between">
+                                    <div className={`flex items-center gap-2 text-xs font-bold ${microCopy.color}`}>
+                                        <Bookmark size={14} /> {microCopy.text}
+                                    </div>
+                                    <div className={`w-8 h-8 rounded-full border border-slate-700 flex items-center justify-center text-slate-500 group-hover:bg-slate-800 group-hover:text-white transition-all`}>
+                                        <ChevronRight size={16} />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     );
                 })}
              </div>
+
+             {/* Bottom Info Banner */}
+             <div className="mt-16 bg-slate-800/50 border border-slate-800 rounded-xl p-4 flex items-center justify-center gap-3 text-sm text-slate-400 animate-fadeIn">
+                 <CheckCircle2 size={18} className="text-teal-500"/>
+                 <span>Bu bölümdeki içerikler, jüri değerlendirme kriterleriyle ve puanlama sistemiyle %100 uyumludur.</span>
+             </div>
+
          </div>
       </section>
 
-      {/* 4. FINALIST MASTERCLASS (Moved to Bottom) */}
+      {/* 4. FINALIST MASTERCLASS (Locked) */}
       <section className="relative z-20 mt-12 pt-20 border-t border-slate-800 bg-slate-950/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
               <div className="text-center mb-10">
@@ -236,121 +312,6 @@ export const Academy: React.FC = () => {
                   <p className="text-slate-300 text-sm font-medium">
                       Bu bölümdeki içerikler, <span className="text-white font-bold">1 Nisan</span> tarihinde açıklanacak 20 finalist takıma özel olarak erişime açılacaktır.
                   </p>
-              </div>
-
-              {/* WORKSHOP CARDS (Restored) */}
-              <div className="grid lg:grid-cols-3 gap-6 mb-12">
-                  
-                  {/* Card 1 */}
-                  <div className="group bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 p-8 rounded-3xl relative overflow-hidden hover:border-amber-500/30 transition-all duration-300 hover:-translate-y-2 shadow-2xl">
-                      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                          <BookOpen size={100} className="text-white"/>
-                      </div>
-                      
-                      <div className="flex justify-between items-start mb-8 relative z-10">
-                          <div className="text-5xl font-black text-slate-800 group-hover:text-slate-700 transition-colors">01</div>
-                          <div className="text-right">
-                              <div className="text-xl font-bold text-white">6 NİSAN</div>
-                              <div className="text-amber-500 text-xs font-bold tracking-widest">20:00 - 22:00</div>
-                          </div>
-                      </div>
-
-                      <div className="relative z-10 mb-8 min-h-[160px]">
-                          <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-amber-500 mb-4 border border-slate-700">
-                              <BookOpen size={20} />
-                          </div>
-                          <h3 className="text-2xl font-bold text-white mb-2 leading-tight">İleri Senaryo & Dramaturji</h3>
-                          <div className="flex items-center gap-2 mb-4">
-                              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">ONLINE ATÖLYE</span>
-                          </div>
-                          <div className="space-y-2">
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Senaryo Matematiği ve Yapı</p>
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Karakter Derinliği & Dönüşüm</p>
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Çatışma ve Dramatik Tansiyon</p>
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Diyalog Yazımı & Alt Metin</p>
-                          </div>
-                      </div>
-
-                      <button disabled={!isFinalist} className="w-full py-4 rounded-xl bg-slate-900 border border-slate-700 text-slate-400 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                          <Lock size={14} /> Canlı Yayına Katıl
-                      </button>
-                  </div>
-
-                  {/* Card 2 */}
-                  <div className="group bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 p-8 rounded-3xl relative overflow-hidden hover:border-teal-500/30 transition-all duration-300 hover:-translate-y-2 shadow-2xl">
-                      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                          <Camera size={100} className="text-white"/>
-                      </div>
-                      
-                      <div className="flex justify-between items-start mb-8 relative z-10">
-                          <div className="text-5xl font-black text-slate-800 group-hover:text-slate-700 transition-colors">02</div>
-                          <div className="text-right">
-                              <div className="text-xl font-bold text-white">8 NİSAN</div>
-                              <div className="text-teal-500 text-xs font-bold tracking-widest">20:00 - 22:00</div>
-                          </div>
-                      </div>
-
-                      <div className="relative z-10 mb-8 min-h-[160px]">
-                          <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-teal-500 mb-4 border border-slate-700">
-                              <MonitorPlay size={20} />
-                          </div>
-                          <h3 className="text-2xl font-bold text-white mb-2 leading-tight">Görsel Yönetim & Sinematografi</h3>
-                          <div className="flex items-center gap-2 mb-4">
-                              <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">TEKNİK ATÖLYE</span>
-                          </div>
-                          <div className="space-y-2">
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Kameranın veya yapay zekanın gözünden atmosfer yaratmak.</p>
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Kompozisyon ve Kadraj Estetiği</p>
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Işık Kullanımı ve Renk Psikolojisi</p>
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> AI: Prompt Tutarlılığı (Consistency)</p>
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Kamera Hareketleri ve Anlamı</p>
-                          </div>
-                      </div>
-
-                      <button disabled={!isFinalist} className="w-full py-4 rounded-xl bg-slate-900 border border-slate-700 text-slate-400 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                          <Lock size={14} /> Canlı Yayına Katıl
-                      </button>
-                  </div>
-
-                  {/* Card 3 */}
-                  <div className="group bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 p-8 rounded-3xl relative overflow-hidden hover:border-indigo-500/30 transition-all duration-300 hover:-translate-y-2 shadow-2xl">
-                      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                          <Sliders size={100} className="text-white"/>
-                      </div>
-                      
-                      <div className="flex justify-between items-start mb-8 relative z-10">
-                          <div className="text-5xl font-black text-slate-800 group-hover:text-slate-700 transition-colors">03</div>
-                          <div className="text-right">
-                              <div className="text-xl font-bold text-white">10 NİSAN</div>
-                              <div className="text-indigo-500 text-xs font-bold tracking-widest">20:00 - 22:00</div>
-                          </div>
-                      </div>
-
-                      <div className="relative z-10 mb-8 min-h-[160px]">
-                          <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-indigo-500 mb-4 border border-slate-700">
-                              <Scissors size={20} />
-                          </div>
-                          <h3 className="text-2xl font-bold text-white mb-2 leading-tight">Kurgu Ritmi & Ses Tasarımı</h3>
-                          <div className="flex items-center gap-2 mb-4">
-                              <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
-                              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">POST-PRODÜKSİYON</span>
-                          </div>
-                          <div className="space-y-2">
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Filmin kalbi kurgu masasında atar. Görüntüyü sesle bütünleştirme sanatı.</p>
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Kurgu Ritmi ve Zamanlama</p>
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Ses Tasarımı (SFX) ve Miksaj</p>
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Müzik Kullanımı ve Duygu</p>
-                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Color Grading (Renk Düzenleme)</p>
-                          </div>
-                      </div>
-
-                      <button disabled={!isFinalist} className="w-full py-4 rounded-xl bg-slate-900 border border-slate-700 text-slate-400 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                          <Lock size={14} /> Canlı Yayına Katıl
-                      </button>
-                  </div>
-
               </div>
 
               {/* REVISION KIT BLOCK */}
@@ -394,9 +355,8 @@ export const Academy: React.FC = () => {
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .delay-100 { animation-delay: 0.1s; }
         .delay-200 { animation-delay: 0.2s; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .mask-gradient { mask-image: linear-gradient(to right, transparent, black 20px, black 90%, transparent); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </div>
   );

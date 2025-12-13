@@ -262,7 +262,7 @@ export interface CMSAcademyItem {
     description: string;
     type: 'PDF' | 'VIDEO' | 'LINK';
     url: string;
-    category: 'Senaryo & Tema' | 'Çekim & Ses' | 'Kurgu & Montaj' | 'Yapay Zeka' | 'Yarışma Rehberi' | 'İlham & Analiz';
+    category: 'Senaryo & Tema' | 'Teknik & Kurgu' | 'Yapay Zeka' | 'İlham & Rehber'; // Simplified categories
     isStarterPack?: boolean;
     isFinalistContent?: boolean; // New flag for Finalist Lounge
 }

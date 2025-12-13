@@ -61,11 +61,9 @@ export const CMSAcademyTab: React.FC = () => {
                             <label className="label-text">Kategori</label>
                             <select value={academyForm.category} onChange={(e) => setAcademyForm({...academyForm, category: e.target.value as any})} className="input-field">
                                 <option value="Senaryo & Tema">Senaryo & Tema</option>
-                                <option value="Çekim & Ses">Çekim & Ses</option>
-                                <option value="Kurgu & Montaj">Kurgu & Montaj</option>
+                                <option value="Teknik & Kurgu">Teknik & Kurgu</option>
                                 <option value="Yapay Zeka">Yapay Zeka</option>
-                                <option value="Yarışma Rehberi">Yarışma Rehberi</option>
-                                <option value="İlham & Analiz">İlham & Analiz</option>
+                                <option value="İlham & Rehber">İlham & Rehber</option>
                             </select>
                         </div>
                     </div>
