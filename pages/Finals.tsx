@@ -6,21 +6,22 @@ import { useAppContext } from '../context/AppContext';
 export const Finals: React.FC = () => {
   const { cmsPrizes } = useAppContext();
 
-  // Find prizes by ID, or use fallback if not set
-  const getPrize = (id: string, defaultTitle: string, defaultReward: string, defaultDesc: string) => {
+  // Find prizes by ID.
+  // We expect context to be populated with defaults if DB is empty, so we don't need hardcoded text here anymore.
+  const getPrize = (id: string) => {
       const p = cmsPrizes.find(item => item.id === id);
       return {
-          title: p?.title || defaultTitle,
-          reward: p?.reward || defaultReward,
-          description: p?.description || defaultDesc
+          title: p?.title || 'Ödül Başlığı',
+          reward: p?.reward || 'Tutar',
+          description: p?.description || 'Açıklama yükleniyor...'
       };
   };
 
-  const rank1 = getPrize('rank1', 'Altın Kamera Ödülü', '40.000 TL', 'Yaratıcılığı, teknik ustalığı ve sinematik anlatımıyla jüriyi en çok etkileyen birinci ekip bu büyük ödülün sahibi olur.');
-  const rank2 = getPrize('rank2', 'Gümüş Klaket Ödülü', '30.000 TL', 'Kurgusal bütünlük, sahne tasarımı ve anlatım başarısıyla ikinci seçilen ekip ödüllendirilir.');
-  const rank3 = getPrize('rank3', 'Bronz Film Makarası', '20.000 TL', 'Teknik başarı, kamera kullanımı ve görsel anlatım gücüyle öne çıkan üçüncü ekip bu ödülü alır.');
-  const mention = getPrize('mention', 'Mansiyon Ödülü', 'Sürpriz Ödül', 'Gelecek vadeden, potansiyeli yüksek ve özgün sinematik yaklaşıma sahip ekibe verilen özel teşvik ödülü.');
-  const special = getPrize('special', 'Jüri Özel Ödülü', 'Sanatsal Cesaret Ödülü', 'Klasik anlatımın dışına çıkarak cesur, yenilikçi ve etkileyici bir yaklaşım sergileyen ekibe verilen özel jüri plaketi.');
+  const rank1 = getPrize('rank1');
+  const rank2 = getPrize('rank2');
+  const rank3 = getPrize('rank3');
+  const mention = getPrize('mention');
+  const special = getPrize('special');
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans relative overflow-hidden text-white selection:bg-amber-500 selection:text-black">
@@ -157,7 +158,7 @@ export const Finals: React.FC = () => {
             </div>
         </div>
 
-        {/* Footer Note - Updated to Islamic/Contemplative Quote */}
+        {/* Footer Note */}
         <div className="mt-28 text-center opacity-80 pb-12">
              <p className="text-slate-400 font-light italic text-lg font-serif">
                 "Kâinatın ayetlerini kadraja sığdırmak değil, kadrajdan kâinatı tefekkür etmektir hüner.<br/>

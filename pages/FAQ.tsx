@@ -13,7 +13,7 @@ interface FAQItem {
 }
 
 export const FAQ: React.FC = () => {
-  const { cmsGeneral, cmsFaqs } = useAppContext();
+  const { cmsGeneral, cmsFaqs, sendContactMessage } = useAppContext();
   const [openId, setOpenId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<FAQCategory | 'Tümü'>('Tümü');
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,39 +25,52 @@ export const FAQ: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setIsSending(true);
       setErrorMessage('');
 
-      const adminParams = {
-          name: contactForm.name,
-          email: contactForm.email,
-          title: contactForm.title,
-          message: contactForm.message
-      };
+      try {
+          // 1. Save to Database
+          await sendContactMessage({
+              name: contactForm.name,
+              email: contactForm.email,
+              title: contactForm.title,
+              message: contactForm.message
+          });
 
-      const autoReplyParams = {
-          name: contactForm.name,
-          email: contactForm.email,
-          title: contactForm.title
-      };
+          // 2. Send via EmailJS (Optional backup/notification)
+          const adminParams = {
+              name: contactForm.name,
+              email: contactForm.email,
+              title: contactForm.title,
+              message: contactForm.message
+          };
 
-      send("service_o0zu33c", "template_4c8rmq9", adminParams, "RzmeddmQjAXFkTle4")
-        .then(() => {
-            return send("service_o0zu33c", "template_k7k7lcb", autoReplyParams, "RzmeddmQjAXFkTle4");
-        })
-        .then(() => {
-            setIsSending(false);
-            setIsSent(true);
-            setContactForm({ name: '', email: '', title: '', message: '' });
-            setTimeout(() => setIsSent(false), 5000);
-        })
-        .catch((error) => {
-            console.error("EmailJS Error:", error);
-            setErrorMessage('Gönderim sırasında bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.');
-            setIsSending(false);
-        });
+          const autoReplyParams = {
+              name: contactForm.name,
+              email: contactForm.email,
+              title: contactForm.title
+          };
+
+          // Try sending email, but don't block success if it fails (since we saved to DB)
+          try {
+              await send("service_o0zu33c", "template_4c8rmq9", adminParams, "RzmeddmQjAXFkTle4");
+              await send("service_o0zu33c", "template_k7k7lcb", autoReplyParams, "RzmeddmQjAXFkTle4");
+          } catch(emailErr) {
+              console.warn("EmailJS Failed but DB Saved:", emailErr);
+          }
+
+          setIsSending(false);
+          setIsSent(true);
+          setContactForm({ name: '', email: '', title: '', message: '' });
+          setTimeout(() => setIsSent(false), 5000);
+
+      } catch (error) {
+          console.error("Error:", error);
+          setErrorMessage('Gönderim sırasında bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.');
+          setIsSending(false);
+      }
   };
 
   const handleContactChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

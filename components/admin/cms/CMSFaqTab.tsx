@@ -1,93 +1,132 @@
 
 import React, { useState } from 'react';
-import { Plus, PenTool, Trash2 } from 'lucide-react';
+import { Plus, PenTool, Trash2, Save, X, HelpCircle } from 'lucide-react';
 import { useAppContext } from '../../../context/AppContext';
 import { CMSFaqItem, FAQCategory } from '../../../types';
 
 export const CMSFaqTab: React.FC = () => {
     const { cmsFaqs, addCMSFaq, updateCMSFaq, deleteCMSFaq } = useAppContext();
-    const [isEditingFaq, setIsEditingFaq] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState<string | null>(null);
     const [faqForm, setFaqForm] = useState<Partial<CMSFaqItem>>({ category: 'Genel', question: '', answer: '', order: 0 });
 
-    const startEditFaq = (faq?: CMSFaqItem) => {
-        if (faq) {
-            setIsEditingFaq(faq.id);
-            setFaqForm(faq);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (isEditing) {
+            await updateCMSFaq(isEditing, faqForm);
+            setIsEditing(null);
         } else {
-            setIsEditingFaq('NEW');
-            setFaqForm({ category: 'Genel', question: '', answer: '', order: cmsFaqs.length + 1 });
+            await addCMSFaq({ ...faqForm, order: cmsFaqs.length + 1 } as CMSFaqItem);
         }
+        setFaqForm({ category: 'Genel', question: '', answer: '', order: 0 });
     };
 
-    const handleFaqSave = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (isEditingFaq === 'NEW') {
-            await addCMSFaq(faqForm as CMSFaqItem);
-        } else if (isEditingFaq) {
-            await updateCMSFaq(isEditingFaq, faqForm);
-        }
-        setIsEditingFaq(null);
+    const handleEdit = (item: CMSFaqItem) => {
+        setIsEditing(item.id);
+        setFaqForm(item);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleCancel = () => {
+        setIsEditing(null);
         setFaqForm({ category: 'Genel', question: '', answer: '', order: 0 });
+    };
+
+    const getCategoryColor = (cat: string) => {
+        switch(cat) {
+            case 'Genel': return 'bg-blue-900/30 text-blue-400 border-blue-800';
+            case 'Teknik': return 'bg-purple-900/30 text-purple-400 border-purple-800';
+            case 'Süreç & Teslim': return 'bg-amber-900/30 text-amber-400 border-amber-800';
+            default: return 'bg-emerald-900/30 text-emerald-400 border-emerald-800';
+        }
     };
 
     return (
         <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 animate-fadeIn">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-white text-lg">Sıkça Sorulan Sorular</h3>
-                <button onClick={() => startEditFaq()} className="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
-                    <Plus size={16} /> Yeni Soru Ekle
-                </button>
-            </div>
+            <h3 className="font-bold text-white text-lg mb-6 border-b border-slate-700 pb-4 flex items-center justify-between">
+                <span>{isEditing ? 'Soruyu Düzenle' : 'Yeni Soru Ekle'}</span>
+                {isEditing && (
+                    <button onClick={handleCancel} className="text-xs text-rose-400 flex items-center gap-1 hover:underline">
+                        <X size={14}/> Vazgeç
+                    </button>
+                )}
+            </h3>
 
-            {isEditingFaq && (
-                <div className="bg-slate-900 p-6 rounded-xl border border-slate-600 mb-8 animate-fadeIn">
-                    <h4 className="text-white font-bold mb-4">{isEditingFaq === 'NEW' ? 'Yeni Soru' : 'Soruyu Düzenle'}</h4>
-                    <form onSubmit={handleFaqSave} className="space-y-4">
-                        <div className="grid md:grid-cols-4 gap-4">
-                            <div className="md:col-span-1">
-                                <label className="label-text">Kategori</label>
-                                <select 
-                                    value={faqForm.category} 
-                                    onChange={(e) => setFaqForm({...faqForm, category: e.target.value as FAQCategory})}
-                                    className="input-field"
-                                >
-                                    <option value="Genel">Genel</option>
-                                    <option value="Teknik">Teknik</option>
-                                    <option value="Süreç & Teslim">Süreç & Teslim</option>
-                                    <option value="Ödüller & Değerlendirme">Ödüller & Değerlendirme</option>
-                                </select>
-                            </div>
-                            <div className="md:col-span-3">
-                                <label className="label-text">Soru</label>
-                                <input value={faqForm.question} onChange={(e) => setFaqForm({...faqForm, question: e.target.value})} className="input-field" required />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="label-text">Cevap</label>
-                            <textarea value={faqForm.answer} onChange={(e) => setFaqForm({...faqForm, answer: e.target.value})} className="input-field h-24" required />
-                        </div>
-                        <div className="flex justify-end gap-3">
-                            <button type="button" onClick={() => setIsEditingFaq(null)} className="px-4 py-2 text-slate-400 hover:text-white">İptal</button>
-                            <button type="submit" className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-bold">Kaydet</button>
-                        </div>
-                    </form>
+            <form onSubmit={handleSubmit} className={`p-6 rounded-xl border mb-8 transition-all ${isEditing ? 'bg-blue-900/20 border-blue-500/50' : 'bg-slate-900 border-slate-600'}`}>
+                <div className="grid md:grid-cols-4 gap-5 mb-4">
+                    <div className="md:col-span-1">
+                        <label className="label-text">Kategori</label>
+                        <select 
+                            value={faqForm.category} 
+                            onChange={(e) => setFaqForm({...faqForm, category: e.target.value as FAQCategory})}
+                            className="input-field"
+                        >
+                            <option value="Genel">Genel</option>
+                            <option value="Teknik">Teknik</option>
+                            <option value="Süreç & Teslim">Süreç & Teslim</option>
+                            <option value="Ödüller & Değerlendirme">Ödüller & Değerlendirme</option>
+                        </select>
+                    </div>
+                    <div className="md:col-span-3">
+                        <label className="label-text">Soru</label>
+                        <input 
+                            value={faqForm.question} 
+                            onChange={(e) => setFaqForm({...faqForm, question: e.target.value})} 
+                            className="input-field" 
+                            placeholder="Örn: Yarışmaya kimler katılabilir?"
+                            required 
+                        />
+                    </div>
                 </div>
-            )}
+                <div className="mb-4">
+                    <label className="label-text">Cevap</label>
+                    <textarea 
+                        value={faqForm.answer} 
+                        onChange={(e) => setFaqForm({...faqForm, answer: e.target.value})} 
+                        className="input-field h-24" 
+                        placeholder="Cevabı buraya yazınız..."
+                        required 
+                    />
+                </div>
+                <div className="text-right flex justify-end gap-3">
+                    {isEditing && (
+                        <button type="button" onClick={handleCancel} className="bg-slate-700 hover:bg-slate-600 text-slate-300 px-6 py-2 rounded-lg font-bold flex items-center gap-2">
+                            İptal
+                        </button>
+                    )}
+                    <button type="submit" className={`${isEditing ? 'bg-blue-600 hover:bg-blue-500' : 'bg-rose-600 hover:bg-rose-500'} text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all`}>
+                        {isEditing ? <><Save size={16}/> Güncelle</> : <><Plus size={16}/> Ekle</>}
+                    </button>
+                </div>
+            </form>
 
+            <h3 className="font-bold text-white text-lg mb-4">Mevcut Sorular</h3>
             <div className="space-y-3">
                 {cmsFaqs.length === 0 && <p className="text-slate-500 text-center py-8">Henüz soru eklenmemiş.</p>}
                 {cmsFaqs.map(faq => (
-                    <div key={faq.id} className="bg-slate-900 border border-slate-700 p-4 rounded-xl flex justify-between items-start group hover:border-slate-500 transition-colors">
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[10px] font-bold uppercase bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">{faq.category}</span>
-                                <h4 className="font-bold text-white text-sm">{faq.question}</h4>
+                    <div key={faq.id} className={`flex flex-col md:flex-row items-start justify-between p-4 rounded-xl border transition-all ${isEditing === faq.id ? 'bg-blue-900/10 border-blue-500/30' : 'bg-slate-900 border-slate-700 hover:border-slate-500'}`}>
+                        <div className="flex items-start gap-4 mb-3 md:mb-0 flex-1">
+                            <div className={`p-3 rounded-lg ${isEditing === faq.id ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                                <HelpCircle size={20}/>
                             </div>
-                            <p className="text-slate-400 text-xs line-clamp-1">{faq.answer}</p>
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${getCategoryColor(faq.category)}`}>
+                                        {faq.category}
+                                    </span>
+                                    <h4 className={`font-bold text-sm ${isEditing === faq.id ? 'text-blue-400' : 'text-white'}`}>
+                                        {faq.question}
+                                    </h4>
+                                </div>
+                                <p className="text-slate-400 text-xs leading-relaxed">{faq.answer}</p>
+                            </div>
                         </div>
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => startEditFaq(faq)} className="p-2 bg-blue-900/30 text-blue-400 rounded-lg hover:bg-blue-900/50"><PenTool size={14}/></button>
-                            <button onClick={() => deleteCMSFaq(faq.id)} className="p-2 bg-red-900/30 text-red-400 rounded-lg hover:bg-red-900/50"><Trash2 size={14}/></button>
+                        <div className="flex gap-2 justify-end ml-4">
+                            <button onClick={() => handleEdit(faq)} className="bg-blue-900/30 text-blue-400 hover:bg-blue-900/50 p-2 rounded-lg transition-colors" title="Düzenle">
+                                <PenTool size={18}/>
+                            </button>
+                            <button onClick={() => deleteCMSFaq(faq.id)} className="bg-red-900/30 text-red-400 hover:bg-red-900/50 p-2 rounded-lg transition-colors" title="Sil">
+                                <Trash2 size={18}/>
+                            </button>
                         </div>
                     </div>
                 ))}

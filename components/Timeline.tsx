@@ -12,7 +12,10 @@ import {
   Mic2, 
   Clapperboard,
   CheckCircle2,
-  Film
+  Film,
+  MonitorPlay,
+  Scissors,
+  Trophy
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
@@ -23,52 +26,6 @@ interface TimelineEvent {
   icon: React.ElementType;
   color: string; // 'rose' | 'teal' | 'amber'
 }
-
-// Fallback events
-const fallbackEvents: TimelineEvent[] = [
-  {
-    date: '20 Ocak 2026',
-    title: 'Başvuruların Başlaması',
-    description: 'Reflect&Shoot 2026 maratonu resmen başlıyor! Takımını kur, temayı seç ve sisteme kaydını yaptır.',
-    icon: Flag,
-    color: 'teal'
-  },
-  {
-    date: '13 Şubat 2026',
-    title: 'Son Başvuru Tarihi',
-    description: 'Yarışmaya katılım için son gün. Belgelerini ve takım bilgilerini eksiksiz tamamlamayı unutma.',
-    icon: Calendar,
-    color: 'rose'
-  },
-  {
-    date: '16 Şubat – 20 Mart 2026',
-    title: 'İlk Video Teslim Süreci',
-    description: 'Senaryonu filme dökme vakti. Çektiğin ham veya kurgulanmış ilk versiyonu sisteme yükle.',
-    icon: Video,
-    color: 'amber'
-  },
-  {
-    date: '1 Nisan 2026',
-    title: 'Finalistlerin Açıklanması',
-    description: 'Ön jüri değerlendirmesi tamamlanıyor. Finale kalmaya hak kazanan takımlar duyuruluyor.',
-    icon: Star,
-    color: 'teal'
-  },
-  {
-    date: '11 Mayıs 2026',
-    title: 'Sonuçların İlanı',
-    description: 'Dereceye giren eserler web sitesi üzerinden açıklanıyor.',
-    icon: CheckCircle2,
-    color: 'rose'
-  },
-  {
-    date: '22 Mayıs 2026',
-    title: 'Ödül Töreni',
-    description: 'Gala gecesi, kırmızı halı ve büyük ödüllerin sahiplerini bulması.',
-    icon: Award,
-    color: 'teal'
-  }
-];
 
 const TimelineItem: React.FC<{ event: TimelineEvent; index: number }> = ({ event, index }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -208,7 +165,7 @@ export const Timeline: React.FC = () => {
       description: item.description,
       icon: Calendar,
       color: ['teal', 'rose', 'amber'][index % 3] // Cyclic colors
-  })) : fallbackEvents;
+  })) : [];
 
   return (
     <section className="bg-slate-950 py-24 overflow-hidden relative">

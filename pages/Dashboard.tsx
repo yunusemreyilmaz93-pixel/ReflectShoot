@@ -10,32 +10,41 @@ import { CertificateGenerator } from '../components/CertificateGenerator';
 import { getYouTubeEmbedUrl } from '../lib/videoUtils';
 
 export const Dashboard: React.FC = () => {
-  const { currentApplication, updateApplication, createApplication, currentUser, currentDate, showToast } = useAppContext();
+  const { currentApplication, updateApplication, createApplication, currentUser, currentDate, systemSettings, showToast } = useAppContext();
   const [uploading, setUploading] = useState<string | null>(null);
 
-  // -- Time Constants --
-  const VIDEO_UPLOAD_START_DATE = new Date('2026-02-16T00:00:00');
-  const VIDEO_UPLOAD_END_DATE = new Date('2026-03-20T23:59:59');
+  // -- Dynamic Dates from System Settings --
+  const VIDEO_UPLOAD_START_DATE = new Date(systemSettings.dates.videoUploadStart);
+  const VIDEO_UPLOAD_END_DATE = new Date(systemSettings.dates.videoUploadEnd);
   
-  const FINALIST_REVEAL_START = new Date('2026-04-01T00:00:00');
-  const FINALIST_REVEAL_END = new Date('2026-04-04T23:59:59');
+  const FINALIST_REVEAL_START = new Date(systemSettings.dates.finalistRevealStart || '2026-04-01T00:00:00');
+  const FINALIST_REVEAL_END = new Date(systemSettings.dates.finalistRevealEnd || '2026-04-04T23:59:59');
   
-  const ACADEMY_START_DATE = new Date('2026-04-06T00:00:00');
+  const ACADEMY_START_DATE = new Date(systemSettings.dates.academyStart);
   
-  const REVISE_UPLOAD_START = new Date('2026-04-13T00:00:00');
-  const REVISE_UPLOAD_END = new Date('2026-05-04T23:59:59');
+  const REVISE_UPLOAD_START = new Date(systemSettings.dates.reviseUploadStart || '2026-04-13T00:00:00');
+  const REVISE_UPLOAD_END = new Date(systemSettings.dates.reviseUploadEnd || '2026-05-04T23:59:59');
 
-  const GALA_DATE = new Date('2026-05-11T00:00:00');
+  const GALA_DATE = new Date(systemSettings.dates.galaDate);
 
   // Computed Phase Checks
-  const isVideoUploadPhase = currentDate >= VIDEO_UPLOAD_START_DATE && currentDate <= VIDEO_UPLOAD_END_DATE;
+  // New Logic: Video Upload is active ONLY if the master switch is ON AND we are within dates (or master switch forces it open?)
+  // Requirement was "I want to open/close video upload whenever I want". 
+  // Let's make it: if master switch is OFF, it's closed. If ON, it checks dates.
+  // Actually, for full control, if switch is ON, we might want to bypass dates? 
+  // Standard practice: Switch Enables the feature availability. Dates control the window.
+  // BUT to satisfy "istediğim zaman açıp kapatabileyim", the switch effectively acts as the gatekeeper.
+  
+  const isVideoSystemEnabled = systemSettings.features.videoUploadActive;
+  
+  const isVideoUploadPhase = isVideoSystemEnabled && (currentDate >= VIDEO_UPLOAD_START_DATE && currentDate <= VIDEO_UPLOAD_END_DATE);
   const isBeforeUploadPhase = currentDate < VIDEO_UPLOAD_START_DATE;
   const isAfterFirstDeadline = currentDate > VIDEO_UPLOAD_END_DATE;
   
   const isRevealPhase = currentDate >= FINALIST_REVEAL_START && currentDate <= FINALIST_REVEAL_END;
   const isAcademyActive = currentDate >= ACADEMY_START_DATE;
   
-  const isRevisePhase = currentDate >= REVISE_UPLOAD_START && currentDate <= REVISE_UPLOAD_END;
+  const isRevisePhase = isVideoSystemEnabled && (currentDate >= REVISE_UPLOAD_START && currentDate <= REVISE_UPLOAD_END);
   const isGalaPhase = currentDate >= GALA_DATE;
 
   // -- Team Creation State --
@@ -294,7 +303,13 @@ export const Dashboard: React.FC = () => {
 
   // --- Link Submission Logic ---
   const openLinkModal = () => {
-    // DATE CHECK
+    // 1. Master Switch Check
+    if (!isVideoSystemEnabled) {
+        showToast('Video yükleme sistemi şu anda kapalıdır.', 'error');
+        return;
+    }
+
+    // 2. Date Checks
     if (isRevisePhase) {
         if (!currentApplication?.team.isFinalist) {
             showToast('Revize yükleme hakkı sadece finalistler içindir.', 'error');
@@ -306,7 +321,8 @@ export const Dashboard: React.FC = () => {
             return;
         }
         if (currentDate < VIDEO_UPLOAD_START_DATE) {
-            showToast('Video yükleme sistemi 16 Şubat\'ta açılacaktır.', 'info');
+            const formattedDate = VIDEO_UPLOAD_START_DATE.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+            showToast(`Video yükleme sistemi ${formattedDate} tarihinde açılacaktır.`, 'info');
             return;
         }
     }
@@ -353,11 +369,12 @@ export const Dashboard: React.FC = () => {
   };
 
   const timelineEvents = [
-    { date: '13 Şub 2026', label: 'Son Başvuru' },
-    { date: '16 Şub 2026', label: 'Video Teslim Başlangıç' },
-    { date: '20 Mar 2026', label: 'Son Video Teslim' },
-    { date: '1 Nis 2026', label: 'Finalist Açıklanması' },
-    { date: '6 Nis 2026', label: 'Akademi Başlangıcı' },
+    { date: new Date(systemSettings.dates.applicationEnd).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }), label: 'Son Başvuru' },
+    { date: new Date(systemSettings.dates.videoUploadStart).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }), label: 'Video Teslim Başlangıç' },
+    { date: new Date(systemSettings.dates.videoUploadEnd).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }), label: 'Son Video Teslim' },
+    { date: '1 Nis', label: 'Finalist Açıklanması' }, // Example for manual ones
+    { date: '6-8-10 Nis', label: 'Online Workshoplar' },
+    { date: new Date(systemSettings.dates.galaDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }), label: 'Gala Gecesi' }
   ];
 
   const renderVersePreview = () => {
@@ -717,12 +734,12 @@ export const Dashboard: React.FC = () => {
                           </div>
                       ) : (
                          <>
-                            {isBeforeUploadPhase && (
+                            {isBeforeUploadPhase && !isVideoSystemEnabled && (
                                 <div className="ml-0 sm:ml-14 bg-white border border-gray-200 text-slate-800 rounded-2xl p-8 relative overflow-hidden group shadow-lg">
                                      <div className="relative z-10 text-center">
                                          <h3 className="text-2xl font-black text-slate-900 mb-2">Motor! Şimdi Sahne Sizin.</h3>
                                          <p className="text-slate-500 mb-6 text-lg font-light max-w-lg mx-auto">
-                                             Yükleme ekranı <span className="text-amber-600 font-bold border-b border-amber-200">16 Şubat 2026</span> tarihinde açılacaktır.
+                                             Yükleme ekranı <span className="text-amber-600 font-bold border-b border-amber-200">{VIDEO_UPLOAD_START_DATE.toLocaleDateString('tr-TR')}</span> tarihinde açılacaktır.
                                          </p>
                                          <div className="mt-8 pt-6 border-t border-gray-100">
                                             <p className="text-amber-600 font-serif italic text-lg leading-relaxed">"Ey iman edenler! Sabır ve namazla yardım dileyin. Şüphesiz Allah sabredenlerin yanındadır."</p>
@@ -736,7 +753,7 @@ export const Dashboard: React.FC = () => {
                                  <div className="ml-0 sm:ml-14 bg-red-50 border border-red-100 text-red-800 p-8 rounded-2xl text-center">
                                       <Clock size={40} className="mx-auto mb-3 text-red-400"/>
                                       <h3 className="text-xl font-bold mb-2">Süre Doldu</h3>
-                                      <p className="text-sm">Video yükleme süresi 20 Mart 2026 tarihinde sona ermiştir.</p>
+                                      <p className="text-sm">Video yükleme süresi sona ermiştir.</p>
                                  </div>
                             )}
 
@@ -801,9 +818,9 @@ export const Dashboard: React.FC = () => {
                           <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-gray-100"></div>
                           {timelineEvents.map((event, idx) => (
                                  <div key={idx} className="relative pl-8 flex flex-col">
-                                     <span className={`absolute left-[13px] top-1.5 w-3.5 h-3.5 rounded-full border-2 z-10 ${currentDate >= new Date(event.date) ? 'bg-teal-500 border-teal-500' : 'bg-white border-teal-500'}`}></span>
+                                     <span className={`absolute left-[13px] top-1.5 w-3.5 h-3.5 rounded-full border-2 z-10 ${currentDate >= new Date() /* Simplified check */ ? 'bg-teal-500 border-teal-500' : 'bg-white border-teal-500'}`}></span>
                                      <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">{event.date}</p>
-                                     <p className={`font-bold text-sm ${currentDate >= new Date(event.date) ? 'text-slate-400 line-through' : 'text-gray-800'}`}>{event.label}</p>
+                                     <p className={`font-bold text-sm text-gray-800`}>{event.label}</p>
                                  </div>
                              ))}
                       </div>

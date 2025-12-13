@@ -136,12 +136,17 @@ export interface SystemSettings {
         galaDate: string;
         publicVoteStart?: string;
         publicVoteEnd?: string;
+        finalistRevealStart?: string;
+        finalistRevealEnd?: string;
+        reviseUploadStart?: string;
+        reviseUploadEnd?: string;
     };
     features: {
         judgeSystemActive: boolean;
         publicResultReveal: boolean;
         allowNewRegistrations: boolean;
         publicVotingActive?: boolean;
+        videoUploadActive: boolean; // NEW: Master switch for video uploads
     };
 }
 
@@ -183,6 +188,17 @@ export interface ChatMessage {
   senderRole: UserRole;
   text: string;
   createdAt: string;
+}
+
+// NEW: Contact Message (Inbox)
+export interface ContactMessage {
+    id: string;
+    name: string;
+    email: string;
+    title: string; // Subject
+    message: string;
+    createdAt: string;
+    status: 'READ' | 'UNREAD';
 }
 
 // NEW: Vote
@@ -246,6 +262,7 @@ export interface CMSAcademyItem {
     type: 'PDF' | 'VIDEO' | 'LINK';
     url: string;
     category: 'Hazırlık' | 'Prodüksiyon' | 'Post-Prodüksiyon';
+    subTag?: 'Genel' | 'Yapay Zeka' | 'Canlı Çekim';
 }
 
 export interface CMSTimelineItem {

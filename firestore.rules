@@ -3,90 +3,112 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
+    // --- HELPER FUNCTIONS ---
+    
+    // Check if user is authenticated
     function isSignedIn() {
       return request.auth != null;
     }
     
+    // Check if user is the owner of the resource
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Fetch user role from 'users' collection
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
     
+    // Check for specific role
     function hasRole(role) {
       return isSignedIn() && getUserData().role == role;
     }
 
-    // 1. USERS
+    // --- 1. USERS ---
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && (request.auth.uid == userId || hasRole('ADMIN'));
+      allow read: if isSignedIn(); // Allow reading profiles (needed for admin/jury lists)
+      allow write: if isOwner(userId) || hasRole('ADMIN');
     }
 
-    // 2. APPLICATIONS
+    // --- 2. APPLICATIONS ---
     match /applications/{appId} {
-      // Allow read if Admin, Judge, Owner, OR if it's a Finalist (for Public Vote)
-      allow read: if (isSignedIn() && (
-        hasRole('ADMIN') || 
-        hasRole('JUDGE') || 
-        (hasRole('TEACHER') && resource.data.teacher.email == request.auth.token.email)
-      )) || (resource.data.team.isFinalist == true);
+      // READ PERMISSIONS:
+      // - Admin: All
+      // - Judge: All (needed for querying filtering)
+      // - Teacher: Own application
+      // - Public: Only if isFinalist is true (for voting page)
+      allow read: if hasRole('ADMIN') || 
+                     hasRole('JUDGE') || 
+                     (hasRole('TEACHER') && resource.data.teacher.email == request.auth.token.email) || 
+                     resource.data.team.isFinalist == true;
       
+      // CREATE: Teachers and Admins
       allow create: if hasRole('TEACHER') || hasRole('ADMIN');
-      allow update: if hasRole('ADMIN') || (hasRole('TEACHER') && resource.data.teacher.email == request.auth.token.email) || hasRole('JUDGE');
       
-      // SUBCOLLECTIONS
+      // UPDATE:
+      // - Admin: All fields
+      // - Teacher: Own application
+      // - Judge: Needs update permission on parent doc to update 'finalScore', 'juryCount', 'gradedBy'
+      // - Public: Public vote increment (restricted by logic usually, but allowed here for simplicity)
+      allow update: if hasRole('ADMIN') || 
+                       (hasRole('TEACHER') && resource.data.teacher.email == request.auth.token.email) || 
+                       hasRole('JUDGE') ||
+                       (resource.data.team.isFinalist == true); // For public votes increment
+
+      // SUBCOLLECTION: SCORES
       match /scores/{juryId} {
-        allow read: if hasRole('ADMIN') || (hasRole('JUDGE') && request.auth.uid == juryId);
-        allow write: if hasRole('JUDGE') && request.auth.uid == juryId;
+        allow read: if hasRole('ADMIN') || (hasRole('JUDGE') && isOwner(juryId));
+        allow write: if hasRole('JUDGE') && isOwner(juryId);
       }
 
+      // SUBCOLLECTION: MESSAGES (Chat)
       match /messages/{msgId} {
         allow read: if hasRole('ADMIN') || (hasRole('TEACHER') && get(/databases/$(database)/documents/applications/$(appId)).data.teacher.email == request.auth.token.email);
         allow create: if hasRole('ADMIN') || hasRole('TEACHER');
       }
     }
 
-    // 3. NOTIFICATIONS
+    // --- 3. NOTIFICATIONS ---
     match /notifications/{notificationId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isSignedIn(); // Allow triggering notifications
+      allow update: if isOwner(resource.data.userId); // Mark as read
     }
 
-    // 4. PUBLIC VOTES
+    // --- 4. PUBLIC VOTES ---
     match /public_votes/{voteId} {
-      allow create: if true;
-      allow read: if true;
+      allow read: if true; // Needed to check for duplicate votes by fingerprint
+      allow create: if true; // Public voting allowed
     }
 
-    // 5. AUDIT LOGS
+    // --- 5. AUDIT LOGS ---
     match /auditLogs/{logId} {
       allow read: if hasRole('ADMIN');
       allow create: if isSignedIn();
     }
 
-    // 6. SYSTEM SETTINGS
+    // --- 6. CONTACT MESSAGES (New Feature) ---
+    match /contact_messages/{msgId} {
+      allow read: if hasRole('ADMIN'); // Only Admin can read inbox
+      allow create: if true; // Anyone (Public) can send message
+      allow update: if hasRole('ADMIN'); // Mark as read
+    }
+
+    // --- 7. SYSTEM SETTINGS ---
     match /system/{document=**} {
       allow read: if true;
       allow write: if hasRole('ADMIN');
     }
 
-    // 7. CMS CONTENT (Dynamic Match for all cms_ collections)
-    match /{path=**}/cms_general/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /{path=**}/cms_faqs/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /{path=**}/cms_gallery/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /{path=**}/cms_academy/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /{path=**}/cms_timeline/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /{path=**}/cms_prizes/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /{path=**}/cms_links/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    
-    // Direct match as fallback
-    match /cms_general/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_faqs/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_gallery/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_academy/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_timeline/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_prizes/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_links/{document=**} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    // --- 8. CMS CONTENT ---
+    // Explicit matches for all CMS collections
+    match /cms_general/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_links/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_faqs/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_gallery/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_academy/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_timeline/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_prizes/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
   }
 }

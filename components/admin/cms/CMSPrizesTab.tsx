@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Trophy } from 'lucide-react';
+import { Trophy, Save } from 'lucide-react';
 import { useAppContext } from '../../../context/AppContext';
 import { CMSPrize } from '../../../types';
 
-// Independent Prize Editor Component - Moved OUTSIDE to fix hook errors
+// Independent Prize Editor Component
 const CMSPrizeEditor = ({ prizeId, label }: { prizeId: string, label: string }) => {
     const { cmsPrizes, updateCMSPrize } = useAppContext();
     const [localPrize, setLocalPrize] = useState<CMSPrize>({ id: prizeId, title: '', reward: '', description: '' });
@@ -19,12 +19,14 @@ const CMSPrizeEditor = ({ prizeId, label }: { prizeId: string, label: string }) 
     };
 
     return (
-        <div className="bg-slate-900 p-6 rounded-xl border border-slate-700 mb-4">
-            <h4 className="text-amber-500 font-bold mb-4 uppercase text-xs tracking-widest">{label}</h4>
+        <div className="bg-slate-900 p-6 rounded-xl border border-slate-700 mb-4 transition-all hover:border-slate-600">
+            <h4 className="text-amber-500 font-bold mb-4 uppercase text-xs tracking-widest flex items-center gap-2">
+                <Trophy size={14}/> {label}
+            </h4>
             <div className="grid md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label className="label-text">Ödül İsmi</label>
-                    <input value={localPrize.title} onChange={e => setLocalPrize({...localPrize, title: e.target.value})} className="input-field" placeholder="Altın Kamera"/>
+                    <input value={localPrize.title} onChange={e => setLocalPrize({...localPrize, title: e.target.value})} className="input-field" placeholder="Ödül Başlığı"/>
                 </div>
                 <div>
                     <label className="label-text">Tutar / Değer</label>
@@ -36,7 +38,9 @@ const CMSPrizeEditor = ({ prizeId, label }: { prizeId: string, label: string }) 
                 <textarea value={localPrize.description} onChange={e => setLocalPrize({...localPrize, description: e.target.value})} className="input-field h-20" placeholder="Kısa açıklama..."/>
             </div>
             <div className="text-right">
-                <button onClick={save} className="bg-slate-700 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors">Kaydet</button>
+                <button onClick={save} className="bg-slate-800 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-xs transition-colors flex items-center gap-2 ml-auto border border-slate-700">
+                    <Save size={14}/> Kaydet
+                </button>
             </div>
         </div>
     );

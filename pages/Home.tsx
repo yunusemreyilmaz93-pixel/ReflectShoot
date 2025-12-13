@@ -12,9 +12,9 @@ const COMPETITION_PHASES = [
   { label: 'Son Başvuru Tarihi', date: '2026-02-13T23:59:59' },
   { label: '1. Video Teslimi', date: '2026-03-20T23:59:59' },
   { label: 'Finalistlerin Açıklanması', date: '2026-04-01T12:00:00' },
-  { label: 'Akademi Başlangıcı', date: '2026-04-06T09:00:00' },
-  { label: 'Final Video Teslimi', date: '2026-05-04T23:59:59' },
-  { label: 'Gala Daveti', date: '2026-05-11T12:00:00' }, // Updated
+  { label: 'Akademi & Workshoplar', date: '2026-04-06T09:00:00' },
+  { label: 'Revize Video Teslimi', date: '2026-05-04T23:59:59' },
+  { label: 'Sonuçların Açıklanması', date: '2026-05-11T10:00:00' },
   { label: 'Büyük Final & Ödül Töreni', date: '2026-05-22T19:00:00' }
 ];
 
@@ -565,7 +565,7 @@ export const Home: React.FC = () => {
 
       {/* Category Detail Modal - RE-ADDED */}
       {selectedCategory && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-fadeIn">
           <div className="bg-slate-900 w-full max-w-2xl rounded-[2rem] border border-slate-700 shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
             
             {/* Header */}
