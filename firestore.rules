@@ -10,12 +10,12 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // Check if user is the owner of the resource
+    // Check if user is the owner of the resource (based on uid)
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
     
-    // Fetch user role from 'users' collection
+    // Fetch user data to check roles
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
@@ -25,90 +25,94 @@ service cloud.firestore {
       return isSignedIn() && getUserData().role == role;
     }
 
-    // --- 1. USERS ---
+    // --- 1. SYSTEM SETTINGS & CMS (Public Read) ---
+    // AppContext reads from 'settings/config'
+    match /settings/{document=**} {
+      allow read: if true;
+      allow write: if hasRole('ADMIN');
+    }
+    
+    // AppContext reads from 'cms/general' and 'cms/links'
+    match /cms/{document=**} {
+      allow read: if true;
+      allow write: if hasRole('ADMIN');
+    }
+
+    // Specific CMS Collections
+    match /cms_prizes/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_faqs/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_gallery/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_academy/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_timeline/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+
+    // --- 2. USERS ---
     match /users/{userId} {
-      allow read: if isSignedIn(); // Allow reading profiles (needed for admin/jury lists)
+      allow read: if isSignedIn(); // Users need to read profiles (e.g. for Jury assignments)
       allow write: if isOwner(userId) || hasRole('ADMIN');
     }
 
-    // --- 2. APPLICATIONS ---
+    // --- 3. APPLICATIONS ---
     match /applications/{appId} {
-      // READ PERMISSIONS:
-      // - Admin: All
-      // - Judge: All (needed for querying filtering)
+      // READ:
+      // - Admin & Judge: All
       // - Teacher: Own application
-      // - Public: Only if isFinalist is true (for voting page)
+      // - Public: Finalists (for public voting/viewing)
       allow read: if hasRole('ADMIN') || 
                      hasRole('JUDGE') || 
-                     (hasRole('TEACHER') && resource.data.teacher.email == request.auth.token.email) || 
+                     (hasRole('TEACHER') && resource.data.teacher.id == request.auth.uid) || 
                      resource.data.team.isFinalist == true;
       
       // CREATE: Teachers and Admins
       allow create: if hasRole('TEACHER') || hasRole('ADMIN');
       
       // UPDATE:
-      // - Admin: All fields
+      // - Admin: All
       // - Teacher: Own application
-      // - Judge: Needs update permission on parent doc to update 'finalScore', 'juryCount', 'gradedBy'
-      // - Public: Public vote increment (restricted by logic usually, but allowed here for simplicity)
+      // - Judge: Update application status/scoring metadata
+      // - Public: Indirectly via Cloud Functions usually, but allowed here for finalist flag updates or votes if handled client side
       allow update: if hasRole('ADMIN') || 
-                       (hasRole('TEACHER') && resource.data.teacher.email == request.auth.token.email) || 
+                       (hasRole('TEACHER') && resource.data.teacher.id == request.auth.uid) || 
                        hasRole('JUDGE') ||
-                       (resource.data.team.isFinalist == true); // For public votes increment
+                       (resource.data.team.isFinalist == true); 
 
-      // SUBCOLLECTION: SCORES
+      // Scores Subcollection
       match /scores/{juryId} {
         allow read: if hasRole('ADMIN') || (hasRole('JUDGE') && isOwner(juryId));
         allow write: if hasRole('JUDGE') && isOwner(juryId);
       }
 
-      // SUBCOLLECTION: MESSAGES (Chat)
+      // Messages Subcollection (Chat)
       match /messages/{msgId} {
-        allow read: if hasRole('ADMIN') || (hasRole('TEACHER') && get(/databases/$(database)/documents/applications/$(appId)).data.teacher.email == request.auth.token.email);
+        allow read: if hasRole('ADMIN') || (hasRole('TEACHER') && get(/databases/$(database)/documents/applications/$(appId)).data.teacher.id == request.auth.uid);
         allow create: if hasRole('ADMIN') || hasRole('TEACHER');
       }
     }
 
-    // --- 3. NOTIFICATIONS ---
+    // --- 4. NOTIFICATIONS ---
     match /notifications/{notificationId} {
       allow read: if isOwner(resource.data.userId);
-      allow create: if isSignedIn(); // Allow triggering notifications
+      allow create: if isSignedIn(); 
       allow update: if isOwner(resource.data.userId); // Mark as read
     }
 
-    // --- 4. PUBLIC VOTES ---
-    match /public_votes/{voteId} {
-      allow read: if true; // Needed to check for duplicate votes by fingerprint
-      allow create: if true; // Public voting allowed
+    // --- 5. PUBLIC VOTES ---
+    // AppContext uses 'votes' collection
+    match /votes/{voteId} {
+      allow read: if true; // Needed to check previous votes by fingerprint
+      allow create: if true; // Public voting
     }
 
-    // --- 5. AUDIT LOGS ---
-    match /auditLogs/{logId} {
+    // --- 6. CONTACT MESSAGES ---
+    match /contact_messages/{msgId} {
+      allow read: if hasRole('ADMIN');
+      allow create: if true; // Public contact form
+      allow update: if hasRole('ADMIN');
+    }
+
+    // --- 7. AUDIT LOGS ---
+    match /logs/{logId} {
       allow read: if hasRole('ADMIN');
       allow create: if isSignedIn();
     }
-
-    // --- 6. CONTACT MESSAGES (New Feature) ---
-    match /contact_messages/{msgId} {
-      allow read: if hasRole('ADMIN'); // Only Admin can read inbox
-      allow create: if true; // Anyone (Public) can send message
-      allow update: if hasRole('ADMIN'); // Mark as read
-    }
-
-    // --- 7. SYSTEM SETTINGS ---
-    match /system/{document=**} {
-      allow read: if true;
-      allow write: if hasRole('ADMIN');
-    }
-
-    // --- 8. CMS CONTENT ---
-    // Explicit matches for all CMS collections
-    match /cms_general/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_links/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_faqs/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_gallery/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_academy/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_timeline/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_prizes/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
   }
 }

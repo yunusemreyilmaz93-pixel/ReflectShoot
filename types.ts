@@ -147,6 +147,7 @@ export interface SystemSettings {
         allowNewRegistrations: boolean;
         publicVotingActive?: boolean;
         videoUploadActive: boolean; // NEW: Master switch for video uploads
+        maintenanceMode: boolean; // NEW: Global maintenance switch
     };
 }
 

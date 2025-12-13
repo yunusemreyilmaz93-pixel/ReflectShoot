@@ -34,7 +34,7 @@ export const Gallery: React.FC = () => {
            </div>
            <h1 className="text-5xl md:text-7xl font-black mb-8 tracking-tight animate-fadeIn delay-100">
              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">
-               Reflect&Shoot Gala Arşivi
+               Galeri
              </span>
            </h1>
            <p className="text-xl md:text-2xl text-slate-300 max-w-2xl mx-auto font-light leading-relaxed animate-fadeIn delay-200">

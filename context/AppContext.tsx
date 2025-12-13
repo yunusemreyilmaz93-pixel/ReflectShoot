@@ -1,156 +1,49 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { auth, db } from '../lib/firebase';
+// @ts-ignore
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth';
 import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
-  deleteDoc, 
-  collection, 
-  query, 
-  onSnapshot,
-  getFirestore,
-  addDoc,
-  orderBy,
-  limit,
-  where,
-  getDocs,
-  increment,
-  writeBatch
+    doc, 
+    getDoc, 
+    setDoc, 
+    updateDoc, 
+    collection, 
+    query, 
+    where, 
+    onSnapshot, 
+    addDoc, 
+    serverTimestamp, 
+    deleteDoc, 
+    writeBatch, 
+    orderBy, 
+    getDocs
 } from 'firebase/firestore';
 import { 
-  getAuth, 
-  createUserWithEmailAndPassword, 
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  sendEmailVerification,
-  signOut,
-  onAuthStateChanged 
-} from 'firebase/auth'; 
-import { auth, db } from '../lib/firebase';
-import { Application, ApplicationStatus, UserRole, EvaluationCriteria, UserProfile, SystemSettings, LogEntry, ScoreDocument, ToastMessage, Notification, ChatMessage, CMSGeneral, CMSFaqItem, CMSGalleryItem, NotificationTarget, CMSAcademyItem, CMSTimelineItem, CMSPrize, CMSLinks, ContactMessage } from '../types';
-
-interface AppContextType {
-  currentUser: UserProfile | null;
-  allUsers: UserProfile[]; // For Admin
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  registerTeacher: (data: any) => Promise<void>;
-  resendVerificationEmail: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  
-  // Application Logic
-  currentApplication: Application | null;
-  createApplication: (data: any) => Promise<void>;
-  updateApplication: (app: Application) => Promise<void>;
-  allApplications: Application[]; 
-  bulkUpdateApplications: (appIds: string[], status: ApplicationStatus) => Promise<void>; // New
-  
-  // Scoring Logic
-  submitScore: (appId: string, criteria: EvaluationCriteria, notes: string) => Promise<void>;
-  fetchJuryScores: (appId: string) => Promise<ScoreDocument[]>;
-  assignJury: (appId: string, juryIds: string[]) => Promise<void>; 
-  bulkAssignJury: (assignments: {appId: string, juryIds: string[]}[]) => Promise<void>; 
-  
-  // Admin Logic
-  updateUserRole: (uid: string, newRole: UserRole) => Promise<void>;
-  currentDate: Date;
-  setSimulatedDate: (date: Date) => void;
-  
-  // System & Logs
-  systemSettings: SystemSettings;
-  updateSystemSettings: (settings: SystemSettings) => Promise<void>;
-  auditLogs: LogEntry[];
-  logAction: (action: string, details: string, targetId?: string) => Promise<void>;
-
-  // CMS Content
-  cmsGeneral: CMSGeneral;
-  cmsLinks: CMSLinks;
-  cmsFaqs: CMSFaqItem[];
-  cmsGallery: CMSGalleryItem[];
-  cmsAcademy: CMSAcademyItem[];
-  cmsTimeline: CMSTimelineItem[];
-  cmsPrizes: CMSPrize[];
-  updateCMSGeneral: (data: CMSGeneral) => Promise<void>;
-  updateCMSLinks: (data: CMSLinks) => Promise<void>;
-  updateCMSPrize: (prize: CMSPrize) => Promise<void>;
-  addCMSFaq: (faq: Omit<CMSFaqItem, 'id'>) => Promise<void>;
-  updateCMSFaq: (id: string, data: Partial<CMSFaqItem>) => Promise<void>;
-  deleteCMSFaq: (id: string) => Promise<void>;
-  addCMSGalleryItem: (item: Omit<CMSGalleryItem, 'id'>) => Promise<void>;
-  deleteCMSGalleryItem: (id: string) => Promise<void>;
-  addCMSAcademyItem: (item: Omit<CMSAcademyItem, 'id'>) => Promise<void>; 
-  updateCMSAcademyItem: (id: string, data: Partial<CMSAcademyItem>) => Promise<void>;
-  deleteCMSAcademyItem: (id: string) => Promise<void>; 
-  addCMSTimelineItem: (item: Omit<CMSTimelineItem, 'id'>) => Promise<void>; 
-  updateCMSTimelineItem: (id: string, data: Partial<CMSTimelineItem>) => Promise<void>; 
-  deleteCMSTimelineItem: (id: string) => Promise<void>; 
-
-  // UI
-  toasts: ToastMessage[];
-  showToast: (message: string, type: 'success' | 'error' | 'info') => void;
-  removeToast: (id: string) => void;
-
-  // Notifications
-  notifications: Notification[];
-  markNotificationAsRead: (id: string) => Promise<void>;
-  sendNotification: (userId: string, title: string, message: string, type: 'info' | 'success' | 'warning' | 'error') => Promise<void>;
-  sendAnnouncement: (target: NotificationTarget, title: string, message: string, type: 'info' | 'success' | 'warning' | 'error') => Promise<void>;
-
-  // Chat & Support
-  sendMessage: (appId: string, text: string) => Promise<void>;
-  contactMessages: ContactMessage[]; // New
-  sendContactMessage: (data: Omit<ContactMessage, 'id' | 'createdAt' | 'status'>) => Promise<void>; // New
-  markContactMessageAsRead: (id: string) => Promise<void>; // New
-  
-  // Public Vote
-  submitPublicVote: (appId: string, fingerprint: string) => Promise<void>;
-}
-
-const AppContext = createContext<AppContextType | undefined>(undefined);
-
-// Default Settings
-const DEFAULT_SETTINGS: SystemSettings = {
-  dates: {
-    applicationStart: '2026-01-20T09:00:00',
-    applicationEnd: '2026-02-13T23:59:59',
-    videoUploadStart: '2026-02-16T00:00:00',
-    videoUploadEnd: '2026-03-20T23:59:59',
-    academyStart: '2026-04-06T09:00:00',
-    galaDate: '2026-05-11T19:00:00',
-    publicVoteStart: '2026-05-01T00:00:00',
-    publicVoteEnd: '2026-05-10T23:59:59',
-    finalistRevealStart: '2026-04-01T00:00:00',
-    finalistRevealEnd: '2026-04-04T23:59:59',
-    reviseUploadStart: '2026-04-13T00:00:00',
-    reviseUploadEnd: '2026-05-04T23:59:59'
-  },
-  features: {
-    judgeSystemActive: true,
-    publicResultReveal: false,
-    allowNewRegistrations: true,
-    publicVotingActive: true,
-    videoUploadActive: true
-  }
-};
-
-// Default CMS Data
-const DEFAULT_CMS_GENERAL: CMSGeneral = {
-    contactEmail: 'reflect_shoot@proton.me',
-    contactPhone: '(0332) 351 28 02',
-    contactAddress: 'Şemsi Tebrizi Mah. Vali İzzetbey Cd., Bölüm Sk. No:2, 42050 Karatay / Konya',
-    socialInstagram: '#',
-    socialTwitter: '#',
-    socialYoutube: '#',
-    footerText: 'Gençlerin vizöründen dünyayı anlama ve anlatma çabası. Asrın idrakini sinemanın diliyle buluşturan lise kısa film yarışması.'
-};
-
-const DEFAULT_CMS_LINKS: CMSLinks = {
-    specUrl: 'https://dosya.co/ornek_sartname.pdf',
-    parentalUrl: 'https://dosya.co/ornek_veli_izni.pdf',
-    kvkkUrl: 'https://dosya.co/ornek_kvkk.pdf',
-    posterUrl: ''
-};
+    UserProfile, 
+    UserRole, 
+    SystemSettings, 
+    Application, 
+    ToastMessage, 
+    CMSGeneral, 
+    CMSLinks, 
+    CMSPrize, 
+    CMSFaqItem, 
+    CMSGalleryItem, 
+    CMSAcademyItem, 
+    CMSTimelineItem, 
+    ContactMessage, 
+    Notification,
+    LogEntry,
+    ApplicationStatus,
+    NotificationTarget,
+    EvaluationCriteria,
+    ScoreDocument,
+    Team,
+    TeacherProfile,
+    Category,
+    Theme
+} from '../types';
 
 // Default FAQs
 const DEFAULT_CMS_FAQS: CMSFaqItem[] = [
@@ -174,389 +67,696 @@ const DEFAULT_CMS_FAQS: CMSFaqItem[] = [
         question: 'Hangi formatta teslim etmeliyiz?',
         answer: 'Filmler MP4 veya MOV formatında, en az 1920x1080 (Full HD) çözünürlükte teslim edilmelidir. Görüntü oranı 16:9 (yatay) olmalıdır.',
         order: 3
+    },
+    {
+        id: 'faq4',
+        category: 'Genel',
+        question: 'Bireysel başvuru yapabilir miyim?',
+        answer: 'Hayır, yarışma takım çalışmasını teşvik etmek amacıyla düzenlenmiştir. En az 3 kişilik bir takım kurmanız gerekmektedir.',
+        order: 4
+    },
+    {
+        id: 'faq5',
+        category: 'Genel',
+        question: 'Bir danışman öğretmen birden fazla takıma danışmanlık yapabilir mi?',
+        answer: 'Evet, bir öğretmen kendi okulundaki birden fazla takıma danışmanlık yapabilir. Ancak her takımın başvurusu ayrı yapılmalıdır.',
+        order: 5
+    },
+    {
+        id: 'faq6',
+        category: 'Genel',
+        question: 'Yarışmaya katılım ücretli mi?',
+        answer: 'Hayır, Reflect&Shoot kısa film yarışmasına katılım tamamen ücretsizdir.',
+        order: 6
+    },
+    {
+        id: 'faq7',
+        category: 'Genel',
+        question: 'Farklı okullardan öğrenciler aynı takımda yer alabilir mi?',
+        answer: 'Hayır, takım üyelerinin tamamının aynı okulda öğrenim görüyor olması gerekmektedir.',
+        order: 7
+    },
+    {
+        id: 'faq8',
+        category: 'Genel',
+        question: 'Bir öğrenci birden fazla takımda görev alabilir mi?',
+        answer: 'Hayır, bir öğrenci sadece tek bir projede ve tek bir takımda yer alabilir.',
+        order: 8
+    },
+    {
+        id: 'faq9',
+        category: 'Teknik',
+        question: 'Profesyonel kamera zorunlu mu? Telefonla çekim yapabilir miyiz?',
+        answer: 'Profesyonel ekipman zorunluluğu yoktur. Hikaye anlatımı ve teknik kurallara (Işık, Ses, Kadraj) uyulduğu sürece yüksek çözünürlüklü cep telefonları ile çekilen filmler de kabul edilir.',
+        order: 9
+    },
+    {
+        id: 'faq10',
+        category: 'Teknik',
+        question: 'Filmin dili ne olmalı?',
+        answer: 'Yarışma formatı gereği filmin sesli dili (diyaloglar veya dış ses) İngilizce olmalıdır. Türkçe altyazı eklenmesi zorunludur.',
+        order: 10
+    },
+    {
+        id: 'faq11',
+        category: 'Teknik',
+        question: 'Filmde kullanılan müziklerin telif durumu ne olmalı?',
+        answer: 'Kullanılan tüm müzikler ya telifsiz (royalty-free) olmalı ya da kullanım hakları satın alınmış olmalıdır. Telif ihlali tespit edilen eserler diskalifiye edilir.',
+        order: 11
+    },
+    {
+        id: 'faq12',
+        category: 'Teknik',
+        question: 'Stok görüntü (Stock Footage) kullanımı serbest mi?',
+        answer: 'Canlı çekim kategorisinde filmin tamamı stok görüntüden oluşamaz. Destekleyici amaçla, filmin süresinin %30\'unu geçmeyecek şekilde stok görüntü kullanılabilir.',
+        order: 12
+    },
+    {
+        id: 'faq13',
+        category: 'Süreç & Teslim',
+        question: 'Videoyu sisteme nasıl yükleyeceğiz?',
+        answer: 'Videonuzu Google Drive, Dropbox veya YouTube (Liste Dışı) gibi bir platforma yükleyip, indirme bağlantısını Danışman Öğretmen Paneli üzerinden sisteme girmelisiniz.',
+        order: 13
+    },
+    {
+        id: 'faq14',
+        category: 'Süreç & Teslim',
+        question: 'Başvuru yaptıktan sonra takım ismini veya temasını değiştirebilir miyiz?',
+        answer: 'Hayır, kayıt işlemi tamamlanıp onaylandıktan sonra takım adı, kategori ve tema bilgileri güvenlik nedeniyle kilitlenir.',
+        order: 14
+    },
+    {
+        id: 'faq15',
+        category: 'Süreç & Teslim',
+        question: 'Veli izin belgesi ve KVKK formu zorunlu mu?',
+        answer: 'Evet, 18 yaşından küçük tüm katılımcılar için veli izin belgesinin ve KVKK aydınlatma metninin imzalanıp sisteme yüklenmesi yasal bir zorunluluktur.',
+        order: 15
+    },
+    {
+        id: 'faq16',
+        category: 'Süreç & Teslim',
+        question: 'Revize süreci nedir?',
+        answer: 'İlk elemeyi geçip finalist olan takımlar, jüri geri bildirimleri ve Akademi eğitimleri doğrultusunda filmlerinde düzenleme (revize) yapma hakkı kazanır. Bu, final puanlamasını etkiler.',
+        order: 16
+    },
+    {
+        id: 'faq17',
+        category: 'Ödüller & Değerlendirme',
+        question: 'Değerlendirme kriterleri nelerdir?',
+        answer: 'Eserler 4 ana başlıkta değerlendirilir: Senaryo ve Hikaye (%25), Teknik Kalite (%25), Özgünlük (%25) ve Tema Uyumu (%25).',
+        order: 17
+    },
+    {
+        id: 'faq18',
+        category: 'Ödüller & Değerlendirme',
+        question: 'Jüri üyeleri kimlerden oluşuyor?',
+        answer: 'Jüri kadrosu; akademisyenler ve alanında uzman eğitimcilerden oluşmaktadır.',
+        order: 18
+    },
+    {
+        id: 'faq19',
+        category: 'Ödüller & Değerlendirme',
+        question: 'Halk oylaması jüri puanını etkiler mi?',
+        answer: 'Hayır, halk oylaması "Seyirci Özel Ödülü"nü belirlemek içindir. Ana ödüller (1., 2., 3.) tamamen jüri puanlaması ile belirlenir.',
+        order: 19
+    },
+    {
+        id: 'faq20',
+        category: 'Ödüller & Değerlendirme',
+        question: 'Ödül törenine katılım zorunlu mu?',
+        answer: 'Dereceye giren veya finalist olan takımların (veya temsilcilerinin) Konya\'da düzenlenecek Gala gecesine katılımı, ödüllerini teslim almaları açısından önemle rica olunur.',
+        order: 20
     }
 ];
 
-const DEFAULT_CMS_ACADEMY: CMSAcademyItem[] = [
-  { id: 'static-1', title: 'Senaryo Yazım Formatı', description: 'Endüstri standardı senaryo formatı (Fransız/Amerikan). Sahne başlığı, eylem ve diyalog yazım kuralları.', type: 'PDF', url: 'https://www.senaryo.org/wp-content/uploads/2023/01/Senaryo-Sablonu.pdf', category: 'Hazırlık', subTag: 'Genel' },
-  { id: 'static-2', title: 'Storyboard Şablonu', description: 'Çekim öncesi görsel planlama için kare kare çizim şablonu. Kamera açılarını ve hareketlerini not alın.', type: 'PDF', url: '#', category: 'Hazırlık', subTag: 'Genel' },
-  { id: 'static-3', title: 'Çekim Ölçekleri Rehberi', description: 'Geniş plan, detay plan, omuz plan... Hangi ölçek ne zaman kullanılır? Görsel anlatım dili rehberi.', type: 'PDF', url: '#', category: 'Hazırlık', subTag: 'Canlı Çekim' },
-  { id: 'static-4', title: 'AI Prompt Mühendisliği', description: 'Midjourney ve DALL-E için etkili prompt yazma teknikleri. Işık, stil ve lens parametreleri sözlüğü.', type: 'LINK', url: '#', category: 'Hazırlık', subTag: 'Yapay Zeka' },
-  { id: 'static-5', title: 'Film Analizi Formu', description: 'İzlediğiniz filmleri veya kendi senaryonuzu analiz ederken kullanabileceğiniz dramatik yapı çözümleme formu.', type: 'PDF', url: '#', category: 'Hazırlık', subTag: 'Genel' },
-  { id: 'static-6', title: 'Kurgu Terimleri Sözlüğü', description: 'Kuleshov etkisi, J-Cut, L-Cut gibi temel kurgu terimleri ve kullanım amaçları.', type: 'PDF', url: '#', category: 'Hazırlık', subTag: 'Genel' },
-  { id: 'static-7', title: 'Ses Kayıt & Mikrofon', description: 'Temiz ses almanın püf noktaları. Mikrofon konumlandırma ve ortam sesi yönetimi.', type: 'VIDEO', url: '#', category: 'Hazırlık', subTag: 'Canlı Çekim' },
-  { id: 'static-8', title: 'Runway Gen-2 Rehberi', description: 'Metinden videoya (Text-to-Video) ve Resimden videoya (Image-to-Video) oluşturma teknikleri.', type: 'VIDEO', url: '#', category: 'Hazırlık', subTag: 'Yapay Zeka' },
-  { id: 'static-9', title: 'Telifsiz Kaynaklar Listesi', description: 'Projelerinizde yasal olarak kullanabileceğiniz ücretsiz müzik, ses efekti ve stok video siteleri.', type: 'LINK', url: '#', category: 'Hazırlık', subTag: 'Genel' },
-  { id: 'static-10', title: 'Prodüksiyon Takvimi', description: 'Çekim günlerini planlamak ve kaynakları yönetmek için hazır planlama dosyası.', type: 'PDF', url: '#', category: 'Hazırlık', subTag: 'Canlı Çekim' },
-  { id: 'static-11', title: 'Sinematik Işık Kurulumu', description: 'Üç nokta ışık tekniği (Key, Fill, Back Light) ve doğal ışığı verimli kullanma yöntemleri.', type: 'VIDEO', url: '#', category: 'Hazırlık', subTag: 'Canlı Çekim' },
-  { id: 'static-12', title: 'AI Seslendirme Araçları', description: 'ElevenLabs ve Adobe Podcast kullanarak karakter seslendirme ve ses kalitesini iyileştirme rehberi.', type: 'LINK', url: '#', category: 'Hazırlık', subTag: 'Yapay Zeka' }
-];
+interface AppContextType {
+    currentUser: UserProfile | null;
+    loading: boolean;
+    systemSettings: SystemSettings;
+    cmsGeneral: CMSGeneral;
+    cmsLinks: CMSLinks;
+    cmsPrizes: CMSPrize[];
+    cmsFaqs: CMSFaqItem[];
+    cmsGallery: CMSGalleryItem[];
+    cmsAcademy: CMSAcademyItem[];
+    cmsTimeline: CMSTimelineItem[];
+    allUsers: UserProfile[];
+    allApplications: Application[];
+    currentApplication: Application | null;
+    contactMessages: ContactMessage[];
+    notifications: Notification[];
+    auditLogs: LogEntry[];
+    currentDate: Date;
+    toasts: ToastMessage[];
+    
+    // Auth
+    login: (email: string, pass: string) => Promise<void>;
+    logout: () => Promise<void>;
+    registerTeacher: (data: any) => Promise<void>;
+    resendVerificationEmail: () => Promise<void>;
+    resetPassword: (email: string) => Promise<void>;
+    updateUserRole: (uid: string, role: UserRole) => Promise<void>;
 
-// Default Timeline
-const DEFAULT_CMS_TIMELINE: CMSTimelineItem[] = [
-    { id: 't1', date: '20 Ocak 2026', title: 'Başvuruların Başlaması', description: 'Reflect&Shoot 2026 maratonu resmen başlıyor! Takımını kur, temayı seç ve sisteme kaydını yaptır.', order: 1 },
-    { id: 't2', date: '13 Şubat 2026', title: 'Son Başvuru Tarihi', description: 'Yarışmaya katılım için son gün. Belgelerini ve takım bilgilerini eksiksiz tamamlamayı unutma.', order: 2 },
-    { id: 't3', date: '16 Şubat – 20 Mart 2026', title: 'İlk Video Teslim Süreci', description: 'Senaryonu filme dökme vakti. Çektiğin ham veya kurgulanmış ilk versiyonu sisteme yükle.', order: 3 },
-    { id: 't4', date: '1 Nisan 2026', title: 'Finalistlerin Açıklanması', description: 'Ön jüri değerlendirmesi tamamlanıyor. Finale kalmaya hak kazanan takımlar duyuruluyor.', order: 4 },
-    { id: 't5', date: '6 - 8 - 10 Nisan 2026', title: 'Online Akademi & Workshoplar', description: 'Finalist takımlar için senaryo, teknik ve kurgu üzerine yoğunlaştırılmış online atölye çalışmaları.', order: 5 },
-    { id: 't6', date: '13 Nisan – 4 Mayıs 2026', title: 'Revize ve Final Teslim', description: 'Akademiden edinilen bilgilerle filmlerin revize edilmesi ve son kurgunun jüriye teslimi.', order: 6 },
-    { id: 't7', date: '11 Mayıs 2026', title: 'Sonuçların Açıklanması', description: 'Jüri değerlendirmesi tamamlanıyor ve dereceye giren eserler ilan ediliyor.', order: 7 },
-    { id: 't8', date: '22 Mayıs 2026', title: 'Büyük Final & Ödül Töreni', description: 'Gala gecesi, kırmızı halı ve büyük ödüllerin sahiplerini bulması.', order: 8 }
-];
+    // CMS
+    updateCMSGeneral: (data: CMSGeneral) => Promise<void>;
+    updateCMSLinks: (data: CMSLinks) => Promise<void>;
+    updateCMSPrize: (data: CMSPrize) => Promise<void>;
+    addCMSFaq: (data: CMSFaqItem) => Promise<void>;
+    updateCMSFaq: (id: string, data: Partial<CMSFaqItem>) => Promise<void>;
+    deleteCMSFaq: (id: string) => Promise<void>;
+    addCMSGalleryItem: (data: CMSGalleryItem) => Promise<void>;
+    deleteCMSGalleryItem: (id: string) => Promise<void>;
+    addCMSAcademyItem: (data: CMSAcademyItem) => Promise<void>;
+    updateCMSAcademyItem: (id: string, data: Partial<CMSAcademyItem>) => Promise<void>;
+    deleteCMSAcademyItem: (id: string) => Promise<void>;
+    addCMSTimelineItem: (data: CMSTimelineItem) => Promise<void>;
+    updateCMSTimelineItem: (id: string, data: Partial<CMSTimelineItem>) => Promise<void>;
+    deleteCMSTimelineItem: (id: string) => Promise<void>;
 
-// Default Prizes
-const DEFAULT_CMS_PRIZES: CMSPrize[] = [
-    { id: 'rank1', title: 'Altın Kamera Ödülü', reward: '40.000 TL', description: 'Yaratıcılığı, teknik ustalığı ve sinematik anlatımıyla jüriyi en çok etkileyen birinci ekip bu büyük ödülün sahibi olur.' },
-    { id: 'rank2', title: 'Gümüş Klaket Ödülü', reward: '30.000 TL', description: 'Kurgusal bütünlük, sahne tasarımı ve anlatım başarısıyla ikinci seçilen ekip ödüllendirilir.' },
-    { id: 'rank3', title: 'Bronz Film Makarası', reward: '20.000 TL', description: 'Teknik başarı, kamera kullanımı ve görsel anlatım gücüyle öne çıkan üçüncü ekip bu ödülü alır.' },
-    { id: 'mention', title: 'Mansiyon Ödülü', reward: 'Sürpriz Ödül', description: 'Gelecek vadeden, potansiyeli yüksek ve özgün sinematik yaklaşıma sahip ekibe verilen özel teşvik ödülü.' },
-    { id: 'special', title: 'Jüri Özel Ödülü', reward: 'Sanatsal Cesaret Ödülü', description: 'Klasik anlatımın dışına çıkarak cesur, yenilikçi ve etkileyici bir yaklaşım sergileyen ekibe verilen özel jüri plaketi.' }
-];
+    // Application
+    createApplication: (data: any) => Promise<void>;
+    updateApplication: (app: Application) => Promise<void>;
+    bulkUpdateApplications: (ids: string[], status: ApplicationStatus) => Promise<void>;
+    
+    // Jury & Scoring
+    assignJury: (appId: string, juryIds: string[]) => Promise<void>;
+    bulkAssignJury: (assignments: {appId: string, juryIds: string[]}[]) => Promise<void>;
+    submitScore: (appId: string, criteria: EvaluationCriteria, notes: string) => Promise<void>;
+    fetchJuryScores: (appId: string) => Promise<ScoreDocument[]>;
+
+    // Other
+    sendMessage: (appId: string, text: string) => Promise<void>;
+    sendContactMessage: (data: any) => Promise<void>;
+    markContactMessageAsRead: (id: string) => Promise<void>;
+    markNotificationAsRead: (id: string) => Promise<void>;
+    sendAnnouncement: (target: NotificationTarget, title: string, message: string, type: string) => Promise<void>;
+    submitPublicVote: (appId: string, fingerprint: string) => Promise<void>;
+    
+    // System
+    updateSystemSettings: (settings: SystemSettings) => Promise<void>;
+    logAction: (action: string, details: string, targetId?: string) => Promise<void>;
+    showToast: (message: string, type: 'success' | 'error' | 'info') => void;
+    removeToast: (id: string) => void;
+    downloadFullBackup: () => void;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+// Default Values
+const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
+    dates: {
+        applicationStart: '2026-01-20T09:00',
+        applicationEnd: '2026-02-13T23:59',
+        videoUploadStart: '2026-03-20T09:00',
+        videoUploadEnd: '2026-03-20T23:59',
+        academyStart: '2026-04-06T09:00',
+        galaDate: '2026-05-22T19:00',
+    },
+    features: {
+        judgeSystemActive: false,
+        publicResultReveal: false,
+        allowNewRegistrations: true,
+        videoUploadActive: false,
+        maintenanceMode: false
+    }
+};
+
+const DEFAULT_CMS_GENERAL: CMSGeneral = {
+    contactEmail: 'info@reflectandshoot.com',
+    contactPhone: '+90 555 123 45 67',
+    contactAddress: 'Konya, Türkiye',
+    socialInstagram: '#',
+    socialTwitter: '#',
+    socialYoutube: '#',
+    footerText: 'Reflect & Shoot Kısa Film Yarışması'
+};
+
+const DEFAULT_CMS_LINKS: CMSLinks = {
+    specUrl: '#',
+    parentalUrl: '#',
+    kvkkUrl: '#',
+    posterUrl: '#'
+};
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [currentDate, setCurrentDate] = useState(new Date());
+    const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [toasts, setToasts] = useState<ToastMessage[]>([]);
+    
+    // Data States
+    const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SYSTEM_SETTINGS);
+    const [cmsGeneral, setCmsGeneral] = useState<CMSGeneral>(DEFAULT_CMS_GENERAL);
+    const [cmsLinks, setCmsLinks] = useState<CMSLinks>(DEFAULT_CMS_LINKS);
+    const [cmsPrizes, setCmsPrizes] = useState<CMSPrize[]>([]);
+    const [cmsFaqs, setCmsFaqs] = useState<CMSFaqItem[]>(DEFAULT_CMS_FAQS);
+    const [cmsGallery, setCmsGallery] = useState<CMSGalleryItem[]>([]);
+    const [cmsAcademy, setCmsAcademy] = useState<CMSAcademyItem[]>([]);
+    const [cmsTimeline, setCmsTimeline] = useState<CMSTimelineItem[]>([]);
+    
+    const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
+    const [allApplications, setAllApplications] = useState<Application[]>([]);
+    const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [auditLogs, setAuditLogs] = useState<LogEntry[]>([]);
+    
+    const [currentApplication, setCurrentApplication] = useState<Application | null>(null);
+    const [currentDate, setCurrentDate] = useState(new Date());
 
-  const [allApplications, setAllApplications] = useState<Application[]>([]);
-  const [currentApplication, setCurrentApplication] = useState<Application | null>(null);
-  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
-  
-  const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
-  const [auditLogs, setAuditLogs] = useState<LogEntry[]>([]);
-  
-  // CMS State
-  const [cmsGeneral, setCmsGeneral] = useState<CMSGeneral>(DEFAULT_CMS_GENERAL);
-  const [cmsLinks, setCmsLinks] = useState<CMSLinks>(DEFAULT_CMS_LINKS);
-  const [cmsFaqs, setCmsFaqs] = useState<CMSFaqItem[]>(DEFAULT_CMS_FAQS);
-  const [cmsGallery, setCmsGallery] = useState<CMSGalleryItem[]>([]);
-  const [cmsAcademy, setCmsAcademy] = useState<CMSAcademyItem[]>(DEFAULT_CMS_ACADEMY);
-  const [cmsTimeline, setCmsTimeline] = useState<CMSTimelineItem[]>(DEFAULT_CMS_TIMELINE);
-  const [cmsPrizes, setCmsPrizes] = useState<CMSPrize[]>(DEFAULT_CMS_PRIZES);
+    // Toast Helper
+    const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+        const id = Math.random().toString(36).substring(7);
+        setToasts(prev => [...prev, { id, message, type }]);
+        setTimeout(() => removeToast(id), 5000);
+    };
 
-  // Contact Messages
-  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
+    const removeToast = (id: string) => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+    };
 
-  // ... (rest of state)
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+    // Listeners
+    useEffect(() => {
+        const unsubAuth = onAuthStateChanged(auth, async (user: any) => {
+            if (user) {
+                // Fetch User Profile
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    const profile = userDoc.data() as UserProfile;
+                    // Update email verified status if changed
+                    if(profile.emailVerified !== user.emailVerified) {
+                        await updateDoc(doc(db, "users", user.uid), { emailVerified: user.emailVerified });
+                        profile.emailVerified = user.emailVerified;
+                    }
+                    setCurrentUser(profile);
+                }
+            } else {
+                setCurrentUser(null);
+                setCurrentApplication(null);
+            }
+            setLoading(false);
+        });
 
-  // ... (helper functions)
-  const setSimulatedDate = (date: Date) => { setCurrentDate(date); };
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    const id = Date.now().toString();
-    setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => { removeToast(id); }, 4000);
-  };
-  const removeToast = (id: string) => { setToasts((prev) => prev.filter(t => t.id !== id)); };
+        // System Settings Listener
+        const unsubSettings = onSnapshot(doc(db, "settings", "config"), (doc) => {
+            if(doc.exists()) setSystemSettings(doc.data() as SystemSettings);
+        });
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const userDocRef = doc(db, "users", user.uid);
-        try {
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-              setCurrentUser({ ...userDoc.data() as UserProfile, emailVerified: user.emailVerified });
-            } else { setCurrentUser(null); }
-        } catch (e) { console.error("Error fetching user profile:", e); }
-      } else {
-        setCurrentUser(null); setCurrentApplication(null); setAllApplications([]); setAllUsers([]);
-      }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+        // CMS Listeners
+        const unsubCmsGen = onSnapshot(doc(db, "cms", "general"), (doc) => {
+            if(doc.exists()) setCmsGeneral(doc.data() as CMSGeneral);
+        });
+        const unsubCmsLinks = onSnapshot(doc(db, "cms", "links"), (doc) => {
+            if(doc.exists()) setCmsLinks(doc.data() as CMSLinks);
+        });
+        const unsubPrizes = onSnapshot(collection(db, "cms_prizes"), (snap) => {
+            setCmsPrizes(snap.docs.map(d => ({id: d.id, ...d.data()} as CMSPrize)));
+        });
+        const unsubFaqs = onSnapshot(query(collection(db, "cms_faqs"), orderBy("order")), (snap) => {
+            if(snap.empty) {
+                setCmsFaqs(DEFAULT_CMS_FAQS);
+            } else {
+                setCmsFaqs(snap.docs.map(d => ({id: d.id, ...d.data()} as CMSFaqItem)));
+            }
+        });
+        const unsubGallery = onSnapshot(collection(db, "cms_gallery"), (snap) => {
+            setCmsGallery(snap.docs.map(d => ({id: d.id, ...d.data()} as CMSGalleryItem)));
+        });
+        const unsubAcademy = onSnapshot(collection(db, "cms_academy"), (snap) => {
+            setCmsAcademy(snap.docs.map(d => ({id: d.id, ...d.data()} as CMSAcademyItem)));
+        });
+        const unsubTimeline = onSnapshot(query(collection(db, "cms_timeline"), orderBy("order")), (snap) => {
+            setCmsTimeline(snap.docs.map(d => ({id: d.id, ...d.data()} as CMSTimelineItem)));
+        });
 
-  // ... (CMS Sync Effects - Unchanged) ...
-  useEffect(() => {
-    const generalRef = doc(db, "cms_general", "info");
-    const unsubGeneral = onSnapshot(generalRef, (docSnap) => { if(docSnap.exists()) setCmsGeneral(docSnap.data() as CMSGeneral); });
+        // Clock
+        const interval = setInterval(() => setCurrentDate(new Date()), 60000);
 
-    const linksRef = doc(db, "cms_links", "docs");
-    const unsubLinks = onSnapshot(linksRef, (docSnap) => { if(docSnap.exists()) setCmsLinks(docSnap.data() as CMSLinks); });
+        return () => {
+            unsubAuth();
+            unsubSettings();
+            unsubCmsGen();
+            unsubCmsLinks();
+            unsubPrizes();
+            unsubFaqs();
+            unsubGallery();
+            unsubAcademy();
+            unsubTimeline();
+            clearInterval(interval);
+        };
+    }, []);
 
-    const qFaqs = query(collection(db, "cms_faqs"), orderBy("order", "asc"));
-    const unsubFaqs = onSnapshot(qFaqs, (snap) => {
-        const faqs: CMSFaqItem[] = [];
-        snap.forEach(d => faqs.push({ id: d.id, ...d.data() } as CMSFaqItem));
-        if (faqs.length === 0) setCmsFaqs(DEFAULT_CMS_FAQS);
-        else setCmsFaqs(faqs);
-    });
+    // Admin & User Data Listeners
+    useEffect(() => {
+        if (!currentUser) return;
 
-    const qGallery = query(collection(db, "cms_gallery"), orderBy("year", "desc"));
-    const unsubGallery = onSnapshot(qGallery, (snap) => {
-        const items: CMSGalleryItem[] = [];
-        snap.forEach(d => items.push({ id: d.id, ...d.data() } as CMSGalleryItem));
-        setCmsGallery(items);
-    });
+        let unsubs: (() => void)[] = [];
 
-    const qAcademy = query(collection(db, "cms_academy"));
-    const unsubAcademy = onSnapshot(qAcademy, (snap) => {
-        const items: CMSAcademyItem[] = [];
-        snap.forEach(d => items.push({ id: d.id, ...d.data() } as CMSAcademyItem));
-        if (items.length === 0) setCmsAcademy(DEFAULT_CMS_ACADEMY);
-        else setCmsAcademy(items);
-    });
-
-    const qTimeline = query(collection(db, "cms_timeline"), orderBy("order", "asc"));
-    const unsubTimeline = onSnapshot(qTimeline, (snap) => {
-        const items: CMSTimelineItem[] = [];
-        snap.forEach(d => items.push({ id: d.id, ...d.data() } as CMSTimelineItem));
-        if (items.length === 0) setCmsTimeline(DEFAULT_CMS_TIMELINE);
-        else setCmsTimeline(items);
-    });
-
-    const qPrizes = query(collection(db, "cms_prizes"));
-    const unsubPrizes = onSnapshot(qPrizes, (snap) => {
-        const items: CMSPrize[] = [];
-        snap.forEach(d => items.push({ id: d.id, ...d.data() } as CMSPrize));
-        if (items.length === 0) setCmsPrizes(DEFAULT_CMS_PRIZES);
-        else setCmsPrizes(items);
-    });
-
-    const settingsRef = doc(db, "system", "config");
-    getDoc(settingsRef).then(docSnap => {
-        if(docSnap.exists()) setSystemSettings(docSnap.data() as SystemSettings);
-        else setDoc(settingsRef, DEFAULT_SETTINGS).catch(e => console.warn("Failed to init settings", e.message)); 
-    }).catch(e => console.warn("Settings fetch warning", e.message));
-
-    let unsubPublicFinalists = () => {};
-    let unsubApps = () => {};
-    let unsubLogs = () => {};
-    let unsubUsers = () => {};
-    let unsubNotifs = () => {};
-    let unsubMessages = () => {};
-
-    if (!currentUser) {
-        const qFinalists = query(collection(db, "applications"), where("team.isFinalist", "==", true));
-        unsubPublicFinalists = onSnapshot(qFinalists, (snap) => {
-            const apps: Application[] = [];
-            snap.forEach(d => apps.push(d.data() as Application));
-            setAllApplications(apps);
-        }, (error) => console.warn("Public Finalists Sync Warning:", error.message));
-    } else {
-        let qApps;
-        if (currentUser.role === UserRole.ADMIN) qApps = query(collection(db, "applications"));
-        else if (currentUser.role === UserRole.JUDGE) qApps = query(collection(db, "applications"), where("status", "in", [ApplicationStatus.FINAL_SUBMITTED, ApplicationStatus.GRADED, ApplicationStatus.APPROVED, ApplicationStatus.UNDER_REVIEW]));
-        else qApps = query(collection(db, "applications"), where("teacher.email", "==", currentUser.email));
-
-        unsubApps = onSnapshot(qApps, (querySnapshot) => {
-          const apps: Application[] = [];
-          querySnapshot.forEach((doc) => apps.push(doc.data() as Application));
-          setAllApplications(apps);
-          if (currentUser.role === UserRole.TEACHER) {
-             const userApp = apps.find(app => app.teacher.email === currentUser.email);
-             setCurrentApplication(userApp || null);
-          }
-        }, (error) => console.warn("Application Sync Warning:", error.message));
-
-        const qNotifs = query(collection(db, "notifications"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(20));
-        unsubNotifs = onSnapshot(qNotifs, (snap) => {
-            const notifs: Notification[] = [];
-            snap.forEach(d => notifs.push({ id: d.id, ...d.data() } as Notification));
-            setNotifications(notifs);
-        }, (error) => console.warn("Notifications Sync Warning:", error.message));
+        // Notifications
+        const notifQ = query(collection(db, "notifications"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
+        unsubs.push(onSnapshot(notifQ, (snap) => {
+            setNotifications(snap.docs.map(d => ({id: d.id, ...d.data()} as Notification)));
+        }));
 
         if (currentUser.role === UserRole.ADMIN) {
-            const qLogs = query(collection(db, "auditLogs"), orderBy("timestamp", "desc"), limit(50));
-            unsubLogs = onSnapshot(qLogs, (snap) => {
-                const logs: LogEntry[] = [];
-                snap.forEach(d => logs.push({ id: d.id, ...d.data() } as LogEntry));
-                setAuditLogs(logs);
-            }, (error) => console.warn("Audit Logs Sync Warning:", error.message));
-
-            const qUsers = query(collection(db, "users"));
-            unsubUsers = onSnapshot(qUsers, (snap) => {
-                const users: UserProfile[] = [];
-                snap.forEach(d => users.push(d.data() as UserProfile));
-                setAllUsers(users);
-            }, (error) => console.warn("Users Sync Warning:", error.message));
-
-            // Sync Contact Messages
-            const qMessages = query(collection(db, "contact_messages"), orderBy("createdAt", "desc"));
-            unsubMessages = onSnapshot(qMessages, (snap) => {
-                const msgs: ContactMessage[] = [];
-                snap.forEach(d => msgs.push({ id: d.id, ...d.data() } as ContactMessage));
-                setContactMessages(msgs);
-            });
+            // Admin Listeners
+            unsubs.push(onSnapshot(collection(db, "users"), (snap) => {
+                setAllUsers(snap.docs.map(d => ({uid: d.id, ...d.data()} as UserProfile)));
+            }));
+            unsubs.push(onSnapshot(collection(db, "applications"), (snap) => {
+                setAllApplications(snap.docs.map(d => ({id: d.id, ...d.data()} as Application)));
+            }));
+            unsubs.push(onSnapshot(query(collection(db, "contact_messages"), orderBy("createdAt", "desc")), (snap) => {
+                setContactMessages(snap.docs.map(d => ({id: d.id, ...d.data()} as ContactMessage)));
+            }));
+            unsubs.push(onSnapshot(query(collection(db, "logs"), orderBy("timestamp", "desc")), (snap) => {
+                setAuditLogs(snap.docs.map(d => ({id: d.id, ...d.data()} as LogEntry)));
+            }));
+        } else if (currentUser.role === UserRole.JUDGE) {
+            // Judge Listeners (Need to see assigned apps)
+            unsubs.push(onSnapshot(collection(db, "applications"), (snap) => {
+                setAllApplications(snap.docs.map(d => ({id: d.id, ...d.data()} as Application)));
+            }));
+        } else if (currentUser.role === UserRole.TEACHER || currentUser.role === UserRole.STUDENT) {
+            // Teacher/Student: Listen to their application
+            if(currentUser.role === UserRole.TEACHER) {
+                const appQ = query(collection(db, "applications"), where("teacher.id", "==", currentUser.uid));
+                unsubs.push(onSnapshot(appQ, (snap) => {
+                    if(!snap.empty) setCurrentApplication({id: snap.docs[0].id, ...snap.docs[0].data()} as Application);
+                    else setCurrentApplication(null);
+                }));
+            }
         }
-    }
 
-    return () => {
-        unsubGeneral(); unsubLinks(); unsubFaqs(); unsubGallery(); unsubAcademy(); unsubTimeline(); unsubPrizes();
-        if(unsubPublicFinalists) unsubPublicFinalists();
-        if(unsubApps) unsubApps();
-        if(unsubLogs) unsubLogs();
-        if(unsubUsers) unsubUsers();
-        if(unsubNotifs) unsubNotifs();
-        if(unsubMessages) unsubMessages();
+        return () => unsubs.forEach(u => u());
+    }, [currentUser?.uid, currentUser?.role]);
+
+    // Actions
+    const login = async (email: string, pass: string) => {
+        await signInWithEmailAndPassword(auth, email, pass);
     };
-  }, [currentUser]);
 
-  // ... (auth functions)
-  const login = async (email: string, password: string) => { await signInWithEmailAndPassword(auth, email, password); };
-  const logout = async () => { await signOut(auth); };
-  const resetPassword = async (email: string) => { await sendPasswordResetEmail(auth, email); };
-  const registerTeacher = async (data: any) => {
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-        const user = userCredential.user;
-        if (user) {
-          await sendEmailVerification(user);
-          const isK12 = data.email.endsWith('k12.tr');
-          const initialRole = isK12 ? UserRole.TEACHER : UserRole.PENDING_TEACHER;
-          const newProfile: UserProfile = { uid: user.uid, email: data.email, fullName: data.name, role: initialRole, school: data.school, city: data.city, createdAt: new Date().toISOString(), emailVerified: false };
-          await setDoc(doc(db, "users", user.uid), JSON.parse(JSON.stringify(newProfile)));
-          await logAction("NEW_REGISTRATION", `${data.name} (${data.school}) kayıt oldu.`, user.uid);
+    const logout = async () => {
+        await signOut(auth);
+    };
+
+    const registerTeacher = async (data: any) => {
+        const { user } = await createUserWithEmailAndPassword(auth, data.email, data.password);
+        await sendEmailVerification(user);
+        
+        const profile: UserProfile = {
+            uid: user.uid,
+            email: data.email,
+            fullName: data.name,
+            role: data.email.endsWith('@k12.tr') ? UserRole.TEACHER : UserRole.PENDING_TEACHER,
+            school: data.school,
+            city: data.city,
+            createdAt: new Date().toISOString(),
+            emailVerified: false
+        };
+        
+        await setDoc(doc(db, "users", user.uid), profile);
+        await logAction("REGISTER", `Yeni öğretmen kaydı: ${data.email}`);
+    };
+
+    const resendVerificationEmail = async () => {
+        if(auth.currentUser) await sendEmailVerification(auth.currentUser);
+    };
+
+    const resetPassword = async (email: string) => {
+        await sendPasswordResetEmail(auth, email);
+    };
+
+    const updateUserRole = async (uid: string, role: UserRole) => {
+        await updateDoc(doc(db, "users", uid), { role });
+        await logAction("UPDATE_ROLE", `Kullanıcı ${uid} rolü ${role} yapıldı.`);
+    };
+
+    // CMS Actions
+    const updateCMSGeneral = async (data: CMSGeneral) => {
+        await setDoc(doc(db, "cms", "general"), data);
+        showToast('Genel ayarlar güncellendi.', 'success');
+    };
+    const updateCMSLinks = async (data: CMSLinks) => {
+        await setDoc(doc(db, "cms", "links"), data);
+        showToast('Linkler güncellendi.', 'success');
+    };
+    const updateCMSPrize = async (data: CMSPrize) => {
+        // Assume prize ID is document ID in cms_prizes
+        await setDoc(doc(db, "cms_prizes", data.id), data);
+        showToast('Ödül güncellendi.', 'success');
+    };
+    const addCMSFaq = async (data: CMSFaqItem) => {
+        await addDoc(collection(db, "cms_faqs"), data);
+        showToast('SSS eklendi.', 'success');
+    };
+    const updateCMSFaq = async (id: string, data: Partial<CMSFaqItem>) => {
+        await updateDoc(doc(db, "cms_faqs", id), data);
+        showToast('SSS güncellendi.', 'success');
+    };
+    const deleteCMSFaq = async (id: string) => {
+        await deleteDoc(doc(db, "cms_faqs", id));
+        showToast('SSS silindi.', 'success');
+    };
+    const addCMSGalleryItem = async (data: CMSGalleryItem) => {
+        await addDoc(collection(db, "cms_gallery"), data);
+        showToast('Fotoğraf eklendi.', 'success');
+    };
+    const deleteCMSGalleryItem = async (id: string) => {
+        await deleteDoc(doc(db, "cms_gallery", id));
+        showToast('Fotoğraf silindi.', 'success');
+    };
+    const addCMSAcademyItem = async (data: CMSAcademyItem) => {
+        await addDoc(collection(db, "cms_academy"), data);
+        showToast('İçerik eklendi.', 'success');
+    };
+    const updateCMSAcademyItem = async (id: string, data: Partial<CMSAcademyItem>) => {
+        await updateDoc(doc(db, "cms_academy", id), data);
+        showToast('İçerik güncellendi.', 'success');
+    };
+    const deleteCMSAcademyItem = async (id: string) => {
+        await deleteDoc(doc(db, "cms_academy", id));
+        showToast('İçerik silindi.', 'success');
+    };
+    const addCMSTimelineItem = async (data: CMSTimelineItem) => {
+        await addDoc(collection(db, "cms_timeline"), data);
+        showToast('Adım eklendi.', 'success');
+    };
+    const updateCMSTimelineItem = async (id: string, data: Partial<CMSTimelineItem>) => {
+        await updateDoc(doc(db, "cms_timeline", id), data);
+        showToast('Adım güncellendi.', 'success');
+    };
+    const deleteCMSTimelineItem = async (id: string) => {
+        await deleteDoc(doc(db, "cms_timeline", id));
+        showToast('Adım silindi.', 'success');
+    };
+
+    // Application Actions
+    const createApplication = async (data: any) => {
+        if(!currentUser) return;
+        const team: Team = {
+            id: Math.random().toString(36).substring(7),
+            name: data.teamName,
+            category: data.category,
+            theme: data.theme,
+            selectedVerse: data.selectedVerse,
+            students: data.students.map((s: any) => ({
+                id: Math.random().toString(36).substring(7),
+                ...s,
+                hasParentalConsent: false,
+                hasKvkkConsent: false
+            })),
+            isPreliminaryStageComplete: false,
+            isFinalStageComplete: false,
+            videoStatus: 'PENDING',
+            logoUrl: 'https://via.placeholder.com/128' // Mock for now, normally upload to storage
+        };
+        const app: Application = {
+            id: Math.random().toString(36).substring(7),
+            teacher: {
+                id: currentUser.uid,
+                fullName: currentUser.fullName,
+                school: currentUser.school || '',
+                city: currentUser.city || '',
+                email: currentUser.email,
+                phone: currentUser.phone || ''
+            },
+            team,
+            status: ApplicationStatus.DRAFT,
+            submittedAt: new Date().toISOString()
+        };
+        
+        await setDoc(doc(db, "applications", app.id), app);
+        setCurrentApplication(app);
+        showToast('Takım oluşturuldu.', 'success');
+    };
+
+    const updateApplication = async (app: Application) => {
+        await setDoc(doc(db, "applications", app.id), app);
+        if(currentApplication?.id === app.id) setCurrentApplication(app);
+        showToast('Değişiklikler kaydedildi.', 'success');
+    };
+
+    const bulkUpdateApplications = async (ids: string[], status: ApplicationStatus) => {
+        const batch = writeBatch(db);
+        ids.forEach(id => {
+            const ref = doc(db, "applications", id);
+            batch.update(ref, { status });
+        });
+        await batch.commit();
+        showToast(`${ids.length} başvuru güncellendi.`, 'success');
+        await logAction("BULK_UPDATE", `${ids.length} başvuru durumu: ${status}`);
+    };
+
+    const assignJury = async (appId: string, juryIds: string[]) => {
+        await updateDoc(doc(db, "applications", appId), { assignedJuryIds: juryIds });
+        showToast('Jüri ataması güncellendi.', 'success');
+    };
+
+    const bulkAssignJury = async (assignments: {appId: string, juryIds: string[]}[]) => {
+        const batch = writeBatch(db);
+        assignments.forEach(a => {
+            const ref = doc(db, "applications", a.appId);
+            batch.update(ref, { assignedJuryIds: a.juryIds });
+        });
+        await batch.commit();
+        showToast('Toplu jüri ataması tamamlandı.', 'success');
+    };
+
+    const submitScore = async (appId: string, criteria: EvaluationCriteria, notes: string) => {
+        if(!currentUser) return;
+        const total = criteria.story + criteria.technical + criteria.originality + criteria.themeFit;
+        const scoreDoc: ScoreDocument = {
+            juryId: currentUser.uid,
+            juryName: currentUser.fullName,
+            total,
+            criteria,
+            notes,
+            updatedAt: new Date().toISOString()
+        };
+        
+        await setDoc(doc(db, "applications", appId, "scores", currentUser.uid), scoreDoc);
+        
+        const appRef = doc(db, "applications", appId);
+        const appDoc = await getDoc(appRef);
+        if(appDoc.exists()) {
+            const appData = appDoc.data() as Application;
+            const gradedBy = appData.gradedBy || [];
+            if(!gradedBy.includes(currentUser.uid)) {
+                gradedBy.push(currentUser.uid);
+                await updateDoc(appRef, { 
+                    gradedBy, 
+                    status: ApplicationStatus.GRADED
+                });
+            }
         }
-      } catch (error) { console.error("Registration Error:", error); throw error; }
-  };
-  const resendVerificationEmail = async () => { if (auth.currentUser) await sendEmailVerification(auth.currentUser); };
-  const updateUserRole = async (uid: string, newRole: UserRole) => {
-      const userRef = doc(db, "users", uid);
-      await updateDoc(userRef, { role: newRole });
-      await logAction("UPDATE_ROLE", `Kullanıcı rolü güncellendi: ${newRole}`, uid);
-      await sendNotification(uid, "Rol Güncellemesi", `Hesap yetkiniz ${newRole} olarak güncellendi.`, "success");
-  };
-
-  // ... (application & scoring functions)
-  const createApplication = async (data: any) => {
-    if (!currentUser) return;
-    const newApp: Application = {
-      id: `APP-${currentUser.uid}`,
-      teacher: { id: `T-${currentUser.uid}`, fullName: currentUser.fullName, school: currentUser.school || 'Belirtilmedi', city: currentUser.city || 'Belirtilmedi', email: currentUser.email, phone: currentUser.phone || "" },
-      team: { id: `TEAM-${Date.now()}`, name: data.teamName, category: data.category, theme: data.theme, ...(data.selectedVerse ? { selectedVerse: data.selectedVerse } : {}), ...(data.logoFile ? { logoUrl: URL.createObjectURL(data.logoFile) } : {}), students: data.students.map((s: any, idx: number) => ({ id: `S-${Date.now()}-${idx}`, firstName: s.firstName, lastName: s.lastName, grade: s.grade, hasKvkkConsent: false, hasParentalConsent: false, docStatus: 'PENDING' })), videoStatus: 'PENDING', isPreliminaryStageComplete: false, isFinalStageComplete: false, isFinalist: false },
-      status: ApplicationStatus.DRAFT, submittedAt: new Date().toISOString()
+        showToast('Puan kaydedildi.', 'success');
     };
-    try { await setDoc(doc(db, "applications", newApp.id), JSON.parse(JSON.stringify(newApp))); showToast('Takım başarıyla oluşturuldu!', 'success'); const admins = allUsers.filter(u => u.role === UserRole.ADMIN); admins.forEach(admin => sendNotification(admin.uid, "Yeni Başvuru", `${currentUser.fullName} yeni bir takım oluşturdu: ${data.teamName}`, "info")); } catch (error) { console.error(error); showToast('Takım oluşturulurken hata oluştu.', 'error'); }
-  };
-  const updateApplication = async (updatedApp: Application) => { 
-      try { await setDoc(doc(db, "applications", updatedApp.id), JSON.parse(JSON.stringify(updatedApp))); showToast('Başvuru güncellendi.', 'success'); if (updatedApp.status === ApplicationStatus.FINAL_SUBMITTED) { const admins = allUsers.filter(u => u.role === UserRole.ADMIN); admins.forEach(admin => sendNotification(admin.uid, "Video Yüklendi", `${updatedApp.team.name} final videosunu yükledi.`, "success")); } if (currentUser?.role === UserRole.ADMIN) { const teacherId = updatedApp.id.replace("APP-", ""); sendNotification(teacherId, "Durum Güncellemesi", `Başvuru durumunuz güncellendi: ${updatedApp.status}`, "info"); if (updatedApp.team.isFinalist) sendNotification(teacherId, "TEBRİKLER!", "Takımınız FİNALİST olmaya hak kazandı!", "success"); } } catch (error) { console.error(error); showToast('Güncelleme sırasında hata oluştu.', 'error'); }
-  };
-  const submitScore = async (appId: string, criteria: EvaluationCriteria, notes: string) => { 
-      if (!currentUser || currentUser.role !== UserRole.JUDGE) return;
-      const totalScore = criteria.story + criteria.technical + criteria.originality + criteria.themeFit;
-      const scoreDoc: ScoreDocument = { juryId: currentUser.uid, juryName: currentUser.fullName, total: totalScore, criteria: criteria, notes: notes, updatedAt: new Date().toISOString() };
-      const scoreRef = doc(db, "applications", appId, "scores", currentUser.uid);
-      await setDoc(scoreRef, scoreDoc);
-      const scoresSnapshot = await getDocs(collection(db, "applications", appId, "scores"));
-      let sum = 0; let count = 0; const gradedBy: string[] = [];
-      scoresSnapshot.forEach(doc => { const data = doc.data() as ScoreDocument; sum += data.total; count++; gradedBy.push(data.juryId); });
-      const avg = count > 0 ? parseFloat((sum / count).toFixed(2)) : 0;
-      const appRef = doc(db, "applications", appId);
-      await updateDoc(appRef, { finalScore: avg, juryCount: count, gradedBy: gradedBy, status: ApplicationStatus.GRADED });
-      await logAction("SUBMIT_SCORE", `Puan verildi: ${totalScore} (Takım: ${appId})`, appId);
-      showToast('Puan başarıyla kaydedildi!', 'success');
-      const admins = allUsers.filter(u => u.role === UserRole.ADMIN);
-      admins.forEach(admin => sendNotification(admin.uid, "Jüri Puanlaması", `${currentUser.fullName} bir takımı puanladı (${totalScore}).`, "info"));
-  };
-  const fetchJuryScores = async (appId: string): Promise<ScoreDocument[]> => {
-      const q = query(collection(db, "applications", appId, "scores"));
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreDocument));
-  };
-  const assignJury = async (appId: string, juryIds: string[]) => {
-      await updateDoc(doc(db, "applications", appId), { assignedJuryIds: juryIds });
-      await logAction("ASSIGN_JURY", `Jüri ataması güncellendi.`, appId);
-      showToast('Jüri ataması kaydedildi.', 'success');
-  };
 
-  const bulkAssignJury = async (assignments: {appId: string, juryIds: string[]}[]) => {
-      if(!currentUser || currentUser.role !== UserRole.ADMIN) return;
-      const batch = writeBatch(db);
-      assignments.forEach(item => {
-          const ref = doc(db, "applications", item.appId);
-          batch.update(ref, { assignedJuryIds: item.juryIds });
-      });
-      await batch.commit();
-      await logAction("BULK_ASSIGN_JURY", `${assignments.length} takım için otomatik jüri ataması yapıldı.`);
-      showToast(`${assignments.length} takıma jüri ataması başarıyla yapıldı.`, 'success');
-  };
+    const fetchJuryScores = async (appId: string) => {
+        const q = collection(db, "applications", appId, "scores");
+        const snap = await getDocs(q);
+        return snap.docs.map(d => ({id: d.id, ...d.data()} as ScoreDocument));
+    };
 
-  // NEW: Bulk Update Application Status
-  const bulkUpdateApplications = async (appIds: string[], status: ApplicationStatus) => {
-      if(!currentUser || currentUser.role !== UserRole.ADMIN) return;
-      const batch = writeBatch(db);
-      appIds.forEach(id => {
-          const ref = doc(db, "applications", id);
-          batch.update(ref, { status: status });
-      });
-      await batch.commit();
-      await logAction("BULK_STATUS_UPDATE", `${appIds.length} takım durumu güncellendi: ${status}`);
-      showToast(`${appIds.length} takım güncellendi.`, 'success');
-  };
+    const sendMessage = async (appId: string, text: string) => {
+        if(!currentUser) return;
+        await addDoc(collection(db, "applications", appId, "messages"), {
+            senderId: currentUser.uid,
+            senderName: currentUser.fullName,
+            senderRole: currentUser.role,
+            text,
+            createdAt: new Date().toISOString()
+        });
+    };
 
-  // ... (notifications, messaging, public vote, system settings, CMS general/links/faq/gallery/academy/timeline functions - Unchanged)
-  const sendNotification = async (userId: string, title: string, message: string, type: 'info' | 'success' | 'warning' | 'error') => { try { await addDoc(collection(db, "notifications"), { userId, title, message, type, read: false, createdAt: new Date().toISOString() }); } catch (e) { console.error("Notification Error:", e); } };
-  const markNotificationAsRead = async (id: string) => { await updateDoc(doc(db, "notifications", id), { read: true }); };
-  const sendAnnouncement = async (target: NotificationTarget, title: string, message: string, type: 'info' | 'success' | 'warning' | 'error') => {
-      let targetUserIds: string[] = [];
-      if (target === 'ALL') targetUserIds = allUsers.map(u => u.uid);
-      else if (target === 'TEACHERS') targetUserIds = allUsers.filter(u => u.role === UserRole.TEACHER).map(u => u.uid);
-      else if (target === 'JUDGES') targetUserIds = allUsers.filter(u => u.role === UserRole.JUDGE).map(u => u.uid);
-      else if (target === 'FINALISTS') { const finalistEmails = allApplications.filter(a => a.team.isFinalist).map(a => a.teacher.email); targetUserIds = allUsers.filter(u => finalistEmails.includes(u.email)).map(u => u.uid); }
-      let count = 0; for (const uid of targetUserIds) { await sendNotification(uid, title, message, type); count++; }
-      await logAction("ANNOUNCEMENT", `Duyuru gönderildi (${count} kişi): ${title}`);
-      showToast(`${count} kişiye duyuru gönderildi.`, 'success');
-  };
-  const sendMessage = async (appId: string, text: string) => { if (!currentUser) return; const msg: ChatMessage = { id: `MSG-${Date.now()}`, senderId: currentUser.uid, senderName: currentUser.fullName, senderRole: currentUser.role, text, createdAt: new Date().toISOString() }; await addDoc(collection(db, "applications", appId, "messages"), msg); };
-  
-  // NEW: Contact Messages
-  const sendContactMessage = async (data: Omit<ContactMessage, 'id' | 'createdAt' | 'status'>) => {
-      await addDoc(collection(db, "contact_messages"), { ...data, createdAt: new Date().toISOString(), status: 'UNREAD' });
-  };
-  const markContactMessageAsRead = async (id: string) => {
-      await updateDoc(doc(db, "contact_messages", id), { status: 'READ' });
-  };
+    const sendContactMessage = async (data: any) => {
+        await addDoc(collection(db, "contact_messages"), {
+            ...data,
+            status: 'UNREAD',
+            createdAt: new Date().toISOString()
+        });
+    };
 
-  const submitPublicVote = async (appId: string, fingerprint: string) => { const q = query(collection(db, "public_votes"), where("appId", "==", appId), where("voterFingerprint", "==", fingerprint)); const snap = await getDocs(q); if (!snap.empty) throw new Error("Bu video için zaten oy kullandınız."); await addDoc(collection(db, "public_votes"), { appId, voterFingerprint: fingerprint, timestamp: new Date().toISOString() }); await updateDoc(doc(db, "applications", appId), { "team.publicVotes": increment(1) }); };
-  const updateSystemSettings = async (settings: SystemSettings) => { await setDoc(doc(db, "system", "config"), settings); setSystemSettings(settings); await logAction("UPDATE_SETTINGS", "Sistem ayarları güncellendi."); showToast('Sistem ayarları kaydedildi.', 'success'); };
-  
-  const updateCMSGeneral = async (data: CMSGeneral) => { await setDoc(doc(db, "cms_general", "info"), data); await logAction("CMS_UPDATE", "Genel site ayarları güncellendi."); showToast('Genel ayarlar güncellendi.', 'success'); };
-  const updateCMSLinks = async (data: CMSLinks) => { await setDoc(doc(db, "cms_links", "docs"), data); await logAction("CMS_UPDATE_LINKS", "Dosya linkleri güncellendi."); showToast('Linkler güncellendi.', 'success'); };
-  const addCMSFaq = async (faq: Omit<CMSFaqItem, 'id'>) => { await addDoc(collection(db, "cms_faqs"), faq); await logAction("CMS_ADD_FAQ", `Yeni SSS eklendi: ${faq.question}`); showToast('Soru eklendi.', 'success'); };
-  const updateCMSFaq = async (id: string, data: Partial<CMSFaqItem>) => { await setDoc(doc(db, "cms_faqs", id), data, { merge: true }); await logAction("CMS_UPDATE_FAQ", `SSS güncellendi: ${id}`); showToast('Soru güncellendi.', 'success'); };
-  const deleteCMSFaq = async (id: string) => { await deleteDoc(doc(db, "cms_faqs", id)); await logAction("CMS_DELETE_FAQ", `SSS silindi: ${id}`); showToast('Soru silindi.', 'info'); };
-  const addCMSGalleryItem = async (item: Omit<CMSGalleryItem, 'id'>) => { await addDoc(collection(db, "cms_gallery"), item); await logAction("CMS_ADD_GALLERY", `Galeriye fotoğraf eklendi: ${item.category}`); showToast('Fotoğraf eklendi.', 'success'); };
-  const deleteCMSGalleryItem = async (id: string) => { await deleteDoc(doc(db, "cms_gallery"), id); await logAction("CMS_DELETE_GALLERY", `Galeriden fotoğraf silindi: ${id}`); showToast('Fotoğraf silindi.', 'info'); };
-  const addCMSAcademyItem = async (item: Omit<CMSAcademyItem, 'id'>) => { await addDoc(collection(db, "cms_academy"), item); await logAction("CMS_ADD_ACADEMY", `Akademi içeriği eklendi: ${item.title}`); showToast('İçerik eklendi.', 'success'); };
-  const updateCMSAcademyItem = async (id: string, data: Partial<CMSAcademyItem>) => { await updateDoc(doc(db, "cms_academy", id), data); await logAction("CMS_UPDATE_ACADEMY", `Akademi içeriği güncellendi: ${id}`); showToast('İçerik güncellendi.', 'success'); };
-  const deleteCMSAcademyItem = async (id: string) => { await deleteDoc(doc(db, "cms_academy"), id); await logAction("CMS_DELETE_ACADEMY", `Akademi içeriği silindi: ${id}`); showToast('İçerik silindi.', 'info'); };
-  const addCMSTimelineItem = async (item: Omit<CMSTimelineItem, 'id'>) => { await addDoc(collection(db, "cms_timeline"), item); await logAction("CMS_ADD_TIMELINE", `Takvim öğesi eklendi: ${item.title}`); showToast('Takvim güncellendi.', 'success'); };
-  const updateCMSTimelineItem = async (id: string, data: Partial<CMSTimelineItem>) => { await updateDoc(doc(db, "cms_timeline", id), data); await logAction("CMS_UPDATE_TIMELINE", `Takvim öğesi güncellendi: ${id}`); showToast('Takvim güncellendi.', 'success'); };
-  const deleteCMSTimelineItem = async (id: string) => { await deleteDoc(doc(db, "cms_timeline"), id); await logAction("CMS_DELETE_TIMELINE", `Takvim öğesi silindi: ${id}`); showToast('Takvim güncellendi.', 'info'); };
+    const markContactMessageAsRead = async (id: string) => {
+        await updateDoc(doc(db, "contact_messages", id), { status: 'READ' });
+    };
 
-  const updateCMSPrize = async (prize: CMSPrize) => {
-      await setDoc(doc(db, "cms_prizes", prize.id), prize, { merge: true });
-      await logAction("CMS_UPDATE_PRIZE", `Ödül güncellendi: ${prize.title}`);
-      showToast('Ödül bilgisi kaydedildi.', 'success');
-  };
+    const markNotificationAsRead = async (id: string) => {
+        await updateDoc(doc(db, "notifications", id), { read: true });
+        setNotifications(prev => prev.map(n => n.id === id ? {...n, read: true} : n));
+    };
 
-  const logAction = async (action: string, details: string, targetId?: string) => {
-      if(!currentUser) return;
-      const newLog: LogEntry = { id: `LOG-${Date.now()}`, action, details, performedBy: currentUser.email, timestamp: new Date().toISOString(), targetId };
-      try { await addDoc(collection(db, "auditLogs"), newLog); } catch (e) { console.error("Failed to log", e); }
-  };
+    const sendAnnouncement = async (target: NotificationTarget, title: string, message: string, type: string) => {
+        await logAction("ANNOUNCEMENT", `Duyuru: ${title} -> ${target}`);
+        showToast('Duyuru gönderim kuyruğuna alındı.', 'success');
+    };
 
-  return (
-    <AppContext.Provider value={{ 
-      currentUser, allUsers, loading, login, logout, registerTeacher, resendVerificationEmail, resetPassword, updateUserRole,
-      currentApplication, createApplication, updateApplication, allApplications, submitScore, fetchJuryScores, assignJury, bulkAssignJury, bulkUpdateApplications,
-      currentDate, setSimulatedDate, systemSettings, updateSystemSettings, auditLogs, logAction,
-      cmsGeneral, cmsLinks, cmsFaqs, cmsGallery, cmsAcademy, cmsTimeline, cmsPrizes,
-      updateCMSGeneral, updateCMSLinks, updateCMSPrize, addCMSFaq, updateCMSFaq, deleteCMSFaq,
-      addCMSGalleryItem, deleteCMSGalleryItem, addCMSAcademyItem, updateCMSAcademyItem, deleteCMSAcademyItem, addCMSTimelineItem, deleteCMSTimelineItem, updateCMSTimelineItem,
-      toasts, showToast, removeToast, notifications, markNotificationAsRead, sendNotification, sendAnnouncement, sendMessage, submitPublicVote,
-      contactMessages, sendContactMessage, markContactMessageAsRead
-    }}>
-      {children}
-    </AppContext.Provider>
-  );
+    const submitPublicVote = async (appId: string, fingerprint: string) => {
+        const q = query(collection(db, "votes"), where("appId", "==", appId), where("voterFingerprint", "==", fingerprint));
+        const snap = await getDocs(q);
+        if(!snap.empty) throw new Error("Bu eser için daha önce oy kullandınız.");
+        
+        await addDoc(collection(db, "votes"), { appId, fingerprint, timestamp: new Date().toISOString() });
+    };
+
+    const updateSystemSettings = async (settings: SystemSettings) => {
+        await setDoc(doc(db, "settings", "config"), settings);
+        setSystemSettings(settings);
+        showToast('Sistem ayarları güncellendi.', 'success');
+    };
+
+    const logAction = async (action: string, details: string, targetId?: string) => {
+        if(!currentUser) return;
+        await addDoc(collection(db, "logs"), {
+            action,
+            details,
+            targetId,
+            performedBy: currentUser.email,
+            timestamp: new Date().toISOString()
+        });
+    };
+
+    const downloadFullBackup = () => {
+        const data = {
+            systemSettings,
+            cmsGeneral,
+            cmsLinks,
+            cmsPrizes,
+            cmsFaqs,
+            allUsers,
+            allApplications,
+            contactMessages,
+            auditLogs
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const value = {
+        currentUser, loading, systemSettings, cmsGeneral, cmsLinks, cmsPrizes, cmsFaqs, cmsGallery, cmsAcademy, cmsTimeline,
+        allUsers, allApplications, currentApplication, contactMessages, notifications, auditLogs, currentDate, toasts,
+        login, logout, registerTeacher, resendVerificationEmail, resetPassword, updateUserRole,
+        updateCMSGeneral, updateCMSLinks, updateCMSPrize, addCMSFaq, updateCMSFaq, deleteCMSFaq,
+        addCMSGalleryItem, deleteCMSGalleryItem, addCMSAcademyItem, updateCMSAcademyItem, deleteCMSAcademyItem,
+        addCMSTimelineItem, updateCMSTimelineItem, deleteCMSTimelineItem,
+        createApplication, updateApplication, bulkUpdateApplications,
+        assignJury, bulkAssignJury, submitScore, fetchJuryScores,
+        sendMessage, sendContactMessage, markContactMessageAsRead, markNotificationAsRead, sendAnnouncement, submitPublicVote,
+        updateSystemSettings, logAction, showToast, removeToast, downloadFullBackup
+    };
+
+    return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
 export const useAppContext = () => {
   const context = useContext(AppContext);
-  if (!context) throw new Error("useAppContext must be used within AppProvider");
+  if (context === undefined) {
+    throw new Error('useAppContext must be used within an AppProvider');
+  }
   return context;
 };

@@ -17,13 +17,29 @@ import { JuryDashboard } from './pages/JuryDashboard';
 import { PublicVote } from './pages/PublicVote'; // Importapp.auth
 import { AppProvider, useAppContext } from './context/AppContext';
 import { UserRole } from './types';
-import { ShieldAlert, Mail, CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { ShieldAlert, Mail, CheckCircle2, AlertCircle, Info, X, Construction, Settings } from 'lucide-react';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
 };
+
+// --- Maintenance Page ---
+const MaintenancePage = () => (
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-center">
+        <div className="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center border border-amber-500/30 mb-8 animate-pulse shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+            <Construction size={48} className="text-amber-500" />
+        </div>
+        <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tight">Sistem Bakımda</h1>
+        <p className="text-lg text-slate-400 max-w-lg mb-8 leading-relaxed">
+            Daha iyi bir deneyim sunmak için şu anda kısa bir bakım çalışması yapıyoruz. Lütfen biraz sonra tekrar deneyin.
+        </p>
+        <div className="flex items-center gap-2 text-sm font-bold text-slate-600 uppercase tracking-widest border-t border-slate-800 pt-6">
+            <Settings size={14} /> Reflect & Shoot Teknik Ekibi
+        </div>
+    </div>
+);
 
 // --- Toast Component ---
 const ToastContainer = () => {
@@ -123,10 +139,23 @@ const ProtectedRoute = ({ children, allowedRoles }: { children?: React.ReactNode
 };
 
 const AppRoutes: React.FC = () => {
+  const { systemSettings, currentUser } = useAppContext();
+  const location = useLocation();
+
+  // Maintenance Check
+  if (systemSettings.features.maintenanceMode && currentUser?.role !== UserRole.ADMIN) {
+      // Allow access to login so Admin can get in to disable maintenance
+      if (location.pathname !== '/login') {
+          return <MaintenancePage />;
+      }
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <ScrollToTop />
-      <Navbar />
+      {/* Hide Navbar on Maintenance Page */}
+      {(!systemSettings.features.maintenanceMode || currentUser?.role === UserRole.ADMIN) && <Navbar />}
+      
       <ToastContainer />
       <main className="flex-grow">
         <Routes>
@@ -159,7 +188,8 @@ const AppRoutes: React.FC = () => {
           } />
         </Routes>
       </main>
-      <Footer />
+      {/* Hide Footer on Maintenance Page */}
+      {(!systemSettings.features.maintenanceMode || currentUser?.role === UserRole.ADMIN) && <Footer />}
     </div>
   );
 };

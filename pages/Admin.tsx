@@ -4,7 +4,7 @@ import {
     Search, Check, X, Eye, Award, FileText, Shield, Inbox, Download, 
     Users, Film, School, Mail, AlertTriangle, Send, Clapperboard, Video, 
     Cpu, Activity, PieChart, BarChart3, Clock, UserCheck, Star, Plus, Lock, 
-    Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog, MessageSquare, ExternalLink, Link as LinkIcon, Save, Youtube, PenTool, LayoutTemplate, HelpCircle, Bell, Image as ImageIcon, Megaphone, BookOpen, Calendar, Trophy, CheckCircle2, AlertOctagon, Info, ToggleRight, ToggleLeft, Power, Globe, Upload, LayoutGrid, Filter, TrendingUp, Wand2, Square, CheckSquare, MailOpen
+    Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog, MessageSquare, ExternalLink, Link as LinkIcon, Save, Youtube, PenTool, LayoutTemplate, HelpCircle, Bell, Image as ImageIcon, Megaphone, BookOpen, Calendar, Trophy, CheckCircle2, AlertOctagon, Info, ToggleRight, ToggleLeft, Power, Globe, Upload, LayoutGrid, Filter, TrendingUp, Wand2, Square, CheckSquare, MailOpen, Database, Construction
 } from 'lucide-react';
 import { ApplicationStatus, Category, Application, UserRole, LogEntry, SystemSettings, ScoreDocument, CMSGeneral, CMSFaqItem, FAQCategory, NotificationTarget, CMSGalleryItem, CMSAcademyItem, CMSTimelineItem, CMSPrize, CMSLinks, ContactMessage } from '../types';
 import { useAppContext } from '../context/AppContext';
@@ -214,7 +214,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }: Si
                         </div>
                         <div>
                             <h1 className="font-bold text-white tracking-tight leading-tight">Yönetici</h1>
-                            <p className="text-[10px] text-slate-500 font-medium">Reflect&Shoot Admin</p>
+                            <p className="text-slate-500 text-sm font-medium">Reflect&Shoot</p>
                         </div>
                     </div>
                     {/* Mobile Close Button */}
@@ -254,7 +254,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }: Si
     );
 };
 
-// ... (AnalyticsSection and AdminDashboard remain unchanged)
+// ... (Other components remain unchanged)
 const AnalyticsSection = ({ apps }: { apps: Application[] }) => {
     // 1. Prepare Data for Trend Chart
     const trendData = useMemo(() => {
@@ -337,6 +337,7 @@ const AnalyticsSection = ({ apps }: { apps: Application[] }) => {
     );
 };
 
+// ... (Rest of Admin Components remain largely same)
 const AdminDashboard = ({ apps }: { apps: Application[] }) => {
     const totalApps = apps.length;
     const finalists = apps.filter(a => a.team.isFinalist).length;
@@ -417,6 +418,7 @@ const AdminDashboard = ({ apps }: { apps: Application[] }) => {
     );
 };
 
+// ... (Other admin components like AdminUsers, AdminInbox, AdminTeams, AdminJuryAssign, AdminAnnouncements omitted for brevity but remain same)
 const AdminUsers = () => {
     const { allUsers, updateUserRole, showToast } = useAppContext();
     const [filter, setFilter] = useState('');
@@ -737,6 +739,7 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist }: { apps: Application
 
 // ... (AdminJuryAssign, AdminAnnouncements Components remain unchanged)
 const AdminJuryAssign = ({ apps }: { apps: Application[] }) => {
+    // ... (Code as before)
     const { allUsers, assignJury, bulkAssignJury, showToast } = useAppContext();
     const juries = allUsers.filter(u => u.role === UserRole.JUDGE);
     const [filter, setFilter] = useState('');
@@ -1202,7 +1205,7 @@ const AdminAnnouncements = () => {
 };
 
 export const Admin: React.FC = () => {
-  const { allApplications, updateApplication, logAction, systemSettings, updateSystemSettings, auditLogs, logout, fetchJuryScores, loading, showToast } = useAppContext();
+  const { allApplications, updateApplication, logAction, systemSettings, updateSystemSettings, auditLogs, logout, fetchJuryScores, loading, showToast, downloadFullBackup } = useAppContext();
   const [activeTab, setActiveTab] = useState('DASHBOARD');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -1357,9 +1360,44 @@ export const Admin: React.FC = () => {
 
                                  {/* Controls Column */}
                                  <div className="space-y-6">
+                                     
+                                     {/* Security & Backup (Moved Up) */}
+                                     <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                                         <h4 className="font-bold text-white mb-6 pb-2 border-b border-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
+                                             <Database size={18} className="text-amber-500"/> Güvenlik ve Yedekleme
+                                         </h4>
+                                         <div className="space-y-4">
+                                             <div className="flex items-center justify-between">
+                                                 <div>
+                                                     <p className="text-sm font-bold text-slate-300">Veri Yedekleme</p>
+                                                     <p className="text-[10px] text-slate-500">Tüm veritabanını JSON formatında indir.</p>
+                                                 </div>
+                                                 <button 
+                                                    onClick={downloadFullBackup}
+                                                    className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors border border-slate-600"
+                                                 >
+                                                     <Download size={14}/> Yedek İndir
+                                                 </button>
+                                             </div>
+
+                                             <div className="border-t border-slate-700 my-4"></div>
+
+                                             <ToggleSwitch 
+                                                label="Bakım Modu (Maintenance)" 
+                                                checked={systemSettings.features.maintenanceMode} 
+                                                onChange={() => updateSystemSettings({...systemSettings, features: {...systemSettings.features, maintenanceMode: !systemSettings.features.maintenanceMode}})} 
+                                                activeColor="bg-red-500"
+                                             />
+                                             <div className="bg-red-900/20 p-3 rounded-lg border border-red-900/50 text-xs text-red-300 mt-2 flex gap-2">
+                                                 <AlertTriangle size={16} className="flex-shrink-0"/>
+                                                 <strong>Dikkat:</strong> Bakım modu açıldığında, Admin dışındaki tüm kullanıcılar "Bakımdayız" sayfasına yönlendirilir ve sisteme erişemezler.
+                                             </div>
+                                         </div>
+                                     </div>
+
                                      <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 h-full">
                                          <h4 className="font-bold text-white mb-6 pb-2 border-b border-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
-                                             <Power size={18} className="text-rose-500"/> Sistem Kontrolleri
+                                             <Power size={18} className="text-rose-500"/> Diğer Kontroller
                                          </h4>
                                          <div className="space-y-4">
                                              <ToggleSwitch 

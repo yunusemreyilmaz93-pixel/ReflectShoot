@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { ChevronDown, Search, MessageCircle, HelpCircle, PenTool, Award, Users, MapPin, Phone, Mail, Send, CheckCircle2, AlertCircle, Cpu, Clock, Trophy, Sparkles } from 'lucide-react';
+import { ChevronDown, Search, MessageCircle, HelpCircle, PenTool, Award, Users, MapPin, Phone, Mail, Send, CheckCircle2, AlertCircle, Cpu, Clock, Trophy, LayoutGrid } from 'lucide-react';
 import { send } from '@emailjs/browser';
 import { useAppContext } from '../context/AppContext';
 import { FAQCategory } from '../types';
@@ -91,7 +91,7 @@ export const FAQ: React.FC = () => {
   };
 
   const categories = [
-      { id: 'Tümü', icon: Sparkles },
+      { id: 'Tümü', icon: LayoutGrid },
       { id: 'Genel', icon: Users },
       { id: 'Teknik', icon: Cpu },
       { id: 'Süreç & Teslim', icon: Clock },
