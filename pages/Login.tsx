@@ -102,6 +102,9 @@ export const Login: React.FC = () => {
         <p className="mt-2 text-sm font-medium text-gray-500">
           Reflect&Shoot Yönetim Paneli
         </p>
+        <p className="mt-2 text-xs text-rose-900/60 font-semibold bg-rose-50 inline-block px-3 py-1 rounded-full">
+            Danışman Öğretmenler, Jüri Üyeleri ve Yöneticiler içindir.
+        </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -182,7 +185,7 @@ export const Login: React.FC = () => {
               </div>
 
               <div className="text-sm">
-                <button type="button" onClick={() => setShowForgotModal(true)} className="font-bold text-rose-600 hover:text-rose-500">
+                <button type="button" onClick={() => setShowForgotModal(true)} className="font-black text-rose-600 hover:text-rose-800 underline transition-colors">
                   Şifremi Unuttum
                 </button>
               </div>
@@ -196,6 +199,9 @@ export const Login: React.FC = () => {
               >
                 {isLoggingIn || contextLoading ? 'Giriş Yapılıyor...' : 'Güvenli Giriş Yap'} <ArrowRight className="ml-2 h-5 w-5" />
               </button>
+              <p className="mt-4 text-[10px] text-gray-400 text-center flex items-center justify-center gap-1.5 font-medium">
+                  <Lock size={10} /> Kişisel verileriniz KVKK kapsamında korunmaktadır.
+              </p>
             </div>
           </form>
 

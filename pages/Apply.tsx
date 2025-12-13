@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, School, MapPin, Lock, ArrowRight, CheckSquare, X, Info, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { User, Mail, School, MapPin, Lock, ArrowRight, CheckSquare, X, Info, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 export const Apply: React.FC = () => {
@@ -162,9 +162,11 @@ export const Apply: React.FC = () => {
     <div className="bg-gray-50 min-h-screen py-24 flex flex-col justify-center sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-10">
         <h1 className="text-4xl font-black text-rose-900 tracking-tight">Danışman Öğretmen Kaydı</h1>
-        <p className="text-gray-500 mt-2 font-medium">
-            Reflect&Shoot yarışmasına başvurmak için önce hesap oluşturun.<br/>
-            E-posta doğrulamasının ardından paneliniz aktif olacaktır.
+        <p className="text-gray-500 mt-2 font-medium flex flex-col items-center gap-1">
+            <span>Reflect&Shoot yarışmasına başvurmak için önce hesap oluşturun.</span>
+            <span className="inline-flex items-center gap-1.5 text-rose-600 font-bold bg-rose-50 px-3 py-1 rounded-full text-xs">
+               <Clock size={14} /> Kayıt işlemi yaklaşık 2–3 dakika sürer.
+            </span>
         </p>
       </div>
 
@@ -189,7 +191,7 @@ export const Apply: React.FC = () => {
 
                 <div>
                     <label className="label flex items-center gap-2 text-slate-700"><School size={16} className="text-rose-500"/> Okul Adı</label>
-                    <input name="school" value={formData.school} onChange={handleChange} className="input-field" placeholder="Lise Adı" />
+                    <input name="school" value={formData.school} onChange={handleChange} className="input-field" placeholder="Örn: Konya Anadolu İmam Hatip Lisesi" />
                     {errors.school && <p className="error-text">{errors.school}</p>}
                 </div>
 
@@ -208,8 +210,8 @@ export const Apply: React.FC = () => {
                            <CheckCircle2 size={16} />
                         </div>
                         <div className="text-sm text-teal-800">
-                            <span className="font-bold block text-teal-900 mb-1">Hızlı Onay Avantajı</span>
-                            <span className="leading-relaxed">
+                            <span className="font-black block text-teal-800 mb-1 uppercase text-xs tracking-wider">🚀 Hızlı Onay Avantajı</span>
+                            <span className="leading-relaxed text-xs sm:text-sm">
                                 <strong>@k12.tr</strong> uzantılı kurumsal okul e-posta adresinizle kayıt olduğunuzda, hesabınız yönetici onayı beklemeden <strong>doğrudan onaylanır</strong> ve panele hemen erişebilirsiniz.
                             </span>
                         </div>
@@ -226,6 +228,9 @@ export const Apply: React.FC = () => {
 
                 {/* CONSENT SECTION */}
                 <div className="space-y-4 pt-4 border-t border-gray-100 mt-6">
+                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <CheckSquare size={14} className="text-teal-600"/> Yasal Onaylar
+                    </h4>
                     {/* Consent 1 */}
                     <div className="flex items-start">
                         <input 
@@ -278,6 +283,9 @@ export const Apply: React.FC = () => {
                             <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> Kaydediliyor...</>
                         ) : <>Kayıt Ol ve İlerle <ArrowRight size={20} className="ml-2"/></>}
                     </button>
+                    <p className="text-center text-xs text-slate-400 mt-4 font-medium">
+                        E-posta doğrulamasından sonra paneliniz aktif olacaktır.
+                    </p>
                 </div>
             </form>
             

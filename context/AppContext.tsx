@@ -189,6 +189,37 @@ const DEFAULT_CMS_FAQS: CMSFaqItem[] = [
     }
 ];
 
+// DEFAULT ACADEMY ITEMS (Consolidated Categories)
+const DEFAULT_CMS_ACADEMY: CMSAcademyItem[] = [
+    // Senaryo & Tema (Amber)
+    { id: 'def1', title: 'Kahramanın Yolculuğu ve Maneviyat', description: 'Joseph Campbell’in monomit yapısının İslami anlatı geleneğiyle harmanlanması.', category: 'Senaryo & Tema', type: 'PDF', url: '#', isStarterPack: true },
+    { id: 'def2', title: 'Ayetlerden Senaryoya: Uyarlama Rehberi', description: 'Soyut manevi kavramların somut film sahnelerine dönüştürülmesi.', category: 'Senaryo & Tema', type: 'VIDEO', url: '#', isStarterPack: false },
+    
+    // Çekim & Ses (Emerald)
+    { id: 'def3', title: 'Sinematik Işık ve Kompozisyon', description: 'Duyguyu güçlendirmek için ışık kullanımı ve 1/3 kuralı.', category: 'Çekim & Ses', type: 'VIDEO', url: '#', isStarterPack: true },
+    { id: 'def4', title: 'Ses Tasarımı: Filmin Gizli Kahramanı', description: 'Diyalog, atmosfer ve foley seslerinin katmanlı kullanımı.', category: 'Çekim & Ses', type: 'PDF', url: '#', isStarterPack: true },
+
+    // Kurgu & Montaj (Indigo)
+    { id: 'def5', title: 'Kurguda Ritm ve Duygu Akışı', description: 'Kesme teknikleri (J-Cut, L-Cut) ile hikaye anlatımını güçlendirmek.', category: 'Kurgu & Montaj', type: 'VIDEO', url: '#', isStarterPack: false },
+    { id: 'def6', title: 'DaVinci Resolve ile Renk Düzenleme', description: 'Filminize profesyonel bir atmosfer katmak için temel renk teorisi.', category: 'Kurgu & Montaj', type: 'LINK', url: '#', isStarterPack: false },
+
+    // Yapay Zeka (Purple)
+    { id: 'def7', title: 'Midjourney ile Storyboard Oluşturma', description: 'Senaryonuzu görselleştirmek için AI araçlarını kullanma rehberi.', category: 'Yapay Zeka', type: 'PDF', url: '#', isStarterPack: true },
+    { id: 'def8', title: 'Runway Gen-2 ile Video Üretimi', description: 'Metinden videoya (Text-to-Video) üretim teknikleri ve ipuçları.', category: 'Yapay Zeka', type: 'VIDEO', url: '#', isStarterPack: false },
+
+    // Yarışma Rehberi (Rose)
+    { id: 'def9', title: 'Teknik Şartname ve Teslim Kriterleri', description: 'Diskalifiye olmamak için dikkat etmeniz gereken teknik kurallar.', category: 'Yarışma Rehberi', type: 'PDF', url: '#', isStarterPack: true },
+    { id: 'def10', title: 'Set Çantası Kontrol Listesi', description: 'Çekim gününde ihtiyacınız olacak ekipman ve belgeler listesi.', category: 'Yarışma Rehberi', type: 'PDF', url: '#', isStarterPack: true },
+
+    // İlham & Analiz (Cyan)
+    { id: 'def11', title: 'Ödüllü Kısa Film Analizleri', description: 'Geçmiş yıllarda dereceye giren filmlerin sahne sahne analizi.', category: 'İlham & Analiz', type: 'VIDEO', url: '#', isStarterPack: false },
+    { id: 'def12', title: 'Usta Yönetmenlerden Tavsiyeler', description: 'Mecid Mecidi ve Nuri Bilge Ceylan sinemasından notlar.', category: 'İlham & Analiz', type: 'LINK', url: '#', isStarterPack: false },
+
+    // FINALIST CONTENT (Locked for others)
+    { id: 'fin1', title: 'İleri Düzey Senaryo Doktorluğu', description: 'Finalist projelerin senaryoları üzerinde birebir analiz teknikleri.', category: 'Senaryo & Tema', type: 'VIDEO', url: '#', isFinalistContent: true },
+    { id: 'fin2', title: 'Festival Stratejileri ve Dağıtım', description: 'Filminizi uluslararası festivallere nasıl gönderirsiniz?', category: 'Yarışma Rehberi', type: 'PDF', url: '#', isFinalistContent: true }
+];
+
 interface AppContextType {
     currentUser: UserProfile | null;
     loading: boolean;
@@ -380,9 +411,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const unsubGallery = onSnapshot(collection(db, "cms_gallery"), (snap) => {
             setCmsGallery(snap.docs.map(d => ({id: d.id, ...d.data()} as CMSGalleryItem)));
         });
+        
+        // Academy Listener with Fallback
         const unsubAcademy = onSnapshot(collection(db, "cms_academy"), (snap) => {
-            setCmsAcademy(snap.docs.map(d => ({id: d.id, ...d.data()} as CMSAcademyItem)));
+            if(snap.empty) {
+                setCmsAcademy(DEFAULT_CMS_ACADEMY);
+            } else {
+                setCmsAcademy(snap.docs.map(d => ({id: d.id, ...d.data()} as CMSAcademyItem)));
+            }
         });
+
         const unsubTimeline = onSnapshot(query(collection(db, "cms_timeline"), orderBy("order")), (snap) => {
             setCmsTimeline(snap.docs.map(d => ({id: d.id, ...d.data()} as CMSTimelineItem)));
         });
