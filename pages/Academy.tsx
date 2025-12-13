@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { 
-  BookOpen, Film, Video, Cpu, Link as LinkIcon, FileText, Search, Sparkles, Sprout, Lock, Crown, Star
+  BookOpen, Film, Video, Link as LinkIcon, FileText, Search, Sparkles, Sprout, Lock, Star, Calendar, Mic2, MonitorPlay, Sliders, CheckCircle2, Download, AlertCircle, PlayCircle, Camera, Scissors
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { CMSAcademyItem } from '../types';
@@ -18,7 +18,7 @@ const categoryStyles: Record<string, { bg: string, text: string, border: string,
 };
 
 export const Academy: React.FC = () => {
-  const { cmsAcademy, currentApplication, currentUser } = useAppContext();
+  const { cmsAcademy, currentApplication } = useAppContext();
   
   // -- Filter State --
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,9 +38,7 @@ export const Academy: React.FC = () => {
   const isFinalist = currentApplication?.team.isFinalist;
 
   // -- Filter Logic --
-  // Separate Finalist Content from General Grid
-  const finalistItems = cmsAcademy.filter(i => i.isFinalistContent);
-  
+  // We only use CMS for the General Items now, as Finalist section is static layout
   const generalItems = cmsAcademy.filter(i => {
       if (i.isFinalistContent) return false; // Don't show in main grid
 
@@ -64,11 +62,7 @@ export const Academy: React.FC = () => {
       }
   };
 
-  const handleOpen = (url: string, locked: boolean = false) => {
-      if(locked) {
-          alert('Bu içerik sadece finalist takımlar içindir.');
-          return;
-      }
+  const handleOpen = (url: string) => {
       if (url && url !== '#') {
           window.open(url, '_blank');
       } else {
@@ -86,7 +80,7 @@ export const Academy: React.FC = () => {
     <div className="bg-slate-900 min-h-screen font-sans selection:bg-rose-500 selection:text-white pb-24">
       
       {/* 1. Cinematic Hero Section */}
-      <div className="bg-gradient-to-b from-rose-950 via-slate-900 to-slate-950 text-white pt-32 pb-24 relative overflow-hidden">
+      <div className="bg-gradient-to-b from-rose-950 via-slate-900 to-slate-950 text-white pt-32 pb-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none"></div>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-rose-500/10 blur-[120px] rounded-full pointer-events-none mix-blend-screen"></div>
         
@@ -105,55 +99,16 @@ export const Academy: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. FINALIST LOUNGE (Restored & Enhanced) */}
-      <section className="relative z-20 -mt-16 mb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-br from-amber-950/80 to-slate-900 border-2 border-amber-500/30 rounded-[2rem] p-8 md:p-12 relative overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.15)] group">
-              {/* Animated Glow */}
-              <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none -mr-20 -mt-20 group-hover:bg-amber-500/20 transition-colors duration-700"></div>
-              
-              <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 mb-8 border-b border-amber-500/20 pb-8">
-                  <div>
-                      <div className="flex items-center gap-3 mb-2">
-                          <Crown size={24} className="text-amber-400 fill-amber-400" />
-                          <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">Finalist Masterclass</h2>
-                      </div>
-                      <p className="text-amber-200/60 font-medium">Sadece ön elemeyi geçen takımların erişimine açık özel ileri düzey eğitimler.</p>
-                  </div>
-                  {!isFinalist && (
-                      <div className="px-4 py-2 bg-slate-950/50 rounded-lg border border-amber-500/30 text-amber-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                          <Lock size={14} /> Erişim Kısıtlı
-                      </div>
-                  )}
-              </div>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {finalistItems.length > 0 ? finalistItems.map((item, idx) => (
-                      <div 
-                          key={idx} 
-                          onClick={() => handleOpen(item.url, !isFinalist)}
-                          className={`relative p-6 rounded-xl border transition-all duration-300 group/card ${isFinalist ? 'bg-amber-900/10 border-amber-500/30 hover:bg-amber-900/20 hover:border-amber-500/60 cursor-pointer' : 'bg-slate-950/50 border-slate-800 opacity-60 grayscale cursor-not-allowed'}`}
-                      >
-                          <div className="flex justify-between items-start mb-4">
-                              <div className={`p-3 rounded-lg ${isFinalist ? 'bg-amber-500 text-black' : 'bg-slate-800 text-slate-500'}`}>
-                                  {item.type === 'VIDEO' ? <Video size={20}/> : <FileText size={20}/>}
-                              </div>
-                              {!isFinalist && <Lock size={20} className="text-slate-600"/>}
-                          </div>
-                          <h4 className="font-bold text-white text-lg mb-2 group-hover/card:text-amber-400 transition-colors">{item.title}</h4>
-                          <p className="text-sm text-slate-400 leading-relaxed">{item.description}</p>
-                      </div>
-                  )) : (
-                      <div className="col-span-full text-center py-8 text-amber-500/50 text-sm italic">
-                          Finalist içerikleri yakında eklenecektir.
-                      </div>
-                  )}
-              </div>
-          </div>
-      </section>
-
-      {/* 3. Sticky Search & Filter Bar */}
+      {/* 2. Sticky Search & Filter Bar (Temel Hazırlık Seti) */}
       <div className="sticky top-20 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800 shadow-lg">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              
+              <div className="flex items-center gap-2 mb-4">
+                  <BookOpen size={20} className="text-teal-500" />
+                  <h2 className="text-lg font-bold text-white">Temel Hazırlık Seti</h2>
+              </div>
+              <p className="text-slate-400 text-xs mb-4">Yarışmaya başvuran herkesin erişimine açık, sinemanın ABC'sini oluşturan kaynak kütüphanesi.</p>
+
               <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                   
                   {/* Search */}
@@ -198,29 +153,17 @@ export const Academy: React.FC = () => {
           </div>
       </div>
 
-      {/* 4. Cards Grid */}
+      {/* 3. Cards Grid (General Items Only) */}
       <section className="py-12">
          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
              
-             {/* Header Info */}
-             <div className="mb-8 flex items-center gap-3">
-                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <BookOpen size={24} className="text-teal-500"/> 
-                    {showStarterPack ? 'Başlangıç Seti' : activeFilter}
-                 </h2>
-                 <span className="bg-slate-800 text-slate-400 text-xs px-3 py-1 rounded-full border border-slate-700 font-medium">
-                     {generalItems.length} Kaynak
-                 </span>
-             </div>
-
              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {!hasContent && (
                     <div className="col-span-full py-24 text-center bg-slate-800/30 rounded-3xl border border-slate-700 border-dashed flex flex-col items-center">
                         <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4">
                             <Search size={32} className="text-slate-500"/>
                         </div>
-                        <h3 className="text-white font-bold text-xl mb-2">Sonuç Bulunamadı</h3>
-                        <p className="text-slate-500 font-medium max-w-md mx-auto">Aradığınız kriterlere uygun kaynak mevcut değil. Farklı bir arama yapabilir veya filtreleri temizleyebilirsiniz.</p>
+                        <h3 className="text-white font-bold text-xl mb-2">Aradığınız kriterlere uygun kaynak bulunamadı.</h3>
                         <button onClick={clearFilters} className="mt-6 px-8 py-3 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold transition-colors shadow-lg">
                             Filtreleri Temizle
                         </button>
@@ -268,6 +211,182 @@ export const Academy: React.FC = () => {
                 })}
              </div>
          </div>
+      </section>
+
+      {/* 4. FINALIST MASTERCLASS (Moved to Bottom) */}
+      <section className="relative z-20 mt-12 pt-20 border-t border-slate-800 bg-slate-950/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
+              <div className="text-center mb-10">
+                  <span className="bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg shadow-rose-600/30 flex items-center gap-2 mx-auto w-fit mb-4">
+                      <Star size={12} className="fill-white"/> SADECE FİNALİSTLER
+                  </span>
+                  <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4 drop-shadow-xl">
+                      Finalistlere Özel Akademi
+                  </h2>
+                  <p className="text-slate-400 font-light text-lg max-w-2xl mx-auto">
+                      Finale kalan <strong>10 Canlı Çekim</strong> ve <strong>10 Yapay Zeka</strong> ekibi için özel olarak kurgulanmış, sektör profesyonelleri ile buluşma noktası.
+                  </p>
+              </div>
+
+              {/* Info Box */}
+              <div className="max-w-3xl mx-auto bg-slate-900/80 backdrop-blur-md border border-slate-700/50 rounded-2xl p-4 mb-16 flex items-center justify-center gap-4 text-center shadow-2xl">
+                  <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-rose-500">
+                      <Lock size={18} />
+                  </div>
+                  <p className="text-slate-300 text-sm font-medium">
+                      Bu bölümdeki içerikler, <span className="text-white font-bold">1 Nisan</span> tarihinde açıklanacak 20 finalist takıma özel olarak erişime açılacaktır.
+                  </p>
+              </div>
+
+              {/* WORKSHOP CARDS (Restored) */}
+              <div className="grid lg:grid-cols-3 gap-6 mb-12">
+                  
+                  {/* Card 1 */}
+                  <div className="group bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 p-8 rounded-3xl relative overflow-hidden hover:border-amber-500/30 transition-all duration-300 hover:-translate-y-2 shadow-2xl">
+                      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                          <BookOpen size={100} className="text-white"/>
+                      </div>
+                      
+                      <div className="flex justify-between items-start mb-8 relative z-10">
+                          <div className="text-5xl font-black text-slate-800 group-hover:text-slate-700 transition-colors">01</div>
+                          <div className="text-right">
+                              <div className="text-xl font-bold text-white">6 NİSAN</div>
+                              <div className="text-amber-500 text-xs font-bold tracking-widest">20:00 - 22:00</div>
+                          </div>
+                      </div>
+
+                      <div className="relative z-10 mb-8 min-h-[160px]">
+                          <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-amber-500 mb-4 border border-slate-700">
+                              <BookOpen size={20} />
+                          </div>
+                          <h3 className="text-2xl font-bold text-white mb-2 leading-tight">İleri Senaryo & Dramaturji</h3>
+                          <div className="flex items-center gap-2 mb-4">
+                              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">ONLINE ATÖLYE</span>
+                          </div>
+                          <div className="space-y-2">
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Senaryo Matematiği ve Yapı</p>
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Karakter Derinliği & Dönüşüm</p>
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Çatışma ve Dramatik Tansiyon</p>
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Diyalog Yazımı & Alt Metin</p>
+                          </div>
+                      </div>
+
+                      <button disabled={!isFinalist} className="w-full py-4 rounded-xl bg-slate-900 border border-slate-700 text-slate-400 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                          <Lock size={14} /> Canlı Yayına Katıl
+                      </button>
+                  </div>
+
+                  {/* Card 2 */}
+                  <div className="group bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 p-8 rounded-3xl relative overflow-hidden hover:border-teal-500/30 transition-all duration-300 hover:-translate-y-2 shadow-2xl">
+                      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                          <Camera size={100} className="text-white"/>
+                      </div>
+                      
+                      <div className="flex justify-between items-start mb-8 relative z-10">
+                          <div className="text-5xl font-black text-slate-800 group-hover:text-slate-700 transition-colors">02</div>
+                          <div className="text-right">
+                              <div className="text-xl font-bold text-white">8 NİSAN</div>
+                              <div className="text-teal-500 text-xs font-bold tracking-widest">20:00 - 22:00</div>
+                          </div>
+                      </div>
+
+                      <div className="relative z-10 mb-8 min-h-[160px]">
+                          <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-teal-500 mb-4 border border-slate-700">
+                              <MonitorPlay size={20} />
+                          </div>
+                          <h3 className="text-2xl font-bold text-white mb-2 leading-tight">Görsel Yönetim & Sinematografi</h3>
+                          <div className="flex items-center gap-2 mb-4">
+                              <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">TEKNİK ATÖLYE</span>
+                          </div>
+                          <div className="space-y-2">
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Kameranın veya yapay zekanın gözünden atmosfer yaratmak.</p>
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Kompozisyon ve Kadraj Estetiği</p>
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Işık Kullanımı ve Renk Psikolojisi</p>
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> AI: Prompt Tutarlılığı (Consistency)</p>
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Kamera Hareketleri ve Anlamı</p>
+                          </div>
+                      </div>
+
+                      <button disabled={!isFinalist} className="w-full py-4 rounded-xl bg-slate-900 border border-slate-700 text-slate-400 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                          <Lock size={14} /> Canlı Yayına Katıl
+                      </button>
+                  </div>
+
+                  {/* Card 3 */}
+                  <div className="group bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 p-8 rounded-3xl relative overflow-hidden hover:border-indigo-500/30 transition-all duration-300 hover:-translate-y-2 shadow-2xl">
+                      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                          <Sliders size={100} className="text-white"/>
+                      </div>
+                      
+                      <div className="flex justify-between items-start mb-8 relative z-10">
+                          <div className="text-5xl font-black text-slate-800 group-hover:text-slate-700 transition-colors">03</div>
+                          <div className="text-right">
+                              <div className="text-xl font-bold text-white">10 NİSAN</div>
+                              <div className="text-indigo-500 text-xs font-bold tracking-widest">20:00 - 22:00</div>
+                          </div>
+                      </div>
+
+                      <div className="relative z-10 mb-8 min-h-[160px]">
+                          <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-indigo-500 mb-4 border border-slate-700">
+                              <Scissors size={20} />
+                          </div>
+                          <h3 className="text-2xl font-bold text-white mb-2 leading-tight">Kurgu Ritmi & Ses Tasarımı</h3>
+                          <div className="flex items-center gap-2 mb-4">
+                              <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">POST-PRODÜKSİYON</span>
+                          </div>
+                          <div className="space-y-2">
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Filmin kalbi kurgu masasında atar. Görüntüyü sesle bütünleştirme sanatı.</p>
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Kurgu Ritmi ve Zamanlama</p>
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Ses Tasarımı (SFX) ve Miksaj</p>
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Müzik Kullanımı ve Duygu</p>
+                              <p className="text-sm text-slate-400 flex items-center gap-2"><span className="text-slate-600">›</span> Color Grading (Renk Düzenleme)</p>
+                          </div>
+                      </div>
+
+                      <button disabled={!isFinalist} className="w-full py-4 rounded-xl bg-slate-900 border border-slate-700 text-slate-400 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                          <Lock size={14} /> Canlı Yayına Katıl
+                      </button>
+                  </div>
+
+              </div>
+
+              {/* REVISION KIT BLOCK */}
+              <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-3xl p-8 md:p-10 border border-slate-700 shadow-2xl flex flex-col md:flex-row items-center gap-10 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                  
+                  <div className="flex-1 relative z-10">
+                      <div className="w-14 h-14 bg-rose-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-rose-600/30">
+                          <CheckCircle2 size={32} />
+                      </div>
+                      <h3 className="text-3xl font-black text-white mb-2">Revize Hazırlık Kiti</h3>
+                      <p className="text-slate-400 leading-relaxed mb-8 max-w-md">
+                          Final tesliminden önce projenizi teknik ve sanatsal açıdan kusursuz hale getirmek için bu kontrol listesini kullanın.
+                      </p>
+                      <button disabled={!isFinalist} className="bg-slate-200 hover:bg-white text-slate-900 px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                          <Download size={18} /> Kiti İndir (PDF)
+                      </button>
+                  </div>
+
+                  <div className="flex-1 w-full relative z-10">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {[
+                              'Renk Düzenleme (Color Grading)', 'Ses Temizliği & Final Miksaj', 
+                              'Altyazı & Jenerik Kontrolü', 'AI Tutarlılık & Glitch Temizliği',
+                              'Telif & Lisans Uyumluluğu', 'Dosya İsimlendirme & Format',
+                              'Final Export Ayarları (Bitrate)', 'Frame Rate Tutarlılığı'
+                          ].map((item, idx) => (
+                              <div key={idx} className="flex items-center gap-3 bg-slate-950/50 p-3 rounded-lg border border-slate-700/50">
+                                  <div className="w-4 h-4 rounded border border-slate-600"></div>
+                                  <span className="text-xs font-bold text-slate-300">{item}</span>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+              </div>
+          </div>
       </section>
 
       <style>{`
