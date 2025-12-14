@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { auth, db } from '../lib/firebase';
 // @ts-ignore
@@ -45,6 +44,9 @@ import {
     Theme
 } from '../types';
 
+// Asset Base URL (Should match public bucket domain)
+export const PUBLIC_ASSETS_BASE_URL = "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev";
+
 // Default FAQs
 const DEFAULT_CMS_FAQS: CMSFaqItem[] = [
     {
@@ -54,298 +56,10 @@ const DEFAULT_CMS_FAQS: CMSFaqItem[] = [
         answer: 'Türkiye genelindeki tüm Anadolu İmam Hatip Lisesi öğrencileri yarışmaya katılabilir. Takımlar en az 3, en fazla 6 öğrenciden oluşmalıdır ve bir danışman öğretmen bulunması zorunludur.',
         order: 1
     },
-    {
-        id: 'faq2',
-        category: 'Teknik',
-        question: 'Filmlerin süresi ne kadar olmalıdır?',
-        answer: 'Filmler, jenerik dahil en az 3 dakika, en fazla 8 dakika uzunluğunda olmalıdır. Bu süre sınırlarına uymayan eserler değerlendirmeye alınmayacaktır.',
-        order: 2
-    },
-    {
-        id: 'faq3',
-        category: 'Teknik',
-        question: 'Hangi formatta teslim etmeliyiz?',
-        answer: 'Filmler MP4 veya MOV formatında, en az 1920x1080 (Full HD) çözünürlükte teslim edilmelidir. Görüntü oranı 16:9 (yatay) olmalıdır.',
-        order: 3
-    },
-    {
-        id: 'faq4',
-        category: 'Genel',
-        question: 'Bireysel başvuru yapabilir miyim?',
-        answer: 'Hayır, yarışma takım çalışmasını teşvik etmek amacıyla düzenlenmiştir. En az 3 kişilik bir takım kurmanız gerekmektedir.',
-        order: 4
-    },
-    {
-        id: 'faq5',
-        category: 'Genel',
-        question: 'Bir danışman öğretmen birden fazla takıma danışmanlık yapabilir mi?',
-        answer: 'Evet, bir öğretmen kendi okulundaki birden fazla takıma danışmanlık yapabilir. Ancak her takımın başvurusu ayrı yapılmalıdır.',
-        order: 5
-    },
-    {
-        id: 'faq6',
-        category: 'Genel',
-        question: 'Yarışmaya katılım ücretli mi?',
-        answer: 'Hayır, Reflect&Shoot kısa film yarışmasına katılım tamamen ücretsizdir.',
-        order: 6
-    },
-    {
-        id: 'faq7',
-        category: 'Genel',
-        question: 'Farklı okullardan öğrenciler aynı takımda yer alabilir mi?',
-        answer: 'Hayır, takım üyelerinin tamamının aynı okulda öğrenim görüyor olması gerekmektedir.',
-        order: 7
-    },
-    {
-        id: 'faq8',
-        category: 'Genel',
-        question: 'Bir öğrenci birden fazla takımda görev alabilir mi?',
-        answer: 'Hayır, bir öğrenci sadece tek bir projede ve tek bir takımda yer alabilir.',
-        order: 8
-    },
-    {
-        id: 'faq9',
-        category: 'Teknik',
-        question: 'Profesyonel kamera zorunlu mu? Telefonla çekim yapabilir miyiz?',
-        answer: 'Profesyonel ekipman zorunluluğu yoktur. Hikaye anlatımı ve teknik kurallara (Işık, Ses, Kadraj) uyulduğu sürece yüksek çözünürlüklü cep telefonları ile çekilen filmler de kabul edilir.',
-        order: 9
-    },
-    {
-        id: 'faq10',
-        category: 'Teknik',
-        question: 'Filmin dili ne olmalı?',
-        answer: 'Yarışma formatı gereği filmin sesli dili (diyaloglar veya dış ses) İngilizce olmalıdır. Türkçe altyazı eklenmesi zorunludur.',
-        order: 10
-    },
-    {
-        id: 'faq11',
-        category: 'Teknik',
-        question: 'Filmde kullanılan müziklerin telif durumu ne olmalı?',
-        answer: 'Kullanılan tüm müzikler ya telifsiz (royalty-free) olmalı ya da kullanım hakları satın alınmış olmalıdır. Telif ihlali tespit edilen eserler diskalifiye edilir.',
-        order: 11
-    },
-    {
-        id: 'faq12',
-        category: 'Teknik',
-        question: 'Stok görüntü (Stock Footage) kullanımı serbest mi?',
-        answer: 'Canlı çekim kategorisinde filmin tamamı stok görüntüden oluşamaz. Destekleyici amaçla, filmin süresinin %30\'unu geçmeyecek şekilde stok görüntü kullanılabilir.',
-        order: 12
-    },
-    {
-        id: 'faq13',
-        category: 'Süreç & Teslim',
-        question: 'Videoyu sisteme nasıl yükleyeceğiz?',
-        answer: 'Videonuzu Google Drive, Dropbox veya YouTube (Liste Dışı) gibi bir platforma yükleyip, indirme bağlantısını Danışman Öğretmen Paneli üzerinden sisteme girmelisiniz.',
-        order: 13
-    },
-    {
-        id: 'faq14',
-        category: 'Süreç & Teslim',
-        question: 'Başvuru yaptıktan sonra takım ismini veya temasını değiştirebilir miyiz?',
-        answer: 'Hayır, kayıt işlemi tamamlanıp onaylandıktan sonra takım adı, kategori ve tema bilgileri güvenlik nedeniyle kilitlenir.',
-        order: 14
-    },
-    {
-        id: 'faq15',
-        category: 'Süreç & Teslim',
-        question: 'Veli izin belgesi ve KVKK formu zorunlu mu?',
-        answer: 'Evet, 18 yaşından küçük tüm katılımcılar için veli izin belgesinin ve KVKK aydınlatma metninin imzalanıp sisteme yüklenmesi yasal bir zorunluluktur.',
-        order: 15
-    },
-    {
-        id: 'faq16',
-        category: 'Süreç & Teslim',
-        question: 'Revize süreci nedir?',
-        answer: 'İlk elemeyi geçip finalist olan takımlar, jüri geri bildirimleri ve Akademi eğitimleri doğrultusunda filmlerinde düzenleme (revize) yapma hakkı kazanır. Bu, final puanlamasını etkiler.',
-        order: 16
-    },
-    {
-        id: 'faq17',
-        category: 'Ödüller & Değerlendirme',
-        question: 'Değerlendirme kriterleri nelerdir?',
-        answer: 'Eserler 4 ana başlıkta değerlendirilir: Senaryo ve Hikaye (%25), Teknik Kalite (%25), Özgünlük (%25) ve Tema Uyumu (%25).',
-        order: 17
-    },
-    {
-        id: 'faq18',
-        category: 'Ödüller & Değerlendirme',
-        question: 'Jüri üyeleri kimlerden oluşuyor?',
-        answer: 'Jüri kadrosu; akademisyenler ve alanında uzman eğitimcilerden oluşmaktadır.',
-        order: 18
-    },
-    {
-        id: 'faq19',
-        category: 'Ödüller & Değerlendirme',
-        question: 'Halk oylaması jüri puanını etkiler mi?',
-        answer: 'Hayır, halk oylaması "Seyirci Özel Ödülü"nü belirlemek içindir. Ana ödüller (1., 2., 3.) tamamen jüri puanlaması ile belirlenir.',
-        order: 19
-    },
-    {
-        id: 'faq20',
-        category: 'Ödüller & Değerlendirme',
-        question: 'Ödül törenine katılım zorunlu mu?',
-        answer: 'Dereceye giren veya finalist olan takımların (veya temsilcilerinin) Konya\'da düzenlenecek Gala gecesine katılımı, ödüllerini teslim almaları açısından önemle rica olunur.',
-        order: 20
-    }
 ];
 
-// DEFAULT ACADEMY ITEMS (Expanded Starter Pack)
 const DEFAULT_CMS_ACADEMY: CMSAcademyItem[] = [
-    // --- 1. SENARYO & TEMA ---
-    { 
-        id: 'def1', 
-        title: 'Kahramanın Yolculuğu ve Maneviyat', 
-        description: 'Joseph Campbell’in monomit yapısının İslami anlatı geleneğiyle harmanlanması.', 
-        category: 'Senaryo & Tema', 
-        type: 'PDF', 
-        url: '#', 
-        isStarterPack: true 
-    },
-    { 
-        id: 'sen2', 
-        title: 'Ayetlerden Senaryoya: Uyarlama Rehberi', 
-        description: 'Soyut manevi kavramların somut film sahnelerine dönüştürülmesi.', 
-        category: 'Senaryo & Tema', 
-        type: 'VIDEO', 
-        url: '#', 
-        isStarterPack: true 
-    },
-    { 
-        id: 'sen3', 
-        title: 'Karakter Yaratma: Derinlik ve Dönüşüm', 
-        description: 'İzleyicinin bağ kurabileceği, yaşayan ve dönüşen karakterler yazma teknikleri.', 
-        category: 'Senaryo & Tema', 
-        type: 'PDF', 
-        url: '#', 
-        isStarterPack: true 
-    },
-    { 
-        id: 'sen4', 
-        title: 'Diyalog Yazımı: Az Söz Çok Şey', 
-        description: 'Sahneyi sürükleyen, doğal ve alt metni güçlü diyaloglar nasıl yazılır?', 
-        category: 'Senaryo & Tema', 
-        type: 'VIDEO', 
-        url: '#', 
-        isStarterPack: true 
-    },
-    
-    // --- 2. TEKNİK & KURGU ---
-    { 
-        id: 'def2', 
-        title: 'DaVinci Resolve ile Renk Düzenleme', 
-        description: 'Filminize profesyonel bir atmosfer katmak için temel renk teorisi.', 
-        category: 'Teknik & Kurgu', 
-        type: 'LINK', 
-        url: '#', 
-        isStarterPack: true 
-    },
-    { 
-        id: 'tek2', 
-        title: 'Sinematik Işık ve Kompozisyon', 
-        description: 'Doğal ve yapay ışıkla atmosfer yaratma, 1/3 kuralı ve kadraj estetiği.', 
-        category: 'Teknik & Kurgu', 
-        type: 'VIDEO', 
-        url: '#', 
-        isStarterPack: true 
-    },
-    { 
-        id: 'tek3', 
-        title: 'Ses Tasarımı: Filmin Gizli Kahramanı', 
-        description: 'Diyalog, atmosfer sesleri ve foley kullanımı ile filmin duygu dünyasını inşa etmek.', 
-        category: 'Teknik & Kurgu', 
-        type: 'PDF', 
-        url: '#', 
-        isStarterPack: true 
-    },
-    { 
-        id: 'tek4', 
-        title: 'Kurguda Ritm ve Duygu Akışı', 
-        description: 'Kesme teknikleri (J-Cut, L-Cut) ile hikaye anlatımını güçlendirmek.', 
-        category: 'Teknik & Kurgu', 
-        type: 'VIDEO', 
-        url: '#', 
-        isStarterPack: true 
-    },
-
-    // --- 3. YAPAY ZEKA ---
-    { 
-        id: 'def3', 
-        title: 'Midjourney ile Storyboard Oluşturma', 
-        description: 'Senaryonuzu görselleştirmek için AI araçlarını kullanma rehberi.', 
-        category: 'Yapay Zeka', 
-        type: 'PDF', 
-        url: '#', 
-        isStarterPack: true 
-    },
-    { 
-        id: 'ai2', 
-        title: 'Runway Gen-2 ile Video Üretimi', 
-        description: 'Metinden videoya (Text-to-Video) üretim teknikleri ve prompt ipuçları.', 
-        category: 'Yapay Zeka', 
-        type: 'VIDEO', 
-        url: '#', 
-        isStarterPack: true 
-    },
-    { 
-        id: 'ai3', 
-        title: 'Suno AI ile Film Müziği Besteleme', 
-        description: 'Filminizin duygusuna uygun özgün müzikleri yapay zeka ile üretme rehberi.', 
-        category: 'Yapay Zeka', 
-        type: 'LINK', 
-        url: '#', 
-        isStarterPack: true 
-    },
-    { 
-        id: 'ai4', 
-        title: 'AI Destekli Seslendirme ve Lip Sync', 
-        description: 'ElevenLabs ve HeyGen kullanarak karakterlerinizi konuşturun.', 
-        category: 'Yapay Zeka', 
-        type: 'PDF', 
-        url: '#', 
-        isStarterPack: true 
-    },
-
-    // --- 4. İLHAM & REHBER ---
-    { 
-        id: 'def4', 
-        title: 'Teknik Şartname ve Teslim Kriterleri', 
-        description: 'Diskalifiye olmamak için dikkat etmeniz gereken teknik kurallar.', 
-        category: 'İlham & Rehber', 
-        type: 'PDF', 
-        url: '#', 
-        isStarterPack: true 
-    },
-    { 
-        id: 'reh2', 
-        title: 'Set Çantası Kontrol Listesi', 
-        description: 'Çekim gününde ihtiyacınız olacak ekipman, yedek parça ve belge listesi.', 
-        category: 'İlham & Rehber', 
-        type: 'PDF', 
-        url: '#', 
-        isStarterPack: true 
-    },
-    { 
-        id: 'reh3', 
-        title: 'Ödüllü Kısa Film Analizleri', 
-        description: 'Geçmiş yıllarda dereceye giren filmlerin sahne sahne analizi.', 
-        category: 'İlham & Rehber', 
-        type: 'VIDEO', 
-        url: '#', 
-        isStarterPack: true 
-    },
-    { 
-        id: 'reh4', 
-        title: 'Usta Yönetmenlerden Tavsiyeler', 
-        description: 'Mecid Mecidi ve Nuri Bilge Ceylan sinemasından notlar.', 
-        category: 'İlham & Rehber', 
-        type: 'LINK', 
-        url: '#', 
-        isStarterPack: true 
-    },
-
-    // FINALIST CONTENT (Locked for others)
-    { id: 'fin1', title: 'İleri Düzey Senaryo Doktorluğu', description: 'Finalist projelerin senaryoları üzerinde birebir analiz teknikleri.', category: 'Senaryo & Tema', type: 'VIDEO', url: '#', isFinalistContent: true },
-    { id: 'fin2', title: 'Festival Stratejileri ve Dağıtım', description: 'Filminizi uluslararası festivallere nasıl gönderirsiniz?', category: 'İlham & Rehber', type: 'PDF', url: '#', isFinalistContent: true }
+    { id: 'def1', title: 'Kahramanın Yolculuğu ve Maneviyat', description: 'Joseph Campbell’in monomit yapısının İslami anlatı geleneğiyle harmanlanması.', category: 'Senaryo & Tema', type: 'PDF', url: '#', isStarterPack: true },
 ];
 
 interface AppContextType {
@@ -410,6 +124,7 @@ interface AppContextType {
     markNotificationAsRead: (id: string) => Promise<void>;
     sendAnnouncement: (target: NotificationTarget, title: string, message: string, type: string) => Promise<void>;
     submitPublicVote: (appId: string, fingerprint: string) => Promise<void>;
+    getSignedUrl: (key: string) => Promise<string>;
     
     // System
     updateSystemSettings: (settings: SystemSettings) => Promise<void>;
@@ -421,7 +136,6 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Default Values
 const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
     dates: {
         applicationStart: '2026-01-20T09:00',
@@ -457,12 +171,20 @@ const DEFAULT_CMS_LINKS: CMSLinks = {
     posterUrl: '#'
 };
 
+// Helper: Hydrate Logo URL from Key
+const hydrateApplication = (data: any, id: string): Application => {
+    const app = { id, ...data } as Application;
+    if (app.team.logoKey) {
+        app.team.logoUrl = `${PUBLIC_ASSETS_BASE_URL}/${app.team.logoKey}`;
+    }
+    return app;
+};
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
     
-    // Data States
     const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SYSTEM_SETTINGS);
     const [cmsGeneral, setCmsGeneral] = useState<CMSGeneral>(DEFAULT_CMS_GENERAL);
     const [cmsLinks, setCmsLinks] = useState<CMSLinks>(DEFAULT_CMS_LINKS);
@@ -481,7 +203,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [currentApplication, setCurrentApplication] = useState<Application | null>(null);
     const [currentDate, setCurrentDate] = useState(new Date());
 
-    // Toast Helper
     const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
         const id = Math.random().toString(36).substring(7);
         setToasts(prev => [...prev, { id, message, type }]);
@@ -492,15 +213,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setToasts(prev => prev.filter(t => t.id !== id));
     };
 
-    // Listeners
     useEffect(() => {
         const unsubAuth = onAuthStateChanged(auth, async (user: any) => {
             if (user) {
-                // Fetch User Profile
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
                     const profile = userDoc.data() as UserProfile;
-                    // Update email verified status if changed
                     if(profile.emailVerified !== user.emailVerified) {
                         await updateDoc(doc(db, "users", user.uid), { emailVerified: user.emailVerified });
                         profile.emailVerified = user.emailVerified;
@@ -514,12 +232,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             setLoading(false);
         });
 
-        // System Settings Listener
         const unsubSettings = onSnapshot(doc(db, "settings", "config"), (doc) => {
             if(doc.exists()) setSystemSettings(doc.data() as SystemSettings);
         });
 
-        // CMS Listeners
         const unsubCmsGen = onSnapshot(doc(db, "cms", "general"), (doc) => {
             if(doc.exists()) setCmsGeneral(doc.data() as CMSGeneral);
         });
@@ -539,8 +255,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const unsubGallery = onSnapshot(collection(db, "cms_gallery"), (snap) => {
             setCmsGallery(snap.docs.map(d => ({id: d.id, ...d.data()} as CMSGalleryItem)));
         });
-        
-        // Academy Listener with Fallback
         const unsubAcademy = onSnapshot(collection(db, "cms_academy"), (snap) => {
             if(snap.empty) {
                 setCmsAcademy(DEFAULT_CMS_ACADEMY);
@@ -548,12 +262,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 setCmsAcademy(snap.docs.map(d => ({id: d.id, ...d.data()} as CMSAcademyItem)));
             }
         });
-
         const unsubTimeline = onSnapshot(query(collection(db, "cms_timeline"), orderBy("order")), (snap) => {
             setCmsTimeline(snap.docs.map(d => ({id: d.id, ...d.data()} as CMSTimelineItem)));
         });
 
-        // Clock
         const interval = setInterval(() => setCurrentDate(new Date()), 60000);
 
         return () => {
@@ -570,25 +282,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         };
     }, []);
 
-    // Admin & User Data Listeners
     useEffect(() => {
         if (!currentUser) return;
-
         let unsubs: (() => void)[] = [];
-
-        // Notifications
-        const notifQ = query(collection(db, "notifications"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"));
+        
+        // Removed orderBy to fix potential index error, sorting in client
+        const notifQ = query(collection(db, "notifications"), where("userId", "==", currentUser.uid));
         unsubs.push(onSnapshot(notifQ, (snap) => {
-            setNotifications(snap.docs.map(d => ({id: d.id, ...d.data()} as Notification)));
+            const list = snap.docs.map(d => ({id: d.id, ...d.data()} as Notification));
+            list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setNotifications(list);
         }));
 
         if (currentUser.role === UserRole.ADMIN) {
-            // Admin Listeners
             unsubs.push(onSnapshot(collection(db, "users"), (snap) => {
                 setAllUsers(snap.docs.map(d => ({uid: d.id, ...d.data()} as UserProfile)));
             }));
             unsubs.push(onSnapshot(collection(db, "applications"), (snap) => {
-                setAllApplications(snap.docs.map(d => ({id: d.id, ...d.data()} as Application)));
+                setAllApplications(snap.docs.map(d => hydrateApplication(d.data(), d.id)));
             }));
             unsubs.push(onSnapshot(query(collection(db, "contact_messages"), orderBy("createdAt", "desc")), (snap) => {
                 setContactMessages(snap.docs.map(d => ({id: d.id, ...d.data()} as ContactMessage)));
@@ -597,25 +308,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 setAuditLogs(snap.docs.map(d => ({id: d.id, ...d.data()} as LogEntry)));
             }));
         } else if (currentUser.role === UserRole.JUDGE) {
-            // Judge Listeners (Need to see assigned apps)
             unsubs.push(onSnapshot(collection(db, "applications"), (snap) => {
-                setAllApplications(snap.docs.map(d => ({id: d.id, ...d.data()} as Application)));
+                setAllApplications(snap.docs.map(d => hydrateApplication(d.data(), d.id)));
             }));
         } else if (currentUser.role === UserRole.TEACHER || currentUser.role === UserRole.STUDENT) {
-            // Teacher/Student: Listen to their application
             if(currentUser.role === UserRole.TEACHER) {
                 const appQ = query(collection(db, "applications"), where("teacher.id", "==", currentUser.uid));
                 unsubs.push(onSnapshot(appQ, (snap) => {
-                    if(!snap.empty) setCurrentApplication({id: snap.docs[0].id, ...snap.docs[0].data()} as Application);
+                    if(!snap.empty) setCurrentApplication(hydrateApplication(snap.docs[0].data(), snap.docs[0].id));
                     else setCurrentApplication(null);
                 }));
             }
         }
-
         return () => unsubs.forEach(u => u());
     }, [currentUser?.uid, currentUser?.role]);
 
-    // Actions
     const login = async (email: string, pass: string) => {
         await signInWithEmailAndPassword(auth, email, pass);
     };
@@ -656,7 +363,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         await logAction("UPDATE_ROLE", `Kullanıcı ${uid} rolü ${role} yapıldı.`);
     };
 
-    // CMS Actions
     const updateCMSGeneral = async (data: CMSGeneral) => {
         await setDoc(doc(db, "cms", "general"), data);
         showToast('Genel ayarlar güncellendi.', 'success');
@@ -666,7 +372,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         showToast('Linkler güncellendi.', 'success');
     };
     const updateCMSPrize = async (data: CMSPrize) => {
-        // Assume prize ID is document ID in cms_prizes
         await setDoc(doc(db, "cms_prizes", data.id), data);
         showToast('Ödül güncellendi.', 'success');
     };
@@ -715,11 +420,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         showToast('Adım silindi.', 'success');
     };
 
-    // Application Actions
     const createApplication = async (data: any) => {
         if(!currentUser) return;
+        
+        // Use ID provided by dashboard (for public upload sync) or generate new one
+        const generatedId = data.id || Math.random().toString(36).substring(7);
+
         const team: Team = {
-            id: Math.random().toString(36).substring(7),
+            id: generatedId,
             name: data.teamName,
             category: data.category,
             theme: data.theme,
@@ -733,10 +441,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             isPreliminaryStageComplete: false,
             isFinalStageComplete: false,
             videoStatus: 'PENDING',
-            logoUrl: 'https://via.placeholder.com/128' // Mock for now, normally upload to storage
+            logoKey: data.logoKey, // Store the R2 Key
+            // If logoKey exists, logoUrl will be generated on fetch.
+            // If legacy logoUrl exists, it will be used as fallback.
+            logoUrl: data.logoUrl || (data.logoKey ? `${PUBLIC_ASSETS_BASE_URL}/${data.logoKey}` : 'https://via.placeholder.com/128')
         };
         const app: Application = {
-            id: Math.random().toString(36).substring(7),
+            id: generatedId,
             teacher: {
                 id: currentUser.uid,
                 fullName: currentUser.fullName,
@@ -756,8 +467,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const updateApplication = async (app: Application) => {
-        await setDoc(doc(db, "applications", app.id), app);
-        if(currentApplication?.id === app.id) setCurrentApplication(app);
+        // We only save raw data to DB, remove hydrated URL if it was added
+        const dataToSave = { ...app };
+        // We don't need to explicitly strip logoUrl because we want to keep it if it's a legacy static URL,
+        // but for new ones, we rely on logoKey. Firestore will save what we give it.
+        // It's safer to save the full object as is to support both.
+        
+        await setDoc(doc(db, "applications", app.id), dataToSave);
+        
+        // Re-hydrate for local state
+        const hydrated = hydrateApplication(dataToSave, app.id);
+        if(currentApplication?.id === app.id) setCurrentApplication(hydrated);
+        
         showToast('Değişiklikler kaydedildi.', 'success');
     };
 
@@ -903,6 +624,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         document.body.removeChild(link);
     };
 
+    // --- New: Get Signed URL for Private Files ---
+    const getSignedUrl = async (key: string): Promise<string> => {
+        try {
+            // Encode key to handle slashes or special chars safely in URL
+            const encodedKey = encodeURIComponent(key);
+            const apiResponse = await fetch(`/api/view?key=${encodedKey}`, {
+                method: 'GET',
+            });
+
+            if (!apiResponse.ok) {
+                throw new Error('Dosya görüntüleme linki alınamadı');
+            }
+
+            const { signedUrl } = await apiResponse.json();
+            return signedUrl;
+        } catch (error) {
+            console.error(error);
+            return '#';
+        }
+    };
+
     const value = {
         currentUser, loading, systemSettings, cmsGeneral, cmsLinks, cmsPrizes, cmsFaqs, cmsGallery, cmsAcademy, cmsTimeline,
         allUsers, allApplications, currentApplication, contactMessages, notifications, auditLogs, currentDate, toasts,
@@ -913,7 +655,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         createApplication, updateApplication, bulkUpdateApplications,
         assignJury, bulkAssignJury, submitScore, fetchJuryScores,
         sendMessage, sendContactMessage, markContactMessageAsRead, markNotificationAsRead, sendAnnouncement, submitPublicVote,
-        updateSystemSettings, logAction, showToast, removeToast, downloadFullBackup
+        updateSystemSettings, logAction, showToast, removeToast, downloadFullBackup, getSignedUrl
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

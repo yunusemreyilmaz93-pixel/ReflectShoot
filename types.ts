@@ -49,10 +49,17 @@ export interface Student {
   lastName: string;
   grade: string; // e.g. "11-B"
   email?: string;
+  
+  // Consent Docs
   hasParentalConsent: boolean; // File uploaded
   hasKvkkConsent: boolean;     // File uploaded
-  parentalConsentUrl?: string; // Mock URL for admin view
-  kvkkConsentUrl?: string;     // Mock URL for admin view
+  parentalConsentUrl?: string; // Private R2 Key/URL
+  kvkkConsentUrl?: string;     // Private R2 Key/URL
+  
+  // Challenge-Response Security
+  parentalExpectedId?: string; // The ID generated on the PDF
+  kvkkExpectedId?: string;     // The ID generated on the PDF
+  
   docStatus?: 'PENDING' | 'APPROVED' | 'REJECTED'; // New for admin review
 }
 
@@ -77,7 +84,8 @@ export interface ScoreDocument {
 export interface Team {
   id: string;
   name: string;
-  logoUrl?: string; // Mock URL or base64
+  logoUrl?: string; // Derived in frontend (Public URL)
+  logoKey?: string; // Stored in DB (R2 Key: teams/{id}/logo.png)
   category: Category;
   theme: Theme;
   selectedVerse?: string; // If theme is AYET

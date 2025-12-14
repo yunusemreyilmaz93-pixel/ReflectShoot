@@ -181,103 +181,114 @@ export const Apply: React.FC = () => {
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6 animate-fadeIn">
+            <form onSubmit={handleSubmit} className="space-y-8 animate-fadeIn">
                 
-                <div>
-                    <label className="label flex items-center gap-2 text-slate-700"><User size={16} className="text-rose-500"/> Ad Soyad</label>
-                    <input name="name" value={formData.name} onChange={handleChange} className="input-field" placeholder="Örn: Ahmet Yılmaz" />
-                    {errors.name && <p className="error-text">{errors.name}</p>}
-                </div>
-
-                <div>
-                    <label className="label flex items-center gap-2 text-slate-700"><School size={16} className="text-rose-500"/> Okul Adı</label>
-                    <input name="school" value={formData.school} onChange={handleChange} className="input-field" placeholder="Örn: Konya Anadolu İmam Hatip Lisesi" />
-                    {errors.school && <p className="error-text">{errors.school}</p>}
-                </div>
-
-                <div>
-                    <label className="label flex items-center gap-2 text-slate-700"><MapPin size={16} className="text-rose-500"/> Şehir / İlçe</label>
-                    <input name="city" value={formData.city} onChange={handleChange} className="input-field" placeholder="Şehir" />
-                </div>
-
-                <div>
-                    <label className="label flex items-center gap-2 text-slate-700"><Mail size={16} className="text-rose-500"/> E-posta</label>
-                    <input type="email" name="email" value={formData.email} onChange={handleChange} className="input-field" placeholder="mail@okul.com" />
+                {/* --- HESAP BİLGİLERİ KARTI --- */}
+                <div className="space-y-5">
+                    <h3 className="text-lg font-black text-slate-800 pb-2 border-b border-slate-100 flex items-center gap-2">
+                        <User size={20} className="text-rose-500"/> Hesap Bilgileri
+                    </h3>
                     
-                     {/* k12.tr Hint - UPDATED */}
-                     <div className="mt-3 bg-teal-50 border border-teal-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-                        <div className="bg-teal-100 p-1.5 rounded-full text-teal-600 mt-0.5">
-                           <CheckCircle2 size={16} />
-                        </div>
-                        <div className="text-sm text-teal-800">
-                            <span className="font-black block text-teal-800 mb-1 uppercase text-xs tracking-wider">🚀 Hızlı Onay Avantajı</span>
-                            <span className="leading-relaxed text-xs sm:text-sm">
-                                <strong>@k12.tr</strong> uzantılı kurumsal okul e-posta adresinizle kayıt olduğunuzda, hesabınız yönetici onayı beklemeden <strong>doğrudan onaylanır</strong> ve panele hemen erişebilirsiniz.
-                            </span>
-                        </div>
+                    <div>
+                        <label className="label flex items-center gap-2 text-slate-700">Ad Soyad</label>
+                        <input name="name" value={formData.name} onChange={handleChange} className="input-field" placeholder="Örn: Ahmet Yılmaz" />
+                        {errors.name && <p className="error-text">{errors.name}</p>}
                     </div>
 
-                    {errors.email && <p className="error-text">{errors.email}</p>}
+                    <div>
+                        <label className="label flex items-center gap-2 text-slate-700">Okul Adı</label>
+                        <input name="school" value={formData.school} onChange={handleChange} className="input-field" placeholder="Örn: Konya Anadolu İmam Hatip Lisesi" />
+                        {errors.school && <p className="error-text">{errors.school}</p>}
+                    </div>
+
+                    <div>
+                        <label className="label flex items-center gap-2 text-slate-700">Şehir / İlçe</label>
+                        <input name="city" value={formData.city} onChange={handleChange} className="input-field" placeholder="Şehir" />
+                    </div>
+
+                    <div>
+                        <label className="label flex items-center gap-2 text-slate-700">E-posta</label>
+                        <input type="email" name="email" value={formData.email} onChange={handleChange} className="input-field" placeholder="mail@okul.com" />
+                        
+                        {/* k12.tr Hint */}
+                        <div className="mt-3 bg-teal-50 border border-teal-100 rounded-lg p-3 flex items-start gap-3">
+                            <div className="bg-teal-100 p-1 rounded-full text-teal-600 mt-0.5 flex-shrink-0">
+                               <CheckCircle2 size={14} />
+                            </div>
+                            <div className="text-xs text-teal-800 leading-relaxed">
+                                <strong className="font-bold text-teal-900">İpucu:</strong> <strong>@k12.tr</strong> uzantılı kurumsal e-posta adresinizle kayıt olduğunuzda, hesabınız yönetici onayı beklemeden <strong>doğrudan onaylanır</strong>.
+                            </div>
+                        </div>
+
+                        {errors.email && <p className="error-text">{errors.email}</p>}
+                    </div>
+
+                    <div>
+                        <label className="label flex items-center gap-2 text-slate-700">Şifre Oluştur</label>
+                        <input type="password" name="password" value={formData.password} onChange={handleChange} className="input-field" placeholder="******" />
+                        {errors.password && <p className="error-text">{errors.password}</p>}
+                    </div>
                 </div>
 
-                <div>
-                    <label className="label flex items-center gap-2 text-slate-700"><Lock size={16} className="text-rose-500"/> Şifre Oluştur</label>
-                    <input type="password" name="password" value={formData.password} onChange={handleChange} className="input-field" placeholder="******" />
-                    {errors.password && <p className="error-text">{errors.password}</p>}
-                </div>
-
-                {/* CONSENT SECTION */}
-                <div className="space-y-4 pt-4 border-t border-gray-100 mt-6">
-                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2 flex items-center gap-2">
-                        <CheckSquare size={14} className="text-teal-600"/> Yasal Onaylar
+                {/* --- YASAL ONAYLAR BLOĞU --- */}
+                <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <CheckSquare size={14} className="text-teal-600"/> Yasal Onaylar ve Sorumluluklar
                     </h4>
-                    {/* Consent 1 */}
-                    <div className="flex items-start">
-                        <input 
-                            id="privacy" 
-                            type="checkbox" 
-                            checked={consents.privacy}
-                            onChange={(e) => setConsents({...consents, privacy: e.target.checked})}
-                            className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded mt-1 cursor-pointer accent-teal-600" 
-                        />
-                        <label htmlFor="privacy" className="ml-3 block text-sm text-gray-600">
-                             <span className="cursor-pointer hover:text-teal-600 hover:underline font-bold text-gray-800" onClick={() => openModal('privacy')}>GİZLİLİK VE PLATFORM KULLANIM TAAHHÜDÜ'nü</span> okudum, kabul ediyorum.
-                        </label>
-                    </div>
-                    {errors.privacy && <p className="error-text pl-7">{errors.privacy}</p>}
+                    
+                    <p className="text-[11px] text-slate-500 italic mb-4">
+                        Bu onaylar, yarışma sürecinin sağlıklı ve adil yürütülmesi için zorunludur.
+                    </p>
 
-                    {/* Consent 2 */}
-                    <div className="flex items-start">
-                        <input 
-                            id="responsibility" 
-                            type="checkbox" 
-                            checked={consents.responsibility}
-                            onChange={(e) => setConsents({...consents, responsibility: e.target.checked})}
-                            className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded mt-1 cursor-pointer accent-teal-600" 
-                        />
-                        <label htmlFor="responsibility" className="ml-3 block text-sm text-gray-600">
-                             <span className="cursor-pointer hover:text-teal-600 hover:underline font-bold text-gray-800" onClick={() => openModal('responsibility')}>ÖĞRETMEN SORUMLULUK TAAHHÜTNAMESİ'ni</span> okudum, kabul ediyorum.
-                        </label>
-                    </div>
-                    {errors.responsibility && <p className="error-text pl-7">{errors.responsibility}</p>}
+                    <div className="space-y-3">
+                        {/* Consent 1 */}
+                        <div className="flex items-start">
+                            <input 
+                                id="privacy" 
+                                type="checkbox" 
+                                checked={consents.privacy}
+                                onChange={(e) => setConsents({...consents, privacy: e.target.checked})}
+                                className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded mt-0.5 cursor-pointer accent-teal-600" 
+                            />
+                            <label htmlFor="privacy" className="ml-2 block text-xs text-gray-600 leading-snug">
+                                 <span className="cursor-pointer hover:text-teal-600 hover:underline font-bold text-gray-800" onClick={() => openModal('privacy')}>GİZLİLİK VE PLATFORM KULLANIM TAAHHÜDÜ'nü</span> okudum, kabul ediyorum.
+                            </label>
+                        </div>
+                        {errors.privacy && <p className="error-text pl-6">{errors.privacy}</p>}
 
-                    {/* Consent 3 */}
-                    <div className="flex items-start">
-                        <input 
-                            id="dataLock" 
-                            type="checkbox" 
-                            checked={consents.dataLock}
-                            onChange={(e) => setConsents({...consents, dataLock: e.target.checked})}
-                            className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded mt-1 cursor-pointer accent-teal-600" 
-                        />
-                        <label htmlFor="dataLock" className="ml-3 block text-sm text-gray-600">
-                             <span className="cursor-pointer hover:text-teal-600 hover:underline font-bold text-gray-800" onClick={() => openModal('dataLock')}>TAKIM BİLGİLERİ KİLİTLEME ONAYI'nı</span> okudum, kabul ediyorum.
-                        </label>
+                        {/* Consent 2 */}
+                        <div className="flex items-start">
+                            <input 
+                                id="responsibility" 
+                                type="checkbox" 
+                                checked={consents.responsibility}
+                                onChange={(e) => setConsents({...consents, responsibility: e.target.checked})}
+                                className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded mt-0.5 cursor-pointer accent-teal-600" 
+                            />
+                            <label htmlFor="responsibility" className="ml-2 block text-xs text-gray-600 leading-snug">
+                                 <span className="cursor-pointer hover:text-teal-600 hover:underline font-bold text-gray-800" onClick={() => openModal('responsibility')}>ÖĞRETMEN SORUMLULUK TAAHHÜTNAMESİ'ni</span> okudum, kabul ediyorum.
+                            </label>
+                        </div>
+                        {errors.responsibility && <p className="error-text pl-6">{errors.responsibility}</p>}
+
+                        {/* Consent 3 */}
+                        <div className="flex items-start">
+                            <input 
+                                id="dataLock" 
+                                type="checkbox" 
+                                checked={consents.dataLock}
+                                onChange={(e) => setConsents({...consents, dataLock: e.target.checked})}
+                                className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded mt-0.5 cursor-pointer accent-teal-600" 
+                            />
+                            <label htmlFor="dataLock" className="ml-2 block text-xs text-gray-600 leading-snug">
+                                 <span className="cursor-pointer hover:text-teal-600 hover:underline font-bold text-gray-800" onClick={() => openModal('dataLock')}>TAKIM BİLGİLERİ KİLİTLEME ONAYI'nı</span> okudum, kabul ediyorum.
+                            </label>
+                        </div>
+                        {errors.dataLock && <p className="error-text pl-6">{errors.dataLock}</p>}
                     </div>
-                    {errors.dataLock && <p className="error-text pl-7">{errors.dataLock}</p>}
                 </div>
 
-                <div className="pt-6">
+                <div className="pt-2">
                      <button type="submit" disabled={isSubmitting} className="w-full bg-slate-900 hover:bg-rose-600 text-white px-8 py-4 rounded-xl font-bold flex items-center justify-center shadow-xl transform transition hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed">
                         {isSubmitting ? (
                             <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> Kaydediliyor...</>
