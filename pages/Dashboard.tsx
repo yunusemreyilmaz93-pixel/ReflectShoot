@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { ApplicationStatus, Category, Theme, UserRole, Student } from '../types';
@@ -202,7 +203,8 @@ export const Dashboard: React.FC = () => {
                   teamName: teamForm.name,
                   category: teamForm.category,
                   theme: teamForm.theme,
-                  selectedVerse: teamForm.theme === Theme.AYET ? teamForm.selectedVerse : undefined,
+                  // Ensure we send null instead of undefined for selectedVerse if not AYET
+                  selectedVerse: teamForm.theme === Theme.AYET ? teamForm.selectedVerse : null,
                   logoKey: logoKey,
                   students
               });

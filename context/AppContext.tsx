@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { auth, db } from '../lib/firebase';
 // @ts-ignore
@@ -431,7 +432,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             name: data.teamName,
             category: data.category,
             theme: data.theme,
-            selectedVerse: data.selectedVerse,
+            selectedVerse: data.selectedVerse || null, // FIX: Avoid undefined, use null
             students: data.students.map((s: any) => ({
                 id: Math.random().toString(36).substring(7),
                 ...s,
@@ -441,7 +442,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             isPreliminaryStageComplete: false,
             isFinalStageComplete: false,
             videoStatus: 'PENDING',
-            logoKey: data.logoKey, // Store the R2 Key
+            logoKey: data.logoKey || null, // FIX: Avoid undefined, use null
             // If logoKey exists, logoUrl will be generated on fetch.
             // If legacy logoUrl exists, it will be used as fallback.
             logoUrl: data.logoUrl || (data.logoKey ? `${PUBLIC_ASSETS_BASE_URL}/${data.logoKey}` : 'https://via.placeholder.com/128')
@@ -468,10 +469,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const updateApplication = async (app: Application) => {
         // We only save raw data to DB, remove hydrated URL if it was added
-        const dataToSave = { ...app };
-        // We don't need to explicitly strip logoUrl because we want to keep it if it's a legacy static URL,
-        // but for new ones, we rely on logoKey. Firestore will save what we give it.
-        // It's safer to save the full object as is to support both.
+        // Sanitize to remove undefined values which Firestore hates.
+        // JSON.stringify strips undefined keys, which is compatible with setDoc.
+        const dataToSave = JSON.parse(JSON.stringify(app));
         
         await setDoc(doc(db, "applications", app.id), dataToSave);
         
