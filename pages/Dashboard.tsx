@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { ApplicationStatus, Category, Theme, UserRole, Student } from '../types';
-import { CheckCircle, AlertCircle, Upload, Video, Award, Clock, Users, FileDown, Clapperboard, Film, UserPlus, BookOpen, Trophy, HeartHandshake, Cpu, Link as LinkIcon, ExternalLink, Play, AlertTriangle, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { CheckCircle, AlertCircle, Upload, Video, Award, Clock, Users, FileDown, Clapperboard, Film, UserPlus, BookOpen, Trophy, HeartHandshake, Cpu, Link as LinkIcon, ExternalLink, Play, AlertTriangle, CheckCircle2, ShieldCheck, PenTool, FileText, ChevronRight, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { ChatArea } from '../components/ChatArea';
@@ -14,6 +14,9 @@ import jsPDF from 'jspdf';
 export const Dashboard: React.FC = () => {
   const { currentApplication, updateApplication, createApplication, currentUser, currentDate, systemSettings, showToast, getSignedUrl } = useAppContext();
   const [uploading, setUploading] = useState<string | null>(null);
+  
+  // UI State for tracking download steps
+  const [downloadedDocs, setDownloadedDocs] = useState<Set<string>>(new Set());
 
   const VIDEO_UPLOAD_START_DATE = new Date(systemSettings.dates.videoUploadStart);
   const VIDEO_UPLOAD_END_DATE = new Date(systemSettings.dates.videoUploadEnd);
@@ -225,7 +228,7 @@ export const Dashboard: React.FC = () => {
       
       doc.setFont("helvetica", "bold");
       doc.setFontSize(20);
-      doc.text(type === 'kvkk' ? "KVKK AYDINLATMA VE RIZA METNI" : "VELI IZIN BELGESI", 105, 30, { align: "center" });
+      doc.text(type === 'kvkk' ? "AÇIK RIZA METNİ" : "VELI IZIN BELGESI", 105, 30, { align: "center" });
       
       doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
@@ -271,8 +274,8 @@ export const Dashboard: React.FC = () => {
       doc.setTextColor(220, 38, 38);
       doc.text(docId, 142, 22);
 
-      doc.save(`${type}_${student.firstName}_${student.lastName}.pdf`);
-      showToast(`${type === 'kvkk' ? 'KVKK' : 'Veli İzin'} belgesi oluşturuldu.`, 'success');
+      doc.save(`${type === 'kvkk' ? 'Acik_Riza' : 'Veli_Izin'}_${student.firstName}_${student.lastName}.pdf`);
+      showToast(`${type === 'kvkk' ? 'Açık Rıza' : 'Veli İzin'} belgesi oluşturuldu.`, 'success');
   };
 
   const handleUploadClick = (type: 'kvkk' | 'parent', student: Student) => {
@@ -375,6 +378,13 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  // Helper to handle download state
+  const handleDownloadProcess = (type: 'kvkk' | 'parent', student: Student) => {
+      generateAndDownloadDoc(type, student);
+      // Mark as downloaded in UI state to enable upload button
+      setDownloadedDocs(prev => new Set(prev).add(`${student.id}-${type}`));
+  };
+
   const renderVersePreview = () => {
         if (!teamForm.selectedVerse || !verseDetails[teamForm.selectedVerse]) return null;
         const v = verseDetails[teamForm.selectedVerse];
@@ -412,17 +422,17 @@ export const Dashboard: React.FC = () => {
 
   const getStatusBadge = (status: ApplicationStatus) => {
         const styles = {
-            [ApplicationStatus.DRAFT]: 'bg-slate-100 text-slate-600',
-            [ApplicationStatus.PRELIMINARY_SUBMITTED]: 'bg-blue-100 text-blue-700',
-            [ApplicationStatus.FINAL_SUBMITTED]: 'bg-purple-100 text-purple-700',
-            [ApplicationStatus.UNDER_REVIEW]: 'bg-amber-100 text-amber-700',
-            [ApplicationStatus.APPROVED]: 'bg-green-100 text-green-700',
-            [ApplicationStatus.GRADED]: 'bg-teal-100 text-teal-700',
-            [ApplicationStatus.REJECTED]: 'bg-red-100 text-red-700',
-            [ApplicationStatus.NEEDS_FIX]: 'bg-orange-100 text-orange-700',
-            [ApplicationStatus.DISQUALIFIED]: 'bg-gray-800 text-white',
+            [ApplicationStatus.DRAFT]: 'bg-slate-800 text-slate-400 border-slate-700',
+            [ApplicationStatus.PRELIMINARY_SUBMITTED]: 'bg-blue-900/30 text-blue-400 border-blue-800',
+            [ApplicationStatus.FINAL_SUBMITTED]: 'bg-purple-900/30 text-purple-400 border-purple-800',
+            [ApplicationStatus.UNDER_REVIEW]: 'bg-amber-900/30 text-amber-400 border-amber-800',
+            [ApplicationStatus.APPROVED]: 'bg-emerald-900/30 text-emerald-400 border-emerald-800',
+            [ApplicationStatus.GRADED]: 'bg-teal-900/30 text-teal-400 border-teal-800',
+            [ApplicationStatus.REJECTED]: 'bg-red-900/30 text-red-400 border-red-800',
+            [ApplicationStatus.NEEDS_FIX]: 'bg-orange-900/30 text-orange-400 border-orange-800',
+            [ApplicationStatus.DISQUALIFIED]: 'bg-slate-900 text-white border-slate-700',
         };
-        return <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${styles[status] || 'bg-gray-100'}`}>{status}</span>;
+        return <span className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${styles[status] || 'bg-slate-800'}`}>{status}</span>;
   };
 
   const printTeacherGuide = () => {
@@ -439,10 +449,11 @@ export const Dashboard: React.FC = () => {
   };
 
   const timelineEvents = [
+      { date: '15 Aralık', label: 'Ön Kayıt Dönemi' },
       { date: '20 Ocak', label: 'Başvurular Başladı' },
       { date: '13 Şubat', label: 'Son Başvuru' },
-      { date: '20 Mart', label: 'Video Yükleme Başlangıç' },
-      { date: '1 Nisan', label: 'Finalistler İlanı' },
+      { date: '20 Mart', label: 'Video Yükleme' },
+      { date: '1 Nisan', label: 'Finalistler' },
       { date: '22 Mayıs', label: 'Gala Gecesi' }
   ];
 
@@ -576,7 +587,7 @@ export const Dashboard: React.FC = () => {
   const { team, status } = currentApplication;
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-12">
+    <div className="bg-slate-950 min-h-screen pb-20 text-slate-200">
       <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="application/pdf" />
 
       {verificationModal && (
@@ -707,34 +718,48 @@ export const Dashboard: React.FC = () => {
           </div>
       )}
 
-      <div className="bg-slate-900 text-white pb-32 pt-16 relative overflow-hidden">
+      {/* --- HERO SECTION --- */}
+      <div className="bg-slate-900 text-white pb-32 pt-20 relative overflow-hidden">
           <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }}></div>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-              <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
-                  <div className="w-28 h-28 bg-white rounded-full p-1 flex items-center justify-center overflow-hidden border-4 border-amber-400 shadow-2xl relative">
-                      {team.logoUrl ? <img src={team.logoUrl} className="w-full h-full object-cover rounded-full" /> : <Users className="text-gray-300" size={40} />}
+              <div className="flex flex-col md:flex-row items-center gap-10 text-center md:text-left">
+                  {/* Team Logo - Jeweled Look */}
+                  <div className="w-32 h-32 bg-slate-800 rounded-full p-1 flex items-center justify-center overflow-hidden ring-4 ring-slate-800 shadow-2xl relative flex-shrink-0">
+                      {team.logoUrl ? <img src={team.logoUrl} className="w-full h-full object-cover rounded-full opacity-90 hover:opacity-100 transition-opacity" /> : <Users className="text-gray-600" size={40} />}
                   </div>
+                  
                   <div className="flex-1">
-                      <h1 className="text-4xl font-black tracking-tight flex items-center justify-center md:justify-start gap-3">
+                      <h1 className="text-5xl font-black tracking-tighter flex flex-col md:flex-row items-center md:items-end justify-center md:justify-start gap-4 leading-none mb-4">
                           {team.name}
-                          {isFinalist && <span className="bg-amber-500 text-black text-xs px-3 py-1 rounded-full font-black tracking-widest uppercase shadow-lg shadow-amber-500/20">Finalist</span>}
+                          {isFinalist && (
+                              <span className="bg-amber-500 text-black text-[10px] px-3 py-1 rounded-full font-black tracking-widest uppercase shadow-lg shadow-amber-500/20 translate-y-[-4px]">
+                                  Finalist
+                              </span>
+                          )}
                       </h1>
-                      <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-slate-300 mt-3 text-sm font-medium">
-                          <span className="bg-slate-800 px-3 py-1 rounded-full border border-slate-700 shadow-sm">{team.category}</span>
-                          <span className="flex items-center"><Award size={16} className="mr-1 text-amber-500"/> {team.theme}</span>
-                          <span className="flex items-center"><Users size={16} className="mr-1 text-teal-500"/> {team.students.length} Öğrenci</span>
+                      
+                      <div className="flex flex-wrap justify-center md:justify-start items-center gap-3 text-slate-300">
+                          <span className="bg-white/10 px-4 py-1.5 rounded-full border border-white/5 shadow-sm text-xs font-semibold tracking-wide backdrop-blur-sm">{team.category}</span>
+                          <span className="bg-white/10 px-4 py-1.5 rounded-full border border-white/5 shadow-sm text-xs font-semibold tracking-wide backdrop-blur-sm flex items-center gap-1.5">
+                              <Award size={14} className="text-amber-400"/> {team.theme}
+                          </span>
+                          <span className="bg-white/10 px-4 py-1.5 rounded-full border border-white/5 shadow-sm text-xs font-semibold tracking-wide backdrop-blur-sm flex items-center gap-1.5">
+                              <Users size={14} className="text-teal-400"/> {team.students.length} Öğrenci
+                          </span>
                       </div>
                   </div>
-                  <div className="bg-white/5 backdrop-blur-md px-8 py-5 rounded-2xl border border-white/10 text-center shadow-xl">
-                      <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Başvuru Durumu</p>
-                      <div className="text-xl font-bold">{isGalaPhase ? <span className="text-rose-400">Gala Bekleniyor</span> : getStatusBadge(status)}</div>
+
+                  {/* Status Indicator */}
+                  <div className="flex flex-col items-center md:items-end gap-2">
+                      <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Güncel Durum</p>
+                      <div className="text-xl font-bold">{isGalaPhase ? <span className="text-rose-400 animate-pulse">Gala Bekleniyor</span> : getStatusBadge(status)}</div>
                   </div>
               </div>
               
               {isFinalist && isAcademyActive && (
-                  <div className="mt-12 flex justify-center md:justify-start gap-4">
+                  <div className="mt-10 flex justify-center md:justify-start gap-4">
                       <Link to="/academy" className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-amber-900/20 transform hover:-translate-y-1 transition-all">
-                          <BookOpen size={20} /> Online Akademi Paneli
+                          <BookOpen size={20} /> Akademiye Giriş
                       </Link>
                   </div>
               )}
@@ -742,191 +767,273 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-20">
-          <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                   <div className="bg-teal-50 p-3 rounded-full text-teal-600 border border-teal-100"><CheckCircle size={24} /></div>
-                   <p className="text-slate-800 font-bold text-lg">Takımınız başarıyla oluşturulmuştur.</p>
+          
+          {/* --- SUCCESS NOTIFICATION --- */}
+          <div className="bg-gradient-to-r from-slate-900 to-slate-800 backdrop-blur rounded-2xl p-8 shadow-2xl shadow-slate-950/50 border border-slate-700 mb-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+              <div className="flex items-start gap-5 relative z-10">
+                   <div className="bg-teal-900/30 p-3 rounded-full text-teal-400 ring-1 ring-teal-500/20"><CheckCircle size={28} /></div>
+                   <div>
+                       <p className="text-white font-bold text-lg leading-tight mb-1">Takım kaydı tamamlandı.</p>
+                       <p className="text-slate-400 text-sm font-medium">Süreç boyunca tüm belgeleri bu panelden yönetebilirsiniz.</p>
+                   </div>
               </div>
-              <div className="flex gap-3">
-                  <CertificateGenerator />
-                  <button onClick={printTeacherGuide} className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 px-6 rounded-xl flex items-center text-sm transition-colors border border-slate-200 shadow-sm">
-                      <FileDown size={18} className="mr-2" /> Görev Rehberi İndir (PDF)
+              <div className="flex gap-3 items-center relative z-10">
+                  {isGalaPhase ? (
+                      <CertificateGenerator />
+                  ) : (
+                      <div className="relative overflow-hidden rounded-xl bg-slate-950 border border-slate-800 p-1 group">
+                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+                          <div className="relative flex items-center gap-4 px-5 py-3 bg-slate-900/80 backdrop-blur-sm rounded-lg cursor-not-allowed">
+                               <div className="bg-slate-800 p-2.5 rounded-full text-slate-500 group-hover:text-amber-500 group-hover:bg-amber-500/10 transition-colors">
+                                   <Lock size={20} />
+                               </div>
+                               <div className="text-left">
+                                   <div className="text-slate-300 font-bold text-sm group-hover:text-amber-400 transition-colors">Katılım Belgesi</div>
+                                   <div className="text-slate-500 text-xs font-medium tracking-wide">22 Mayıs 2026'ya kadar kilitli</div>
+                               </div>
+                          </div>
+                      </div>
+                  )}
+                  <button onClick={printTeacherGuide} className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold py-3 px-6 rounded-xl flex items-center text-sm transition-colors border border-slate-700 h-full">
+                      <FileDown size={18} className="mr-2" /> Rehber (PDF)
                   </button>
               </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-8">
-                   <div className={`bg-white rounded-3xl shadow-lg p-8 border border-gray-100 relative overflow-hidden transition-all duration-300 ${team.isPreliminaryStageComplete ? 'border-l-8 border-l-green-500' : ''}`}>
-                      <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center">
-                          <span className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center mr-4 text-sm font-bold shadow-md">1</span>
-                          Ön Başvuru & Belgeler
-                      </h2>
-                      <div className="space-y-4 pl-0 sm:pl-14">
-                          {team.students.map((student) => (
-                              <div key={student.id} className="bg-gray-50 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 border border-gray-100">
-                                  <div className="flex items-center gap-4 w-full sm:w-auto">
-                                      <div className="w-12 h-12 rounded-full bg-white text-slate-700 flex items-center justify-center font-bold text-lg shadow-sm border border-gray-100">{student.firstName[0]}</div>
-                                      <div>
-                                          <p className="font-bold text-slate-900 text-base">{student.firstName} {student.lastName}</p>
-                                          <p className="text-xs text-slate-500">Öğrenci</p>
-                                      </div>
-                                  </div>
-                                  <div className="flex gap-3 w-full sm:w-auto">
-                                      <div className="flex flex-col gap-1 w-full">
-                                          {!student.hasParentalConsent ? (
-                                              <>
-                                                <button 
-                                                    onClick={() => generateAndDownloadDoc('parent', student)}
-                                                    className="w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors border border-slate-200 flex items-center justify-center"
-                                                >
-                                                    <FileDown size={12} className="mr-1"/> Veli İzni İndir
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleUploadClick('parent', student)}
-                                                    className="w-full px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-colors border border-blue-200 flex items-center justify-center"
-                                                >
-                                                    <Upload size={12} className="mr-1"/> Yükle
-                                                </button>
-                                              </>
-                                          ) : (
-                                              <div className="flex items-center justify-center h-full bg-green-50 text-green-700 rounded-lg border border-green-200 font-bold text-xs p-2">
-                                                  <CheckCircle size={14} className="mr-2"/> Veli İzni Tamam
-                                              </div>
-                                          )}
-                                      </div>
-
-                                      <div className="flex flex-col gap-1 w-full">
-                                          {!student.hasKvkkConsent ? (
-                                              <>
-                                                <button 
-                                                    onClick={() => generateAndDownloadDoc('kvkk', student)}
-                                                    className="w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors border border-slate-200 flex items-center justify-center"
-                                                >
-                                                    <FileDown size={12} className="mr-1"/> KVKK İndir
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleUploadClick('kvkk', student)}
-                                                    className="w-full px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-colors border border-blue-200 flex items-center justify-center"
-                                                >
-                                                    <Upload size={12} className="mr-1"/> Yükle
-                                                </button>
-                                              </>
-                                          ) : (
-                                              <div className="flex items-center justify-center h-full bg-green-50 text-green-700 rounded-lg border border-green-200 font-bold text-xs p-2">
-                                                  <CheckCircle size={14} className="mr-2"/> KVKK Tamam
-                                              </div>
-                                          )}
-                                      </div>
-                                  </div>
-                              </div>
-                          ))}
-                      </div>
-                  </div>
-
-                  <div className={`bg-white rounded-3xl shadow-lg p-8 border border-gray-100 transition-all duration-300 ${!team.isPreliminaryStageComplete ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-                      <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center justify-between">
-                          <div className="flex items-center">
-                              <span className="w-10 h-10 rounded-full bg-rose-100 text-rose-900 flex items-center justify-center mr-4 text-sm font-bold shadow-md">2</span>
-                              {isRevisePhase && isFinalist ? "Final Kurgu (Revize) Teslimi" : "Video Teslimi"}
+                   
+                   {/* --- STAGE 1 CARD --- */}
+                   <div className={`bg-slate-900/50 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-950/20 p-8 md:p-10 border border-slate-800 relative overflow-hidden transition-all duration-300 ${team.isPreliminaryStageComplete ? 'border-l-[6px] border-l-emerald-500' : ''}`}>
+                      <h2 className="text-2xl font-black text-white mb-8 flex items-center gap-5">
+                          <div className="w-12 h-12 rounded-full bg-slate-800 text-white flex items-center justify-center text-lg font-bold shadow-xl shadow-slate-950/50 border border-slate-700">1</div>
+                          <div>
+                              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Aşama 1</span>
+                              Ön Başvuru & Belgeler
                           </div>
                       </h2>
                       
-                      {!team.isPreliminaryStageComplete ? (
-                          <div className="bg-amber-50 text-amber-800 p-4 rounded-xl text-sm mb-6 flex items-center font-medium ml-14 border border-amber-100">
-                              <AlertCircle size={18} className="mr-3 flex-shrink-0"/>
-                              Video yüklemesi yapabilmek için önce 1. Aşamada tüm belgeleri tamamlamanız gerekmektedir.
+                      <div className="pl-0 md:pl-[4.25rem]">
+                          <div className="space-y-4">
+                              {team.students.map((student) => (
+                                  <div key={student.id} className="flex flex-col xl:flex-row bg-slate-800/40 rounded-xl border border-slate-700/50 p-5 gap-6 hover:border-slate-600 transition-colors">
+                                      {/* Student Info */}
+                                      <div className="flex items-center gap-4 min-w-[200px]">
+                                          <div className="w-10 h-10 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center font-black text-sm border border-slate-600">
+                                              {student.firstName[0]}
+                                          </div>
+                                          <div>
+                                              <p className="font-bold text-white text-sm leading-tight">{student.firstName} {student.lastName}</p>
+                                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{student.grade} • Öğrenci</span>
+                                          </div>
+                                      </div>
+                                      
+                                      {/* Document Actions Grid - Vertically Stacked within Cells */}
+                                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                          
+                                          {/* Veli İzni Group */}
+                                          <div className="bg-slate-950/30 rounded-xl p-4 border border-slate-800/50 flex flex-col justify-between h-full">
+                                              <div className="mb-3">
+                                                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Adım 1</span>
+                                                  <span className="text-sm font-bold text-slate-300 block">Veli İzin Belgesi</span>
+                                              </div>
+                                              
+                                              {!student.hasParentalConsent ? (
+                                                  <div className="flex flex-col gap-3">
+                                                      <button 
+                                                          onClick={() => handleDownloadProcess('parent', student)}
+                                                          className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 px-4 rounded-lg border border-slate-700 transition-all flex items-center justify-between group"
+                                                      >
+                                                          <span className="flex items-center gap-2"><FileDown size={14} className="text-amber-500"/> Belgeyi İndir</span>
+                                                          <span className="text-[9px] bg-slate-900 px-2 py-0.5 rounded text-slate-500 group-hover:text-slate-300 transition-colors">İmzalanacak</span>
+                                                      </button>
+                                                      
+                                                      <button 
+                                                          onClick={() => handleUploadClick('parent', student)}
+                                                          disabled={!downloadedDocs.has(`${student.id}-parent`)}
+                                                          className={`w-full py-3 px-4 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                                                              downloadedDocs.has(`${student.id}-parent`)
+                                                              ? 'bg-rose-600 hover:bg-rose-500 text-white border-rose-500 hover:border-rose-400 shadow-lg shadow-rose-900/20 cursor-pointer transform hover:-translate-y-0.5'
+                                                              : 'bg-slate-900 text-slate-600 border-slate-800 cursor-not-allowed opacity-50'
+                                                          }`}
+                                                      >
+                                                          <Upload size={14}/> 2. İmzalı Yükle
+                                                      </button>
+                                                  </div>
+                                              ) : (
+                                                  <div className="flex flex-col items-center justify-center h-full min-h-[80px] bg-emerald-900/10 rounded-lg border border-emerald-500/20">
+                                                      <CheckCircle2 size={24} className="text-emerald-500 mb-2"/>
+                                                      <span className="text-emerald-400 font-bold text-xs">Tamamlandı</span>
+                                                  </div>
+                                              )}
+                                          </div>
+
+                                          {/* KVKK Group */}
+                                          <div className="bg-slate-950/30 rounded-xl p-4 border border-slate-800/50 flex flex-col justify-between h-full">
+                                              <div className="mb-3">
+                                                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Adım 2</span>
+                                                  <span className="text-sm font-bold text-slate-300 block">Açık Rıza Metni</span>
+                                              </div>
+
+                                              {!student.hasKvkkConsent ? (
+                                                  <div className="flex flex-col gap-3">
+                                                      <button 
+                                                          onClick={() => handleDownloadProcess('kvkk', student)}
+                                                          className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 px-4 rounded-lg border border-slate-700 transition-all flex items-center justify-between group"
+                                                      >
+                                                          <span className="flex items-center gap-2"><FileDown size={14} className="text-amber-500"/> Belgeyi İndir</span>
+                                                          <span className="text-[9px] bg-slate-900 px-2 py-0.5 rounded text-slate-500 group-hover:text-slate-300 transition-colors">İmzalanacak</span>
+                                                      </button>
+                                                      
+                                                      <button 
+                                                          onClick={() => handleUploadClick('kvkk', student)}
+                                                          disabled={!downloadedDocs.has(`${student.id}-kvkk`)}
+                                                          className={`w-full py-3 px-4 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-2 ${
+                                                              downloadedDocs.has(`${student.id}-kvkk`)
+                                                              ? 'bg-rose-600 hover:bg-rose-500 text-white border-rose-500 hover:border-rose-400 shadow-lg shadow-rose-900/20 cursor-pointer transform hover:-translate-y-0.5'
+                                                              : 'bg-slate-900 text-slate-600 border-slate-800 cursor-not-allowed opacity-50'
+                                                          }`}
+                                                      >
+                                                          <Upload size={14}/> 2. İmzalı Yükle
+                                                      </button>
+                                                  </div>
+                                              ) : (
+                                                  <div className="flex flex-col items-center justify-center h-full min-h-[80px] bg-emerald-900/10 rounded-lg border border-emerald-500/20">
+                                                      <CheckCircle2 size={24} className="text-emerald-500 mb-2"/>
+                                                      <span className="text-emerald-400 font-bold text-xs">Tamamlandı</span>
+                                                  </div>
+                                              )}
+                                          </div>
+
+                                      </div>
+                                  </div>
+                              ))}
                           </div>
-                      ) : (
-                         <>
-                            {isBeforeUploadPhase && !isVideoSystemEnabled && (
-                                <div className="ml-0 sm:ml-14 bg-white border border-gray-200 text-slate-800 rounded-2xl p-8 relative overflow-hidden group shadow-lg">
-                                     <div className="relative z-10 text-center">
-                                         <h3 className="text-2xl font-black text-slate-900 mb-2">Motor! Şimdi Sahne Sizin.</h3>
-                                         <p className="text-slate-500 mb-6 text-lg font-light max-w-lg mx-auto">
-                                             Yükleme ekranı <span className="text-amber-600 font-bold border-b border-amber-200">{VIDEO_UPLOAD_START_DATE.toLocaleDateString('tr-TR')}</span> tarihinde açılacaktır.
+                      </div>
+                  </div>
+
+                  {/* --- STAGE 2 CARD --- */}
+                  <div className={`bg-slate-900/50 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-950/20 p-8 md:p-10 border border-slate-800 transition-all duration-300 relative overflow-hidden ${!team.isPreliminaryStageComplete ? 'grayscale opacity-75' : ''}`}>
+                      <h2 className="text-2xl font-black text-white mb-8 flex items-center justify-between">
+                          <div className="flex items-center gap-5">
+                              <span className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shadow-lg border border-slate-700 ${!team.isPreliminaryStageComplete ? 'bg-slate-800 text-slate-500' : 'bg-rose-600 text-white shadow-rose-900/50 border-rose-500'}`}>2</span>
+                              <div>
+                                  <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Aşama 2</span>
+                                  {isRevisePhase && isFinalist ? "Final Kurgu (Revize)" : "Video Teslimi"}
+                              </div>
+                          </div>
+                          {!team.isPreliminaryStageComplete && <Lock className="text-slate-600" size={24}/>}
+                      </h2>
+                      
+                      <div className="pl-0 md:pl-[4.25rem]">
+                          {!team.isPreliminaryStageComplete ? (
+                              <div className="bg-slate-950/50 p-6 rounded-xl border border-slate-800 text-center">
+                                  <p className="text-slate-400 font-medium text-sm leading-relaxed mb-2">
+                                      Bu aşama kilitlidir.
+                                  </p>
+                                  <p className="text-slate-600 text-xs">
+                                      Video yükleme ekranına erişmek için lütfen 1. aşamadaki tüm belgeleri tamamlayınız.
+                                  </p>
+                              </div>
+                          ) : (
+                             <>
+                                {isBeforeUploadPhase && !isVideoSystemEnabled && (
+                                    <div className="bg-slate-900 border-2 border-dashed border-slate-700 rounded-2xl p-8 text-center">
+                                         <h3 className="text-xl font-bold text-white mb-2">Motor! Sahne Sizin.</h3>
+                                         <p className="text-slate-400 text-sm mb-6">
+                                             Sistem <span className="text-white font-bold">{VIDEO_UPLOAD_START_DATE.toLocaleDateString('tr-TR')}</span> tarihinde açılacaktır.
                                          </p>
-                                         <div className="mt-8 pt-6 border-t border-gray-100">
-                                            <p className="text-amber-600 font-serif italic text-lg leading-relaxed">"Ey iman edenler! Sabır ve namazla yardım dileyin. Şüphesiz Allah sabredenlerin yanındadır."</p>
-                                            <div className="flex items-center justify-center gap-2 mt-3 text-amber-600/60 text-xs font-bold uppercase tracking-widest"><BookOpen size={14} /> Bakara: 153</div>
+                                         <div className="inline-block bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
+                                            <p className="text-slate-400 font-serif italic text-sm">"Ey iman edenler! Sabır ve namazla yardım dileyin..." <span className="text-xs not-italic font-bold text-slate-500 ml-2 uppercase">Bakara: 153</span></p>
                                         </div>
+                                    </div>
+                                )}
+
+                                {isAfterFirstDeadline && !isRevisePhase && team.videoStatus !== 'UPLOADED' && team.videoStatus !== 'SUBMITTED_LINK' && (
+                                     <div className="bg-red-900/20 border border-red-900/50 text-red-400 p-8 rounded-2xl text-center">
+                                          <Clock size={40} className="mx-auto mb-3 text-red-500"/>
+                                          <h3 className="text-xl font-bold mb-2">Süre Doldu</h3>
+                                          <p className="text-sm">Video yükleme süresi sona ermiştir.</p>
                                      </div>
-                                </div>
-                            )}
+                                )}
 
-                            {isAfterFirstDeadline && !isRevisePhase && team.videoStatus !== 'UPLOADED' && team.videoStatus !== 'SUBMITTED_LINK' && (
-                                 <div className="ml-0 sm:ml-14 bg-red-50 border border-red-100 text-red-800 p-8 rounded-2xl text-center">
-                                      <Clock size={40} className="mx-auto mb-3 text-red-400"/>
-                                      <h3 className="text-xl font-bold mb-2">Süre Doldu</h3>
-                                      <p className="text-sm">Video yükleme süresi sona ermiştir.</p>
-                                 </div>
-                            )}
-
-                            {((isVideoUploadPhase) || (isRevisePhase && isFinalist) || (team.videoStatus === 'UPLOADED' || team.videoStatus === 'SUBMITTED_LINK')) && (
-                                <div 
-                                    className={`ml-0 sm:ml-14 border-2 border-dashed rounded-2xl p-10 text-center transition-all group relative ${isGalaPhase ? 'border-gray-200 bg-gray-50 opacity-80 pointer-events-none' : 'border-gray-300 bg-white'}`} 
-                                >
-                                    {team.videoStatus === 'UPLOADED' ? (
-                                        <div className="py-2">
-                                            {youtubeEmbedUrl ? (
-                                                <div className="mb-4 rounded-xl overflow-hidden shadow-lg">
-                                                     <iframe 
-                                                        src={youtubeEmbedUrl} 
-                                                        className="w-full aspect-video" 
-                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                                        allowFullScreen
-                                                     ></iframe>
-                                                </div>
-                                            ) : (
-                                                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><CheckCircle size={40} /></div>
-                                            )}
-                                            <h3 className="text-xl font-bold text-gray-900">{isRevisePhase && isFinalist ? "Revize Video Yüklendi" : "Video Başarıyla Yüklendi"}</h3>
-                                            {youtubeEmbedUrl && <p className="text-sm text-green-600 mt-2 font-medium">Yayınlandı</p>}
-                                        </div>
-                                    ) : team.videoStatus === 'SUBMITTED_LINK' ? (
-                                        <div className="py-2">
-                                             <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"><Clock size={40} /></div>
-                                             <h3 className="text-xl font-bold text-gray-900">İnceleniyor...</h3>
-                                             <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto">
-                                                 Video linkiniz alındı. Teknik ekibimiz dosyayı kontrol edip sisteme yükleyecektir.
-                                             </p>
-                                             <div className="mt-4 bg-slate-100 p-2 rounded text-xs text-slate-500 truncate max-w-xs mx-auto border border-gray-200">
-                                                 {team.submissionDownloadUrl}
-                                             </div>
-                                        </div>
-                                    ) : (
-                                        (!isAfterFirstDeadline || isRevisePhase) && !isGalaPhase && (
-                                            <div 
-                                                onClick={openLinkModal}
-                                                className="cursor-pointer hover:bg-slate-50 hover:border-blue-500 p-4 -m-4 rounded-2xl transition-all"
-                                            >
-                                                <div className="w-20 h-20 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-md border border-gray-100">
-                                                    <LinkIcon size={36} />
-                                                </div>
-                                                <h3 className="text-xl font-bold text-gray-900">{isRevisePhase ? "Revize Linki Gönder" : "Video Linki Teslim Et"}</h3>
-                                                <p className="text-sm text-slate-500 mt-2">Drive, WeTransfer veya Dropbox linki</p>
+                                {((isVideoUploadPhase) || (isRevisePhase && isFinalist) || (team.videoStatus === 'UPLOADED' || team.videoStatus === 'SUBMITTED_LINK')) && (
+                                    <div 
+                                        className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all group relative ${isGalaPhase ? 'border-slate-800 bg-slate-900 opacity-50 pointer-events-none' : 'border-slate-700 hover:border-blue-500/50 bg-slate-900/50'}`} 
+                                    >
+                                        {team.videoStatus === 'UPLOADED' ? (
+                                            <div className="py-2">
+                                                {youtubeEmbedUrl ? (
+                                                    <div className="mb-6 rounded-xl overflow-hidden shadow-2xl ring-4 ring-slate-800">
+                                                         <iframe 
+                                                            src={youtubeEmbedUrl} 
+                                                            className="w-full aspect-video" 
+                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                            allowFullScreen
+                                                         ></iframe>
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-16 h-16 bg-green-900/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-green-500/20"><CheckCircle size={32} /></div>
+                                                )}
+                                                <h3 className="text-lg font-bold text-white">{isRevisePhase && isFinalist ? "Revize Video Yüklendi" : "Video Başarıyla Yüklendi"}</h3>
+                                                {youtubeEmbedUrl && <p className="text-xs text-green-500 mt-2 font-bold uppercase tracking-wider flex items-center justify-center gap-1"><CheckCircle2 size={12}/> Yayında</p>}
                                             </div>
-                                        )
-                                    )}
-                                </div>
-                            )}
-                         </>
-                      )}
+                                        ) : team.videoStatus === 'SUBMITTED_LINK' ? (
+                                            <div className="py-2">
+                                                 <div className="w-16 h-16 bg-blue-900/20 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-blue-500/20"><Clock size={32} /></div>
+                                                 <h3 className="text-lg font-bold text-white">İnceleniyor</h3>
+                                                 <p className="text-xs text-slate-400 mt-2 max-w-sm mx-auto leading-relaxed">
+                                                     Video linkiniz teknik ekip tarafından kontrol ediliyor. Onaylandığında burada görünecektir.
+                                                 </p>
+                                                 <div className="mt-4 bg-slate-950 px-4 py-2 rounded border border-slate-800 text-xs text-slate-500 font-mono inline-block max-w-full truncate">
+                                                     {team.submissionDownloadUrl}
+                                                 </div>
+                                            </div>
+                                        ) : (
+                                            (!isAfterFirstDeadline || isRevisePhase) && !isGalaPhase && (
+                                                <div 
+                                                    onClick={openLinkModal}
+                                                    className="cursor-pointer p-4 transition-all"
+                                                >
+                                                    <div className="w-20 h-20 bg-slate-800 text-blue-500 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform shadow-xl shadow-blue-900/20 border border-slate-700 group-hover:border-blue-500/50">
+                                                        <LinkIcon size={32} />
+                                                    </div>
+                                                    <h3 className="text-xl font-bold text-white mb-2">{isRevisePhase ? "Revize Linki Gönder" : "Video Linki Teslim Et"}</h3>
+                                                    <p className="text-sm text-slate-400">Google Drive, WeTransfer veya Dropbox</p>
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                )}
+                             </>
+                          )}
+                      </div>
                   </div>
               </div>
 
-              <div className="space-y-6">
-                  <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
-                      <h3 className="font-bold text-gray-900 mb-6 flex items-center"><Clock className="mr-2 text-teal-500" size={20} /> Takvim</h3>
-                      <div className="space-y-6 relative pl-2">
-                          <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-gray-100"></div>
-                          {timelineEvents.map((event, idx) => (
-                                 <div key={idx} className="relative pl-8 flex flex-col">
-                                     <span className={`absolute left-[13px] top-1.5 w-3.5 h-3.5 rounded-full border-2 z-10 ${currentDate >= new Date() ? 'bg-teal-500 border-teal-500' : 'bg-white border-teal-500'}`}></span>
-                                     <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">{event.date}</p>
-                                     <p className={`font-bold text-sm text-gray-800`}>{event.label}</p>
+              <div className="space-y-8">
+                  <div className="bg-slate-900/50 backdrop-blur-sm p-8 rounded-3xl shadow-lg border border-slate-800">
+                      <h3 className="font-bold text-white mb-8 flex items-center text-lg"><Clock className="mr-3 text-slate-500" size={24} /> Takvim</h3>
+                      <div className="space-y-8 relative pl-2">
+                          <div className="absolute left-[7px] top-3 bottom-3 w-px bg-slate-800"></div>
+                          {timelineEvents.map((event, idx) => {
+                               const isActive = (() => {
+                                   if (currentDate < new Date('2026-01-20')) return idx === 0;
+                                   if (currentDate < new Date('2026-02-13')) return idx === 1;
+                                   if (currentDate < new Date('2026-03-20')) return idx === 2;
+                                   if (currentDate < new Date('2026-04-01')) return idx === 3;
+                                   if (currentDate < new Date('2026-05-22')) return idx === 4;
+                                   return idx === 5;
+                               })();
+
+                               return (
+                                 <div key={idx} className="relative pl-8 flex flex-col group">
+                                     <span className={`absolute left-[3px] top-1.5 w-[9px] h-[9px] rounded-full z-10 transition-colors ${isActive ? 'bg-rose-500 shadow-[0_0_0_4px_rgba(244,63,94,0.2)]' : 'bg-slate-700'}`}></span>
+                                     <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${isActive ? 'text-rose-500' : 'text-slate-500'}`}>{event.date}</p>
+                                     <p className={`font-bold text-sm ${isActive ? 'text-white' : 'text-slate-400'}`}>{event.label}</p>
                                  </div>
-                             ))}
+                               )
+                           })}
                       </div>
                   </div>
                   

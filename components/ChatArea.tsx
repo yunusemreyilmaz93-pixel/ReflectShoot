@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, UserCircle, ShieldCheck } from 'lucide-react';
+import { Send, UserCircle, ShieldCheck, MessageSquare } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { ChatMessage, UserRole } from '../types';
 import { collection, query, orderBy, onSnapshot, getFirestore } from 'firebase/firestore';
@@ -43,36 +43,47 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ appId, theme = 'dark' }) => 
   // Theme Classes
   const containerClass = theme === 'dark' 
     ? "bg-slate-950 border-slate-800" 
-    : "bg-white border-gray-100 shadow-lg rounded-3xl";
+    : "bg-white border-slate-100 shadow-lg shadow-slate-200/50 rounded-3xl";
   
   const headerClass = theme === 'dark'
     ? "bg-slate-900 border-slate-800 text-white"
-    : "bg-white border-gray-100 text-slate-900 rounded-t-3xl";
+    : "bg-white border-slate-50 text-slate-900 rounded-t-3xl pt-6 px-6 pb-4";
 
-  const messageBgMe = "bg-rose-600 text-white";
+  const messageBgMe = "bg-rose-600 text-white shadow-md shadow-rose-900/20";
   const messageBgAdmin = theme === 'dark'
     ? "bg-slate-800 text-white border border-rose-500/30"
-    : "bg-white text-slate-800 border border-rose-200 shadow-sm";
+    : "bg-white text-slate-800 border border-rose-100 shadow-sm ring-1 ring-rose-50";
   const messageBgOther = theme === 'dark'
     ? "bg-slate-800 text-slate-200"
-    : "bg-gray-100 text-slate-700";
+    : "bg-slate-50 text-slate-600 border border-slate-100";
 
   const inputClass = theme === 'dark'
-    ? "bg-slate-950 border-slate-800 text-white focus:border-rose-500"
-    : "bg-gray-50 border-gray-200 text-slate-900 focus:border-rose-500 focus:bg-white";
+    ? "bg-slate-900 border-slate-800 text-white focus:border-rose-500 placeholder-slate-600"
+    : "bg-slate-50 border-slate-200 text-slate-900 focus:border-rose-500 focus:bg-white focus:ring-4 focus:ring-rose-500/10 placeholder-slate-400";
 
   return (
-    <div className={`flex flex-col h-[400px] border overflow-hidden ${containerClass}`}>
-        <div className={`p-4 border-b flex items-center justify-between ${headerClass}`}>
-            <h3 className="text-sm font-black flex items-center gap-2">
-                <ShieldCheck size={16} className="text-teal-500"/> Yönetim ile Mesajlaşma
-            </h3>
+    <div className={`flex flex-col h-[500px] border overflow-hidden ${containerClass}`}>
+        <div className={`flex items-center justify-between border-b ${headerClass}`}>
+            <div>
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                    Yönetim ile İletişim
+                </h3>
+                <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>Organizasyon ekibine doğrudan soru sorabilirsiniz.</p>
+            </div>
+            <div className={`p-2 rounded-full ${theme === 'dark' ? 'bg-slate-800 text-slate-400' : 'bg-slate-50 text-slate-400'}`}>
+                <MessageSquare size={20} />
+            </div>
         </div>
         
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-opacity-50">
             {messages.length === 0 && (
-                <div className={`text-center text-xs py-10 italic ${theme === 'dark' ? 'text-slate-600' : 'text-gray-400'}`}>
-                    Henüz mesaj yok. Bir soru sorabilirsiniz.
+                <div className="h-full flex flex-col items-center justify-center text-center px-6">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${theme === 'dark' ? 'bg-slate-900 text-slate-700' : 'bg-slate-50 text-slate-300'}`}>
+                        <ShieldCheck size={32} />
+                    </div>
+                    <p className={`text-sm font-medium ${theme === 'dark' ? 'text-slate-500' : 'text-slate-500'}`}>
+                        Merak ettiklerinizi buradan sorabilirsiniz.<br/>Ekibimiz en kısa sürede yanıtlayacaktır.
+                    </p>
                 </div>
             )}
             {messages.map(msg => {
@@ -83,13 +94,15 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ appId, theme = 'dark' }) => 
 
                 return (
                     <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[85%] rounded-2xl p-3 text-sm shadow-sm ${bubbleClass} ${isMe ? 'rounded-br-none' : 'rounded-bl-none'}`}>
-                            <div className="flex items-center gap-2 mb-1 opacity-70 text-[10px] font-bold uppercase">
-                                {isAdmin && <ShieldCheck size={10} />}
-                                {msg.senderName}
-                            </div>
-                            <p className="leading-relaxed">{msg.text}</p>
-                            <span className="text-[9px] opacity-50 block text-right mt-1">
+                        <div className={`max-w-[85%] rounded-2xl p-4 text-sm leading-relaxed ${bubbleClass} ${isMe ? 'rounded-br-none' : 'rounded-bl-none'}`}>
+                            {!isMe && (
+                                <div className="flex items-center gap-2 mb-1.5 opacity-80 text-[10px] font-bold uppercase tracking-wider">
+                                    {isAdmin && <ShieldCheck size={12} className="text-rose-500" />}
+                                    {msg.senderName}
+                                </div>
+                            )}
+                            <p>{msg.text}</p>
+                            <span className={`text-[9px] block text-right mt-2 font-medium ${isMe ? 'text-white/60' : 'text-slate-400'}`}>
                                 {new Date(msg.createdAt).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}
                             </span>
                         </div>
@@ -98,15 +111,15 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ appId, theme = 'dark' }) => 
             })}
         </div>
 
-        <form onSubmit={handleSend} className={`p-3 border-t flex gap-2 ${headerClass} ${theme === 'light' ? 'rounded-b-3xl' : ''}`}>
+        <form onSubmit={handleSend} className={`p-4 border-t flex gap-3 ${theme === 'dark' ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-100 rounded-b-3xl'}`}>
             <input 
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Mesajınızı yazın..." 
-                className={`flex-1 border rounded-xl px-4 py-3 text-sm outline-none transition-all ${inputClass}`}
+                className={`flex-1 border rounded-xl px-5 py-4 text-sm outline-none transition-all shadow-sm ${inputClass}`}
             />
-            <button type="submit" className="bg-rose-600 hover:bg-rose-500 text-white p-3 rounded-xl transition-colors shadow-md">
-                <Send size={18} />
+            <button type="submit" className="bg-rose-600 hover:bg-rose-500 text-white p-4 rounded-xl transition-all shadow-lg shadow-rose-600/20 transform hover:-translate-y-0.5 active:translate-y-0">
+                <Send size={20} />
             </button>
         </form>
     </div>

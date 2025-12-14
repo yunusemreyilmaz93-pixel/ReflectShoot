@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Award } from 'lucide-react';
+import { Award, Sparkles } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 export const CertificateGenerator: React.FC = () => {
@@ -378,9 +378,16 @@ export const CertificateGenerator: React.FC = () => {
   return (
     <button 
       onClick={printCertificate}
-      className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 font-bold py-3 px-6 rounded-xl shadow-lg flex items-center gap-2 transform hover:-translate-y-1 transition-all"
+      className="group relative flex items-center gap-4 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-900 px-6 py-3 rounded-xl font-black shadow-lg shadow-amber-500/20 transition-all transform hover:-translate-y-1"
     >
-      <Award size={20} /> Katılım Belgesi (PDF)
+      <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm border border-white/20">
+          <Award size={20} className="text-slate-900"/>
+      </div>
+      <div className="text-left leading-tight">
+          <div className="text-[9px] font-bold uppercase tracking-wider opacity-80">Hazır</div>
+          <div className="text-sm font-black">Belgeyi İndir</div>
+      </div>
+      <Sparkles className="absolute top-2 right-2 text-white/60 animate-pulse" size={14}/>
     </button>
   );
 };
