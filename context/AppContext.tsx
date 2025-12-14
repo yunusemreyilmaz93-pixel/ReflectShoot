@@ -13,7 +13,6 @@ import {
     where, 
     onSnapshot, 
     addDoc, 
-    serverTimestamp, 
     deleteDoc, 
     writeBatch, 
     orderBy, 
@@ -40,15 +39,10 @@ import {
     EvaluationCriteria,
     ScoreDocument,
     Team,
-    TeacherProfile,
-    Category,
-    Theme
 } from '../types';
 
-// Asset Base URL (Should match public bucket domain)
 export const PUBLIC_ASSETS_BASE_URL = "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev";
 
-// Default FAQs
 const DEFAULT_CMS_FAQS: CMSFaqItem[] = [
     {
         id: 'faq1',
@@ -83,7 +77,6 @@ interface AppContextType {
     currentDate: Date;
     toasts: ToastMessage[];
     
-    // Auth
     login: (email: string, pass: string) => Promise<void>;
     logout: () => Promise<void>;
     registerTeacher: (data: any) => Promise<void>;
@@ -91,7 +84,6 @@ interface AppContextType {
     resetPassword: (email: string) => Promise<void>;
     updateUserRole: (uid: string, role: UserRole) => Promise<void>;
 
-    // CMS
     updateCMSGeneral: (data: CMSGeneral) => Promise<void>;
     updateCMSLinks: (data: CMSLinks) => Promise<void>;
     updateCMSPrize: (data: CMSPrize) => Promise<void>;
@@ -107,18 +99,15 @@ interface AppContextType {
     updateCMSTimelineItem: (id: string, data: Partial<CMSTimelineItem>) => Promise<void>;
     deleteCMSTimelineItem: (id: string) => Promise<void>;
 
-    // Application
     createApplication: (data: any) => Promise<void>;
     updateApplication: (app: Application) => Promise<void>;
     bulkUpdateApplications: (ids: string[], status: ApplicationStatus) => Promise<void>;
     
-    // Jury & Scoring
     assignJury: (appId: string, juryIds: string[]) => Promise<void>;
     bulkAssignJury: (assignments: {appId: string, juryIds: string[]}[]) => Promise<void>;
     submitScore: (appId: string, criteria: EvaluationCriteria, notes: string) => Promise<void>;
     fetchJuryScores: (appId: string) => Promise<ScoreDocument[]>;
 
-    // Other
     sendMessage: (appId: string, text: string) => Promise<void>;
     sendContactMessage: (data: any) => Promise<void>;
     markContactMessageAsRead: (id: string) => Promise<void>;
@@ -127,7 +116,6 @@ interface AppContextType {
     submitPublicVote: (appId: string, fingerprint: string) => Promise<void>;
     getSignedUrl: (key: string) => Promise<string>;
     
-    // System
     updateSystemSettings: (settings: SystemSettings) => Promise<void>;
     logAction: (action: string, details: string, targetId?: string) => Promise<void>;
     showToast: (message: string, type: 'success' | 'error' | 'info') => void;
@@ -172,13 +160,17 @@ const DEFAULT_CMS_LINKS: CMSLinks = {
     posterUrl: '#'
 };
 
-// Helper: Hydrate Logo URL from Key
 const hydrateApplication = (data: any, id: string): Application => {
     const app = { id, ...data } as Application;
     if (app.team.logoKey) {
         app.team.logoUrl = `${PUBLIC_ASSETS_BASE_URL}/${app.team.logoKey}`;
     }
     return app;
+};
+
+// Helper to remove undefined fields recursively
+const sanitizeData = (data: any) => {
+    return JSON.parse(JSON.stringify(data));
 };
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -287,7 +279,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (!currentUser) return;
         let unsubs: (() => void)[] = [];
         
-        // Removed orderBy to fix potential index error, sorting in client
         const notifQ = query(collection(db, "notifications"), where("userId", "==", currentUser.uid));
         unsubs.push(onSnapshot(notifQ, (snap) => {
             const list = snap.docs.map(d => ({id: d.id, ...d.data()} as Notification));
@@ -422,9 +413,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const createApplication = async (data: any) => {
-        if(!currentUser) return;
+        if(!auth.currentUser) return;
         
-        // Use ID provided by dashboard (for public upload sync) or generate new one
         const generatedId = data.id || Math.random().toString(36).substring(7);
 
         const team: Team = {
@@ -432,7 +422,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             name: data.teamName,
             category: data.category,
             theme: data.theme,
-            selectedVerse: data.selectedVerse || null, // FIX: Avoid undefined, use null
+            selectedVerse: data.selectedVerse, // Will be sanitized if undefined
             students: data.students.map((s: any) => ({
                 id: Math.random().toString(36).substring(7),
                 ...s,
@@ -442,41 +432,39 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             isPreliminaryStageComplete: false,
             isFinalStageComplete: false,
             videoStatus: 'PENDING',
-            logoKey: data.logoKey || null, // FIX: Avoid undefined, use null
-            // If logoKey exists, logoUrl will be generated on fetch.
-            // If legacy logoUrl exists, it will be used as fallback.
+            logoKey: data.logoKey, // Will be sanitized if undefined
             logoUrl: data.logoUrl || (data.logoKey ? `${PUBLIC_ASSETS_BASE_URL}/${data.logoKey}` : 'https://via.placeholder.com/128')
         };
         const app: Application = {
             id: generatedId,
             teacher: {
-                id: currentUser.uid,
-                fullName: currentUser.fullName,
-                school: currentUser.school || '',
-                city: currentUser.city || '',
-                email: currentUser.email,
-                phone: currentUser.phone || ''
+                id: auth.currentUser.uid,
+                fullName: currentUser?.fullName || '',
+                school: currentUser?.school || '',
+                city: currentUser?.city || '',
+                email: auth.currentUser.email || '',
+                phone: currentUser?.phone || ''
             },
             team,
             status: ApplicationStatus.DRAFT,
             submittedAt: new Date().toISOString()
         };
         
-        await setDoc(doc(db, "applications", app.id), app);
+        const safeData = sanitizeData(app);
+        await setDoc(doc(db, "applications", app.id), safeData);
         setCurrentApplication(app);
         showToast('Takım oluşturuldu.', 'success');
     };
 
     const updateApplication = async (app: Application) => {
-        // We only save raw data to DB, remove hydrated URL if it was added
-        // Sanitize to remove undefined values which Firestore hates.
-        // JSON.stringify strips undefined keys, which is compatible with setDoc.
-        const dataToSave = JSON.parse(JSON.stringify(app));
+        if (!auth.currentUser) throw new Error("Oturum açık değil.");
         
-        await setDoc(doc(db, "applications", app.id), dataToSave);
+        const safeData = sanitizeData(app);
         
-        // Re-hydrate for local state
-        const hydrated = hydrateApplication(dataToSave, app.id);
+        // Use merge: true to avoid overwriting unrelated fields if any
+        await setDoc(doc(db, "applications", app.id), safeData, { merge: true });
+        
+        const hydrated = hydrateApplication(safeData, app.id);
         if(currentApplication?.id === app.id) setCurrentApplication(hydrated);
         
         showToast('Değişiklikler kaydedildi.', 'success');
@@ -509,7 +497,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const submitScore = async (appId: string, criteria: EvaluationCriteria, notes: string) => {
-        if(!currentUser) return;
+        if(!auth.currentUser || !currentUser) return;
         const total = criteria.story + criteria.technical + criteria.originality + criteria.themeFit;
         const scoreDoc: ScoreDocument = {
             juryId: currentUser.uid,
@@ -545,7 +533,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const sendMessage = async (appId: string, text: string) => {
-        if(!currentUser) return;
+        if(!auth.currentUser || !currentUser) return;
         await addDoc(collection(db, "applications", appId, "messages"), {
             senderId: currentUser.uid,
             senderName: currentUser.fullName,
@@ -592,7 +580,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const logAction = async (action: string, details: string, targetId?: string) => {
-        if(!currentUser) return;
+        if(!auth.currentUser || !currentUser) return;
         await addDoc(collection(db, "logs"), {
             action,
             details,
@@ -624,10 +612,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         document.body.removeChild(link);
     };
 
-    // --- New: Get Signed URL for Private Files ---
     const getSignedUrl = async (key: string): Promise<string> => {
         try {
-            // Encode key to handle slashes or special chars safely in URL
             const encodedKey = encodeURIComponent(key);
             const apiResponse = await fetch(`/api/view?key=${encodedKey}`, {
                 method: 'GET',

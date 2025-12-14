@@ -15,7 +15,6 @@ export const Dashboard: React.FC = () => {
   const { currentApplication, updateApplication, createApplication, currentUser, currentDate, systemSettings, showToast, getSignedUrl } = useAppContext();
   const [uploading, setUploading] = useState<string | null>(null);
 
-  // -- Dynamic Dates from System Settings --
   const VIDEO_UPLOAD_START_DATE = new Date(systemSettings.dates.videoUploadStart);
   const VIDEO_UPLOAD_END_DATE = new Date(systemSettings.dates.videoUploadEnd);
   
@@ -41,11 +40,9 @@ export const Dashboard: React.FC = () => {
   const isRevisePhase = isVideoSystemEnabled && (currentDate >= REVISE_UPLOAD_START && currentDate <= REVISE_UPLOAD_END);
   const isGalaPhase = currentDate >= GALA_DATE;
 
-  // Derived Values
   const isFinalist = currentApplication?.team.isFinalist;
   const youtubeEmbedUrl = currentApplication?.team.videoUrl ? getYouTubeEmbedUrl(currentApplication.team.videoUrl) : null;
 
-  // -- Team Creation State --
   const [isCreating, setIsCreating] = useState(false);
   const [teamForm, setTeamForm] = useState({ name: '', category: Category.LIVE_ACTION, theme: Theme.AYET, selectedVerse: '' });
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -53,34 +50,28 @@ export const Dashboard: React.FC = () => {
   const [students, setStudents] = useState<{firstName: string; lastName: string; grade: string}[]>([
       { firstName: '', lastName: '', grade: '' },
       { firstName: '', lastName: '', grade: '' },
-      { firstName: '', lastName: '', grade: '' } // Min 3 start
+      { firstName: '', lastName: '', grade: '' } 
   ]);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  // -- Upload State --
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeContext, setActiveContext] = useState<{type: 'kvkk' | 'parent', studentId: string, docId?: string} | null>(null);
   
-  // New Upload Verification State
   const [verificationModal, setVerificationModal] = useState<{type: 'kvkk' | 'parent', studentId: string, expectedId: string} | null>(null);
   const [inputDocId, setInputDocId] = useState('');
 
-  // -- Link Submission State --
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [submissionLink, setSubmissionLink] = useState('');
   const [isSubmittingLink, setIsSubmittingLink] = useState(false);
 
-  // -- Finalist Reveal Modal State --
   const [showRevealModal, setShowRevealModal] = useState(false);
 
-  // Trigger Reveal Modal on Phase Entry
   useEffect(() => {
     if (isRevealPhase && currentApplication) {
        setShowRevealModal(true);
     }
   }, [isRevealPhase, currentApplication]);
 
-  // Autosave Logic for Team Wizard
   useEffect(() => {
     if (currentUser?.role === UserRole.TEACHER && !currentApplication) {
         const savedForm = localStorage.getItem('teamFormDraft');
@@ -97,8 +88,6 @@ export const Dashboard: React.FC = () => {
     }
   }, [teamForm, students, currentApplication, currentUser]);
 
-  // --- TEACHER & STUDENT DASHBOARD LOGIC START ---
-
   const handleTeamChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setTeamForm({...teamForm, [e.target.name]: e.target.value});
   
   const handleStudentChange = (index: number, field: string, value: string) => {
@@ -111,7 +100,6 @@ export const Dashboard: React.FC = () => {
       if(students.length < 6) setStudents([...students, { firstName: '', lastName: '', grade: '' }]);
   };
 
-  // Helper: Resize Image to 128x128 PNG
   const resizeImageTo128 = (file: File): Promise<File> => {
       return new Promise((resolve, reject) => {
           const img = new Image();
@@ -125,7 +113,6 @@ export const Dashboard: React.FC = () => {
                   reject(new Error("Canvas context failed"));
                   return;
               }
-              // Draw image centered and covering 128x128
               ctx.drawImage(img, 0, 0, 128, 128);
               
               canvas.toBlob((blob) => {
@@ -150,7 +137,6 @@ export const Dashboard: React.FC = () => {
           const file = e.target.files[0];
           
           try {
-              // Automatically resize to 128x128 PNG
               const resizedFile = await resizeImageTo128(file);
               setLogoFile(resizedFile);
               setFormErrors({...formErrors, logo: ''});
@@ -180,16 +166,13 @@ export const Dashboard: React.FC = () => {
           setIsCreating(true);
           
           try {
-              // 1. Generate Team ID locally so we can construct the Logo Key
-              // Format: randomString (similar to what AppContext would do)
               const teamId = Math.random().toString(36).substring(7);
               
-              let logoKey = null;
+              // Define logoKey as string | undefined (not null)
+              let logoKey: string | undefined = undefined;
 
-              // 2. Upload Logo to Public Bucket (if file exists)
               if (logoFile) {
                   try {
-                      // Upload to: teams/{teamId}/logo.png via Signed URL
                       logoKey = await uploadPublicLogo(logoFile, teamId);
                   } catch (uploadError) {
                       console.warn("Logo upload failed, proceeding with default.", uploadError);
@@ -197,14 +180,12 @@ export const Dashboard: React.FC = () => {
                   }
               }
 
-              // 3. Create Application with specific ID and Logo Key
               await createApplication({
-                  id: teamId, // Important: Use the same ID we used for the logo
+                  id: teamId, 
                   teamName: teamForm.name,
                   category: teamForm.category,
                   theme: teamForm.theme,
-                  // Ensure we send null instead of undefined for selectedVerse if not AYET
-                  selectedVerse: teamForm.theme === Theme.AYET ? teamForm.selectedVerse : null,
+                  selectedVerse: teamForm.theme === Theme.AYET ? teamForm.selectedVerse : undefined, // Ensure undefined if empty
                   logoKey: logoKey,
                   students
               });
@@ -221,15 +202,12 @@ export const Dashboard: React.FC = () => {
       }
   };
 
-  // --- PDF GENERATION LOGIC ---
   const generateAndDownloadDoc = async (type: 'kvkk' | 'parent', student: Student) => {
       if(!currentApplication) return;
 
-      // 1. Generate Unique Document ID (NEW FORMAT: RFS-VE-12345 or RFS-AR-12345)
-      const randomCode = Math.floor(10000 + Math.random() * 90000).toString(); // 5 digits
+      const randomCode = Math.floor(10000 + Math.random() * 90000).toString();
       const docId = type === 'kvkk' ? `RFS-AR-${randomCode}` : `RFS-VE-${randomCode}`;
       
-      // 2. Update Application with Expected ID
       const updatedStudents = currentApplication.team.students.map(s => {
           if (s.id === student.id) {
               return {
@@ -243,10 +221,8 @@ export const Dashboard: React.FC = () => {
       const newApp = { ...currentApplication, team: { ...currentApplication.team, students: updatedStudents } };
       await updateApplication(newApp);
 
-      // 3. Generate PDF
       const doc = new jsPDF();
       
-      // Basic styling
       doc.setFont("helvetica", "bold");
       doc.setFontSize(20);
       doc.text(type === 'kvkk' ? "KVKK AYDINLATMA VE RIZA METNI" : "VELI IZIN BELGESI", 105, 30, { align: "center" });
@@ -258,7 +234,6 @@ export const Dashboard: React.FC = () => {
       doc.setFontSize(10);
       doc.text("Bu belge sistem tarafindan otomatik olusturulmustur.", 105, 50, { align: "center" });
 
-      // Student Info Box
       doc.setDrawColor(0);
       doc.setFillColor(245, 245, 245);
       doc.rect(20, 60, 170, 40, "F");
@@ -270,7 +245,6 @@ export const Dashboard: React.FC = () => {
       doc.text(`Okul: ${currentApplication.teacher.school}`, 25, 88);
       doc.text(`Sinif: ${student.grade}`, 25, 96);
 
-      // Body Text
       doc.setFontSize(10);
       const bodyText = type === 'kvkk' 
           ? "Yukarida kimlik bilgileri yer alan ogrencimin, Reflect & Shoot yarismasina katilimi surecinde kisisel verilerinin islenmesine, goruntu ve ses kayitlarinin yarisma tanitimlarinda kullanilmasina 6698 sayili KVKK kapsaminda acik riza gosteriyorum."
@@ -279,32 +253,28 @@ export const Dashboard: React.FC = () => {
       const splitText = doc.splitTextToSize(bodyText, 170);
       doc.text(splitText, 20, 120);
 
-      // Signature Area
       doc.text("Tarih: ...../...../2026", 20, 160);
       doc.text("Veli Ad Soyad: .......................................", 20, 170);
       doc.text("Imza:", 20, 180);
 
-      // SECURITY CODE (Watermark & Footer)
       doc.setTextColor(200);
       doc.setFontSize(60);
-      doc.text(docId, 105, 150, { align: 'center', angle: 45 }); // Watermark
+      doc.text(docId, 105, 150, { align: 'center', angle: 45 });
 
-      doc.setTextColor(0); // Reset color
+      doc.setTextColor(0);
       doc.setFontSize(12);
       doc.setFont("courier", "bold");
       
-      // Top Right Box for ID
       doc.setDrawColor(0);
       doc.rect(140, 10, 50, 15);
       doc.text(`BELGE ID:`, 142, 16);
-      doc.setTextColor(220, 38, 38); // Red
+      doc.setTextColor(220, 38, 38);
       doc.text(docId, 142, 22);
 
       doc.save(`${type}_${student.firstName}_${student.lastName}.pdf`);
       showToast(`${type === 'kvkk' ? 'KVKK' : 'Veli İzin'} belgesi oluşturuldu.`, 'success');
   };
 
-  // --- UPLOAD LOGIC (VERIFICATION) ---
   const handleUploadClick = (type: 'kvkk' | 'parent', student: Student) => {
       const expectedId = type === 'kvkk' ? student.kvkkExpectedId : student.parentalExpectedId;
       
@@ -320,17 +290,14 @@ export const Dashboard: React.FC = () => {
   const verifyAndTriggerUpload = () => {
       if (!verificationModal) return;
       
-      // Construct Full ID from Prefix + Input
       const prefix = verificationModal.type === 'kvkk' ? 'RFS-AR-' : 'RFS-VE-';
       const fullInputId = `${prefix}${inputDocId.trim()}`;
 
-      // Comparison
       if (fullInputId !== verificationModal.expectedId) {
           alert(`HATA: Girdiğiniz kod (${fullInputId}) belge üzerindeki kod ile uyuşmuyor. Lütfen doğru belgeyi yüklediğinizden emin olun.`);
           return;
       }
 
-      // Success: Close modal and open file dialog
       const { type, studentId, expectedId } = verificationModal;
       setVerificationModal(null);
       
@@ -345,6 +312,11 @@ export const Dashboard: React.FC = () => {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && activeContext) {
+        if(!currentApplication || !currentUser) {
+            showToast("Oturum zaman aşımına uğradı veya başvuru verisi eksik.", "error");
+            return;
+        }
+
         const { type, studentId, docId } = activeContext;
         const file = e.target.files[0];
         
@@ -357,15 +329,14 @@ export const Dashboard: React.FC = () => {
         setUploading(uploadKey);
         
         try {
-            // 1. Generate Structured Key
-            if(!currentApplication) throw new Error("Başvuru bulunamadı.");
             const teamId = currentApplication.team.id;
             const customKey = `teams/${teamId}/students/${studentId}/docs/${docId || Date.now()}.pdf`;
 
-            // 2. Upload to R2 (Private Bucket) with Custom Key
-            const fileUrl = await uploadFileToR2(file, customKey);
+            // Returns the key (string)
+            const fileKey = await uploadFileToR2(file, customKey);
 
-            // 3. Update Application State
+            if (!fileKey) throw new Error("Yükleme anahtarı alınamadı.");
+
             let updatedApp = { ...currentApplication };
             
             if (studentId) {
@@ -375,8 +346,8 @@ export const Dashboard: React.FC = () => {
                             ...s,
                             hasKvkkConsent: type === 'kvkk' ? true : s.hasKvkkConsent,
                             hasParentalConsent: type === 'parent' ? true : s.hasParentalConsent,
-                            kvkkConsentUrl: type === 'kvkk' ? fileUrl : s.kvkkConsentUrl,
-                            parentalConsentUrl: type === 'parent' ? fileUrl : s.parentalConsentUrl,
+                            kvkkConsentUrl: type === 'kvkk' ? fileKey : s.kvkkConsentUrl, // Use fileKey
+                            parentalConsentUrl: type === 'parent' ? fileKey : s.parentalConsentUrl, // Use fileKey
                         };
                     }
                     return s;
@@ -455,7 +426,6 @@ export const Dashboard: React.FC = () => {
   };
 
   const printTeacherGuide = () => {
-      // Mock functionality or implement actual PDF download
       const doc = new jsPDF();
       doc.setFontSize(16);
       doc.text("Danışman Öğretmen Rehberi", 10, 10);
@@ -609,7 +579,6 @@ export const Dashboard: React.FC = () => {
     <div className="bg-gray-50 min-h-screen pb-12">
       <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="application/pdf" />
 
-      {/* VERIFICATION MODAL */}
       {verificationModal && (
           <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
               <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl relative">
@@ -632,7 +601,6 @@ export const Dashboard: React.FC = () => {
                       </p>
                   </div>
 
-                  {/* SPLIT INPUT DISPLAY */}
                   <div className="flex items-stretch justify-center mb-6 shadow-sm">
                         <div className="bg-slate-200 border-y-2 border-l-2 border-slate-300 rounded-l-xl px-4 flex items-center justify-center font-mono font-bold text-slate-600 text-lg select-none">
                             {verificationModal.type === 'kvkk' ? 'RFS-AR-' : 'RFS-VE-'}
@@ -640,7 +608,6 @@ export const Dashboard: React.FC = () => {
                         <input 
                             value={inputDocId}
                             onChange={(e) => {
-                                // Sadece rakam girilmesine izin ver
                                 const val = e.target.value.replace(/[^0-9]/g, '');
                                 if(val.length <= 5) setInputDocId(val);
                             }}
@@ -660,7 +627,6 @@ export const Dashboard: React.FC = () => {
           </div>
       )}
 
-      {/* REVEAL MODAL */}
       {showRevealModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl animate-fadeIn">
                <div className={`relative w-full max-w-3xl bg-white rounded-3xl p-10 md:p-14 text-center shadow-2xl overflow-hidden border-8 ${isFinalist ? 'border-amber-400' : 'border-slate-200'}`}>
@@ -696,12 +662,11 @@ export const Dashboard: React.FC = () => {
           </div>
       )}
       
-      {/* LINK SUBMISSION MODAL */}
       {showLinkModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
               <div className="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl relative">
                    <button onClick={() => setShowLinkModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-                       <ExternalLink size={20} className="rotate-180"/> {/* Close Icon */}
+                       <ExternalLink size={20} className="rotate-180"/>
                    </button>
                    <div className="text-center mb-6">
                        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -742,7 +707,6 @@ export const Dashboard: React.FC = () => {
           </div>
       )}
 
-      {/* Header Banner */}
       <div className="bg-slate-900 text-white pb-32 pt-16 relative overflow-hidden">
           <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }}></div>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -809,7 +773,6 @@ export const Dashboard: React.FC = () => {
                                       </div>
                                   </div>
                                   <div className="flex gap-3 w-full sm:w-auto">
-                                      {/* PARENT CONSENT BUTTONS */}
                                       <div className="flex flex-col gap-1 w-full">
                                           {!student.hasParentalConsent ? (
                                               <>
@@ -833,7 +796,6 @@ export const Dashboard: React.FC = () => {
                                           )}
                                       </div>
 
-                                      {/* KVKK BUTTONS */}
                                       <div className="flex flex-col gap-1 w-full">
                                           {!student.hasKvkkConsent ? (
                                               <>
@@ -906,7 +868,6 @@ export const Dashboard: React.FC = () => {
                                 >
                                     {team.videoStatus === 'UPLOADED' ? (
                                         <div className="py-2">
-                                            {/* Final YouTube Embed or Uploaded Success */}
                                             {youtubeEmbedUrl ? (
                                                 <div className="mb-4 rounded-xl overflow-hidden shadow-lg">
                                                      <iframe 
@@ -955,14 +916,13 @@ export const Dashboard: React.FC = () => {
               </div>
 
               <div className="space-y-6">
-                  {/* Calendar Widget */}
                   <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100">
                       <h3 className="font-bold text-gray-900 mb-6 flex items-center"><Clock className="mr-2 text-teal-500" size={20} /> Takvim</h3>
                       <div className="space-y-6 relative pl-2">
                           <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-gray-100"></div>
                           {timelineEvents.map((event, idx) => (
                                  <div key={idx} className="relative pl-8 flex flex-col">
-                                     <span className={`absolute left-[13px] top-1.5 w-3.5 h-3.5 rounded-full border-2 z-10 ${currentDate >= new Date() /* Simplified check */ ? 'bg-teal-500 border-teal-500' : 'bg-white border-teal-500'}`}></span>
+                                     <span className={`absolute left-[13px] top-1.5 w-3.5 h-3.5 rounded-full border-2 z-10 ${currentDate >= new Date() ? 'bg-teal-500 border-teal-500' : 'bg-white border-teal-500'}`}></span>
                                      <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">{event.date}</p>
                                      <p className={`font-bold text-sm text-gray-800`}>{event.label}</p>
                                  </div>

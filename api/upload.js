@@ -10,7 +10,6 @@ export default async function handler(req, res) {
   try {
     const { filename, contentType, customKey } = req.body;
 
-    // R2_PRIVATE_BUCKET_NAME kontrol ediliyor
     if (!process.env.R2_ACCOUNT_ID || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !process.env.R2_PRIVATE_BUCKET_NAME) {
       throw new Error('R2 configuration is missing');
     }
@@ -24,22 +23,16 @@ export default async function handler(req, res) {
       },
     });
 
-    // Benzersiz dosya ismi oluştur veya customKey kullan
     const uniqueKey = customKey || `${Date.now()}-${filename.replace(/\s+/g, '-')}`;
 
-    // Presigned URL oluştur (Private Bucket'a yükleme yapmak için)
     const signedUrl = await getSignedUrl(S3, new PutObjectCommand({
-      Bucket: process.env.R2_PRIVATE_BUCKET_NAME, // Güncellendi
+      Bucket: process.env.R2_PRIVATE_BUCKET_NAME,
       Key: uniqueKey,
       ContentType: contentType,
     }), { expiresIn: 3600 });
 
-    // Public URL oluştur (Veritabanına kaydedilecek referans)
-    // Not: Bucket private olduğu için bu URL tarayıcıda doğrudan çalışmaz,
-    // ancak api/view.js üzerinden imzalanarak açılabilir.
-    const publicUrl = uniqueKey; 
-
-    return res.status(200).json({ uploadUrl: signedUrl, publicUrl });
+    // Return fileKey as requested, remove publicUrl usage to prevent client confusion
+    return res.status(200).json({ uploadUrl: signedUrl, fileKey: uniqueKey });
   } catch (error) {
     console.error('R2 Upload Error:', error);
     return res.status(500).json({ error: error.message });

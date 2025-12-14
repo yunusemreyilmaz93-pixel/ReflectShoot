@@ -4,7 +4,7 @@
  * 
  * 1. Backend'den (Vercel API) güvenli yükleme linki (Presigned URL) alır.
  * 2. Dosyayı doğrudan R2'ye PUT eder.
- * 3. Dosyanın Key'ini veya Private Path'ini döner.
+ * 3. Dosyanın Key'ini döner.
  */
 export const uploadFileToR2 = async (file: File, customKey?: string): Promise<string> => {
     try {
@@ -24,7 +24,12 @@ export const uploadFileToR2 = async (file: File, customKey?: string): Promise<st
             throw new Error(err.error || 'Upload URL alınamadı');
         }
 
-        const { uploadUrl, publicUrl } = await apiResponse.json();
+        const { uploadUrl, fileKey } = await apiResponse.json();
+
+        // Validate uploadUrl to prevent 400 errors during fetch
+        if (!uploadUrl || typeof uploadUrl !== 'string') {
+            throw new Error('Geçersiz upload URL.');
+        }
 
         // 2. Upload directly to R2 using the Signed URL
         const uploadResponse = await fetch(uploadUrl, {
@@ -39,7 +44,7 @@ export const uploadFileToR2 = async (file: File, customKey?: string): Promise<st
             throw new Error('Dosya R2 sunucusuna yüklenemedi.');
         }
 
-        return publicUrl;
+        return fileKey; // Return the key only, not full URL
     } catch (error: any) {
         console.error('Upload Failed:', error);
         throw new Error(error.message || 'Dosya yükleme başarısız.');
@@ -48,10 +53,6 @@ export const uploadFileToR2 = async (file: File, customKey?: string): Promise<st
 
 /**
  * Logoyu Cloudflare R2'ye yükler (Public Bucket).
- * 
- * 1. Backend'den (api/public-upload) signed URL alır.
- * 2. Dosyayı R2'ye PUT eder.
- * 3. Dosyanın Key'ini döner (örn: teams/123/logo.png).
  */
 export const uploadPublicLogo = async (file: File, teamId: string): Promise<string> => {
     try {
@@ -70,6 +71,11 @@ export const uploadPublicLogo = async (file: File, teamId: string): Promise<stri
         }
 
         const { uploadUrl, key } = await apiResponse.json();
+
+        // Validate uploadUrl
+        if (!uploadUrl || typeof uploadUrl !== 'string') {
+            throw new Error('Geçersiz logo upload URL.');
+        }
 
         const uploadResponse = await fetch(uploadUrl, {
             method: 'PUT',
