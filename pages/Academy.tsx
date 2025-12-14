@@ -20,32 +20,32 @@ const categoryStyles: Record<string, { bg: string, text: string, border: string,
 const getTitleImage = (title: string): string => {
     const map: Record<string, string> = {
         // Senaryo & Tema
-        'Kahramanın Yolculuğu ve Maneviyat': 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=800', // Path/Journey
-        'Ayetlerden Senaryoya: Uyarlama Rehberi': 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?q=80&w=800&auto=format&fit=crop', // Quran/Book Updated
-        'Karakter Yaratma: Derinlik ve Dönüşüm': 'https://images.unsplash.com/photo-1535905557558-afc4877a26fc?auto=format&fit=crop&q=80&w=800', // Silhouette/Person
-        'Diyalog Yazımı: Az Söz Çok Şey': 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800', // Writing/Script
+        'Kahramanın Yolculuğu ve Maneviyat': 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=800', 
+        'Ayetlerden Senaryoya: Uyarlama Sanatı': 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?q=80&w=800&auto=format&fit=crop', 
+        'Karakter Yaratımı: Tip Değil Karakter': 'https://images.unsplash.com/photo-1535905557558-afc4877a26fc?auto=format&fit=crop&q=80&w=800', 
+        'Diyalog Yazımı: Az Sözle Çok Şey': 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800', 
         
         // Teknik & Kurgu
-        'DaVinci Resolve ile Renk Düzenleme': 'https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=800&auto=format&fit=crop', // Color Grading
-        'Sinematik Işık ve Kompozisyon': 'https://images.unsplash.com/photo-1550948537-130a1ce83314?auto=format&fit=crop&q=80&w=800', // Neon Light
-        'Ses Tasarımı: Filmin Gizli Kahramanı': 'https://images.unsplash.com/photo-1590845947698-8924d7409b56?auto=format&fit=crop&q=80&w=800', // Microphone
-        'Kurguda Ritm ve Duygu Akışı': 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=800&auto=format&fit=crop', // Abstract Rhythm/Flow
+        'Mobil Sinemacılık: Telefonla Film Çekmek': 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=800', 
+        'Sinematik Aydınlatma 101': 'https://images.unsplash.com/photo-1550948537-130a1ce83314?auto=format&fit=crop&q=80&w=800', 
+        'Ses Kaydı ve Temizliği': 'https://images.unsplash.com/photo-1590845947698-8924d7409b56?auto=format&fit=crop&q=80&w=800', 
+        'Kurgu Mantığı: Kesme Nerede Yapılır?': 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=800&auto=format&fit=crop', 
         
         // Yapay Zeka
-        'Midjourney ile Storyboard Oluşturma': 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=800', // AI Art
-        'Runway Gen-2 ile Video Üretimi': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800', // Abstract Tech
-        'Suno AI ile Film Müziği Besteleme': 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&q=80&w=800', // Music/Sound wave
-        'AI Destekli Seslendirme ve Lip Sync': 'https://images.unsplash.com/photo-1617042375876-a13e36732a04?q=80&w=800&auto=format&fit=crop', // Audio Wave Updated
+        'Midjourney ile Storyboard Oluşturma': 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=800', 
+        'Runway Gen-2 ile Video Üretimi': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800', 
+        'Suno AI ile Film Müziği': 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&q=80&w=800', 
+        'ElevenLabs ile Karakter Seslendirme': 'https://images.unsplash.com/photo-1617042375876-a13e36732a04?q=80&w=800&auto=format&fit=crop', 
         
         // İlham & Rehber
-        'Teknik Şartname ve Teslim Kriterleri': 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800', // Meeting/Checklist
-        'Set Çantası Kontrol Listesi': 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=800', // Camera Bag
-        'Ödüllü Kısa Film Analizleri': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=800', // Cinema Theater
-        'Usta Yönetmenlerden Tavsiyeler': 'https://images.unsplash.com/photo-1515634928627-2a4e0dae3ddf?auto=format&fit=crop&q=80&w=800', // Director Chair
+        'Kısa Filmde Zaman Yönetimi': 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800', 
+        'Set Adabı ve Ekip İletişimi': 'https://images.unsplash.com/photo-1533488765986-dfa2a9939acd?q=80&w=800&auto=format&fit=crop', 
+        'Festival ve Gösterim Stratejileri': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=800', 
+        'Yönetmen Gözüyle Bakmak': 'https://images.unsplash.com/photo-1515634928627-2a4e0dae3ddf?auto=format&fit=crop&q=80&w=800', 
         
         // Finalist
-        'İleri Düzey Senaryo Doktorluğu': 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800', // Writing Hand
-        'Festival Stratejileri ve Dağıtım': 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=800' // Red Carpet/Film Strip
+        'İleri Düzey Senaryo Doktorluğu': 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800', 
+        'Festival Stratejileri ve Dağıtım': 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=800' 
     };
     return map[title] || 'https://images.unsplash.com/photo-1478720568477-152d9b164e63?auto=format&fit=crop&q=80&w=800'; // Default Starry Sky
 };

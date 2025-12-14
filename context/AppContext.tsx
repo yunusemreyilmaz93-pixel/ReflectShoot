@@ -44,17 +44,176 @@ import {
 export const PUBLIC_ASSETS_BASE_URL = "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev";
 
 const DEFAULT_CMS_FAQS: CMSFaqItem[] = [
+    // Genel
     {
-        id: 'faq1',
+        id: 'faq_gen_1',
         category: 'Genel',
         question: 'Yarışmaya kimler katılabilir?',
-        answer: 'Türkiye genelindeki tüm Anadolu İmam Hatip Lisesi öğrencileri yarışmaya katılabilir. Takımlar en az 3, en fazla 6 öğrenciden oluşmalıdır ve bir danışman öğretmen bulunması zorunludur.',
+        answer: 'Türkiye genelindeki tüm Anadolu İmam Hatip Lisesi öğrencileri yarışmaya katılabilir.',
         order: 1
     },
+    {
+        id: 'faq_gen_2',
+        category: 'Genel',
+        question: 'Takımlar kaç kişiden oluşmalıdır?',
+        answer: 'Takımlar en az 3, en fazla 6 öğrenciden oluşmalıdır. Bireysel başvuru kabul edilmemektedir.',
+        order: 2
+    },
+    {
+        id: 'faq_gen_3',
+        category: 'Genel',
+        question: 'Danışman öğretmen zorunlu mu?',
+        answer: 'Evet, her takımın başında süreci yönetecek bir danışman öğretmen bulunması zorunludur.',
+        order: 3
+    },
+    {
+        id: 'faq_gen_4',
+        category: 'Genel',
+        question: 'Katılım ücretli mi?',
+        answer: 'Hayır, yarışmaya katılım tamamen ücretsizdir.',
+        order: 4
+    },
+    {
+        id: 'faq_gen_5',
+        category: 'Genel',
+        question: 'Bir öğrenci birden fazla takımda yer alabilir mi?',
+        answer: 'Hayır, her öğrenci yalnızca tek bir projede ve tek bir takımda görev alabilir.',
+        order: 5
+    },
+    // Teknik
+    {
+        id: 'faq_tech_1',
+        category: 'Teknik',
+        question: 'Video çözünürlüğü ve formatı ne olmalıdır?',
+        answer: 'Filmler en az 1920x1080 (Full HD) çözünürlükte, MP4 veya MOV formatında olmalıdır.',
+        order: 6
+    },
+    {
+        id: 'faq_tech_2',
+        category: 'Teknik',
+        question: 'Film süresi ne kadar olmalıdır?',
+        answer: 'Filmler jenerik dahil en az 3, en fazla 8 dakika uzunluğunda olmalıdır.',
+        order: 7
+    },
+    {
+        id: 'faq_tech_3',
+        category: 'Teknik',
+        question: 'Altyazı eklemek zorunlu mu?',
+        answer: 'Evet, filmin dili İngilizce olmalı ve mutlaka Türkçe altyazı eklenmelidir.',
+        order: 8
+    },
+    {
+        id: 'faq_tech_4',
+        category: 'Teknik',
+        question: 'Hangi ekipmanları kullanabiliriz?',
+        answer: 'Profesyonel kamera, DSLR veya yüksek çözünürlüklü cep telefonları kullanılabilir. Ekipman kısıtlaması yoktur.',
+        order: 9
+    },
+    {
+        id: 'faq_tech_5',
+        category: 'Teknik',
+        question: 'Telif hakları konusunda nelere dikkat etmeliyiz?',
+        answer: 'Kullanılan müzik, görsel ve ses efektleri telifsiz olmalı veya kullanım hakları satın alınmış olmalıdır.',
+        order: 10
+    },
+    // Süreç & Teslim
+    {
+        id: 'faq_proc_1',
+        category: 'Süreç & Teslim',
+        question: 'Başvurumu nereden yapabilirim?',
+        answer: 'Başvurular sadece bu web sitesi üzerinden, danışman öğretmen tarafından oluşturulan panelden yapılır.',
+        order: 11
+    },
+    {
+        id: 'faq_proc_2',
+        category: 'Süreç & Teslim',
+        question: 'Filmi sisteme nasıl yükleyeceğim?',
+        answer: 'Filminizi Google Drive, WeTransfer veya Vimeo gibi bir platforma yükleyip, indirme linkini paneldeki ilgili alana yapıştırmanız yeterlidir.',
+        order: 12
+    },
+    {
+        id: 'faq_proc_3',
+        category: 'Süreç & Teslim',
+        question: 'Son başvuru tarihi ne zaman?',
+        answer: 'Son başvuru ve kayıt tarihi 13 Şubat 2026\'dır. Video teslimi için son tarih 20 Mart 2026\'dır.',
+        order: 13
+    },
+    {
+        id: 'faq_proc_4',
+        category: 'Süreç & Teslim',
+        question: 'Fiziksel evrak göndermemiz gerekiyor mu?',
+        answer: 'Hayır, tüm süreç dijital ortamda yürütülür. Veli izin belgeleri ve KVKK formları sisteme PDF olarak yüklenir.',
+        order: 14
+    },
+    {
+        id: 'faq_proc_5',
+        category: 'Süreç & Teslim',
+        question: 'Yüklediğim videoyu sonradan değiştirebilir miyim?',
+        answer: 'Video teslim tarihi bitene kadar panel üzerinden link güncellemesi yapabilirsiniz.',
+        order: 15
+    },
+    // Ödüller & Değerlendirme
+    {
+        id: 'faq_reward_1',
+        category: 'Ödüller & Değerlendirme',
+        question: 'Toplam ödül miktarı nedir?',
+        answer: 'Yarışmada toplam 200.000 TL üzerinde nakdi ödül ve teknoloji hediye çekleri dağıtılacaktır.',
+        order: 16
+    },
+    {
+        id: 'faq_reward_2',
+        category: 'Ödüller & Değerlendirme',
+        question: 'Değerlendirme kriterleri nelerdir?',
+        answer: 'Senaryo (25), Teknik Kalite (25), Özgünlük (25) ve Tema Uyumu (25) olmak üzere 100 puan üzerinden değerlendirme yapılır.',
+        order: 17
+    },
+    {
+        id: 'faq_reward_3',
+        category: 'Ödüller & Değerlendirme',
+        question: 'Jüri üyeleri kimlerdir?',
+        answer: 'Jüri; akademisyenler, yönetmenler, senaristler ve sektör profesyonellerinden oluşmaktadır.',
+        order: 18
+    },
+    {
+        id: 'faq_reward_4',
+        category: 'Ödüller & Değerlendirme',
+        question: 'Ödüller kime verilir?',
+        answer: 'Para ödülleri, dereceye giren takımdaki öğrencilere eşit paylaştırılarak veya takım adına danışman öğretmene (okul hesabına) takdim edilir.',
+        order: 19
+    },
+    {
+        id: 'faq_reward_5',
+        category: 'Ödüller & Değerlendirme',
+        question: 'Sonuçlar ne zaman açıklanacak?',
+        answer: 'Finalistler 1 Nisan 2026\'da, kazananlar ise 22 Mayıs 2026 tarihindeki Gala Gecesi\'nde açıklanacaktır.',
+        order: 20
+    }
 ];
 
 const DEFAULT_CMS_ACADEMY: CMSAcademyItem[] = [
-    { id: 'def1', title: 'Kahramanın Yolculuğu ve Maneviyat', description: 'Joseph Campbell’in monomit yapısının İslami anlatı geleneğiyle harmanlanması.', category: 'Senaryo & Tema', type: 'PDF', url: '#', isStarterPack: true },
+    // Senaryo & Tema
+    { id: 'acad_st_1', title: 'Kahramanın Yolculuğu ve Maneviyat', description: 'Joseph Campbell’in monomit yapısının İslami anlatı geleneğiyle harmanlanması.', category: 'Senaryo & Tema', type: 'PDF', url: '#', isStarterPack: true, isFinalistContent: false },
+    { id: 'acad_st_2', title: 'Ayetlerden Senaryoya: Uyarlama Sanatı', description: 'Kıssaların modern sinema diliyle senaryolaştırılması üzerine teknikler.', category: 'Senaryo & Tema', type: 'PDF', url: '#', isStarterPack: true, isFinalistContent: false },
+    { id: 'acad_st_3', title: 'Karakter Yaratımı: Tip Değil Karakter', description: 'Tek boyutlu tiplemelerden yaşayan, dönüşen karakterlere geçiş rehberi.', category: 'Senaryo & Tema', type: 'VIDEO', url: '#', isStarterPack: false, isFinalistContent: false },
+    { id: 'acad_st_4', title: 'Diyalog Yazımı: Az Sözle Çok Şey', description: 'Sinemada görsel anlatımın gücü ve diyaloğun doğru kullanımı.', category: 'Senaryo & Tema', type: 'PDF', url: '#', isStarterPack: false, isFinalistContent: false },
+
+    // Teknik & Kurgu
+    { id: 'acad_tk_1', title: 'Mobil Sinemacılık: Telefonla Film Çekmek', description: 'Yüksek bütçeli ekipmanlar olmadan akıllı telefonlarla profesyonel görüntü elde etme.', category: 'Teknik & Kurgu', type: 'VIDEO', url: '#', isStarterPack: true, isFinalistContent: false },
+    { id: 'acad_tk_2', title: 'Sinematik Aydınlatma 101', description: 'Doğal ışık kullanımı ve temel 3 nokta ışık tekniği ile atmosfer oluşturma.', category: 'Teknik & Kurgu', type: 'VIDEO', url: '#', isStarterPack: true, isFinalistContent: false },
+    { id: 'acad_tk_3', title: 'Kurgu Mantığı: Kesme Nerede Yapılır?', description: 'Sahneler arası geçişlerde ritim ve duygu akışını yönetmek.', category: 'Teknik & Kurgu', type: 'VIDEO', url: '#', isStarterPack: false, isFinalistContent: false },
+    { id: 'acad_tk_4', title: 'Ses Kaydı ve Temizliği', description: 'Filmin kalitesini belirleyen en önemli unsur: Temiz ses nasıl alınır?', category: 'Teknik & Kurgu', type: 'PDF', url: '#', isStarterPack: false, isFinalistContent: false },
+
+    // Yapay Zeka
+    { id: 'acad_ai_1', title: 'Midjourney ile Storyboard Oluşturma', description: 'Senaryonuzun görsel taslağını yapay zeka ile hızlıca hazırlayın.', category: 'Yapay Zeka', type: 'LINK', url: '#', isStarterPack: true, isFinalistContent: false },
+    { id: 'acad_ai_2', title: 'Runway Gen-2 ile Video Üretimi', description: 'Metinden videoya (Text-to-Video) üretim teknikleri ve prompt mühendisliği.', category: 'Yapay Zeka', type: 'LINK', url: '#', isStarterPack: false, isFinalistContent: false },
+    { id: 'acad_ai_3', title: 'ElevenLabs ile Karakter Seslendirme', description: 'Yapay zeka araçlarıyla karakterlerinize ses verin.', category: 'Yapay Zeka', type: 'LINK', url: '#', isStarterPack: false, isFinalistContent: false },
+    { id: 'acad_ai_4', title: 'Suno AI ile Film Müziği', description: 'Telif sorunu yaşamadan filminiz için özgün müzikler besteleyin.', category: 'Yapay Zeka', type: 'LINK', url: '#', isStarterPack: true, isFinalistContent: false },
+
+    // İlham & Rehber
+    { id: 'acad_ir_1', title: 'Kısa Filmde Zaman Yönetimi', description: '3-8 dakikalık süre sınırını en verimli şekilde kullanma stratejileri.', category: 'İlham & Rehber', type: 'PDF', url: '#', isStarterPack: true, isFinalistContent: false },
+    { id: 'acad_ir_2', title: 'Yönetmen Gözüyle Bakmak', description: 'Usta yönetmenlerden genç sinemacılara altın değerinde tavsiyeler.', category: 'İlham & Rehber', type: 'VIDEO', url: '#', isStarterPack: false, isFinalistContent: false },
+    { id: 'acad_ir_3', title: 'Set Adabı ve Ekip İletişimi', description: 'Çekim sürecinde kriz yönetimi ve ekip içi uyum.', category: 'İlham & Rehber', type: 'PDF', url: '#', isStarterPack: true, isFinalistContent: false },
+    { id: 'acad_ir_4', title: 'Festival ve Gösterim Stratejileri', description: 'Filminizi tamamladıktan sonra izleyiciyle buluşturma yolları.', category: 'İlham & Rehber', type: 'PDF', url: '#', isStarterPack: false, isFinalistContent: false },
 ];
 
 interface AppContextType {
