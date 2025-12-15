@@ -266,6 +266,7 @@ interface AppContextType {
     bulkAssignJury: (assignments: {appId: string, juryIds: string[]}[]) => Promise<void>;
     submitScore: (appId: string, criteria: EvaluationCriteria, notes: string) => Promise<void>;
     fetchJuryScores: (appId: string) => Promise<ScoreDocument[]>;
+    fetchMyScore: (appId: string) => Promise<ScoreDocument | null>;
 
     sendMessage: (appId: string, text: string) => Promise<void>;
     sendContactMessage: (data: any) => Promise<void>;
@@ -459,7 +460,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 setAuditLogs(snap.docs.map(d => ({id: d.id, ...d.data()} as LogEntry)));
             }));
         } else if (currentUser.role === UserRole.JUDGE) {
-            unsubs.push(onSnapshot(collection(db, "applications"), (snap) => {
+            // JUDGE SPECIFIC QUERY: Only fetch assigned applications to respect security rules
+            const q = query(collection(db, "applications"), where("assignedJuryIds", "array-contains", currentUser.uid));
+            unsubs.push(onSnapshot(q, (snap) => {
                 setAllApplications(snap.docs.map(d => hydrateApplication(d.data(), d.id)));
             }));
         } else if (currentUser.role === UserRole.TEACHER || currentUser.role === UserRole.STUDENT) {
@@ -678,7 +681,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 gradedBy.push(currentUser.uid);
                 await updateDoc(appRef, { 
                     gradedBy, 
-                    status: ApplicationStatus.GRADED
+                    // REMOVED STATUS UPDATE TO RESPECT SECURITY RULES
+                    // Status is now managed by Admin or separate pipeline
                 });
             }
         }
@@ -689,6 +693,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const q = collection(db, "applications", appId, "scores");
         const snap = await getDocs(q);
         return snap.docs.map(d => ({id: d.id, ...d.data()} as ScoreDocument));
+    };
+
+    // NEW: Fetch ONLY the current user's score for a specific app
+    const fetchMyScore = async (appId: string) => {
+        if(!auth.currentUser) return null;
+        const docRef = doc(db, "applications", appId, "scores", auth.currentUser.uid);
+        const snap = await getDoc(docRef);
+        if(snap.exists()) {
+            return { id: snap.id, ...snap.data() } as ScoreDocument;
+        }
+        return null;
     };
 
     const sendMessage = async (appId: string, text: string) => {
@@ -798,7 +813,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addCMSGalleryItem, deleteCMSGalleryItem, addCMSAcademyItem, updateCMSAcademyItem, deleteCMSAcademyItem,
         addCMSTimelineItem, updateCMSTimelineItem, deleteCMSTimelineItem,
         createApplication, updateApplication, bulkUpdateApplications,
-        assignJury, bulkAssignJury, submitScore, fetchJuryScores,
+        assignJury, bulkAssignJury, submitScore, fetchJuryScores, fetchMyScore,
         sendMessage, sendContactMessage, markContactMessageAsRead, markNotificationAsRead, sendAnnouncement, submitPublicVote,
         updateSystemSettings, logAction, showToast, removeToast, downloadFullBackup, getSignedUrl
     };

@@ -2,17 +2,18 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Application, EvaluationCriteria, Theme, Category } from '../types';
-import { Video, Play, X, Sliders, CheckCircle, Clock, Save, AlertCircle } from 'lucide-react';
+import { Video, Play, X, Sliders, CheckCircle, Clock, Save, AlertCircle, RefreshCw } from 'lucide-react';
 import { getYouTubeEmbedUrl } from '../lib/videoUtils';
 
 export const JuryDashboard: React.FC = () => {
-  const { allApplications, submitScore, currentUser } = useAppContext();
+  const { allApplications, submitScore, currentUser, fetchMyScore } = useAppContext();
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   
   // Scoring State
   const [criteria, setCriteria] = useState<EvaluationCriteria>({ story: 0, technical: 0, originality: 0, themeFit: 0 });
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUpdateMode, setIsUpdateMode] = useState(false);
 
   // Filter apps assigned to this jury
   const myAssignedApps = allApplications.filter(app => 
@@ -24,11 +25,27 @@ export const JuryDashboard: React.FC = () => {
       return app.gradedBy?.includes(currentUser?.uid || '');
   };
 
-  const openGrading = (app: Application) => {
+  const openGrading = async (app: Application) => {
       setSelectedApp(app);
-      // Reset form (Real implementation would fetch existing score to edit)
-      setCriteria({ story: 0, technical: 0, originality: 0, themeFit: 0 });
-      setNotes('');
+      setIsUpdateMode(false);
+      
+      // Try to fetch existing score
+      try {
+          const existingScore = await fetchMyScore(app.id);
+          if (existingScore) {
+              setCriteria(existingScore.criteria);
+              setNotes(existingScore.notes);
+              setIsUpdateMode(true);
+          } else {
+              // Reset form if no previous score
+              setCriteria({ story: 0, technical: 0, originality: 0, themeFit: 0 });
+              setNotes('');
+          }
+      } catch (error) {
+          console.error("Score fetch error:", error);
+          setCriteria({ story: 0, technical: 0, originality: 0, themeFit: 0 });
+          setNotes('');
+      }
   };
 
   const handleScoreSubmit = async () => {
@@ -43,6 +60,16 @@ export const JuryDashboard: React.FC = () => {
   
   // Helper for embed
   const embedUrl = selectedApp?.team.videoUrl ? getYouTubeEmbedUrl(selectedApp.team.videoUrl) : null;
+
+  // Generate Deterministic Random Code for Anonymity (J-XXXX)
+  // This ensures the ID looks random but is consistent for the same app ID
+  const getJuryCode = (id: string) => {
+      let hash = 0;
+      for (let i = 0; i < id.length; i++) {
+          hash = id.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return `J-${Math.abs(hash).toString().slice(0, 4)}`;
+  };
 
   return (
     <div className="bg-slate-950 min-h-screen text-slate-200 font-sans selection:bg-rose-500 selection:text-white pb-20">
@@ -70,7 +97,7 @@ export const JuryDashboard: React.FC = () => {
               <div className="text-sm text-slate-400">
                   <strong className="text-white block mb-1">Adil Değerlendirme Hatırlatması</strong>
                   Bu ekranda okul, şehir ve öğretmen bilgileri gizlenmiştir. Lütfen sadece eserin sanatsal ve teknik niteliğine odaklanınız.
-                  Puanlama sonrası düzenleme yapılamaz.
+                  <br/>Eser kodları (Örn: J-8341) sistem tarafından otomatik atanmıştır.
               </div>
           </div>
 
@@ -82,6 +109,8 @@ export const JuryDashboard: React.FC = () => {
               ) : (
                   myAssignedApps.map(app => {
                    const graded = isGradedByMe(app);
+                   const juryCode = getJuryCode(app.id);
+
                    return (
                        <div 
                         key={app.id} 
@@ -120,7 +149,7 @@ export const JuryDashboard: React.FC = () => {
                                </div>
                                <div className="flex justify-between items-center text-xs text-slate-500 border-t border-slate-800 pt-3">
                                     <span className="flex items-center gap-1"><Clock size={12}/> {app.team.videoSize || 'N/A'}</span>
-                                    <span className="font-mono text-slate-600">ID: {app.team.id.slice(-4)}</span>
+                                    <span className="font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded font-bold">{juryCode}</span>
                                </div>
                            </div>
                        </div>
@@ -160,12 +189,20 @@ export const JuryDashboard: React.FC = () => {
                    {/* Right: Grading Form */}
                    <div className="w-full lg:w-[450px] bg-slate-900 border-l border-slate-800 flex flex-col h-[60vh] lg:h-full">
                        <div className="p-6 border-b border-slate-800 bg-slate-950/50">
-                           <h2 className="text-2xl font-black text-white mb-1 truncate">{selectedApp.team.name}</h2>
+                           <div className="flex justify-between items-start mb-2">
+                               <h2 className="text-2xl font-black text-white truncate">{selectedApp.team.name}</h2>
+                               <span className="bg-slate-800 text-slate-400 text-[10px] font-mono px-2 py-1 rounded">{getJuryCode(selectedApp.id)}</span>
+                           </div>
                            <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">{selectedApp.team.category} • {selectedApp.team.theme}</p>
                            {selectedApp.team.theme === Theme.AYET && (
                                <p className="mt-2 text-xs text-amber-500 bg-amber-900/10 p-2 rounded border border-amber-900/30 italic">
                                    "{selectedApp.team.selectedVerse}"
                                </p>
+                           )}
+                           {isUpdateMode && (
+                               <div className="mt-4 bg-blue-900/20 text-blue-300 text-xs p-3 rounded border border-blue-900/50 flex items-center gap-2">
+                                   <RefreshCw size={14}/> Bu eseri daha önce puanladınız. Puanınızı güncelleyebilirsiniz.
+                               </div>
                            )}
                        </div>
 
@@ -224,9 +261,9 @@ export const JuryDashboard: React.FC = () => {
                            <button 
                              onClick={handleScoreSubmit}
                              disabled={isSubmitting}
-                             className="w-full bg-rose-600 hover:bg-rose-500 text-white py-4 rounded-xl font-bold shadow-lg shadow-rose-900/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                             className={`w-full text-white py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isUpdateMode ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/20' : 'bg-rose-600 hover:bg-rose-500 shadow-rose-900/20'}`}
                            >
-                               {isSubmitting ? 'Kaydediliyor...' : <><Save size={18}/> Puanı Kaydet</>}
+                               {isSubmitting ? 'Kaydediliyor...' : <>{isUpdateMode ? <RefreshCw size={18}/> : <Save size={18}/>} {isUpdateMode ? 'Puanı Güncelle' : 'Puanı Kaydet'}</>}
                            </button>
                        </div>
                    </div>

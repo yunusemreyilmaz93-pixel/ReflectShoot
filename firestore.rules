@@ -26,19 +26,16 @@ service cloud.firestore {
     }
 
     // --- 1. SYSTEM SETTINGS & CMS (Public Read) ---
-    // AppContext reads from 'settings/config'
     match /settings/{document=**} {
       allow read: if true;
       allow write: if hasRole('ADMIN');
     }
     
-    // AppContext reads from 'cms/general' and 'cms/links'
     match /cms/{document=**} {
       allow read: if true;
       allow write: if hasRole('ADMIN');
     }
 
-    // Specific CMS Collections
     match /cms_prizes/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
     match /cms_faqs/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
     match /cms_gallery/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
@@ -47,36 +44,42 @@ service cloud.firestore {
 
     // --- 2. USERS ---
     match /users/{userId} {
-      allow read: if isSignedIn(); // Users need to read profiles (e.g. for Jury assignments)
+      // JUDGE PERMISSIONS: Blind judging protection. Judges cannot read list of all users.
+      // Only Admin can read all. Users can read own.
+      allow read: if isOwner(userId) || hasRole('ADMIN');
       allow write: if isOwner(userId) || hasRole('ADMIN');
     }
 
     // --- 3. APPLICATIONS ---
     match /applications/{appId} {
-      // READ:
-      // - Admin & Judge: All
+      // READ RULES:
+      // - Admin: All
       // - Teacher: Own application
-      // - Public: Finalists (for public voting/viewing)
+      // - Judge: ONLY assigned applications (Blind Judging Restriction)
+      // - Public: Finalists (Only if needed, better to handle via public voting collection)
       allow read: if hasRole('ADMIN') || 
-                     hasRole('JUDGE') || 
                      (hasRole('TEACHER') && resource.data.teacher.id == request.auth.uid) || 
+                     (hasRole('JUDGE') && request.auth.uid in resource.data.assignedJuryIds) ||
                      resource.data.team.isFinalist == true;
       
       // CREATE: Teachers and Admins
       allow create: if hasRole('TEACHER') || hasRole('ADMIN');
       
-      // UPDATE:
-      // - Admin: All
+      // UPDATE RULES:
+      // - Admin: Full access
       // - Teacher: Own application
-      // - Judge: Update application status/scoring metadata
-      // - Public: Indirectly via Cloud Functions usually, but allowed here for finalist flag updates or votes if handled client side
+      // - Judge: CAN ONLY UPDATE 'gradedBy' array. NO STATUS CHANGE allowed.
       allow update: if hasRole('ADMIN') || 
                        (hasRole('TEACHER') && resource.data.teacher.id == request.auth.uid) || 
-                       hasRole('JUDGE') ||
-                       (resource.data.team.isFinalist == true); 
+                       (hasRole('JUDGE') && 
+                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gradedBy']) &&
+                          request.resource.data.gradedBy.size() == resource.data.gradedBy.size() + 1 &&
+                          request.resource.data.gradedBy[request.resource.data.gradedBy.size() - 1] == request.auth.uid
+                       );
 
       // Scores Subcollection
       match /scores/{juryId} {
+        // JUDGE PERMISSIONS: Can ONLY read/write their OWN score. Cannot see others.
         allow read: if hasRole('ADMIN') || (hasRole('JUDGE') && isOwner(juryId));
         allow write: if hasRole('JUDGE') && isOwner(juryId);
       }
@@ -92,20 +95,19 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       allow read: if isOwner(resource.data.userId);
       allow create: if isSignedIn(); 
-      allow update: if isOwner(resource.data.userId); // Mark as read
+      allow update: if isOwner(resource.data.userId); 
     }
 
     // --- 5. PUBLIC VOTES ---
-    // AppContext uses 'votes' collection
     match /votes/{voteId} {
-      allow read: if true; // Needed to check previous votes by fingerprint
-      allow create: if true; // Public voting
+      allow read: if true; 
+      allow create: if true; 
     }
 
     // --- 6. CONTACT MESSAGES ---
     match /contact_messages/{msgId} {
       allow read: if hasRole('ADMIN');
-      allow create: if true; // Public contact form
+      allow create: if true; 
       allow update: if hasRole('ADMIN');
     }
 
