@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool } from 'lucide-react';
+import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool, Target, HelpCircle } from 'lucide-react';
 import { Timeline } from '../components/Timeline';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { useAppContext } from '../context/AppContext';
@@ -161,12 +161,6 @@ export const Home: React.FC = () => {
         ]
       }
     }
-  ];
-
-  const downloads = [
-    { id: 'spec', title: "Yarışma Şartnamesi", size: "PDF", link: cmsLinks.specUrl },
-    { id: 'parental', title: "Veli İzin Belgesi", size: "PDF", link: cmsLinks.parentalUrl },
-    { id: 'kvkk', title: "KVKK Aydınlatma Metni", size: "PDF", link: cmsLinks.kvkkUrl }
   ];
 
   const formatDate = (dateString: string) => {
@@ -492,7 +486,7 @@ export const Home: React.FC = () => {
                     <p className="text-slate-400 leading-relaxed mb-8 font-light text-lg">
                         Asr-ı Saadet'in yıldızları olan sahabelerin hayatlarından, fedakarlıklarından ve erdemli duruşlarından kesitler.
                     </p>
-                    <div className="bg-slate-950 p-5 rounded-xl border-l-4 border-rose-500 text-xs text-slate-400 italic">
+                    <div className="bg-slate-900 p-5 rounded-xl border-l-4 border-rose-500 text-xs text-slate-400 italic">
                         "Tarihsel gerçekliğe sadık kalınarak dramatize edilmelidir."
                     </div>
                 </div>
@@ -505,31 +499,76 @@ export const Home: React.FC = () => {
       {/* 4. Timeline Section */}
       <Timeline />
 
-      {/* 5. Documents Section */}
+      {/* 5. Preparation Guide Section (Replaces Documents) */}
       <section className="py-24 bg-slate-50 border-t border-slate-200">
-         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-             {/* ... existing documents code ... */}
-            <div className="bg-white rounded-[2rem] shadow-xl p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-10 border-l-8 border-rose-600">
-               <div className="flex-1">
-                  <h2 className="text-3xl font-black text-slate-900 mb-4 flex items-center gap-4">
-                     <FileText className="text-rose-600" size={36}/>
-                     Prodüksiyon Dosyaları
-                  </h2>
-                  <p className="text-slate-600 text-lg mb-8 font-light">
-                     Sete çıkmadan önce gerekli yasal izinleri ve şartnameyi buradan indirebilirsiniz.
-                  </p>
-                  <div className="grid sm:grid-cols-3 gap-6">
-                     {downloads.map((doc, i) => (
-                        <button key={i} onClick={() => handleDownload(doc.link)} className="flex flex-col items-center p-6 rounded-2xl border border-slate-200 hover:border-rose-500 hover:bg-rose-50 transition-all group bg-slate-50 text-center shadow-sm hover:shadow-[0_10px_30px_rgba(225,29,72,0.1)]">
-                           <Download size={28} className="text-slate-400 group-hover:text-rose-600 mb-3 transition-colors"/>
-                           <span className="font-bold text-slate-900 text-sm">{doc.title}</span>
-                           <span className="text-xs text-slate-500 mt-1">{doc.size}</span>
-                        </button>
-                     ))}
-                  </div>
-               </div>
-            </div>
-         </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+             <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-4">
+               Yarışmaya Hazırlık Rehberi
+             </h2>
+             <p className="text-slate-500 text-lg max-w-2xl mx-auto font-light">
+               Hikâyeni çekmeden önce bilmen gereken temel adımlar.
+             </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+             {/* Card 1: Akademi */}
+             <Link to="/academy" className="group bg-white p-8 rounded-[2rem] border border-slate-200 shadow-lg hover:shadow-2xl hover:border-amber-500/30 transition-all duration-300 transform hover:-translate-y-2 flex flex-col h-full">
+                <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner">
+                   <BookOpen size={32} />
+                </div>
+                <h3 className="font-bold text-slate-900 text-2xl mb-3">Akademi</h3>
+                <p className="text-slate-500 text-base leading-relaxed mb-8 flex-1">
+                   Hazırlık seti, içerikler, videolar.
+                </p>
+                <span className="text-amber-600 text-sm font-bold uppercase tracking-wider flex items-center gap-2 group-hover:gap-3 transition-all">
+                   İçeriklere Git <ArrowRight size={16}/>
+                </span>
+             </Link>
+
+             {/* Card 2: Hakkında */}
+             <Link to="/about" className="group bg-white p-8 rounded-[2rem] border border-slate-200 shadow-lg hover:shadow-2xl hover:border-blue-500/30 transition-all duration-300 transform hover:-translate-y-2 flex flex-col h-full">
+                <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner">
+                   <Target size={32} />
+                </div>
+                <h3 className="font-bold text-slate-900 text-2xl mb-3">Hakkında</h3>
+                <p className="text-slate-500 text-base leading-relaxed mb-8 flex-1">
+                   Yarışmanın amacı, felsefesi, temalar.
+                </p>
+                <span className="text-blue-600 text-sm font-bold uppercase tracking-wider flex items-center gap-2 group-hover:gap-3 transition-all">
+                   Yarışmayı Tanı <ArrowRight size={16}/>
+                </span>
+             </Link>
+
+             {/* Card 3: SSS */}
+             <Link to="/faq" className="group bg-white p-8 rounded-[2rem] border border-slate-200 shadow-lg hover:shadow-2xl hover:border-emerald-500/30 transition-all duration-300 transform hover:-translate-y-2 flex flex-col h-full">
+                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner">
+                   <HelpCircle size={32} />
+                </div>
+                <h3 className="font-bold text-slate-900 text-2xl mb-3">Sık Sorulan Sorular</h3>
+                <p className="text-slate-500 text-base leading-relaxed mb-8 flex-1">
+                   Ben ne yapacağım, nasıl katılacağım?
+                </p>
+                <span className="text-emerald-600 text-sm font-bold uppercase tracking-wider flex items-center gap-2 group-hover:gap-3 transition-all">
+                   Sorularına Yanıt Bul <ArrowRight size={16}/>
+                </span>
+             </Link>
+
+             {/* Card 4: Şartname */}
+             <button onClick={() => handleDownload(cmsLinks.specUrl)} className="group bg-white p-8 rounded-[2rem] border border-slate-200 shadow-lg hover:shadow-2xl hover:border-rose-500/30 transition-all duration-300 transform hover:-translate-y-2 flex flex-col h-full text-left">
+                <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner">
+                   <ScrollText size={32} />
+                </div>
+                <h3 className="font-bold text-slate-900 text-2xl mb-3">Yarışma Şartnamesi</h3>
+                <p className="text-slate-500 text-base leading-relaxed mb-8 flex-1">
+                   Yarışma kuralları ve teknik detaylar.
+                </p>
+                <span className="text-rose-600 text-sm font-bold uppercase tracking-wider flex items-center gap-2 group-hover:gap-3 transition-all">
+                   Detayları İncele <ArrowRight size={16}/>
+                </span>
+             </button>
+          </div>
+        </div>
       </section>
 
       {/* 6. Gala & Prizes CTA */}

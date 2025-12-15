@@ -37,20 +37,45 @@ export const Footer: React.FC = () => {
           
           <div>
             <h3 className="text-lg font-semibold text-white mb-4">İletişim</h3>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-start gap-3">
-                <MapPin size={18} className="text-teal-500 mt-0.5 flex-shrink-0" />
-                <span>{cmsGeneral.contactAddress}</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Phone size={18} className="text-teal-500 flex-shrink-0" />
-                <span>{cmsGeneral.contactPhone}</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail size={18} className="text-teal-500 flex-shrink-0" />
-                <span>{cmsGeneral.contactEmail}</span>
-              </li>
-            </ul>
+            
+            {/* Konya IHL */}
+            <div className="mb-6">
+                <h4 className="text-xs font-bold text-white uppercase mb-2">Konya Anadolu İHL</h4>
+                <ul className="space-y-2 text-xs text-slate-400">
+                    <li className="flex items-start gap-2">
+                        <MapPin size={14} className="text-teal-500 mt-0.5 flex-shrink-0" />
+                        <span>Şemsi Tebrizi Mah. Vali İzzetbey Cd. No:2, Karatay/Konya</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                        <Phone size={14} className="text-teal-500 flex-shrink-0" />
+                        <span>(0332) 351 28 02</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                        <Mail size={14} className="text-teal-500 flex-shrink-0" />
+                        <a href="mailto:reflect_shoot@proton.me" className="hover:text-white transition-colors">reflect_shoot@proton.me</a>
+                    </li>
+                </ul>
+            </div>
+
+            {/* TIMAV */}
+            <div>
+                <h4 className="text-xs font-bold text-white uppercase mb-2">TİMAV</h4>
+                <ul className="space-y-2 text-xs text-slate-400">
+                    <li className="flex items-start gap-2">
+                        <MapPin size={14} className="text-rose-500 mt-0.5 flex-shrink-0" />
+                        <span>Şemsitebrizi, Dr. Abdullah Salim Sk. No:22, Karatay/Konya</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                        <Phone size={14} className="text-rose-500 flex-shrink-0" />
+                        <span>(0332) 350 07 96</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                        <Mail size={14} className="text-rose-500 flex-shrink-0" />
+                        <a href="mailto:bilgi@timav.org.tr" className="hover:text-white transition-colors">bilgi@timav.org.tr</a>
+                    </li>
+                </ul>
+            </div>
+
           </div>
         </div>
         <div className="border-t border-gray-800 mt-12 pt-8 text-sm text-center flex flex-col items-center gap-3">
