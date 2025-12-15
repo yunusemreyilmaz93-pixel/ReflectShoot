@@ -291,54 +291,73 @@ export const FAQ: React.FC = () => {
                 <div className="grid md:grid-cols-2 gap-12 items-start">
                     
                     {/* Contact Info Card */}
-                    <div className="bg-slate-800/50 p-10 rounded-3xl border border-slate-700 shadow-xl backdrop-blur-sm h-full">
-                        <h3 className="text-xl font-bold text-white mb-8 border-b border-slate-700 pb-4">İletişim Bilgileri</h3>
+                    <div className="bg-slate-800/50 p-8 rounded-3xl border border-slate-700 shadow-xl backdrop-blur-sm h-full flex flex-col gap-8">
+                        <h3 className="text-xl font-bold text-white mb-2 border-b border-slate-700 pb-4">İletişim Bilgileri</h3>
                         
-                        <div className="space-y-8">
-                            <div className="flex items-start gap-5 group">
-                                <div className="bg-slate-900 p-4 rounded-2xl shadow-sm text-teal-500 border border-slate-700 group-hover:border-teal-500/50 transition-colors">
-                                    <MapPin size={24} />
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-white text-sm uppercase tracking-wide opacity-60 mb-1">Adres</h4>
-                                    <p className="text-slate-300 leading-relaxed font-light">
-                                        {cmsGeneral.contactAddress}
+                        {/* Konya Anadolu İHL */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-4 mb-2">
+                                 <div className="w-16 h-16 bg-white rounded-xl p-1 flex items-center justify-center shadow-lg">
+                                    <img src="https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/20113118_yeni_logo_konyaihl.png" alt="Konya İHL" className="w-full h-full object-contain" />
+                                 </div>
+                                 <h4 className="font-black text-white text-base leading-tight">Konya Anadolu<br/>İmam Hatip Lisesi</h4>
+                            </div>
+                            
+                            <div className="space-y-3 pl-2">
+                                <div className="flex items-start gap-3">
+                                    <MapPin size={18} className="text-teal-500 mt-1 flex-shrink-0" />
+                                    <p className="text-slate-300 text-sm font-light leading-relaxed">
+                                        Şemsi Tebrizi Mah Vali İzzetbey Cd, Şemsitebrizi, Bölüm Sk. No:2, 42050 Karatay/Konya
                                     </p>
                                 </div>
-                            </div>
-
-                            <div className="flex items-start gap-5 group">
-                                <div className="bg-slate-900 p-4 rounded-2xl shadow-sm text-teal-500 border border-slate-700 group-hover:border-teal-500/50 transition-colors">
-                                    <Phone size={24} />
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-white text-sm uppercase tracking-wide opacity-60 mb-1">Telefon</h4>
-                                    <p className="text-slate-300 font-light">
-                                        {cmsGeneral.contactPhone}
+                                <div className="flex items-center gap-3">
+                                    <Phone size={18} className="text-teal-500 flex-shrink-0" />
+                                    <p className="text-slate-300 text-sm font-light">
+                                        (0332) 351 28 02
                                     </p>
                                 </div>
-                            </div>
-
-                            <div className="flex items-start gap-5 group">
-                                <div className="bg-slate-900 p-4 rounded-2xl shadow-sm text-teal-500 border border-slate-700 group-hover:border-teal-500/50 transition-colors">
-                                    <Mail size={24} />
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-white text-sm uppercase tracking-wide opacity-60 mb-1">E-posta</h4>
-                                    <a href={`mailto:${cmsGeneral.contactEmail}`} className="text-teal-400 hover:text-teal-300 transition-colors block font-medium">
-                                        {cmsGeneral.contactEmail}
+                                <div className="flex items-center gap-3">
+                                    <Mail size={18} className="text-teal-500 flex-shrink-0" />
+                                    <a href="mailto:reflect_shoot@proton.me" className="text-teal-400 text-sm font-medium hover:underline">
+                                        reflect_shoot@proton.me
                                     </a>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="mt-10 pt-8 border-t border-slate-700">
-                             <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700">
-                                 <p className="text-xs text-slate-500 text-center">
-                                     Mesai Saatleri: Hafta içi 09:00 - 17:00
-                                 </p>
-                             </div>
+                        <div className="w-full h-px bg-slate-700"></div>
+
+                        {/* TİMAV */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-4 mb-2">
+                                 <div className="w-16 h-16 bg-white rounded-xl p-1 flex items-center justify-center shadow-lg">
+                                    <img src="https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-12-14%20203957.png" alt="TİMAV" className="w-full h-full object-contain" />
+                                 </div>
+                                 <h4 className="font-black text-white text-base leading-tight">TİMAV<br/><span className="text-sm font-normal text-slate-400">Türkiye İmam Hatipliler Vakfı</span></h4>
+                            </div>
+                            
+                            <div className="space-y-3 pl-2">
+                                <div className="flex items-start gap-3">
+                                    <MapPin size={18} className="text-rose-500 mt-1 flex-shrink-0" />
+                                    <p className="text-slate-300 text-sm font-light leading-relaxed">
+                                        Şemsitebrizi, Dr. Abdullah Salim Sk. No:22, 42030, 42030 Karatay/Konya
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Phone size={18} className="text-rose-500 flex-shrink-0" />
+                                    <p className="text-slate-300 text-sm font-light">
+                                        (0332) 350 07 96
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Mail size={18} className="text-rose-500 flex-shrink-0" />
+                                    <a href="mailto:bilgi@timav.org.tr" className="text-rose-400 text-sm font-medium hover:underline">
+                                        bilgi@timav.org.tr
+                                    </a>
+                                </div>
+                            </div>
                         </div>
+
                     </div>
 
                     {/* Contact Form */}
