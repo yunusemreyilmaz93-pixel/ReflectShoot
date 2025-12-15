@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { ApplicationStatus, Category, Theme, UserRole, Student } from '../types';
-import { CheckCircle, AlertCircle, Upload, Video, Award, Clock, Users, FileDown, Clapperboard, Film, UserPlus, BookOpen, Trophy, HeartHandshake, Cpu, Link as LinkIcon, ExternalLink, Play, AlertTriangle, CheckCircle2, ShieldCheck, PenTool, FileText, ChevronRight, Lock } from 'lucide-react';
+import { CheckCircle, AlertCircle, Upload, Video, Award, Clock, Users, FileDown, Clapperboard, Film, UserPlus, BookOpen, Trophy, HeartHandshake, Cpu, Link as LinkIcon, ExternalLink, Play, CheckCircle2, ShieldCheck, X, Save, Plus, AlertTriangle, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { ChatArea } from '../components/ChatArea';
@@ -11,8 +11,11 @@ import { getYouTubeEmbedUrl } from '../lib/videoUtils';
 import { uploadFileToR2, uploadPublicLogo } from '../lib/cloudStorage';
 import jsPDF from 'jspdf';
 
+// Global cache for the font to prevent re-downloading
+let cachedFontBase64: string | null = null;
+
 export const Dashboard: React.FC = () => {
-  const { currentApplication, updateApplication, createApplication, currentUser, currentDate, systemSettings, showToast, getSignedUrl } = useAppContext();
+  const { currentApplication, updateApplication, createApplication, currentUser, currentDate, systemSettings, showToast } = useAppContext();
   const [uploading, setUploading] = useState<string | null>(null);
   
   // UI State for tracking download steps
@@ -68,6 +71,10 @@ export const Dashboard: React.FC = () => {
   const [isSubmittingLink, setIsSubmittingLink] = useState(false);
 
   const [showRevealModal, setShowRevealModal] = useState(false);
+
+  // Derived state to fix "Cannot find name" errors
+  const team = currentApplication?.team;
+  const status = currentApplication?.status;
 
   useEffect(() => {
     if (isRevealPhase && currentApplication) {
@@ -171,7 +178,6 @@ export const Dashboard: React.FC = () => {
           try {
               const teamId = Math.random().toString(36).substring(7);
               
-              // Define logoKey as string | undefined (not null)
               let logoKey: string | undefined = undefined;
 
               if (logoFile) {
@@ -188,7 +194,7 @@ export const Dashboard: React.FC = () => {
                   teamName: teamForm.name,
                   category: teamForm.category,
                   theme: teamForm.theme,
-                  selectedVerse: teamForm.theme === Theme.AYET ? teamForm.selectedVerse : undefined, // Ensure undefined if empty
+                  selectedVerse: teamForm.theme === Theme.AYET ? teamForm.selectedVerse : undefined, 
                   logoKey: logoKey,
                   students
               });
@@ -205,8 +211,70 @@ export const Dashboard: React.FC = () => {
       }
   };
 
+  // Helper functions
+  const getStatusBadge = (s: ApplicationStatus | undefined) => {
+      switch(s) {
+          case ApplicationStatus.DRAFT: return <span className="text-slate-400 bg-slate-800 px-3 py-1 rounded border border-slate-700 text-sm">Taslak</span>;
+          case ApplicationStatus.PRELIMINARY_SUBMITTED: return <span className="text-blue-400 bg-blue-900/30 px-3 py-1 rounded border border-blue-500/50 text-sm">Ön Başvuru</span>;
+          case ApplicationStatus.FINAL_SUBMITTED: return <span className="text-amber-400 bg-amber-900/30 px-3 py-1 rounded border border-amber-500/50 text-sm">Video İnceleniyor</span>;
+          case ApplicationStatus.UNDER_REVIEW: return <span className="text-purple-400 bg-purple-900/30 px-3 py-1 rounded border border-purple-500/50 text-sm">Değerlendiriliyor</span>;
+          case ApplicationStatus.APPROVED: return <span className="text-green-400 bg-green-900/30 px-3 py-1 rounded border border-green-500/50 text-sm">Onaylandı</span>;
+          case ApplicationStatus.GRADED: return <span className="text-teal-400 bg-teal-900/30 px-3 py-1 rounded border border-teal-500/50 text-sm">Puanlandı</span>;
+          case ApplicationStatus.REJECTED: return <span className="text-red-400 bg-red-900/30 px-3 py-1 rounded border border-red-500/50 text-sm">Reddedildi</span>;
+          case ApplicationStatus.NEEDS_FIX: return <span className="text-orange-400 bg-orange-900/30 px-3 py-1 rounded border border-orange-500/50 text-sm">Düzeltme Gerekli</span>;
+          case ApplicationStatus.DISQUALIFIED: return <span className="text-red-600 bg-red-950 px-3 py-1 rounded border border-red-800 text-sm">Diskalifiye</span>;
+          default: return null;
+      }
+  };
+
+  const printTeacherGuide = () => {
+      window.open('https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/Reflect_Shoot_Yarisma_Kilavuzu.pdf', '_blank');
+  };
+
+  const openLinkModal = () => {
+      setSubmissionLink(currentApplication?.team.submissionDownloadUrl || '');
+      setShowLinkModal(true);
+  };
+
+  const submitLink = async () => {
+      if(!submissionLink) return;
+      setIsSubmittingLink(true);
+      try {
+          if (currentApplication) {
+              const updatedApp = {
+                  ...currentApplication,
+                  team: {
+                      ...currentApplication.team,
+                      submissionDownloadUrl: submissionLink,
+                      videoStatus: 'SUBMITTED_LINK' as const
+                  },
+                  status: ApplicationStatus.FINAL_SUBMITTED
+              };
+              await updateApplication(updatedApp);
+              showToast('Video linki gönderildi.', 'success');
+              setShowLinkModal(false);
+          }
+      } catch (error) {
+          console.error(error);
+          showToast('Link gönderilemedi.', 'error');
+      } finally {
+          setIsSubmittingLink(false);
+      }
+  };
+
+  const timelineEvents = [
+      { date: '20 Ocak', label: 'Başvurular' },
+      { date: '13 Şubat', label: 'Son Kayıt' },
+      { date: '20 Mart', label: 'Video Teslim' },
+      { date: '1 Nisan', label: 'Finalistler' },
+      { date: '6 Nisan', label: 'Akademi' },
+      { date: '22 Mayıs', label: 'Gala' }
+  ];
+
   const generateAndDownloadDoc = async (type: 'kvkk' | 'parent', student: Student) => {
       if(!currentApplication) return;
+
+      showToast("Belge oluşturuluyor, lütfen bekleyiniz...", "info");
 
       const randomCode = Math.floor(10000 + Math.random() * 90000).toString();
       const docId = type === 'kvkk' ? `RFS-AR-${randomCode}` : `RFS-VE-${randomCode}`;
@@ -225,54 +293,227 @@ export const Dashboard: React.FC = () => {
       await updateApplication(newApp);
 
       const doc = new jsPDF();
-      
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(20);
-      doc.text(type === 'kvkk' ? "AÇIK RIZA METNİ" : "VELI IZIN BELGESI", 105, 30, { align: "center" });
-      
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Reflect & Shoot Kisa Film Yarismasi`, 105, 40, { align: "center" });
 
-      doc.setFontSize(10);
-      doc.text("Bu belge sistem tarafindan otomatik olusturulmustur.", 105, 50, { align: "center" });
+      // --- ADD TURKISH FONT SUPPORT ---
+      try {
+          if (!cachedFontBase64) {
+              const response = await fetch('/fonts/Roboto-Regular.ttf');
+              if (!response.ok) throw new Error("Yerel font dosyası bulunamadı (/fonts/Roboto-Regular.ttf)");
+              
+              const arrayBuffer = await response.arrayBuffer();
+              const bytes = new Uint8Array(arrayBuffer);
+              let binary = '';
+              const len = bytes.byteLength;
+              for (let i = 0; i < len; i++) {
+                  binary += String.fromCharCode(bytes[i]);
+              }
+              cachedFontBase64 = btoa(binary);
+          }
 
-      doc.setDrawColor(0);
-      doc.setFillColor(245, 245, 245);
-      doc.rect(20, 60, 170, 40, "F");
-      
-      doc.setFont("helvetica", "bold");
-      doc.text("OGRENCI BILGILERI", 25, 70);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Ad Soyad: ${student.firstName} ${student.lastName}`, 25, 80);
-      doc.text(`Okul: ${currentApplication.teacher.school}`, 25, 88);
-      doc.text(`Sinif: ${student.grade}`, 25, 96);
+          if (cachedFontBase64) {
+              doc.addFileToVFS('Roboto-Regular.ttf', cachedFontBase64);
+              doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+              doc.setFont('Roboto'); 
+          }
+      } catch (e) {
+          console.error("Font yükleme hatası:", e);
+          showToast("Font yüklenirken hata oluştu, standart karakterler kullanılacak.", "error");
+      }
+      // ---------------------------------
 
-      doc.setFontSize(10);
-      const bodyText = type === 'kvkk' 
-          ? "Yukarida kimlik bilgileri yer alan ogrencimin, Reflect & Shoot yarismasina katilimi surecinde kisisel verilerinin islenmesine, goruntu ve ses kayitlarinin yarisma tanitimlarinda kullanilmasina 6698 sayili KVKK kapsaminda acik riza gosteriyorum."
-          : "Yukarida kimlik bilgileri yer alan velisi bulundugum ogrencinin, Konya Anadolu Imam Hatip Lisesi tarafindan duzenlenen Reflect & Shoot Kisa Film Yarismasina katilmasina, cekimlerde rol almasina ve ekipte gorev yapmasina izin veriyorum.";
-      
-      const splitText = doc.splitTextToSize(bodyText, 170);
-      doc.text(splitText, 20, 120);
+      if (type === 'parent') {
+          // --- VELİ İZİN BELGESİ ---
+          
+          // 1. Header
+          doc.setFontSize(16);
+          doc.text("VELİ İZİN BELGESİ", 105, 20, { align: "center" });
+          
+          doc.setFontSize(12);
+          doc.text("Reflect & Shoot Kısa Film Yarışması (2026)", 105, 28, { align: "center" });
 
-      doc.text("Tarih: ...../...../2026", 20, 160);
-      doc.text("Veli Ad Soyad: .......................................", 20, 170);
-      doc.text("Imza:", 20, 180);
+          // 2. Body Text
+          doc.setFontSize(10);
+          
+          const margin = 20;
+          const pageWidth = 170; // 210 - 2*20
+          let yPos = 45;
 
-      doc.setTextColor(200);
-      doc.setFontSize(60);
-      doc.text(docId, 105, 150, { align: 'center', angle: 45 });
+          const p1 = `Ben, aşağıda bilgileri yer alan öğrencinin velisi olarak; öğrencimin Reflect & Shoot Kısa Film Yarışması kapsamında yürütülecek olan kısa film üretim sürecine katılmasına izin verdiğimi beyan ederim.`;
+          
+          const p2 = `Bu kapsamda öğrencimin; yarışmaya başvuru sürecinde, film üretimi sırasında ve yarışma süresince gerçekleştirilecek olan görüntü ve ses kayıtlarında (video, fotoğraf, ses kaydı vb.) yer almasını, bu kayıtların yarışma organizasyonu tarafından yarışmanın yürütülmesi, değerlendirilmesi, sonuçların açıklanması ve yarışmanın tanıtımı amacıyla kullanılmasını kabul ediyorum.`;
 
-      doc.setTextColor(0);
-      doc.setFontSize(12);
-      doc.setFont("courier", "bold");
-      
-      doc.setDrawColor(0);
-      doc.rect(140, 10, 50, 15);
-      doc.text(`BELGE ID:`, 142, 16);
-      doc.setTextColor(220, 38, 38);
-      doc.text(docId, 142, 22);
+          const p3 = `Öğrencimin yarışma kapsamında ürettiği kısa filmde yer alan görüntü ve ses kayıtlarının;\n• Yarışmanın resmî internet sitesi,\n• Yarışmaya ait resmî sosyal medya hesapları,\n• Yarışma ile ilişkili dijital ve basılı tanıtım materyalleri\nüzerinde ticari olmayan amaçlarla paylaşılmasına, yayımlanmasına ve arşivlenmesine izin verdiğimi kabul ve beyan ederim.`;
+
+          const p4 = `Yarışma sürecinde öğrencimin, danışman öğretmen gözetiminde ve yarışma kurallarına uygun şekilde hareket edeceğini; yarışma kapsamında gerçekleştirilecek faaliyetlere katılımından doğabilecek olağan risklerin tarafımca bilindiğini ve kabul edildiğini belirtirim.`;
+
+          const p5 = `Bu izin, Reflect & Shoot Kısa Film Yarışması ve yarışma ile doğrudan bağlantılı tanıtım ve bilgilendirme faaliyetleri ile sınırlıdır.`;
+
+          doc.text(doc.splitTextToSize(p1, pageWidth), margin, yPos);
+          yPos += 15;
+          doc.text(doc.splitTextToSize(p2, pageWidth), margin, yPos);
+          yPos += 25;
+          doc.text(doc.splitTextToSize(p3, pageWidth), margin, yPos);
+          yPos += 30;
+          doc.text(doc.splitTextToSize(p4, pageWidth), margin, yPos);
+          yPos += 20;
+          doc.text(doc.splitTextToSize(p5, pageWidth), margin, yPos);
+          yPos += 15;
+
+          // 3. Student Info Block
+          doc.setDrawColor(0);
+          doc.setFillColor(245, 245, 245);
+          doc.rect(margin, yPos, pageWidth, 60, "F");
+          doc.rect(margin, yPos, pageWidth, 60, "S"); 
+
+          let infoY = yPos + 8;
+          doc.setFontSize(11);
+          doc.text("Öğrenci Bilgileri", margin + 5, infoY);
+          infoY += 8;
+          
+          doc.setFontSize(10);
+          const labels = [
+              `Öğrenci Ad Soyad: ${student.firstName} ${student.lastName}`,
+              `Sınıf: ${student.grade}`,
+              `Okul Adı: ${currentApplication.teacher.school}`,
+              `Takım Adı: ${currentApplication.team.name}`,
+              `Kategori: ${currentApplication.team.category}`,
+              `Tema: ${currentApplication.team.theme}`,
+              `(Varsa) Seçilen Ayet: ${currentApplication.team.selectedVerse || '-'}`
+          ];
+
+          labels.forEach(line => {
+              doc.text(line, margin + 5, infoY);
+              infoY += 6;
+          });
+
+          yPos += 70; 
+
+          // 4. Parent Info Block
+          doc.setFontSize(11);
+          doc.text("Veli Bilgileri", margin, yPos);
+          yPos += 8;
+          
+          doc.setFontSize(10);
+          doc.text("Veli Ad Soyad: .................................................................", margin, yPos);
+          yPos += 8;
+          doc.text("Telefon Numarası: ..........................................................", margin, yPos);
+          yPos += 8;
+          doc.text("İmza: ...........................................................................", margin, yPos);
+          yPos += 8;
+          doc.text("Tarih: ...... / ...... / 2026", margin, yPos);
+
+          // 5. Footer Code
+          const footerY = 280;
+          doc.setFontSize(8);
+          doc.setTextColor(100);
+          doc.text("Bu belge Reflect & Shoot dijital sistemi tarafından üretilmiştir.", 105, footerY, { align: "center" });
+          doc.setTextColor(200, 0, 0); 
+          doc.text(`Belge Kodu: ${docId}`, 105, footerY + 5, { align: "center" });
+
+      } else {
+          // --- KVKK AÇIK RIZA METNİ ---
+          let yPos = 20;
+          const margin = 20;
+          const pageWidth = 170;
+          const lineHeight = 4;
+
+          // Helper to check page break
+          const checkPageBreak = (heightToAdd: number) => {
+              if (yPos + heightToAdd > 280) {
+                  doc.addPage();
+                  yPos = 20;
+              }
+          };
+
+          // Title
+          doc.setFontSize(12);
+          doc.text("KİŞİSEL VERİLERİN İŞLENMESİNE İLİŞKİN", 105, yPos, { align: "center" });
+          yPos += 6;
+          doc.text("AYDINLATMA VE AÇIK RIZA METNİ", 105, yPos, { align: "center" });
+          yPos += 8;
+          
+          doc.setFontSize(10);
+          doc.text("Reflect & Shoot Kısa Film Yarışması (2026)", 105, yPos, { align: "center" });
+          yPos += 12;
+
+          doc.setFontSize(9);
+          
+          const intro = `6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) kapsamında, aşağıda bilgileri yer alan öğrencinin velisi olarak; öğrencimin Reflect & Shoot Kısa Film Yarışması’na katılımı sürecinde işlenecek kişisel veriler hakkında tarafıma gerekli aydınlatmanın yapıldığını, bu doğrultuda aşağıda belirtilen hususları okuduğumu, anladığımı ve kabul ettiğimi beyan ederim.`;
+          
+          let lines = doc.splitTextToSize(intro, pageWidth);
+          doc.text(lines, margin, yPos);
+          yPos += (lines.length * lineHeight) + 6;
+
+          const sections = [
+              { title: "1. Veri Sorumlusu", text: "Bu aydınlatma ve açık rıza metni; Reflect & Shoot Kısa Film Yarışması organizasyonu tarafından, yarışmanın başvuru, yürütme, değerlendirme, sonuçlandırma ve tanıtım süreçleri kapsamında hazırlanmıştır." },
+              { title: "2. İşlenen Kişisel Veriler", text: "Yarışma süreci kapsamında aşağıdaki kişisel verilerin işlenebileceği tarafıma bildirilmiştir:\n• Öğrenciye ait kimlik bilgileri (ad, soyad, sınıf bilgisi),\n• Okul bilgisi,\n• Takım bilgileri,\n• Yarışma kapsamında üretilen kısa filmde yer alan görüntü ve ses kayıtları (video, fotoğraf, ses),\n• Yarışma sürecine ilişkin iletişim ve organizasyonel bilgiler." },
+              { title: "3. Kişisel Verilerin İşlenme Amaçları", text: "Yukarıda belirtilen kişisel veriler;\n• Yarışmaya başvuru sürecinin yürütülmesi,\n• Yarışma organizasyonunun planlanması ve yönetilmesi,\n• Jüri değerlendirme süreçlerinin gerçekleştirilmesi,\n• Yarışma sonuçlarının ilan edilmesi,\n• Yarışmaya ilişkin bilgilendirme ve duyuruların yapılması,\n• Yarışmanın tanıtımı ve arşivlenmesi\namaçlarıyla, KVKK’ya uygun şekilde işlenebilecektir." },
+              { title: "4. Görüntü ve Ses Kayıtlarının Kullanımı", text: "Öğrencimin yarışma kapsamında ürettiği kısa filmde yer alan görüntü ve ses kayıtlarının;\n• Yarışmanın resmî internet sitesi,\n• Yarışmaya ait resmî sosyal medya hesapları,\n• Yarışma ile ilişkili dijital ve basılı tanıtım materyalleri\nüzerinde, ticari olmayan amaçlarla paylaşılmasına, yayımlanmasına ve arşivlenmesine açık rıza verdiğimi kabul ve beyan ederim." },
+              { title: "5. Kişisel Verilerin Aktarılması", text: "Kişisel veriler, yarışmanın yürütülmesi amacıyla; yalnızca gerekli olması hâlinde ve KVKK’da öngörülen şartlara uygun olarak, yarışma organizasyonu bünyesinde görevli kişiler ve yetkili kurullar ile paylaşılabilir." },
+              { title: "6. Saklama Süresi", text: "Kişisel veriler, ilgili mevzuatta öngörülen süreler boyunca veya işlenme amaçlarının gerektirdiği süre ile sınırlı olmak kaydıyla saklanacaktır." },
+              { title: "7. Haklarım", text: "KVKK’nın 11. maddesi kapsamında; veri sahibi olarak tarafıma tanınan haklar hakkında bilgilendirildiğimi, bu hakları dilediğim zaman kullanabileceğimi bildiğimi kabul ederim." },
+              { title: "8. Açık Rıza Beyanı", text: "Yukarıda belirtilen tüm hususları okuyup anladığımı; öğrencime ait kişisel verilerin ve yarışma kapsamında üretilen görüntü ve ses kayıtlarının, belirtilen amaçlar doğrultusunda işlenmesine özgür irademle açık rıza verdiğimi kabul, beyan ve taahhüt ederim." }
+          ];
+
+          sections.forEach(sec => {
+              checkPageBreak(20); 
+              doc.setFontSize(9);
+              doc.text(sec.title, margin, yPos);
+              yPos += 5;
+              
+              const secLines = doc.splitTextToSize(sec.text, pageWidth);
+              checkPageBreak(secLines.length * lineHeight);
+              doc.text(secLines, margin, yPos);
+              yPos += (secLines.length * lineHeight) + 6;
+          });
+
+          // Student Info Box
+          checkPageBreak(60);
+          
+          doc.setDrawColor(0);
+          doc.setFillColor(245, 245, 245);
+          doc.rect(margin, yPos, pageWidth, 40, "F");
+          doc.rect(margin, yPos, pageWidth, 40, "S");
+          
+          let infoY = yPos + 8;
+          doc.setFontSize(10);
+          doc.text("Öğrenci Bilgileri", margin + 5, infoY);
+          infoY += 6;
+          doc.setFontSize(9);
+          
+          const studentInfo = [
+              `Öğrenci Ad Soyad: ${student.firstName} ${student.lastName}`,
+              `Sınıf: ${student.grade}`,
+              `Okul Adı: ${currentApplication.teacher.school}`,
+              `Takım Adı: ${currentApplication.team.name}`
+          ];
+          
+          studentInfo.forEach(line => {
+              doc.text(line, margin + 5, infoY);
+              infoY += 5;
+          });
+          
+          yPos += 45;
+
+          // Parent Approval
+          checkPageBreak(40);
+          doc.setFontSize(10);
+          doc.text("Veli Onayı", margin, yPos);
+          yPos += 8;
+          doc.setFontSize(9);
+          doc.text("Veli Ad Soyad: .................................................................", margin, yPos);
+          yPos += 8;
+          doc.text("İmza: ...........................................................................", margin, yPos);
+          yPos += 8;
+          doc.text("Tarih: ...... / ...... / 2026", margin, yPos);
+
+          // Footer Code
+          doc.setFontSize(8);
+          doc.setTextColor(100);
+          doc.text("Bu belge Reflect & Shoot dijital sistemi tarafından üretilmiştir.", 105, 285, { align: "center" });
+          doc.setTextColor(200, 0, 0); 
+          doc.text(`Belge Kodu: ${docId}`, 105, 290, { align: "center" });
+      }
 
       doc.save(`${type === 'kvkk' ? 'Acik_Riza' : 'Veli_Izin'}_${student.firstName}_${student.lastName}.pdf`);
       showToast(`${type === 'kvkk' ? 'Açık Rıza' : 'Veli İzin'} belgesi oluşturuldu.`, 'success');
@@ -335,7 +576,6 @@ export const Dashboard: React.FC = () => {
             const teamId = currentApplication.team.id;
             const customKey = `teams/${teamId}/students/${studentId}/docs/${docId || Date.now()}.pdf`;
 
-            // Returns the key (string)
             const fileKey = await uploadFileToR2(file, customKey);
 
             if (!fileKey) throw new Error("Yükleme anahtarı alınamadı.");
@@ -349,8 +589,8 @@ export const Dashboard: React.FC = () => {
                             ...s,
                             hasKvkkConsent: type === 'kvkk' ? true : s.hasKvkkConsent,
                             hasParentalConsent: type === 'parent' ? true : s.hasParentalConsent,
-                            kvkkConsentUrl: type === 'kvkk' ? fileKey : s.kvkkConsentUrl, // Use fileKey
-                            parentalConsentUrl: type === 'parent' ? fileKey : s.parentalConsentUrl, // Use fileKey
+                            kvkkConsentUrl: type === 'kvkk' ? fileKey : s.kvkkConsentUrl, 
+                            parentalConsentUrl: type === 'parent' ? fileKey : s.parentalConsentUrl, 
                         };
                     }
                     return s;
@@ -378,10 +618,8 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  // Helper to handle download state
   const handleDownloadProcess = (type: 'kvkk' | 'parent', student: Student) => {
       generateAndDownloadDoc(type, student);
-      // Mark as downloaded in UI state to enable upload button
       setDownloadedDocs(prev => new Set(prev).add(`${student.id}-${type}`));
   };
 
@@ -396,195 +634,122 @@ export const Dashboard: React.FC = () => {
         );
   };
 
-  const handleSubmitLink = async () => {
-        if (!submissionLink || !currentApplication) return;
-        setIsSubmittingLink(true);
-        try {
-            const updatedApp = {
-                ...currentApplication,
-                team: {
-                    ...currentApplication.team,
-                    submissionDownloadUrl: submissionLink,
-                    videoStatus: 'SUBMITTED_LINK' as const
-                },
-                status: ApplicationStatus.FINAL_SUBMITTED
-            };
-            await updateApplication(updatedApp);
-            setShowLinkModal(false);
-            showToast('Video linki başarıyla gönderildi.', 'success');
-        } catch (error: any) {
-            console.error(error);
-            showToast('Video linki gönderilemedi.', 'error');
-        } finally {
-            setIsSubmittingLink(false);
-        }
-  };
-
-  const getStatusBadge = (status: ApplicationStatus) => {
-        const styles = {
-            [ApplicationStatus.DRAFT]: 'bg-slate-800 text-slate-400 border-slate-700',
-            [ApplicationStatus.PRELIMINARY_SUBMITTED]: 'bg-blue-900/30 text-blue-400 border-blue-800',
-            [ApplicationStatus.FINAL_SUBMITTED]: 'bg-purple-900/30 text-purple-400 border-purple-800',
-            [ApplicationStatus.UNDER_REVIEW]: 'bg-amber-900/30 text-amber-400 border-amber-800',
-            [ApplicationStatus.APPROVED]: 'bg-emerald-900/30 text-emerald-400 border-emerald-800',
-            [ApplicationStatus.GRADED]: 'bg-teal-900/30 text-teal-400 border-teal-800',
-            [ApplicationStatus.REJECTED]: 'bg-red-900/30 text-red-400 border-red-800',
-            [ApplicationStatus.NEEDS_FIX]: 'bg-orange-900/30 text-orange-400 border-orange-800',
-            [ApplicationStatus.DISQUALIFIED]: 'bg-slate-900 text-white border-slate-700',
-        };
-        return <span className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${styles[status] || 'bg-slate-800'}`}>{status}</span>;
-  };
-
-  const printTeacherGuide = () => {
-      const doc = new jsPDF();
-      doc.setFontSize(16);
-      doc.text("Danışman Öğretmen Rehberi", 10, 10);
-      doc.setFontSize(12);
-      doc.text("Bu belge yapım aşamasındadır.", 10, 20);
-      doc.save("ogretmen_rehberi.pdf");
-  };
-
-  const openLinkModal = () => {
-      setShowLinkModal(true);
-  };
-
-  const timelineEvents = [
-      { date: '15 Aralık', label: 'Ön Kayıt Dönemi' },
-      { date: '20 Ocak', label: 'Başvurular Başladı' },
-      { date: '13 Şubat', label: 'Son Başvuru' },
-      { date: '20 Mart', label: 'Video Yükleme' },
-      { date: '1 Nisan', label: 'Finalistler' },
-      { date: '22 Mayıs', label: 'Gala Gecesi' }
-  ];
-
+  // Render Create Team Form if no application
   if (!currentApplication) {
       return (
-        <div className="bg-slate-950 min-h-screen py-16 px-4 sm:px-6 lg:px-8 font-sans selection:bg-rose-600 selection:text-white relative overflow-hidden">
-            <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }}></div>
-            
-            <div className="max-w-4xl mx-auto relative z-10">
-                <div className="text-center mb-12">
-                    <div className="inline-flex items-center justify-center p-4 bg-rose-900/20 text-rose-500 rounded-2xl mb-6 border border-rose-900/50 shadow-lg">
-                        <Clapperboard size={36} />
-                    </div>
-                    <h1 className="text-4xl font-black text-white tracking-tight">Set Kurulumuna Hoş Geldiniz, {currentUser?.fullName}</h1>
-                    <p className="text-slate-400 mt-2 text-lg font-light">Yönetmen koltuğuna oturmadan önce yapım ekibini oluştur.</p>
-                </div>
+          <div className="bg-slate-950 min-h-screen py-20 px-4 flex justify-center items-center">
+              <div className="max-w-4xl w-full bg-slate-900 rounded-3xl p-8 border border-slate-800 shadow-2xl animate-fadeIn">
+                  <div className="text-center mb-8">
+                      <h1 className="text-3xl font-black text-white mb-2">Takımını Oluştur</h1>
+                      <p className="text-slate-400">Yarışmaya katılmak için takım ve öğrenci bilgilerini giriniz.</p>
+                  </div>
 
-                <div className="bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-800 ring-1 ring-white/5">
-                     <div className="bg-gradient-to-r from-rose-950 to-rose-900 px-8 py-6 border-b border-rose-900 flex items-center justify-between">
-                         <h2 className="text-xl font-bold text-white flex items-center"><Film className="mr-3 text-rose-400"/> Film Seti Kurulum Sihirbazı</h2>
-                         <div className="text-xs font-bold text-rose-200 bg-white/10 px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">Adım 1/2</div>
-                    </div>
-                    
-                    <form onSubmit={handleSubmitTeam} className="p-8 md:p-10 space-y-12">
-                          <section>
-                            <h3 className="text-lg font-bold text-white border-b border-slate-800 pb-4 mb-8 flex items-center gap-3">
-                                <span className="w-7 h-7 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs border border-slate-700 font-bold">1</span>
-                                🎬 Yapım Ekibini Oluştur
-                            </h3>
-                            <div className="space-y-8">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 mb-4 uppercase tracking-widest">Film Türü (Kategori)</label>
-                                    <div className="grid md:grid-cols-2 gap-5">
-                                        <div 
-                                            onClick={() => setTeamForm({...teamForm, category: Category.LIVE_ACTION})}
-                                            className={`cursor-pointer rounded-2xl border-2 p-6 transition-all relative overflow-hidden group ${teamForm.category === Category.LIVE_ACTION ? 'border-amber-500 bg-amber-900/10 shadow-lg' : 'border-slate-800 bg-slate-800/50 hover:border-slate-600'}`}
-                                        >
-                                             <div className="flex items-center gap-4 mb-3">
-                                                <div className={`p-3 rounded-xl ${teamForm.category === Category.LIVE_ACTION ? 'bg-amber-500 text-black' : 'bg-slate-700 text-slate-400'}`}>
-                                                    <Video size={24} />
-                                                </div>
-                                                <h4 className={`text-lg font-bold ${teamForm.category === Category.LIVE_ACTION ? 'text-white' : 'text-slate-300'}`}>Canlı Çekim Filmi</h4>
-                                            </div>
-                                        </div>
-                                         <div 
-                                            onClick={() => setTeamForm({...teamForm, category: Category.AI_ANIMATION})}
-                                            className={`cursor-pointer rounded-2xl border-2 p-6 transition-all relative overflow-hidden group ${teamForm.category === Category.AI_ANIMATION ? 'border-purple-500 bg-purple-900/10 shadow-lg' : 'border-slate-800 bg-slate-800/50 hover:border-slate-600'}`}
-                                        >
-                                            <div className="flex items-center gap-4 mb-3">
-                                                <div className={`p-3 rounded-xl ${teamForm.category === Category.AI_ANIMATION ? 'bg-purple-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
-                                                    <Cpu size={24} />
-                                                </div>
-                                                <h4 className={`text-lg font-bold ${teamForm.category === Category.AI_ANIMATION ? 'text-white' : 'text-slate-300'}`}>AI Animasyon</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Yapım Adı (Takım)</label>
-                                        <input name="name" value={teamForm.name} onChange={handleTeamChange} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3.5 outline-none text-white placeholder-slate-600 font-medium" placeholder="Örn: Kuzey Yıldızı" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Tema Seçimi</label>
-                                        <select name="theme" value={teamForm.theme} onChange={handleTeamChange} className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3.5 outline-none text-white font-medium">
-                                            {Object.values(Theme).map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-                                {teamForm.theme === Theme.AYET && (
-                                    <div className="bg-amber-900/10 p-5 rounded-xl border border-amber-900/30 transition-all">
-                                        <label className="block text-sm font-bold text-amber-500 mb-2 flex items-center gap-2"><BookOpen size={16}/> Hangi Ayet?</label>
-                                        <select name="selectedVerse" value={teamForm.selectedVerse} onChange={handleTeamChange} className="w-full bg-slate-900 border border-amber-500/30 rounded-xl p-3.5 outline-none text-white focus:border-amber-500">
-                                            <option value="">Senaryonun temelini oluşturan ayeti seçiniz</option>
-                                            {versesList.map(v => <option key={v} value={v}>{v}</option>)}
-                                        </select>
-                                        
-                                        {renderVersePreview()}
-                                    </div>
-                                )}
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">Yapım Logosu (Otomatik 128x128px)</label>
-                                    <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 border-dashed text-center">
-                                        <input type="file" onChange={handleLogoUpload} accept="image/*" className="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-rose-900 file:text-rose-100 hover:file:bg-rose-800"/>
-                                        <div className="mt-4 p-4 bg-teal-900/20 rounded-lg border border-teal-900/50 flex items-start gap-3 text-left">
-                                            <CheckCircle2 size={20} className="text-teal-500 flex-shrink-0 mt-0.5"/>
-                                            <div className="text-xs text-teal-300 leading-relaxed">
-                                                <strong className="block text-teal-400 mb-1">Otomatik Formatlama</strong>
-                                                Yüklediğiniz logo, sistem tarafından otomatik olarak <strong>128x128 piksel PNG</strong> formatına dönüştürülecektir. Herhangi bir resim formatı (JPG, PNG, WEBP) yükleyebilirsiniz.
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                        <section>
-                            <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-8">
-                                <h3 className="text-lg font-bold text-white flex items-center gap-3">
-                                    <span className="w-7 h-7 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs border border-slate-700 font-bold">2</span>
-                                    🎭 Cast & Ekip Seçimi
-                                </h3>
-                                <span className="bg-teal-900/30 text-teal-400 text-xs font-bold px-3 py-1.5 rounded-full border border-teal-500/30 shadow-sm">{students.length} / 6 Üye</span>
-                            </div>
-                            <div className="grid md:grid-cols-1 gap-5">
-                                {students.map((student, idx) => (
-                                    <div key={idx} className="bg-slate-800/80 p-6 rounded-2xl border border-slate-700 flex flex-col md:flex-row gap-5 items-end">
-                                        <div className="flex-1 w-full"><input value={student.firstName} onChange={(e) => handleStudentChange(idx, 'firstName', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white" placeholder="Ad" /></div>
-                                        <div className="flex-1 w-full"><input value={student.lastName} onChange={(e) => handleStudentChange(idx, 'lastName', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white" placeholder="Soyad" /></div>
-                                        <div className="w-full md:w-32"><input value={student.grade} onChange={(e) => handleStudentChange(idx, 'grade', e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-white" placeholder="Sınıf" /></div>
-                                    </div>
-                                ))}
-                            </div>
-                             {students.length < 6 && (
-                                <button type="button" onClick={addStudent} className="mt-6 w-full py-4 border-2 border-dashed border-slate-700 rounded-2xl text-slate-400 font-medium hover:border-teal-500 hover:text-teal-400 hover:bg-slate-800/50 transition-all flex items-center justify-center gap-2">
-                                    <UserPlus size={20} /> Yeni Ekip Üyesi Ekle
-                                </button>
-                            )}
-                        </section>
-                        <div className="pt-6 border-t border-slate-800">
-                            <button type="submit" disabled={isCreating} className="w-full bg-gradient-to-r from-rose-700 to-rose-600 hover:from-rose-600 hover:to-rose-500 text-white px-8 py-4 rounded-xl font-bold flex items-center justify-center shadow-lg shadow-rose-900/30 transform transition hover:scale-[1.01] disabled:opacity-70 disabled:cursor-not-allowed text-lg">
-                                {isCreating ? 'Set Kuruluyor...' : 'Kayıt ve Motor!'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-      );
+                  <form onSubmit={handleSubmitTeam} className="space-y-8">
+                      
+                      {/* Team Info */}
+                      <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800">
+                          <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Clapperboard size={20} className="text-rose-500"/> Takım & Proje</h3>
+                          <div className="grid md:grid-cols-2 gap-5">
+                              <div>
+                                  <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Takım Adı</label>
+                                  <input name="name" value={teamForm.name} onChange={handleTeamChange} className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none" placeholder="Yaratıcı bir isim..." />
+                                  {formErrors.teamName && <p className="text-red-500 text-xs mt-1">{formErrors.teamName}</p>}
+                              </div>
+                              <div>
+                                  <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Kategori</label>
+                                  <select name="category" value={teamForm.category} onChange={handleTeamChange} className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none">
+                                      {Object.values(Category).map(c => <option key={c} value={c}>{c}</option>)}
+                                  </select>
+                              </div>
+                              <div>
+                                  <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Tema</label>
+                                  <select name="theme" value={teamForm.theme} onChange={handleTeamChange} className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none">
+                                      {Object.values(Theme).map(t => <option key={t} value={t}>{t}</option>)}
+                                  </select>
+                              </div>
+                              {teamForm.theme === Theme.AYET && (
+                                  <div>
+                                      <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Ayet Seçimi</label>
+                                      <select name="selectedVerse" value={teamForm.selectedVerse} onChange={handleTeamChange} className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none">
+                                          <option value="">Seçiniz...</option>
+                                          {versesList.map(v => <option key={v} value={v}>{v}</option>)}
+                                      </select>
+                                      {formErrors.verse && <p className="text-red-500 text-xs mt-1">{formErrors.verse}</p>}
+                                  </div>
+                              )}
+                          </div>
+                          {renderVersePreview()}
+                          
+                          <div className="mt-5">
+                              <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Takım Logosu</label>
+                              <div className="flex items-center gap-4">
+                                  <div className="w-20 h-20 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700 overflow-hidden">
+                                      {logoFile ? <img src={URL.createObjectURL(logoFile)} className="w-full h-full object-cover" /> : <Upload size={24} className="text-slate-600"/>}
+                                  </div>
+                                  <div>
+                                      <input type="file" onChange={handleLogoUpload} accept="image/*" id="logo-upload" className="hidden" />
+                                      <label htmlFor="logo-upload" className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-bold cursor-pointer transition-colors border border-slate-700">Logo Seç</label>
+                                      <p className="text-[10px] text-slate-500 mt-2">Max 2MB, kare format önerilir.</p>
+                                  </div>
+                              </div>
+                              {formErrors.logo && <p className="text-red-500 text-xs mt-1">{formErrors.logo}</p>}
+                          </div>
+                      </div>
+
+                      {/* Students */}
+                      <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800">
+                          <div className="flex justify-between items-center mb-4">
+                              <h3 className="font-bold text-white flex items-center gap-2"><UserPlus size={20} className="text-teal-500"/> Öğrenci Listesi</h3>
+                              <button type="button" onClick={addStudent} disabled={students.length >= 6} className="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-1 rounded-lg transition-colors border border-slate-700 flex items-center gap-1 disabled:opacity-50">
+                                  <Plus size={14}/> Öğrenci Ekle
+                              </button>
+                          </div>
+                          
+                          <div className="space-y-3">
+                              {students.map((student, i) => (
+                                  <div key={i} className="grid grid-cols-3 gap-3">
+                                      <input 
+                                          placeholder="Ad" 
+                                          value={student.firstName} 
+                                          onChange={(e) => handleStudentChange(i, 'firstName', e.target.value)}
+                                          className="bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white focus:border-teal-500 outline-none"
+                                      />
+                                      <input 
+                                          placeholder="Soyad" 
+                                          value={student.lastName} 
+                                          onChange={(e) => handleStudentChange(i, 'lastName', e.target.value)}
+                                          className="bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white focus:border-teal-500 outline-none"
+                                      />
+                                      <input 
+                                          placeholder="Sınıf (Örn: 11-A)" 
+                                          value={student.grade} 
+                                          onChange={(e) => handleStudentChange(i, 'grade', e.target.value)}
+                                          className="bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white focus:border-teal-500 outline-none"
+                                      />
+                                  </div>
+                              ))}
+                          </div>
+                          {Object.keys(formErrors).some(k => k.startsWith('student')) && <p className="text-red-500 text-xs mt-2">Tüm öğrenci bilgilerini eksiksiz doldurunuz.</p>}
+                      </div>
+
+                      <div className="flex items-center gap-4 p-4 bg-amber-900/20 border border-amber-900/50 rounded-xl">
+                          <AlertTriangle size={24} className="text-amber-500 flex-shrink-0" />
+                          <p className="text-xs text-amber-200">
+                              <strong>Dikkat:</strong> Kayıt sonrası takım bilgileri ve öğrenci listesi değiştirilemez. Lütfen bilgileri kontrol edip onaylayınız.
+                          </p>
+                      </div>
+
+                      <button type="submit" disabled={isCreating} className="w-full bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2">
+                          {isCreating ? 'Oluşturuluyor...' : <><Save size={20}/> Takımı Kaydet ve Başla</>}
+                      </button>
+                  </form>
+              </div>
+          </div>
+      )
   }
 
-  const { team, status } = currentApplication;
+  // Ensure team is defined here implicitly because of the check above
+  if (!team) return null; 
 
   return (
     <div className="bg-slate-950 min-h-screen pb-20 text-slate-200">
@@ -638,92 +803,12 @@ export const Dashboard: React.FC = () => {
           </div>
       )}
 
-      {showRevealModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl animate-fadeIn">
-               <div className={`relative w-full max-w-3xl bg-white rounded-3xl p-10 md:p-14 text-center shadow-2xl overflow-hidden border-8 ${isFinalist ? 'border-amber-400' : 'border-slate-200'}`}>
-                   {isFinalist ? (
-                       <>
-                           <div className="w-32 h-32 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce shadow-xl">
-                               <Trophy size={64} className="drop-shadow-sm" />
-                           </div>
-                           <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">TEBRİKLER!</h2>
-                           <h3 className="text-2xl md:text-3xl font-bold text-amber-500 mb-6">Büyük Finale Kaldınız!</h3>
-                           <p className="text-lg text-slate-600 mb-10 max-w-lg mx-auto leading-relaxed">
-                               Jüri ön elemeyi başarıyla geçtiniz. Artık <strong>Reflect&Shoot Akademi</strong> kapıları sizin için açıldı.
-                           </p>
-                           <button onClick={() => setShowRevealModal(false)} className="bg-amber-500 hover:bg-amber-400 text-white font-black py-4 px-10 rounded-full shadow-lg shadow-amber-500/30 transform hover:scale-105 transition-all text-lg">
-                               Akademiye Giriş Yap
-                           </button>
-                       </>
-                   ) : (
-                       <>
-                           <div className="w-24 h-24 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-6">
-                               <HeartHandshake size={48} />
-                           </div>
-                           <h2 className="text-3xl font-black text-slate-800 mb-4">Teşekkür Ederiz</h2>
-                           <p className="text-slate-600 mb-8 max-w-lg mx-auto leading-relaxed">
-                               Bu yıl finale kalan ekipler arasında yer alamadınız. Ancak hikayenizi bizimle paylaştığınız için minnettarız.
-                           </p>
-                           <button onClick={() => setShowRevealModal(false)} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-8 rounded-xl transition-all">
-                               Panele Dön
-                           </button>
-                       </>
-                   )}
-              </div>
-          </div>
-      )}
-      
-      {showLinkModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-              <div className="bg-white rounded-2xl w-full max-w-md p-8 shadow-2xl relative">
-                   <button onClick={() => setShowLinkModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-                       <ExternalLink size={20} className="rotate-180"/>
-                   </button>
-                   <div className="text-center mb-6">
-                       <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                           <LinkIcon size={32} />
-                       </div>
-                       <h3 className="text-2xl font-black text-slate-900">Video Teslimi</h3>
-                       <p className="text-slate-500 text-sm mt-2">
-                           Videonuzu Google Drive, WeTransfer veya Dropbox gibi bir servise yükleyip, <strong>indirme bağlantısını</strong> buraya yapıştırın.
-                       </p>
-                   </div>
-                   
-                   <div className="space-y-4">
-                       <div>
-                           <label className="block text-xs font-bold text-slate-500 uppercase mb-2">İndirme Bağlantısı</label>
-                           <input 
-                              type="url" 
-                              value={submissionLink}
-                              onChange={(e) => setSubmissionLink(e.target.value)}
-                              placeholder="https://drive.google.com/..."
-                              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none focus:border-blue-500 text-slate-900"
-                           />
-                       </div>
-                       
-                       <div className="bg-amber-50 p-3 rounded-lg border border-amber-100 text-xs text-amber-800 flex gap-2">
-                           <AlertCircle size={16} className="flex-shrink-0" />
-                           Linkin herkese açık olduğundan veya şifre gerektirmediğinden emin olunuz.
-                       </div>
-
-                       <button 
-                         onClick={handleSubmitLink} 
-                         disabled={isSubmittingLink}
-                         className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold shadow-lg transition-all disabled:opacity-70"
-                       >
-                           {isSubmittingLink ? 'Gönderiliyor...' : 'Linki Gönder'}
-                       </button>
-                   </div>
-              </div>
-          </div>
-      )}
-
       {/* --- HERO SECTION --- */}
       <div className="bg-slate-900 text-white pb-32 pt-20 relative overflow-hidden">
           <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }}></div>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
               <div className="flex flex-col md:flex-row items-center gap-10 text-center md:text-left">
-                  {/* Team Logo - Jeweled Look */}
+                  {/* Team Logo */}
                   <div className="w-32 h-32 bg-slate-800 rounded-full p-1 flex items-center justify-center overflow-hidden ring-4 ring-slate-800 shadow-2xl relative flex-shrink-0">
                       {team.logoUrl ? <img src={team.logoUrl} className="w-full h-full object-cover rounded-full opacity-90 hover:opacity-100 transition-opacity" /> : <Users className="text-gray-600" size={40} />}
                   </div>
@@ -828,7 +913,7 @@ export const Dashboard: React.FC = () => {
                                           </div>
                                       </div>
                                       
-                                      {/* Document Actions Grid - Vertically Stacked within Cells */}
+                                      {/* Document Actions Grid */}
                                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                           
                                           {/* Veli İzni Group */}
@@ -922,7 +1007,11 @@ export const Dashboard: React.FC = () => {
                                   {isRevisePhase && isFinalist ? "Final Kurgu (Revize)" : "Video Teslimi"}
                               </div>
                           </div>
-                          {!team.isPreliminaryStageComplete && <Lock className="text-slate-600" size={24}/>}
+                          {!team.isPreliminaryStageComplete && (
+                              <div className="bg-slate-950 p-2 rounded-lg border border-slate-800">
+                                <ShieldCheck className="text-slate-600" size={24}/>
+                              </div>
+                          )}
                       </h2>
                       
                       <div className="pl-0 md:pl-[4.25rem]">
@@ -943,9 +1032,6 @@ export const Dashboard: React.FC = () => {
                                          <p className="text-slate-400 text-sm mb-6">
                                              Sistem <span className="text-white font-bold">{VIDEO_UPLOAD_START_DATE.toLocaleDateString('tr-TR')}</span> tarihinde açılacaktır.
                                          </p>
-                                         <div className="inline-block bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
-                                            <p className="text-slate-400 font-serif italic text-sm">"Ey iman edenler! Sabır ve namazla yardım dileyin..." <span className="text-xs not-italic font-bold text-slate-500 ml-2 uppercase">Bakara: 153</span></p>
-                                        </div>
                                     </div>
                                 )}
 
@@ -1041,6 +1127,70 @@ export const Dashboard: React.FC = () => {
               </div>
           </div>
       </div>
+
+      {showLinkModal && (
+          <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+              <div className="bg-slate-900 rounded-2xl p-8 max-w-md w-full shadow-2xl border border-slate-700 relative">
+                  <button onClick={() => setShowLinkModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white"><X size={20}/></button>
+                  <h3 className="text-xl font-bold text-white mb-2">Video Linki Gönder</h3>
+                  <p className="text-slate-400 text-sm mb-6">Lütfen videonuzu buluta yükleyip (Google Drive, WeTransfer vb.) indirme linkini paylaşın.</p>
+                  
+                  <input 
+                      value={submissionLink}
+                      onChange={(e) => setSubmissionLink(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-white focus:border-blue-500 outline-none mb-4 font-mono text-sm"
+                  />
+                  
+                  <button 
+                      onClick={submitLink}
+                      disabled={isSubmittingLink || !submissionLink}
+                      className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                      {isSubmittingLink ? 'Gönderiliyor...' : <><LinkIcon size={18}/> Linki Teslim Et</>}
+                  </button>
+              </div>
+          </div>
+      )}
+
+      {showRevealModal && (
+          <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 animate-fadeIn">
+              <div className="bg-gradient-to-br from-slate-900 to-slate-950 rounded-3xl p-10 max-w-lg w-full shadow-2xl border border-amber-500/20 text-center relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none"></div>
+                  
+                  <button onClick={() => setShowRevealModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white z-20"><X size={24}/></button>
+
+                  <div className="mb-8 relative z-10">
+                      <div className="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-amber-500/20 animate-pulse">
+                          {isFinalist ? <Trophy size={48} className="text-amber-500 drop-shadow-lg" /> : <HeartHandshake size={48} className="text-slate-400" />}
+                      </div>
+                      <h2 className="text-3xl font-black text-white mb-2 tracking-tight">
+                          {isFinalist ? "Tebrikler Finalist!" : "Teşekkürler"}
+                      </h2>
+                      <p className="text-lg text-slate-400 font-light">
+                          {isFinalist 
+                              ? "Eseriniz jüri değerlendirmesini başarıyla geçti ve finale kaldı." 
+                              : "Bu yıl finalistler arasında yer alamadınız, ancak katılımınız bizim için çok değerliydi."}
+                      </p>
+                  </div>
+
+                  {isFinalist ? (
+                      <div className="bg-amber-900/20 border border-amber-500/30 p-4 rounded-xl mb-6">
+                          <p className="text-amber-200 text-sm font-medium">Akademi paneli erişiminize açılmıştır. Gala gecesi detayları yakında paylaşılacaktır.</p>
+                      </div>
+                  ) : (
+                      <div className="bg-slate-800 border border-slate-700 p-4 rounded-xl mb-6">
+                          <p className="text-slate-300 text-sm">Gelecek yıl tekrar görüşmek dileğiyle.</p>
+                      </div>
+                  )}
+
+                  <button onClick={() => setShowRevealModal(false)} className="bg-slate-100 hover:bg-white text-slate-900 px-8 py-3 rounded-xl font-bold transition-all shadow-lg w-full">
+                      Paneli Görüntüle
+                  </button>
+              </div>
+          </div>
+      )}
+
     </div>
   );
 };
