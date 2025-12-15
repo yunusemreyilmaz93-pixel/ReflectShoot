@@ -298,16 +298,25 @@ export const Dashboard: React.FC = () => {
       try {
           if (!cachedFontBase64) {
               const response = await fetch('/fonts/Roboto-Regular.ttf');
-              if (!response.ok) throw new Error("Yerel font dosyası bulunamadı (/fonts/Roboto-Regular.ttf)");
-              
-              const arrayBuffer = await response.arrayBuffer();
-              const bytes = new Uint8Array(arrayBuffer);
-              let binary = '';
-              const len = bytes.byteLength;
-              for (let i = 0; i < len; i++) {
-                  binary += String.fromCharCode(bytes[i]);
+              if (!response.ok) {
+                  throw new Error(`Font dosyası indirilemedi: ${response.statusText}`);
               }
-              cachedFontBase64 = btoa(binary);
+              const blob = await response.blob();
+              cachedFontBase64 = await new Promise<string>((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                      const result = reader.result as string;
+                      if (!result) {
+                          reject(new Error("Font verisi okunamadı"));
+                          return;
+                      }
+                      // Remove "data:application/octet-stream;base64," prefix
+                      const base64 = result.split(',')[1];
+                      resolve(base64);
+                  };
+                  reader.onerror = () => reject(new Error("Font okuma hatası"));
+                  reader.readAsDataURL(blob);
+              });
           }
 
           if (cachedFontBase64) {
@@ -316,8 +325,10 @@ export const Dashboard: React.FC = () => {
               doc.setFont('Roboto'); 
           }
       } catch (e) {
-          console.error("Font yükleme hatası:", e);
-          showToast("Font yüklenirken hata oluştu, standart karakterler kullanılacak.", "error");
+          console.error("Font Yükleme Hatası:", e);
+          showToast("Belge oluşturulamadı: Türkçe karakter fontu yüklenemedi. Lütfen internet bağlantınızı kontrol edip sayfayı yenileyiniz.", "error");
+          // STOP PROCESS - Do not generate broken PDF
+          return; 
       }
       // ---------------------------------
 
@@ -411,108 +422,105 @@ export const Dashboard: React.FC = () => {
           doc.text(`Belge Kodu: ${docId}`, 105, footerY + 5, { align: "center" });
 
       } else {
-          // --- KVKK AÇIK RIZA METNİ ---
-          let yPos = 20;
-          const margin = 20;
-          const pageWidth = 170;
-          const lineHeight = 4;
+          // --- KVKK AÇIK RIZA METNİ (SINGLE PAGE OPTIMIZED) ---
+          
+          // 1. Header
+          doc.setFontSize(16);
+          doc.text("KİŞİSEL VERİLERİN İŞLENMESİNE İLİŞKİN", 105, 20, { align: "center" });
+          doc.text("AYDINLATMA VE AÇIK RIZA METNİ", 105, 28, { align: "center" });
+          
+          doc.setFontSize(12);
+          doc.text("Reflect & Shoot Kısa Film Yarışması (2026)", 105, 36, { align: "center" });
 
-          // Helper to check page break
-          const checkPageBreak = (heightToAdd: number) => {
-              if (yPos + heightToAdd > 280) {
+          // 2. Body Text
+          doc.setFontSize(10);
+          
+          const margin = 20;
+          const pageWidth = 170; 
+          let yPos = 42; // Raised to fit single page
+
+          const p1 = `6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) kapsamında; aşağıda bilgileri yer alan öğrencinin velisi olarak, öğrencimin Reflect & Shoot Kısa Film Yarışması’na katılımı sürecinde işlenecek kişisel veriler hakkında tarafıma gerekli bilgilendirmenin yapıldığını, bu doğrultuda aşağıdaki hususları okuyup anladığımı beyan ederim.`;
+          
+          const p2 = `Yarışma süreci kapsamında öğrencime ait aşağıdaki kişisel verilerin işlenebileceğini kabul ederim:\nöğrenci kimlik bilgileri (ad, soyad, sınıf), okul bilgisi, takım bilgileri ile yarışma kapsamında üretilen kısa filmde yer alan görüntü ve ses kayıtları (video, fotoğraf, ses).`;
+
+          const p3 = `Bu kişisel verilerin; yarışmaya başvuru ve katılım süreçlerinin yürütülmesi, organizasyonun planlanması ve yönetilmesi, jüri değerlendirme süreçlerinin gerçekleştirilmesi, yarışma sonuçlarının ilan edilmesi, bilgilendirme ve duyuru faaliyetlerinin yapılması ile yarışmanın tanıtımı ve arşivlenmesi amaçlarıyla işlenmesine açık rıza verdiğimi kabul ederim.`;
+
+          const p4 = `Öğrencimin yarışma kapsamında ürettiği kısa filmde yer alan görüntü ve ses kayıtlarının; yarışmanın resmî internet sitesi, yarışmaya ait resmî sosyal medya hesapları ve yarışma ile ilişkili dijital veya basılı tanıtım materyallerinde ticari olmayan amaçlarla kullanılmasına, paylaşılmasına ve yayımlanmasına onay veririm.`;
+
+          const p5 = `Kişisel verilerin, yarışmanın yürütülmesi amacıyla yalnızca gerekli olması hâlinde ve KVKK’da öngörülen şartlara uygun olarak, yarışma organizasyonu bünyesinde görevli yetkililer ile sınırlı olmak kaydıyla paylaşılabileceği tarafıma bildirilmiştir.`;
+
+          const p6 = `Kişisel verilerin, ilgili mevzuatta öngörülen süreler boyunca veya işlenme amacının gerektirdiği süre ile sınırlı olmak üzere saklanacağını; KVKK’nın 11. maddesi kapsamında sahip olduğum haklar hakkında bilgilendirildiğimi ve bu hakları kullanabileceğimi kabul ederim.`;
+
+          const p7 = `Yukarıda belirtilen tüm hususları okuyup anladığımı; öğrencime ait kişisel verilerin ve yarışma kapsamında üretilen görüntü ve ses kayıtlarının belirtilen amaçlar doğrultusunda işlenmesine özgür irademle açık rıza verdiğimi kabul, beyan ve taahhüt ederim.`;
+
+          const paragraphs = [p1, p2, p3, p4, p5, p6, p7];
+
+          paragraphs.forEach((p) => {
+              const lines = doc.splitTextToSize(p, pageWidth);
+              // Check if need new page
+              if (yPos + (lines.length * 5) > 280) {
                   doc.addPage();
                   yPos = 20;
               }
-          };
-
-          // Title
-          doc.setFontSize(12);
-          doc.text("KİŞİSEL VERİLERİN İŞLENMESİNE İLİŞKİN", 105, yPos, { align: "center" });
-          yPos += 6;
-          doc.text("AYDINLATMA VE AÇIK RIZA METNİ", 105, yPos, { align: "center" });
-          yPos += 8;
-          
-          doc.setFontSize(10);
-          doc.text("Reflect & Shoot Kısa Film Yarışması (2026)", 105, yPos, { align: "center" });
-          yPos += 12;
-
-          doc.setFontSize(9);
-          
-          const intro = `6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) kapsamında, aşağıda bilgileri yer alan öğrencinin velisi olarak; öğrencimin Reflect & Shoot Kısa Film Yarışması’na katılımı sürecinde işlenecek kişisel veriler hakkında tarafıma gerekli aydınlatmanın yapıldığını, bu doğrultuda aşağıda belirtilen hususları okuduğumu, anladığımı ve kabul ettiğimi beyan ederim.`;
-          
-          let lines = doc.splitTextToSize(intro, pageWidth);
-          doc.text(lines, margin, yPos);
-          yPos += (lines.length * lineHeight) + 6;
-
-          const sections = [
-              { title: "1. Veri Sorumlusu", text: "Bu aydınlatma ve açık rıza metni; Reflect & Shoot Kısa Film Yarışması organizasyonu tarafından, yarışmanın başvuru, yürütme, değerlendirme, sonuçlandırma ve tanıtım süreçleri kapsamında hazırlanmıştır." },
-              { title: "2. İşlenen Kişisel Veriler", text: "Yarışma süreci kapsamında aşağıdaki kişisel verilerin işlenebileceği tarafıma bildirilmiştir:\n• Öğrenciye ait kimlik bilgileri (ad, soyad, sınıf bilgisi),\n• Okul bilgisi,\n• Takım bilgileri,\n• Yarışma kapsamında üretilen kısa filmde yer alan görüntü ve ses kayıtları (video, fotoğraf, ses),\n• Yarışma sürecine ilişkin iletişim ve organizasyonel bilgiler." },
-              { title: "3. Kişisel Verilerin İşlenme Amaçları", text: "Yukarıda belirtilen kişisel veriler;\n• Yarışmaya başvuru sürecinin yürütülmesi,\n• Yarışma organizasyonunun planlanması ve yönetilmesi,\n• Jüri değerlendirme süreçlerinin gerçekleştirilmesi,\n• Yarışma sonuçlarının ilan edilmesi,\n• Yarışmaya ilişkin bilgilendirme ve duyuruların yapılması,\n• Yarışmanın tanıtımı ve arşivlenmesi\namaçlarıyla, KVKK’ya uygun şekilde işlenebilecektir." },
-              { title: "4. Görüntü ve Ses Kayıtlarının Kullanımı", text: "Öğrencimin yarışma kapsamında ürettiği kısa filmde yer alan görüntü ve ses kayıtlarının;\n• Yarışmanın resmî internet sitesi,\n• Yarışmaya ait resmî sosyal medya hesapları,\n• Yarışma ile ilişkili dijital ve basılı tanıtım materyalleri\nüzerinde, ticari olmayan amaçlarla paylaşılmasına, yayımlanmasına ve arşivlenmesine açık rıza verdiğimi kabul ve beyan ederim." },
-              { title: "5. Kişisel Verilerin Aktarılması", text: "Kişisel veriler, yarışmanın yürütülmesi amacıyla; yalnızca gerekli olması hâlinde ve KVKK’da öngörülen şartlara uygun olarak, yarışma organizasyonu bünyesinde görevli kişiler ve yetkili kurullar ile paylaşılabilir." },
-              { title: "6. Saklama Süresi", text: "Kişisel veriler, ilgili mevzuatta öngörülen süreler boyunca veya işlenme amaçlarının gerektirdiği süre ile sınırlı olmak kaydıyla saklanacaktır." },
-              { title: "7. Haklarım", text: "KVKK’nın 11. maddesi kapsamında; veri sahibi olarak tarafıma tanınan haklar hakkında bilgilendirildiğimi, bu hakları dilediğim zaman kullanabileceğimi bildiğimi kabul ederim." },
-              { title: "8. Açık Rıza Beyanı", text: "Yukarıda belirtilen tüm hususları okuyup anladığımı; öğrencime ait kişisel verilerin ve yarışma kapsamında üretilen görüntü ve ses kayıtlarının, belirtilen amaçlar doğrultusunda işlenmesine özgür irademle açık rıza verdiğimi kabul, beyan ve taahhüt ederim." }
-          ];
-
-          sections.forEach(sec => {
-              checkPageBreak(20); 
-              doc.setFontSize(9);
-              doc.text(sec.title, margin, yPos);
-              yPos += 5;
-              
-              const secLines = doc.splitTextToSize(sec.text, pageWidth);
-              checkPageBreak(secLines.length * lineHeight);
-              doc.text(secLines, margin, yPos);
-              yPos += (secLines.length * lineHeight) + 6;
+              doc.text(lines, margin, yPos);
+              yPos += (lines.length * 5) + 3; // Reduced spacing from 6 to 3 to fit single page
           });
 
-          // Student Info Box
-          checkPageBreak(60);
-          
+          // 3. Student Info Block (Matching Veli İzin Style)
+          if (yPos + 50 > 280) {
+              doc.addPage();
+              yPos = 20;
+          }
+
           doc.setDrawColor(0);
           doc.setFillColor(245, 245, 245);
-          doc.rect(margin, yPos, pageWidth, 40, "F");
-          doc.rect(margin, yPos, pageWidth, 40, "S");
-          
+          doc.rect(margin, yPos, pageWidth, 45, "F");
+          doc.rect(margin, yPos, pageWidth, 45, "S"); 
+
           let infoY = yPos + 8;
-          doc.setFontSize(10);
+          doc.setFontSize(11);
           doc.text("Öğrenci Bilgileri", margin + 5, infoY);
-          infoY += 6;
-          doc.setFontSize(9);
+          infoY += 8;
           
-          const studentInfo = [
+          doc.setFontSize(10);
+          const labels = [
               `Öğrenci Ad Soyad: ${student.firstName} ${student.lastName}`,
               `Sınıf: ${student.grade}`,
               `Okul Adı: ${currentApplication.teacher.school}`,
               `Takım Adı: ${currentApplication.team.name}`
           ];
-          
-          studentInfo.forEach(line => {
-              doc.text(line, margin + 5, infoY);
-              infoY += 5;
-          });
-          
-          yPos += 45;
 
-          // Parent Approval
-          checkPageBreak(40);
-          doc.setFontSize(10);
+          labels.forEach(line => {
+              doc.text(line, margin + 5, infoY);
+              infoY += 6;
+          });
+
+          yPos += 50; // Reduced margin from 55 to 50
+
+          // 4. Parent Approval
+          if (yPos + 40 > 280) {
+              doc.addPage();
+              yPos = 20;
+          }
+
+          doc.setFontSize(11);
           doc.text("Veli Onayı", margin, yPos);
           yPos += 8;
-          doc.setFontSize(9);
+          
+          doc.setFontSize(10);
           doc.text("Veli Ad Soyad: .................................................................", margin, yPos);
           yPos += 8;
           doc.text("İmza: ...........................................................................", margin, yPos);
           yPos += 8;
           doc.text("Tarih: ...... / ...... / 2026", margin, yPos);
 
-          // Footer Code
+          // 5. Footer Code
+          const footerY = 280;
           doc.setFontSize(8);
           doc.setTextColor(100);
-          doc.text("Bu belge Reflect & Shoot dijital sistemi tarafından üretilmiştir.", 105, 285, { align: "center" });
+          doc.text("Bu belge Reflect & Shoot dijital sistemi tarafından üretilmiştir.", 105, footerY, { align: "center" });
           doc.setTextColor(200, 0, 0); 
-          doc.text(`Belge Kodu: ${docId}`, 105, 290, { align: "center" });
+          doc.text(`Belge Kodu: ${docId}`, 105, footerY + 5, { align: "center" });
       }
 
       doc.save(`${type === 'kvkk' ? 'Acik_Riza' : 'Veli_Izin'}_${student.firstName}_${student.lastName}.pdf`);
