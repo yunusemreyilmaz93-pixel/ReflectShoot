@@ -407,7 +407,7 @@ export const Home: React.FC = () => {
                     Yarışma <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500">Temaları</span>
                 </h2>
                 <p className="text-slate-400 text-lg font-light leading-relaxed max-w-2xl">
-                    Kadim kaynaklardan beslenen, sinema diliyle günümüze taşınan özgün hikayeler.
+                    Kutsal kaynaklardan beslenen, sinema diliyle günümüze taşınan özgün hikayeler.
                 </p>
              </div>
              <div className="bg-slate-900 px-5 py-3 rounded-xl border border-slate-800 text-slate-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
