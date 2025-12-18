@@ -15,7 +15,6 @@ export const CMSAcademyTab: React.FC = () => {
         category: 'Senaryo & Tema', 
         isStarterPack: false,
         isFinalistContent: false,
-        mdFile: '',
         pdfFile: '',
         coverImage: ''
     });
@@ -40,7 +39,6 @@ export const CMSAcademyTab: React.FC = () => {
             category: 'Senaryo & Tema', 
             isStarterPack: false, 
             isFinalistContent: false,
-            mdFile: '',
             pdfFile: '',
             coverImage: ''
         });

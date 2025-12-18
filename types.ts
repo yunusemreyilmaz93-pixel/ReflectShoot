@@ -275,7 +275,6 @@ export interface CMSAcademyItem {
     isFinalistContent?: boolean;
     
     // NEW Fields for Admin
-    mdFile?: string; // Public Bucket URL for Markdown content
     pdfFile?: string; // Public Bucket URL for PDF Download
     coverImage?: string; // Public Bucket URL for Card Image
 }
@@ -296,7 +295,6 @@ export interface AcademyContent {
     description: string;
     order: number;
     published: boolean;
-    mdFile: string;
     pdfFile?: string;
     youtubeUrl?: string;
 }
