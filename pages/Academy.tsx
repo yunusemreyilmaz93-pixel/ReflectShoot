@@ -30,11 +30,10 @@ export const Academy: React.FC = () => {
   const publicAcademyItems = cmsAcademy.filter(item => !item.isFinalistContent);
 
   const handleCardClick = (item: any) => {
-      if (item.mdFile) {
-          // If it has a markdown file, go to the detail page
-          navigate(`/academy/${item.id}`);
+      // Direct access to PDF if available, otherwise open URL
+      if (item.pdfFile) {
+          window.open(item.pdfFile, '_blank');
       } else if (item.url) {
-          // Fallback to external link if no MD file but has URL
           window.open(item.url, '_blank');
       }
   };
@@ -172,33 +171,12 @@ export const Academy: React.FC = () => {
                                 
                                 <div className="mt-auto pt-6 border-t border-slate-800 flex items-center justify-between">
                                     <div className="flex gap-2">
-                                        {item.mdFile ? (
-                                            <button className="text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1 hover:underline">
-                                                Oku <ArrowRight size={12}/>
-                                            </button>
-                                        ) : (
-                                            <a 
-                                                href={item.url} 
-                                                target="_blank" 
-                                                rel="noreferrer"
-                                                onClick={(e) => e.stopPropagation()}
-                                                className="text-blue-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1 hover:underline"
-                                            >
-                                                Görüntüle <ExternalLink size={12}/>
-                                            </a>
-                                        )}
-
-                                        {item.pdfFile && (
-                                            <a 
-                                                href={item.pdfFile} 
-                                                target="_blank" 
-                                                rel="noreferrer"
-                                                onClick={(e) => e.stopPropagation()}
-                                                className="text-slate-500 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1 ml-3"
-                                            >
-                                                <Download size={12}/> PDF
-                                            </a>
-                                        )}
+                                        <button 
+                                            className="text-blue-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1 hover:underline"
+                                            onClick={(e) => { e.stopPropagation(); handleCardClick(item); }}
+                                        >
+                                            Görüntüle <ExternalLink size={12}/>
+                                        </button>
                                     </div>
                                     <div className={`w-8 h-8 rounded-full border border-slate-700 flex items-center justify-center text-slate-500 group-hover:bg-slate-800 group-hover:text-white transition-all`}>
                                         <ChevronRight size={16} />
@@ -220,7 +198,7 @@ export const Academy: React.FC = () => {
       </section>
 
       {/* 4. FINALIST MASTERCLASS (Redesigned & Premium) */}
-      <section className="relative z-20 mt-12 pt-24 border-t border-slate-800 bg-slate-950 overflow-hidden">
+      <section className="relative z-20 mt-12 pt-24 border-t border-slate-800 bg-slate-900 overflow-hidden">
           {/* Ambient Glows */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-amber-900/10 blur-[120px] rounded-full pointer-events-none"></div>
           

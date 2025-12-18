@@ -202,7 +202,7 @@ const DEFAULT_CMS_ACADEMY: CMSAcademyItem[] = [
     { id: 'acad_st_4', title: 'Diyalog Yazımı: Az Sözle Çok Şey', description: 'Sinemada görsel anlatımın gücü ve diyaloğun doğru kullanımı.', category: 'Senaryo & Tema', type: 'PDF', url: '#', isStarterPack: false, isFinalistContent: false },
 
     // Teknik & Kurgu
-    // UPDATED: Mobil Sinemacılık with specific URLs and Cover Image
+    // UPDATED: Mobil Sinemacılık - Removed MD file, set PDF and Cover directly
     { 
         id: 'acad_tk_1', 
         title: 'Mobil Sinemacılık: Telefonla Film Çekmek', 
@@ -212,7 +212,7 @@ const DEFAULT_CMS_ACADEMY: CMSAcademyItem[] = [
         url: '#', 
         isStarterPack: true, 
         isFinalistContent: false,
-        mdFile: 'https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/akademi1-mobilfilmcekimisite.md',
+        // Removed mdFile
         pdfFile: 'https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/akademi1-mobilfilmcekimiindir.pdf',
         coverImage: 'https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/akademi1-mobilfilmcekimicover.png'
     },
@@ -860,7 +860,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 url: "#",
                 isStarterPack: true,
                 isFinalistContent: false,
-                mdFile: "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/akademi1-mobilfilmcekimisite.md",
+                // Removed mdFile
                 pdfFile: "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/akademi1-mobilfilmcekimiindir.pdf",
                 coverImage: "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/akademi1-mobilfilmcekimicover.png"
             };

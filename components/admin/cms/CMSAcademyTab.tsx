@@ -100,10 +100,6 @@ export const CMSAcademyTab: React.FC = () => {
                         <h4 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2"><FileText size={14}/> Dosya Bağlantıları (Public URL)</h4>
                         <div className="space-y-3">
                             <div>
-                                <label className="label-text text-[10px]">Markdown Yazı (.md)</label>
-                                <input value={academyForm.mdFile} onChange={(e) => setAcademyForm({...academyForm, mdFile: e.target.value})} className="input-field text-xs" placeholder="https://pub-...r2.dev/yazi.md" />
-                            </div>
-                            <div>
                                 <label className="label-text text-[10px]">İndirilebilir PDF (.pdf)</label>
                                 <input value={academyForm.pdfFile} onChange={(e) => setAcademyForm({...academyForm, pdfFile: e.target.value})} className="input-field text-xs" placeholder="https://pub-...r2.dev/dosya.pdf" />
                             </div>
@@ -190,7 +186,6 @@ export const CMSAcademyTab: React.FC = () => {
                                     <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">{item.category}</span>
                                     {item.isStarterPack && <span className="text-[10px] bg-green-900/30 text-green-400 px-2 py-0.5 rounded border border-green-900/50">Başlangıç</span>}
                                     {item.isFinalistContent && <span className="text-[10px] bg-amber-900/30 text-amber-400 px-2 py-0.5 rounded border border-amber-900/50 flex items-center gap-1"><Crown size={10}/> Finalist</span>}
-                                    {item.mdFile && <span className="text-[10px] bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded border border-blue-900/50">Markdown</span>}
                                     {item.pdfFile && <span className="text-[10px] bg-red-900/30 text-red-400 px-2 py-0.5 rounded border border-red-900/50">PDF</span>}
                                 </div>
                                 <p className="text-xs text-slate-500 mt-1">{item.description}</p>
