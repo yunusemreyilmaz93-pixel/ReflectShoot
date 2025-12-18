@@ -269,10 +269,15 @@ export interface CMSAcademyItem {
     title: string;
     description: string;
     type: 'PDF' | 'VIDEO' | 'LINK';
-    url: string;
-    category: 'Senaryo & Tema' | 'Teknik & Kurgu' | 'Yapay Zeka' | 'İlham & Rehber'; // Simplified categories
+    url: string; // General/Legacy URL
+    category: 'Senaryo & Tema' | 'Teknik & Kurgu' | 'Yapay Zeka' | 'İlham & Rehber';
     isStarterPack?: boolean;
-    isFinalistContent?: boolean; // New flag for Finalist Lounge
+    isFinalistContent?: boolean;
+    
+    // NEW Fields for Admin
+    mdFile?: string; // Public Bucket URL for Markdown content
+    pdfFile?: string; // Public Bucket URL for PDF Download
+    coverImage?: string; // Public Bucket URL for Card Image
 }
 
 export interface CMSTimelineItem {
@@ -281,4 +286,17 @@ export interface CMSTimelineItem {
     title: string;
     description: string;
     order: number;
+}
+
+// Deprecated in favor of CMSAcademyItem, but kept for type safety in existing (unused) components
+export interface AcademyContent {
+    id: string;
+    slug: string;
+    title: string;
+    description: string;
+    order: number;
+    published: boolean;
+    mdFile: string;
+    pdfFile?: string;
+    youtubeUrl?: string;
 }

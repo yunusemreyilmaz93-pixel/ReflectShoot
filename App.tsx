@@ -9,6 +9,7 @@ import { Apply } from './pages/Apply';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Academy } from './pages/Academy';
+import { AcademyDetail } from './pages/AcademyDetail';
 import { Finals } from './pages/Finals';
 import { Gallery } from './pages/Gallery';
 import { Admin } from './pages/Admin';
@@ -162,6 +163,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/academy" element={<Academy />} />
+          <Route path="/academy/:id" element={<AcademyDetail />} />
           <Route path="/finals" element={<Finals />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/faq" element={<FAQ />} />

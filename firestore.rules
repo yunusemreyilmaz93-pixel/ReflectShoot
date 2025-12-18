@@ -41,6 +41,9 @@ service cloud.firestore {
     match /cms_gallery/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
     match /cms_academy/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
     match /cms_timeline/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    
+    // Allow public read for new dynamic academy contents
+    match /academycontent/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
 
     // --- 2. USERS ---
     match /users/{userId} {

@@ -39,11 +39,14 @@ import {
     EvaluationCriteria,
     ScoreDocument,
     Team,
+    AcademyContent
 } from '../types';
 
 export const PUBLIC_ASSETS_BASE_URL = "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev";
+export const R2_PUBLIC_BASE_URL = "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev";
 
 const DEFAULT_CMS_FAQS: CMSFaqItem[] = [
+    // ... (Keep existing default FAQs)
     // Genel
     {
         id: 'faq_gen_1',
@@ -191,6 +194,7 @@ const DEFAULT_CMS_FAQS: CMSFaqItem[] = [
 ];
 
 const DEFAULT_CMS_ACADEMY: CMSAcademyItem[] = [
+    // ... (Keep existing default Academy items)
     // Senaryo & Tema
     { id: 'acad_st_1', title: 'Kahramanın Yolculuğu ve Maneviyat', description: 'Joseph Campbell’in monomit yapısının İslami anlatı geleneğiyle harmanlanması.', category: 'Senaryo & Tema', type: 'PDF', url: '#', isStarterPack: true, isFinalistContent: false },
     { id: 'acad_st_2', title: 'Ayetlerden Senaryoya: Uyarlama Sanatı', description: 'Kıssaların modern sinema diliyle senaryolaştırılması üzerine teknikler.', category: 'Senaryo & Tema', type: 'PDF', url: '#', isStarterPack: true, isFinalistContent: false },
@@ -198,7 +202,20 @@ const DEFAULT_CMS_ACADEMY: CMSAcademyItem[] = [
     { id: 'acad_st_4', title: 'Diyalog Yazımı: Az Sözle Çok Şey', description: 'Sinemada görsel anlatımın gücü ve diyaloğun doğru kullanımı.', category: 'Senaryo & Tema', type: 'PDF', url: '#', isStarterPack: false, isFinalistContent: false },
 
     // Teknik & Kurgu
-    { id: 'acad_tk_1', title: 'Mobil Sinemacılık: Telefonla Film Çekmek', description: 'Yüksek bütçeli ekipmanlar olmadan akıllı telefonlarla profesyonel görüntü elde etme.', category: 'Teknik & Kurgu', type: 'VIDEO', url: '#', isStarterPack: true, isFinalistContent: false },
+    // UPDATED: Mobil Sinemacılık with specific URLs and Cover Image
+    { 
+        id: 'acad_tk_1', 
+        title: 'Mobil Sinemacılık: Telefonla Film Çekmek', 
+        description: 'Yüksek bütçeli ekipmanlar olmadan akıllı telefonlarla profesyonel görüntü elde etme.', 
+        category: 'Teknik & Kurgu', 
+        type: 'VIDEO', 
+        url: '#', 
+        isStarterPack: true, 
+        isFinalistContent: false,
+        mdFile: 'https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/akademi1-mobilfilmcekimisite.md',
+        pdfFile: 'https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/akademi1-mobilfilmcekimiindir.pdf',
+        coverImage: 'https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/akademi1-mobilfilmcekimicover.png'
+    },
     { id: 'acad_tk_2', title: 'Sinematik Aydınlatma 101', description: 'Doğal ışık kullanımı ve temel 3 nokta ışık tekniği ile atmosfer oluşturma.', category: 'Teknik & Kurgu', type: 'VIDEO', url: '#', isStarterPack: true, isFinalistContent: false },
     { id: 'acad_tk_3', title: 'Kurgu Mantığı: Kesme Nerede Yapılır?', description: 'Sahneler arası geçişlerde ritim ve duygu akışını yönetmek.', category: 'Teknik & Kurgu', type: 'VIDEO', url: '#', isStarterPack: false, isFinalistContent: false },
     { id: 'acad_tk_4', title: 'Ses Kaydı ve Temizliği', description: 'Filmin kalitesini belirleyen en önemli unsur: Temiz ses nasıl alınır?', category: 'Teknik & Kurgu', type: 'PDF', url: '#', isStarterPack: false, isFinalistContent: false },
@@ -217,6 +234,7 @@ const DEFAULT_CMS_ACADEMY: CMSAcademyItem[] = [
 ];
 
 interface AppContextType {
+    // ... (Keep existing types)
     currentUser: UserProfile | null;
     loading: boolean;
     systemSettings: SystemSettings;
@@ -227,6 +245,7 @@ interface AppContextType {
     cmsGallery: CMSGalleryItem[];
     cmsAcademy: CMSAcademyItem[];
     cmsTimeline: CMSTimelineItem[];
+    academyContents: AcademyContent[]; 
     allUsers: UserProfile[];
     allApplications: Application[];
     currentApplication: Application | null;
@@ -275,6 +294,7 @@ interface AppContextType {
     sendAnnouncement: (target: NotificationTarget, title: string, message: string, type: string) => Promise<void>;
     submitPublicVote: (appId: string, fingerprint: string) => Promise<void>;
     getSignedUrl: (key: string) => Promise<string>;
+    seedAcademyContent: () => Promise<void>; // Exposed for Admin
     
     updateSystemSettings: (settings: SystemSettings) => Promise<void>;
     logAction: (action: string, details: string, targetId?: string) => Promise<void>;
@@ -285,6 +305,7 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// ... (Keep existing constants)
 const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
     dates: {
         applicationStart: '2026-01-20T09:00',
@@ -338,6 +359,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [loading, setLoading] = useState(true);
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
     
+    // ... (Keep existing states)
     const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SYSTEM_SETTINGS);
     const [cmsGeneral, setCmsGeneral] = useState<CMSGeneral>(DEFAULT_CMS_GENERAL);
     const [cmsLinks, setCmsLinks] = useState<CMSLinks>(DEFAULT_CMS_LINKS);
@@ -346,6 +368,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [cmsGallery, setCmsGallery] = useState<CMSGalleryItem[]>([]);
     const [cmsAcademy, setCmsAcademy] = useState<CMSAcademyItem[]>([]);
     const [cmsTimeline, setCmsTimeline] = useState<CMSTimelineItem[]>([]);
+    const [academyContents, setAcademyContents] = useState<AcademyContent[]>([]); 
     
     const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
     const [allApplications, setAllApplications] = useState<Application[]>([]);
@@ -385,6 +408,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             setLoading(false);
         });
 
+        // ... (Keep existing subscriptions)
         const unsubSettings = onSnapshot(doc(db, "settings", "config"), (doc) => {
             if(doc.exists()) setSystemSettings(doc.data() as SystemSettings);
         });
@@ -419,6 +443,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             setCmsTimeline(snap.docs.map(d => ({id: d.id, ...d.data()} as CMSTimelineItem)));
         });
 
+        // Academy Contents Subscription
+        // FIXED: Renamed 'academyContents' to 'academycontent' to match db path
+        const unsubAcademyContents = onSnapshot(query(collection(db, "academycontent"), where("published", "==", true)), (snap) => {
+            const items = snap.docs.map(d => ({id: d.id, ...d.data()} as AcademyContent));
+            items.sort((a, b) => a.order - b.order); // Client-side sort
+            setAcademyContents(items);
+        }, (error) => {
+            console.error("Academy Contents snapshot error:", error);
+            // Permission denied or other error. We can safely ignore here or set empty.
+            setAcademyContents([]);
+        });
+
         const interval = setInterval(() => setCurrentDate(new Date()), 60000);
 
         return () => {
@@ -431,11 +467,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             unsubGallery();
             unsubAcademy();
             unsubTimeline();
+            unsubAcademyContents();
             clearInterval(interval);
         };
     }, []);
 
     useEffect(() => {
+        // ... (Keep existing user-specific listeners)
         if (!currentUser) return;
         let unsubs: (() => void)[] = [];
         
@@ -460,7 +498,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 setAuditLogs(snap.docs.map(d => ({id: d.id, ...d.data()} as LogEntry)));
             }));
         } else if (currentUser.role === UserRole.JUDGE) {
-            // JUDGE SPECIFIC QUERY: Only fetch assigned applications to respect security rules
             const q = query(collection(db, "applications"), where("assignedJuryIds", "array-contains", currentUser.uid));
             unsubs.push(onSnapshot(q, (snap) => {
                 setAllApplications(snap.docs.map(d => hydrateApplication(d.data(), d.id)));
@@ -477,6 +514,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return () => unsubs.forEach(u => u());
     }, [currentUser?.uid, currentUser?.role]);
 
+    // ... (Keep existing auth functions)
     const login = async (email: string, pass: string) => {
         await signInWithEmailAndPassword(auth, email, pass);
     };
@@ -517,6 +555,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         await logAction("UPDATE_ROLE", `Kullanıcı ${uid} rolü ${role} yapıldı.`);
     };
 
+    // ... (Keep existing CMS update functions)
     const updateCMSGeneral = async (data: CMSGeneral) => {
         await setDoc(doc(db, "cms", "general"), data);
         showToast('Genel ayarlar güncellendi.', 'success');
@@ -574,6 +613,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         showToast('Adım silindi.', 'success');
     };
 
+    // ... (Keep existing App logic)
     const createApplication = async (data: any) => {
         if(!auth.currentUser) return;
         
@@ -584,7 +624,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             name: data.teamName,
             category: data.category,
             theme: data.theme,
-            selectedVerse: data.selectedVerse, // Will be sanitized if undefined
+            selectedVerse: data.selectedVerse, 
             students: data.students.map((s: any) => ({
                 id: Math.random().toString(36).substring(7),
                 ...s,
@@ -594,7 +634,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             isPreliminaryStageComplete: false,
             isFinalStageComplete: false,
             videoStatus: 'PENDING',
-            logoKey: data.logoKey, // Will be sanitized if undefined
+            logoKey: data.logoKey, 
             logoUrl: data.logoUrl || (data.logoKey ? `${PUBLIC_ASSETS_BASE_URL}/${data.logoKey}` : 'https://via.placeholder.com/128')
         };
         const app: Application = {
@@ -620,15 +660,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const updateApplication = async (app: Application) => {
         if (!auth.currentUser) throw new Error("Oturum açık değil.");
-        
         const safeData = sanitizeData(app);
-        
-        // Use merge: true to avoid overwriting unrelated fields if any
         await setDoc(doc(db, "applications", app.id), safeData, { merge: true });
-        
         const hydrated = hydrateApplication(safeData, app.id);
         if(currentApplication?.id === app.id) setCurrentApplication(hydrated);
-        
         showToast('Değişiklikler kaydedildi.', 'success');
     };
 
@@ -679,11 +714,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             const gradedBy = appData.gradedBy || [];
             if(!gradedBy.includes(currentUser.uid)) {
                 gradedBy.push(currentUser.uid);
-                await updateDoc(appRef, { 
-                    gradedBy, 
-                    // REMOVED STATUS UPDATE TO RESPECT SECURITY RULES
-                    // Status is now managed by Admin or separate pipeline
-                });
+                await updateDoc(appRef, { gradedBy });
             }
         }
         showToast('Puan kaydedildi.', 'success');
@@ -695,7 +726,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return snap.docs.map(d => ({id: d.id, ...d.data()} as ScoreDocument));
     };
 
-    // NEW: Fetch ONLY the current user's score for a specific app
     const fetchMyScore = async (appId: string) => {
         if(!auth.currentUser) return null;
         const docRef = doc(db, "applications", appId, "scores", auth.currentUser.uid);
@@ -805,8 +835,48 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     };
 
+    // --- NEW: Manual Seeding Function for Admin ---
+    const seedAcademyContent = async () => {
+        if (!auth.currentUser || currentUser?.role !== UserRole.ADMIN) {
+            showToast("Bu işlem için yetkiniz yok.", "error");
+            return;
+        }
+        
+        try {
+            // Check specifically for the requested content by ID or title
+            const targetId = 'acad_tk_1';
+            const q = query(collection(db, "cms_academy"), where("title", "==", "Mobil Sinemacılık: Telefonla Film Çekmek"));
+            const snap = await getDocs(q);
+            
+            // If it exists, update it. If not, add it.
+            // Using setDoc with merge to ensure it overwrites if exists or creates new.
+            
+            const contentData: CMSAcademyItem = {
+                id: targetId,
+                title: "Mobil Sinemacılık: Telefonla Film Çekmek",
+                description: "Yüksek bütçeli ekipmanlar olmadan akıllı telefonlarla profesyonel görüntü elde etme.",
+                category: "Teknik & Kurgu",
+                type: "VIDEO", // Or VIDEO/PDF as required by UI
+                url: "#",
+                isStarterPack: true,
+                isFinalistContent: false,
+                mdFile: "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/akademi1-mobilfilmcekimisite.md",
+                pdfFile: "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/akademi1-mobilfilmcekimiindir.pdf",
+                coverImage: "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/akademi1-mobilfilmcekimicover.png"
+            };
+
+            // Use setDoc to create or overwrite with specific ID
+            await setDoc(doc(db, "cms_academy", targetId), contentData);
+            
+            showToast("İçerik başarıyla eklendi/güncellendi.", "success");
+        } catch (err) {
+            console.error("Seeding error:", err);
+            showToast("İçerik eklenirken hata oluştu.", "error");
+        }
+    };
+
     const value = {
-        currentUser, loading, systemSettings, cmsGeneral, cmsLinks, cmsPrizes, cmsFaqs, cmsGallery, cmsAcademy, cmsTimeline,
+        currentUser, loading, systemSettings, cmsGeneral, cmsLinks, cmsPrizes, cmsFaqs, cmsGallery, cmsAcademy, cmsTimeline, academyContents,
         allUsers, allApplications, currentApplication, contactMessages, notifications, auditLogs, currentDate, toasts,
         login, logout, registerTeacher, resendVerificationEmail, resetPassword, updateUserRole,
         updateCMSGeneral, updateCMSLinks, updateCMSPrize, addCMSFaq, updateCMSFaq, deleteCMSFaq,
@@ -815,7 +885,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         createApplication, updateApplication, bulkUpdateApplications,
         assignJury, bulkAssignJury, submitScore, fetchJuryScores, fetchMyScore,
         sendMessage, sendContactMessage, markContactMessageAsRead, markNotificationAsRead, sendAnnouncement, submitPublicVote,
-        updateSystemSettings, logAction, showToast, removeToast, downloadFullBackup, getSignedUrl
+        updateSystemSettings, logAction, showToast, removeToast, downloadFullBackup, getSignedUrl,
+        seedAcademyContent // Exposed
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

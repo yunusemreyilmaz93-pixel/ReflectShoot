@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Plus, BookOpen, Trash2, PenTool, X, Save, CheckSquare, Square, Crown } from 'lucide-react';
+import { Plus, BookOpen, Trash2, PenTool, X, Save, CheckSquare, Square, Crown, FileText, Image } from 'lucide-react';
 import { useAppContext } from '../../../context/AppContext';
 import { CMSAcademyItem } from '../../../types';
 
@@ -14,7 +14,10 @@ export const CMSAcademyTab: React.FC = () => {
         url: '', 
         category: 'Senaryo & Tema', 
         isStarterPack: false,
-        isFinalistContent: false 
+        isFinalistContent: false,
+        mdFile: '',
+        pdfFile: '',
+        coverImage: ''
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -25,7 +28,22 @@ export const CMSAcademyTab: React.FC = () => {
         } else {
              await addCMSAcademyItem(academyForm as CMSAcademyItem);
         }
-        setAcademyForm({ title: '', description: '', type: 'LINK', url: '', category: 'Senaryo & Tema', isStarterPack: false, isFinalistContent: false });
+        resetForm();
+    };
+
+    const resetForm = () => {
+        setAcademyForm({ 
+            title: '', 
+            description: '', 
+            type: 'LINK', 
+            url: '', 
+            category: 'Senaryo & Tema', 
+            isStarterPack: false, 
+            isFinalistContent: false,
+            mdFile: '',
+            pdfFile: '',
+            coverImage: ''
+        });
     };
 
     const handleEdit = (item: CMSAcademyItem) => {
@@ -36,7 +54,7 @@ export const CMSAcademyTab: React.FC = () => {
 
     const handleCancel = () => {
         setIsEditing(null);
-        setAcademyForm({ title: '', description: '', type: 'LINK', url: '', category: 'Senaryo & Tema', isStarterPack: false, isFinalistContent: false });
+        resetForm();
     };
 
     return (
@@ -51,6 +69,8 @@ export const CMSAcademyTab: React.FC = () => {
             </h3>
             
             <form onSubmit={handleSubmit} className={`p-6 rounded-xl border mb-8 transition-all ${isEditing ? 'bg-blue-900/20 border-blue-500/50' : 'bg-slate-900 border-slate-600'}`}>
+                
+                {/* Basic Info */}
                 <div className="grid md:grid-cols-2 gap-5 mb-4">
                     <div>
                         <label className="label-text">Başlık</label>
@@ -68,25 +88,53 @@ export const CMSAcademyTab: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <div className="grid md:grid-cols-3 gap-5 mb-4">
-                    <div>
-                        <label className="label-text">Tip</label>
-                        <select value={academyForm.type} onChange={(e) => setAcademyForm({...academyForm, type: e.target.value as any})} className="input-field">
-                            <option value="PDF">PDF Dosyası</option>
-                            <option value="VIDEO">Video Linki</option>
-                            <option value="LINK">Harici Bağlantı</option>
-                        </select>
-                    </div>
-                    <div className="col-span-2">
-                        <label className="label-text">URL / Link</label>
-                        <input required value={academyForm.url} onChange={(e) => setAcademyForm({...academyForm, url: e.target.value})} className="input-field" placeholder="https://..." />
-                    </div>
-                </div>
+
                 <div className="mb-4">
                     <label className="label-text">Açıklama</label>
                     <input value={academyForm.description} onChange={(e) => setAcademyForm({...academyForm, description: e.target.value})} className="input-field" placeholder="Kısa açıklama..." />
                 </div>
+
+                {/* Configuration / Links */}
+                <div className="grid md:grid-cols-2 gap-6 mb-6 pt-4 border-t border-slate-700">
+                    <div>
+                        <h4 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2"><FileText size={14}/> Dosya Bağlantıları (Public URL)</h4>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="label-text text-[10px]">Markdown Yazı (.md)</label>
+                                <input value={academyForm.mdFile} onChange={(e) => setAcademyForm({...academyForm, mdFile: e.target.value})} className="input-field text-xs" placeholder="https://pub-...r2.dev/yazi.md" />
+                            </div>
+                            <div>
+                                <label className="label-text text-[10px]">İndirilebilir PDF (.pdf)</label>
+                                <input value={academyForm.pdfFile} onChange={(e) => setAcademyForm({...academyForm, pdfFile: e.target.value})} className="input-field text-xs" placeholder="https://pub-...r2.dev/dosya.pdf" />
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2"><Image size={14}/> Görsel & Medya</h4>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="label-text text-[10px]">Kapak Resmi URL</label>
+                                <input value={academyForm.coverImage} onChange={(e) => setAcademyForm({...academyForm, coverImage: e.target.value})} className="input-field text-xs" placeholder="https://..." />
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                                <div className="col-span-1">
+                                    <label className="label-text text-[10px]">Tip</label>
+                                    <select value={academyForm.type} onChange={(e) => setAcademyForm({...academyForm, type: e.target.value as any})} className="input-field text-xs">
+                                        <option value="PDF">PDF</option>
+                                        <option value="VIDEO">Video</option>
+                                        <option value="LINK">Link</option>
+                                    </select>
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="label-text text-[10px]">Harici URL (Video/Link)</label>
+                                    <input value={academyForm.url} onChange={(e) => setAcademyForm({...academyForm, url: e.target.value})} className="input-field text-xs" placeholder="https://youtube..." />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
+                {/* Flags */}
                 <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div 
                         onClick={() => setAcademyForm({...academyForm, isStarterPack: !academyForm.isStarterPack})}
@@ -129,17 +177,21 @@ export const CMSAcademyTab: React.FC = () => {
                 {cmsAcademy.map(item => (
                     <div key={item.id} className={`flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border transition-all ${isEditing === item.id ? 'bg-blue-900/10 border-blue-500/30' : 'bg-slate-900 border-slate-700 hover:border-slate-500'}`}>
                         <div className="flex items-start md:items-center gap-4 mb-3 md:mb-0">
-                            <div className={`p-3 rounded-lg ${isEditing === item.id ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
-                                <BookOpen size={20}/>
-                            </div>
+                            {item.coverImage ? (
+                                <img src={item.coverImage} alt="Cover" className="w-12 h-12 rounded-lg object-cover border border-slate-600"/>
+                            ) : (
+                                <div className={`p-3 rounded-lg ${isEditing === item.id ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                                    <BookOpen size={20}/>
+                                </div>
+                            )}
                             <div>
                                 <h4 className={`font-bold ${isEditing === item.id ? 'text-blue-400' : 'text-white'}`}>{item.title}</h4>
                                 <div className="flex flex-wrap gap-2 mt-1">
                                     <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">{item.category}</span>
                                     {item.isStarterPack && <span className="text-[10px] bg-green-900/30 text-green-400 px-2 py-0.5 rounded border border-green-900/50">Başlangıç</span>}
                                     {item.isFinalistContent && <span className="text-[10px] bg-amber-900/30 text-amber-400 px-2 py-0.5 rounded border border-amber-900/50 flex items-center gap-1"><Crown size={10}/> Finalist</span>}
-                                    <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">{item.type}</span>
-                                    <a href={item.url} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:underline truncate max-w-[150px]">{item.url}</a>
+                                    {item.mdFile && <span className="text-[10px] bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded border border-blue-900/50">Markdown</span>}
+                                    {item.pdfFile && <span className="text-[10px] bg-red-900/30 text-red-400 px-2 py-0.5 rounded border border-red-900/50">PDF</span>}
                                 </div>
                                 <p className="text-xs text-slate-500 mt-1">{item.description}</p>
                             </div>

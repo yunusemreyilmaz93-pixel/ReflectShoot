@@ -1,115 +1,45 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   BookOpen, Film, Video, Link as LinkIcon, FileText, Search, Sprout, Star, PlayCircle, ChevronRight, Bookmark, Library,
   CheckCircle2, Lock, Camera, MonitorPlay, Scissors, Download, Calendar, Mic2, Palette, Cpu, Layers, Zap, Clock,
-  Clapperboard, Aperture, Bot, Rocket, Sparkles, MoveRight
+  Clapperboard, Aperture, Bot, Rocket, Sparkles, MoveRight, ArrowRight, ExternalLink
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 
-// Category Color Mapping - High Contrast for Dark Mode
-const categoryStyles: Record<string, { bg: string, text: string, border: string, shadow: string, hoverText: string }> = {
-    'Senaryo & Tema': { bg: 'bg-amber-500', text: 'text-amber-400', hoverText: 'group-hover:text-amber-400', border: 'border-amber-500', shadow: 'shadow-amber-500/20' },
-    'Teknik & Kurgu': { bg: 'bg-emerald-500', text: 'text-emerald-400', hoverText: 'group-hover:text-emerald-400', border: 'border-emerald-500', shadow: 'shadow-emerald-500/20' },
-    'Yapay Zeka': { bg: 'bg-purple-500', text: 'text-purple-400', hoverText: 'group-hover:text-purple-400', border: 'border-purple-500', shadow: 'shadow-purple-500/20' },
-    'İlham & Rehber': { bg: 'bg-cyan-500', text: 'text-cyan-400', hoverText: 'group-hover:text-cyan-400', border: 'border-cyan-500', shadow: 'shadow-cyan-500/20' },
-    'Default': { bg: 'bg-slate-500', text: 'text-slate-400', hoverText: 'group-hover:text-slate-400', border: 'border-slate-500', shadow: 'shadow-slate-500/20' }
-};
-
-// Title-Based Image Mapping for Unique Cards
+// Title-Based Image Mapping for Unique Cards (Fallback if no coverImage)
 const getTitleImage = (title: string): string => {
     const map: Record<string, string> = {
-        // Senaryo & Tema
-        'Kahramanın Yolculuğu ve Maneviyat': 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=800', 
-        'Ayetlerden Senaryoya: Uyarlama Sanatı': 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?q=80&w=800&auto=format&fit=crop', 
-        'Karakter Yaratımı: Tip Değil Karakter': 'https://images.unsplash.com/photo-1535905557558-afc4877a26fc?auto=format&fit=crop&q=80&w=800', 
-        'Diyalog Yazımı: Az Sözle Çok Şey': 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800', 
-        
-        // Teknik & Kurgu
-        'Mobil Sinemacılık: Telefonla Film Çekmek': 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=800', 
-        'Sinematik Aydınlatma 101': 'https://images.unsplash.com/photo-1550948537-130a1ce83314?auto=format&fit=crop&q=80&w=800', 
-        'Ses Kaydı ve Temizliği': 'https://images.unsplash.com/photo-1590845947698-8924d7409b56?auto=format&fit=crop&q=80&w=800', 
-        'Kurgu Mantığı: Kesme Nerede Yapılır?': 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=800&auto=format&fit=crop', 
-        
-        // Yapay Zeka
-        'Midjourney ile Storyboard Oluşturma': 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=800', 
-        'Runway Gen-2 ile Video Üretimi': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800', 
-        'Suno AI ile Film Müziği': 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&q=80&w=800', 
-        'ElevenLabs ile Karakter Seslendirme': 'https://images.unsplash.com/photo-1617042375876-a13e36732a04?q=80&w=800&auto=format&fit=crop', 
-        
-        // İlham & Rehber
-        'Kısa Filmde Zaman Yönetimi': 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800', 
-        'Set Adabı ve Ekip İletişimi': 'https://images.unsplash.com/photo-1533488765986-dfa2a9939acd?q=80&w=800&auto=format&fit=crop', 
-        'Festival ve Gösterim Stratejileri': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&q=80&w=800', 
-        'Yönetmen Gözüyle Bakmak': 'https://images.unsplash.com/photo-1515634928627-2a4e0dae3ddf?auto=format&fit=crop&q=80&w=800', 
-        
-        // Finalist
-        'İleri Düzey Senaryo Doktorluğu': 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800', 
-        'Festival Stratejileri ve Dağıtım': 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=800' 
+        'Mobil Sinemacılık: Telefonla Film Çekmek': 'https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/Mobil%20Sinemac%C4%B1l%C4%B1k-Telefonla%20Film%20%C3%87ekmek%20Cover.png',
     };
-    return map[title] || 'https://images.unsplash.com/photo-1478720568477-152d9b164e63?auto=format&fit=crop&q=80&w=800'; // Default Starry Sky
+    return map[title] || 'https://images.unsplash.com/photo-1478720568477-152d9b164e63?auto=format&fit=crop&q=80&w=800'; 
 };
 
 export const Academy: React.FC = () => {
   const { cmsAcademy, currentApplication } = useAppContext();
+  const navigate = useNavigate();
   
-  // -- Filter State --
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('Tümü');
-
-  // Consolidated Filter Options
-  const filterOptions = [
-      'Tümü',
-      'Senaryo & Tema',
-      'Teknik & Kurgu',
-      'Yapay Zeka',
-      'İlham & Rehber'
-  ];
-
   const isFinalist = currentApplication?.team.isFinalist;
 
-  // -- Filter Logic --
-  const generalItems = cmsAcademy.filter(i => {
-      if (i.isFinalistContent) return false;
-
-      const q = searchQuery.toLowerCase();
-      const matchesSearch = i.title.toLowerCase().includes(q) || i.description.toLowerCase().includes(q);
-      
-      const matchesFilter = activeFilter === 'Tümü' || i.category === activeFilter;
-      
-      return matchesSearch && matchesFilter;
-  });
+  // Filter out finalist content for general view, unless user is finalist (though logic below handles visual lock/display)
+  // For the main grid, we generally want to show "Starter Pack" or "General" items. 
+  // Let's show all items that are NOT flagged as 'isFinalistContent' in the main grid, OR show them but maybe mark them.
+  // The user asked to show "Yarışmaya Hazırlık Seti" (Starter Pack).
   
-  const hasContent = generalItems.length > 0;
+  const publicAcademyItems = cmsAcademy.filter(item => !item.isFinalistContent);
 
-  const handleOpen = (url: string) => {
-      if (url && url !== '#') {
-          window.open(url, '_blank');
-      } else {
-          alert('Bu kaynak yakında erişime açılacaktır.');
+  const handleCardClick = (item: any) => {
+      if (item.mdFile) {
+          // If it has a markdown file, go to the detail page
+          navigate(`/academy/${item.id}`);
+      } else if (item.url) {
+          // Fallback to external link if no MD file but has URL
+          window.open(item.url, '_blank');
       }
   };
 
-  const handleCategoryClick = (e: React.MouseEvent, category: string) => {
-      e.stopPropagation(); // Prevent opening the link
-      setActiveFilter(category);
-      document.getElementById('resources-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
-  const clearFilters = () => {
-      setSearchQuery('');
-      setActiveFilter('Tümü');
-  };
-
-  const getMicroCopy = (cat: string) => {
-      if(cat === 'İlham & Rehber') return { text: "Yarışma kuralları ve ipuçları", color: "text-cyan-400" };
-      if(cat === 'Teknik & Kurgu') return { text: "Teknik puanı artıran içerikler", color: "text-emerald-400" };
-      if(cat === 'Yapay Zeka') return { text: "AI kategorisi için önerilir", color: "text-purple-400" };
-      if(cat === 'Senaryo & Tema') return { text: "Hikaye puanını artıran içerikler", color: "text-amber-400" };
-      return { text: "Jüri Değerlendirme Kriteri", color: "text-slate-400" };
-  };
-
-  // -- Finalist Masterclass Data --
+  // -- Finalist Masterclass Data (Hardcoded for now as per design, but could be dynamic later) --
   const masterclassSchedule = [
       {
           date: '6 Nisan',
@@ -172,64 +102,6 @@ export const Academy: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Simplified Filter Bar */}
-      <div className="sticky top-20 z-30 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800 shadow-2xl transition-all">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-              
-              <div className="flex flex-col gap-6">
-                  {/* Secondary Filters & Search */}
-                  <div className="flex flex-col md:flex-row gap-4 items-center">
-                      
-                      {/* Search */}
-                      <div className="relative w-full md:w-64 flex-shrink-0">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                          <input 
-                            type="text" 
-                            placeholder="Konu ara..." 
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:border-teal-500 outline-none transition-colors"
-                          />
-                      </div>
-
-                      <div className="w-px h-8 bg-slate-800 hidden md:block"></div>
-
-                      {/* Horizontal Categories - Added padding-right to fix clipping */}
-                      <div className="flex items-center gap-2 w-full overflow-x-auto pb-2 scrollbar-hide pr-12">
-                          {filterOptions.map(opt => {
-                              const styles = categoryStyles[opt] || categoryStyles['Default'];
-                              const isActive = activeFilter === opt;
-                              
-                              if (opt === 'Tümü') {
-                                  return (
-                                      <button
-                                        key={opt}
-                                        onClick={() => setActiveFilter('Tümü')}
-                                        className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-xs font-bold transition-all border ${isActive ? 'bg-slate-200 text-slate-900 border-white' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500'}`}
-                                      >
-                                          Tümü
-                                      </button>
-                                  );
-                              }
-
-                              return (
-                                  <button
-                                    key={opt}
-                                    onClick={() => setActiveFilter(opt)}
-                                    className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-xs font-bold transition-all border flex items-center gap-2 ${isActive ? `${styles.bg} text-white border-transparent shadow-lg` : `bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500 hover:text-white`}`}
-                                  >
-                                      {opt}
-                                  </button>
-                              );
-                          })}
-                          {/* Invisible spacer to ensure last item isn't flush with edge */}
-                          <div className="w-4 flex-shrink-0"></div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      </div>
-
       {/* 3. Cards Grid */}
       <section id="resources-grid" className="py-12 bg-slate-900 relative">
          {/* Subtle Grid Background */}
@@ -248,32 +120,27 @@ export const Academy: React.FC = () => {
              </div>
 
              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {!hasContent && (
+                {publicAcademyItems.length === 0 && (
                     <div className="col-span-full py-24 text-center bg-slate-800/30 rounded-3xl border border-slate-700 border-dashed flex flex-col items-center animate-fadeIn">
                         <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4 border border-slate-700">
                             <Search size={32} className="text-slate-500"/>
                         </div>
-                        <h3 className="text-white font-bold text-xl mb-2">Kaynak Bulunamadı</h3>
-                        <p className="text-slate-500 text-sm mb-6">Seçilen kriterlere uygun içerik mevcut değil.</p>
-                        <button onClick={clearFilters} className="px-8 py-3 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-bold transition-colors shadow-lg flex items-center gap-2">
-                            Filtreleri Temizle
-                        </button>
+                        <h3 className="text-white font-bold text-xl mb-2">İçerik Bulunamadı</h3>
+                        <p className="text-slate-500 text-sm mb-6">Henüz eğitim materyali eklenmemiş.</p>
                     </div>
                 )}
                 
-                {generalItems.map((item, idx) => {
-                    const styles = categoryStyles[item.category] || categoryStyles['Default'];
-                    const microCopy = getMicroCopy(item.category);
-                    const imageUrl = getTitleImage(item.title);
+                {publicAcademyItems.map((item) => {
+                    const imageUrl = item.coverImage || getTitleImage(item.title);
 
                     return (
                         <div 
-                            key={idx} 
-                            onClick={() => handleOpen(item.url)} 
+                            key={item.id} 
+                            onClick={() => handleCardClick(item)} 
                             className={`group relative flex flex-col bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] hover:border-slate-600`}
                         >
                             {/* Hover Gradient Overlay */}
-                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${styles.bg.replace('bg-', 'from-').replace('500', '900/10')} to-transparent pointer-events-none z-0`}></div>
+                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-emerald-900/10 to-transparent pointer-events-none z-0`}></div>
 
                             {/* Image Visual */}
                             <div className={`relative overflow-hidden h-48`}>
@@ -285,22 +152,18 @@ export const Academy: React.FC = () => {
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
                                 
                                 <div className="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-sm p-2 rounded-full border border-white/10 text-white z-10 shadow-lg">
-                                    {item.type === 'VIDEO' ? <PlayCircle size={18}/> : item.type === 'PDF' ? <FileText size={18}/> : <LinkIcon size={18}/>}
+                                    <BookOpen size={18}/>
+                                </div>
+                                <div className="absolute top-4 left-4">
+                                    <span className="text-[10px] bg-slate-900/80 text-white px-2 py-1 rounded border border-white/10 backdrop-blur-sm uppercase tracking-wider font-bold">
+                                        {item.category}
+                                    </span>
                                 </div>
                             </div>
                             
                             {/* Content */}
                             <div className={`p-8 flex flex-col flex-1 relative z-10 bg-slate-900`}>
-                                <div className="flex flex-wrap items-center gap-2 mb-4">
-                                    <span 
-                                        onClick={(e) => handleCategoryClick(e, item.category)}
-                                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${styles.border} ${styles.text} bg-slate-950 cursor-pointer hover:bg-slate-800 transition-colors z-20`}
-                                    >
-                                        {item.category}
-                                    </span>
-                                </div>
-
-                                <h3 className={`font-bold text-white mb-3 transition-colors leading-tight ${styles.hoverText} text-xl`}>
+                                <h3 className={`font-bold text-white mb-3 transition-colors leading-tight group-hover:text-emerald-400 text-xl`}>
                                     {item.title}
                                 </h3>
                                 <p className="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-3 font-light">
@@ -308,8 +171,34 @@ export const Academy: React.FC = () => {
                                 </p>
                                 
                                 <div className="mt-auto pt-6 border-t border-slate-800 flex items-center justify-between">
-                                    <div className={`flex items-center gap-2 text-xs font-bold ${microCopy.color}`}>
-                                        <Bookmark size={14} /> {microCopy.text}
+                                    <div className="flex gap-2">
+                                        {item.mdFile ? (
+                                            <button className="text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1 hover:underline">
+                                                Oku <ArrowRight size={12}/>
+                                            </button>
+                                        ) : (
+                                            <a 
+                                                href={item.url} 
+                                                target="_blank" 
+                                                rel="noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="text-blue-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1 hover:underline"
+                                            >
+                                                Görüntüle <ExternalLink size={12}/>
+                                            </a>
+                                        )}
+
+                                        {item.pdfFile && (
+                                            <a 
+                                                href={item.pdfFile} 
+                                                target="_blank" 
+                                                rel="noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="text-slate-500 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1 ml-3"
+                                            >
+                                                <Download size={12}/> PDF
+                                            </a>
+                                        )}
                                     </div>
                                     <div className={`w-8 h-8 rounded-full border border-slate-700 flex items-center justify-center text-slate-500 group-hover:bg-slate-800 group-hover:text-white transition-all`}>
                                         <ChevronRight size={16} />
