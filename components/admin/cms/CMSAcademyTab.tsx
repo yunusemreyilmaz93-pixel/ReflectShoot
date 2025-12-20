@@ -72,12 +72,12 @@ export const CMSAcademyTab: React.FC = () => {
                 <div className="grid md:grid-cols-2 gap-5 mb-4">
                     <div>
                         <label className="label-text">Başlık</label>
-                        <input required value={academyForm.title} onChange={(e) => setAcademyForm({...academyForm, title: e.target.value})} className="input-field" placeholder="Senaryo 101" />
+                        <input required value={academyForm.title || ''} onChange={(e) => setAcademyForm({...academyForm, title: e.target.value})} className="input-field" placeholder="Senaryo 101" />
                     </div>
                     <div className="grid grid-cols-1 gap-4">
                         <div>
                             <label className="label-text">Kategori</label>
-                            <select value={academyForm.category} onChange={(e) => setAcademyForm({...academyForm, category: e.target.value as any})} className="input-field">
+                            <select value={academyForm.category || 'Senaryo & Tema'} onChange={(e) => setAcademyForm({...academyForm, category: e.target.value as any})} className="input-field">
                                 <option value="Senaryo & Tema">Senaryo & Tema</option>
                                 <option value="Teknik & Kurgu">Teknik & Kurgu</option>
                                 <option value="Yapay Zeka">Yapay Zeka</option>
@@ -89,7 +89,7 @@ export const CMSAcademyTab: React.FC = () => {
 
                 <div className="mb-4">
                     <label className="label-text">Açıklama</label>
-                    <input value={academyForm.description} onChange={(e) => setAcademyForm({...academyForm, description: e.target.value})} className="input-field" placeholder="Kısa açıklama..." />
+                    <input value={academyForm.description || ''} onChange={(e) => setAcademyForm({...academyForm, description: e.target.value})} className="input-field" placeholder="Kısa açıklama..." />
                 </div>
 
                 {/* Configuration / Links */}
@@ -99,7 +99,7 @@ export const CMSAcademyTab: React.FC = () => {
                         <div className="space-y-3">
                             <div>
                                 <label className="label-text text-[10px]">İndirilebilir PDF (.pdf)</label>
-                                <input value={academyForm.pdfFile} onChange={(e) => setAcademyForm({...academyForm, pdfFile: e.target.value})} className="input-field text-xs" placeholder="https://pub-...r2.dev/dosya.pdf" />
+                                <input value={academyForm.pdfFile || ''} onChange={(e) => setAcademyForm({...academyForm, pdfFile: e.target.value})} className="input-field text-xs" placeholder="https://pub-...r2.dev/dosya.pdf" />
                             </div>
                         </div>
                     </div>
@@ -108,12 +108,12 @@ export const CMSAcademyTab: React.FC = () => {
                         <div className="space-y-3">
                             <div>
                                 <label className="label-text text-[10px]">Kapak Resmi URL</label>
-                                <input value={academyForm.coverImage} onChange={(e) => setAcademyForm({...academyForm, coverImage: e.target.value})} className="input-field text-xs" placeholder="https://..." />
+                                <input value={academyForm.coverImage || ''} onChange={(e) => setAcademyForm({...academyForm, coverImage: e.target.value})} className="input-field text-xs" placeholder="https://..." />
                             </div>
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="col-span-1">
                                     <label className="label-text text-[10px]">Tip</label>
-                                    <select value={academyForm.type} onChange={(e) => setAcademyForm({...academyForm, type: e.target.value as any})} className="input-field text-xs">
+                                    <select value={academyForm.type || 'LINK'} onChange={(e) => setAcademyForm({...academyForm, type: e.target.value as any})} className="input-field text-xs">
                                         <option value="PDF">PDF</option>
                                         <option value="VIDEO">Video</option>
                                         <option value="LINK">Link</option>
@@ -121,7 +121,7 @@ export const CMSAcademyTab: React.FC = () => {
                                 </div>
                                 <div className="col-span-2">
                                     <label className="label-text text-[10px]">Harici URL (Video/Link)</label>
-                                    <input value={academyForm.url} onChange={(e) => setAcademyForm({...academyForm, url: e.target.value})} className="input-field text-xs" placeholder="https://youtube..." />
+                                    <input value={academyForm.url || ''} onChange={(e) => setAcademyForm({...academyForm, url: e.target.value})} className="input-field text-xs" placeholder="https://youtube..." />
                                 </div>
                             </div>
                         </div>

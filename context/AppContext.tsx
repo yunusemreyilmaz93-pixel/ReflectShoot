@@ -593,7 +593,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         showToast('İçerik eklendi.', 'success');
     };
     const updateCMSAcademyItem = async (id: string, data: Partial<CMSAcademyItem>) => {
-        await updateDoc(doc(db, "cms_academy", id), data);
+        // Use setDoc with merge to support editing default (client-side only) items
+        await setDoc(doc(db, "cms_academy", id), data, { merge: true });
         showToast('İçerik güncellendi.', 'success');
     };
     const deleteCMSAcademyItem = async (id: string) => {

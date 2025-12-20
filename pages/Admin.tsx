@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
     Search, Check, X, Eye, Award, FileText, Shield, Inbox, Download, 
@@ -690,7 +689,7 @@ const AdminAnnouncements = () => {
                 const finalistTeacherIds = allApplications
                     .filter(app => app.team.isFinalist)
                     .map(app => app.teacher.id);
-                recipients = [...new Set(finalistTeacherIds)];
+                recipients = Array.from(new Set(finalistTeacherIds));
             }
 
             if (recipients.length === 0) {
