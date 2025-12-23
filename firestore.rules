@@ -26,7 +26,8 @@ service cloud.firestore {
     }
 
     // --- 1. SYSTEM SETTINGS & CMS (Public Read) ---
-    match /settings/{document=**} {
+    // Changed from /settings to /system to match AppContext.tsx
+    match /system/{document=**} {
       allow read: if true;
       allow write: if hasRole('ADMIN');
     }
@@ -102,7 +103,8 @@ service cloud.firestore {
     }
 
     // --- 5. PUBLIC VOTES ---
-    match /votes/{voteId} {
+    // Changed from /votes to /public_votes to match AppContext.tsx
+    match /public_votes/{voteId} {
       allow read: if true; 
       allow create: if true; 
     }
