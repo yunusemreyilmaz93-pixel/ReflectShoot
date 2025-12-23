@@ -38,7 +38,8 @@ service cloud.firestore {
     }
 
     match /cms_prizes/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_faqs/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    // Fixed typo: cms_faqs -> cms_faq
+    match /cms_faq/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
     match /cms_gallery/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
     match /cms_academy/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
     match /cms_timeline/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }

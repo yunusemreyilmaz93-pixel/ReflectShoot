@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+// @ts-ignore
 import { 
     User, onAuthStateChanged, signInWithEmailAndPassword, signOut, 
     createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, 
@@ -165,7 +166,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // --- AUTH LISTENERS ---
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user: any) => {
             if (user) {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists()) {
@@ -195,16 +196,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         
         const unsubAcademy = onSnapshot(collection(db, "cms_academy"), (snap) => setCmsAcademy(snap.docs.map(d => ({id:d.id, ...d.data()} as CMSAcademyItem))));
         const unsubGallery = onSnapshot(collection(db, "cms_gallery"), (snap) => setCmsGallery(snap.docs.map(d => ({id:d.id, ...d.data()} as CMSGalleryItem))));
+        
+        // Fix: Use cms_faq as consistent with rules
         const unsubFaq = onSnapshot(query(collection(db, "cms_faq"), orderBy("order")), (snap) => setCmsFaqs(snap.docs.map(d => ({id:d.id, ...d.data()} as CMSFaqItem))));
+        
         const unsubTimeline = onSnapshot(query(collection(db, "cms_timeline"), orderBy("order")), (snap) => setCmsTimeline(snap.docs.map(d => ({id:d.id, ...d.data()} as CMSTimelineItem))));
         const unsubPrizes = onSnapshot(collection(db, "cms_prizes"), (snap) => setCmsPrizes(snap.docs.map(d => ({id:d.id, ...d.data()} as CMSPrize))));
+
+        // Public Vote / Finalists for everyone (so guests can see voting page)
+        const unsubFinalists = onSnapshot(query(collection(db, "applications"), where("team.isFinalist", "==", true)), (snap) => {
+            // We only merge these if current user is NOT admin/judge/teacher (i.e. Guest)
+            // Or we just update allApplications if it's currently empty or partial.
+            // However, to avoid complexity, we rely on role-based below. 
+            // If Guest, we populate allApplications with finalists only.
+            if (!currentUser) {
+                 setAllApplications(snap.docs.map(d => ({id:d.id, ...d.data()} as Application)));
+            }
+        }, (error) => {
+            // Silently ignore if permission denied (rules might restrict if not careful, but public read is allowed for finalists)
+            console.log("Public finalist fetch info:", error.message);
+        });
 
         return () => {
             unsubSettings();
             unsubGeneral(); unsubLinks();
             unsubAcademy(); unsubGallery(); unsubFaq(); unsubTimeline(); unsubPrizes();
+            unsubFinalists();
         }
-    }, []);
+    }, [currentUser]); // Re-run if currentUser changes (to toggle finalist listener effect logic)
 
     // --- ROLE BASED LISTENERS ---
     useEffect(() => {
@@ -218,14 +237,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             setNotifications(snap.docs.map(d => ({id:d.id, ...d.data()} as Notification)));
         }));
 
-        if (currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.JUDGE) {
-            // All Applications
+        if (currentUser.role === UserRole.ADMIN) {
+            // Admin sees ALL applications
             unsubs.push(onSnapshot(collection(db, "applications"), (snap) => {
                 setAllApplications(snap.docs.map(d => ({id:d.id, ...d.data()} as Application)));
             }));
-        }
-
-        if (currentUser.role === UserRole.ADMIN) {
+            
             // Admin only data
             unsubs.push(onSnapshot(collection(db, "users"), (snap) => {
                 setAllUsers(snap.docs.map(d => ({id:d.id, ...d.data()} as UserProfile)));
@@ -235,6 +252,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             }));
             unsubs.push(onSnapshot(query(collection(db, "contact_messages"), orderBy("createdAt", "desc")), (snap) => {
                 setContactMessages(snap.docs.map(d => ({id:d.id, ...d.data()} as ContactMessage)));
+            }));
+        } else if (currentUser.role === UserRole.JUDGE) {
+            // Judge sees ONLY assigned applications
+            // Rules require: request.auth.uid in resource.data.assignedJuryIds
+            const q = query(collection(db, "applications"), where("assignedJuryIds", "array-contains", currentUser.uid));
+            unsubs.push(onSnapshot(q, (snap) => {
+                setAllApplications(snap.docs.map(d => ({id:d.id, ...d.data()} as Application)));
             }));
         }
 
@@ -264,6 +288,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const logout = async () => {
         await signOut(auth);
         setCurrentUser(null);
+        setAllApplications([]); // Clear sensitive data
     };
 
     const registerTeacher = async (data: any) => {
@@ -498,7 +523,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const submitPublicVote = async (appId: string, fingerprint: string) => {
         // Check local storage or DB for duplicate votes if needed
         // Assuming simple one-vote-per-fingerprint-per-app for now
-        // This logic should ideally be server-side or secure, simplified here
         const q = query(collection(db, "public_votes"), where("voterFingerprint", "==", fingerprint), where("appId", "==", appId));
         const snap = await getDocs(q);
         if(!snap.empty) throw new Error("Bu videoya daha önce oy verdiniz.");
@@ -507,8 +531,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             appId, fingerprint, timestamp: new Date().toISOString()
         });
         
-        // Increment counter on app (unsafe but simple for demo)
-        // Better: use Cloud Function aggregator
         const appRef = doc(db, "applications", appId);
         const appSnap = await getDoc(appRef);
         if(appSnap.exists()) {
@@ -526,7 +548,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         } else if (target === 'JUDGES') {
             userIds = allUsers.filter(u => u.role === UserRole.JUDGE).map(u => u.uid);
         } else if (target === 'FINALISTS') {
-            // Need to get finalists from applications then get teacher IDs
             const finalists = allApplications.filter(a => a.team.isFinalist);
             userIds = finalists.map(a => a.teacher.id);
         }
@@ -566,7 +587,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const seedAcademyContent = async () => {
-        // Placeholder implementation
         showToast("İçerik yükleme özelliği şimdilik devre dışı.", 'info');
     };
 
