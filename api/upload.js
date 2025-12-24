@@ -23,15 +23,28 @@ export default async function handler(req, res) {
       },
     });
 
-    const uniqueKey = customKey || `${Date.now()}-${filename.replace(/\s+/g, '-')}`;
+    // Fix B: Sanitize Key - Only allow [a-z0-9/._-]
+    // Replace spaces and special chars with hyphen, convert to lowercase
+    const slugify = (str) => {
+        return str
+            .toLowerCase()
+            .replace(/[^a-z0-9/._-]/g, '-')
+            .replace(/-+/g, '-')            // Remove duplicate hyphens
+            .replace(/^-|-$/g, '');        // Remove leading/trailing hyphens
+    };
+
+    const rawKey = customKey || `${Date.now()}-${filename}`;
+    const uniqueKey = slugify(rawKey);
+
+    // Fix A: Ensure ContentType is strictly what was requested or default to PDF
+    const finalizedContentType = contentType || 'application/pdf';
 
     const signedUrl = await getSignedUrl(S3, new PutObjectCommand({
       Bucket: process.env.R2_PRIVATE_BUCKET_NAME,
       Key: uniqueKey,
-      ContentType: contentType,
+      ContentType: finalizedContentType,
     }), { expiresIn: 3600 });
 
-    // Return fileKey as requested, remove publicUrl usage to prevent client confusion
     return res.status(200).json({ uploadUrl: signedUrl, fileKey: uniqueKey });
   } catch (error) {
     console.error('R2 Upload Error:', error);
