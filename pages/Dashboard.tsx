@@ -40,7 +40,7 @@ export const Dashboard: React.FC = () => {
     useEffect(() => {
         // Reset verify codes when app loads
         setVerifyCodes({});
-    }, [currentApplication]);
+    }, [currentApplication?.id]);
 
     // --- DISQUALIFIED CHECK ---
     if (currentApplication?.status === ApplicationStatus.DISQUALIFIED) {
@@ -158,10 +158,10 @@ export const Dashboard: React.FC = () => {
         
         // Formatted Full Code
         const fullCode = type === 'PARENT' 
-            ? `RFS-26-VE-${code}` 
-            : `RFS-26-AR-${code}`;
+            ? `RFS-VI-${code}` 
+            : `RFS-KV-${code}`;
 
-        // 2. Update Application State with the expected code (only the 5 digits)
+        // 2. Update Application State with the expected code
         const updatedStudents = currentApplication.team.students.map(s => {
             if (s.id === studentId) {
                 return type === 'PARENT' 
@@ -180,33 +180,8 @@ export const Dashboard: React.FC = () => {
 
         const doc = new jsPDF();
 
-        // Load Existing Roboto-Regular Font from public folder
-        try {
-            const fontUrl = '/fonts/Roboto-Regular.ttf';
-            const response = await fetch(fontUrl);
-            
-            if (!response.ok) {
-                throw new Error("Local font file not found");
-            }
-
-            const buffer = await response.arrayBuffer();
-            let binary = '';
-            const bytes = new Uint8Array(buffer);
-            const len = bytes.byteLength;
-            for (let i = 0; i < len; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            
-            doc.addFileToVFS("Roboto-Regular.ttf", binary);
-            doc.addFont("Roboto-Regular.ttf", "Roboto-Regular", "normal");
-            
-            // Set font globally to the registered font
-            doc.setFont("Roboto-Regular", "normal");
-        } catch (e) {
-            console.error("Font loading failed, check /public/fonts/Roboto-Regular.ttf", e);
-            // Fallback font - might have issues with Turkish chars but prevents crash
-            doc.setFont("helvetica", "normal");
-        }
+        // Standard fonts don't support Turkish chars. Using Helvetica and replacing non-supported ones for better outcome if custom font fails.
+        doc.setFont("helvetica", "normal");
 
         // Configuration
         doc.setFontSize(14);
@@ -215,68 +190,61 @@ export const Dashboard: React.FC = () => {
         const maxLineWidth = pageWidth - (margin * 2);
         
         // Header
-        // Re-apply font strictly to ensure it sticks
-        doc.setFont("Roboto-Regular", "normal");
-        
         doc.setFontSize(16);
-        // Using normal weight, distinguishing with Size
         if (type === 'PARENT') {
-            doc.text("VELİ İZİN BELGESİ", pageWidth / 2, 20, { align: "center" });
+            doc.text("VELI IZIN BELGESI", pageWidth / 2, 20, { align: "center" });
         } else {
-            doc.text("KVKK AYDINLATMA VE RIZA METNİ", pageWidth / 2, 20, { align: "center" });
+            doc.text("KVKK AYDINLATMA VE RIZA METNI", pageWidth / 2, 20, { align: "center" });
         }
         
         doc.setFontSize(12);
-        doc.text("Reflect & Shoot Kısa Film Yarışması", pageWidth / 2, 28, { align: "center" });
+        doc.text("Reflect & Shoot Kisa Film Yarismasi", pageWidth / 2, 28, { align: "center" });
 
         // Content Body
         doc.setFontSize(10);
         let yPos = 40;
 
-        const veliText = `Ben, aşağıda bilgileri yer alan öğrencinin velisi / yasal temsilcisi olarak; öğrencimin, Konya Anadolu İmam Hatip Lisesi tarafından düzenlenen Reflect & Shoot Kısa Film Yarışması’na katılmasına, yarışma kapsamında gerçekleştirilecek eğitim, hazırlık ve kısa film üretim süreçlerinde aktif olarak yer almasına izin verdiğimi beyan ederim.
+        const veliText = `Ben, asagida bilgileri yer alan ogrencinin velisi / yasal temsilcisi olarak; ogrencimin, Konya Anadolu Imam Hatip Lisesi tarafindan duzenlenen Reflect & Shoot Kisa Film Yarismasi’na katilmasina, yarismasi kapsaminda gerceklestirilecek egitim, hazirlik ve kisa film uretim sureclerinde aktif olarak yer almasina izin verdigimi beyan ederim.
 
-Bu yarışma kapsamında öğrencimin; kısa film çalışmasında görüntüsünün, sesinin ve performansının yer alabileceğini, hazırlanan filmin jüri değerlendirmesi, ön eleme, arşivleme ve yarışma sürecinin yürütülmesi amacıyla izlenebileceğini ve saklanabileceğini kabul ederim. Ayrıca söz konusu filmin veya filmden alınacak görüntülerin, yarışmanın ve düzenleyici kurumun tanıtımı kapsamında; resmî internet siteleri, sosyal medya hesapları, eğitim ve tanıtım amaçlı sunumlar ile benzeri ticari olmayan mecralarda yayınlanabileceğini bildiğimi ve buna muvafakat ettiğimi beyan ederim.
+Bu yarisma kapsaminda ogrencimin; kisa film calismasinda goruntusunun, sesinin ve performansinin yer alabilecegini, hazirlanan filmin juri degerlendirmesi, on eleme, arsivleme ve yarisma surecinin yurutulmesi amaciyla izlenebilecegini ve saklanabilecegini kabul ederim. Ayrica soz konusu filmin veya filmden alinacak goruntulerin, yarismamin ve duzenleyici kurumun tanitimi kapsaminda; resmi internet siteleri, sosyal medya hesaplari, egitim ve tanitim amacli sunumlar ile benzeri ticari olmayan mecralarda yayinlanabilecegini bildigimi ve buna muvafakat ettigimi beyan ederim.
 
-Öğrencimin yarışma sürecine katılımı sırasında yürürlükteki yarışma kurallarına uyacağını, danışman öğretmen rehberliğinde hareket edeceğini ve bu süreçte doğabilecek her türlü sorumluluğun tarafımca bilindiğini kabul ederim. İşbu belge ile verdiğim izin, yarışma süresiyle sınırlı olmak üzere geçerlidir ve tarafımca özgür irade ile imzalanmıştır.`;
+Ogrencimin yarisma surecine katilimi sirasinda yururlukteki yarisma kurallarina uyacagini, danisman ogretmen rehberliginde hareket edecegini ve bu surecte dogabilecek her turlu sorumlulugun tarafimca bilindigini kabul ederim. Isbu belge ile verdigim izin, yarisma suresiyle sinirli olmak uzere gecerlidir ve tarafimca ozgur irade ile imzalanmistir.`;
 
-        const bodyText = type === 'PARENT' ? veliText : veliText.replace("VELİ İZİN BELGESİ", "KVKK METNİ");
+        const bodyText = type === 'PARENT' ? veliText : veliText.replace("VELI IZIN BELGESI", "KVKK METNI");
 
         const splitText = doc.splitTextToSize(bodyText, maxLineWidth);
         doc.text(splitText, margin, yPos);
         yPos += (splitText.length * 5) + 10;
 
         // Student Info
-        // Using normal weight
-        doc.setFont("Roboto-Regular", "normal");
-        doc.text("ÖĞRENCİ VE PROJE BİLGİLERİ", margin, yPos);
+        doc.text("OGRENCI VE PROJE BILGILERI", margin, yPos);
         yPos += 6;
         
-        doc.text(`Öğrencinin Adı Soyadı: ${student.firstName} ${student.lastName}`, margin, yPos);
+        doc.text(`Ogrencinin Adi Soyadi: ${student.firstName} ${student.lastName}`, margin, yPos);
         yPos += 6;
-        doc.text(`Sınıfı: ${student.grade}`, margin, yPos);
+        doc.text(`Sinifi: ${student.grade}`, margin, yPos);
         yPos += 6;
         doc.text(`Okulu: ${currentApplication.teacher.school}`, margin, yPos);
         yPos += 6;
-        doc.text(`Takım Adı: ${currentApplication.team.name}`, margin, yPos);
+        doc.text(`Takim Adi: ${currentApplication.team.name}`, margin, yPos);
         yPos += 6;
-        doc.text(`Danışman Öğretmen: ${currentApplication.teacher.fullName}`, margin, yPos);
+        doc.text(`Danisman Ogretmen: ${currentApplication.teacher.fullName}`, margin, yPos);
         yPos += 15;
 
         // Signatures
-        doc.setFont("Roboto-Regular", "normal");
-        doc.text("ONAY VE İMZA", margin, yPos);
+        doc.text("ONAY VE IMZA", margin, yPos);
         yPos += 10;
 
-        doc.text(`Veli Adı Soyadı: .........................................................`, margin, yPos);
+        doc.text(`Veli Adi Soyadi: .........................................................`, margin, yPos);
         yPos += 8;
-        doc.text(`İmza: .........................................................`, margin, yPos);
+        doc.text(`Imza: .........................................................`, margin, yPos);
         yPos += 8;
         doc.text(`Tarih: .... / .... / 20....`, margin, yPos);
         yPos += 15;
 
-        doc.text(`Danışman Öğretmen Adı Soyadı: .........................................................`, margin, yPos);
+        doc.text(`Danisman Ogretmen Adi Soyadi: .........................................................`, margin, yPos);
         yPos += 8;
-        doc.text(`İmza: .........................................................`, margin, yPos);
+        doc.text(`Imza: .........................................................`, margin, yPos);
         yPos += 8;
         doc.text(`Tarih: .... / .... / 20....`, margin, yPos);
         
@@ -284,17 +252,15 @@ Bu yarışma kapsamında öğrencimin; kısa film çalışmasında görüntüsü
         const pageHeight = doc.internal.pageSize.getHeight();
         const bottomY = pageHeight - 30;
 
-        // Using normal weight, larger size
-        doc.setFont("Roboto-Regular", "normal");
         doc.setFontSize(18);
         doc.text(fullCode, pageWidth / 2, bottomY, { align: "center" });
         
         doc.setFontSize(10);
         doc.setTextColor(100);
-        doc.text("Sisteme yüklerken bu kodun sadece son 5 hanesini girmeniz yeterlidir.", pageWidth / 2, bottomY + 6, { align: "center" });
+        doc.text("Sisteme yuklerken bu kodun sadece son 5 hanesini girmeniz yeterlidir.", pageWidth / 2, bottomY + 6, { align: "center" });
 
         doc.save(`${type}_${student.firstName}_${student.lastName}.pdf`);
-        showToast(`${type === 'PARENT' ? 'Veli İzin' : 'KVKK'} belgesi oluşturuldu.`, 'success');
+        showToast(`${type === 'PARENT' ? 'Veli İzin' : 'KVKK'} belgesi indirildi.`, 'success');
     };
 
     const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>, studentId: string, type: 'PARENT' | 'KVKK') => {
@@ -304,7 +270,6 @@ Bu yarışma kapsamında öğrencimin; kısa film çalışmasında görüntüsü
         const enteredCode = verifyCodes[`${studentId}_${type}`];
         const student = currentApplication.team.students.find(s => s.id === studentId);
         
-        // Verification Check
         const expectedCode = type === 'PARENT' ? student?.parentalExpectedId : student?.kvkkExpectedId;
         
         if (!expectedCode) {
@@ -319,6 +284,7 @@ Bu yarışma kapsamında öğrencimin; kısa film çalışmasında görüntüsü
         setUploadingDoc(studentId + type);
         
         try {
+            // Document uploads go to PRIVATE bucket via uploadFileToR2
             const key = await uploadFileToR2(file, `consents/${currentApplication.id}/${studentId}_${type}.pdf`);
             
             const updatedStudents = currentApplication.team.students.map(s => {
@@ -335,7 +301,6 @@ Bu yarışma kapsamında öğrencimin; kısa film çalışmasında görüntüsü
                 team: { ...currentApplication.team, students: updatedStudents }
             });
             showToast("Belge başarıyla doğrulandı ve yüklendi.", 'success');
-            // Clear code input
             setVerifyCodes({...verifyCodes, [`${studentId}_${type}`]: ''});
         } catch(err: any) {
             showToast("Yükleme hatası: " + err.message, 'error');
@@ -360,7 +325,7 @@ Bu yarışma kapsamında öğrencimin; kısa film çalışmasında görüntüsü
         try {
             await updateApplication({
                 ...currentApplication,
-                team: { ...currentApplication.team, videoStatus: 'SUBMITTED_LINK' }, // Using 'SUBMITTED_LINK' as 'Submitted to Drive' state
+                team: { ...currentApplication.team, videoStatus: 'SUBMITTED_LINK' }, 
                 status: ApplicationStatus.FINAL_SUBMITTED
             });
             showToast("Video teslim bildirimi alındı.", 'success');
@@ -574,7 +539,7 @@ Bu yarışma kapsamında öğrencimin; kısa film çalışmasında görüntüsü
                             <AlertCircle className="text-blue-400 flex-shrink-0" size={20} />
                             <div className="text-sm text-blue-200">
                                 Her öğrenci için <strong>Veli İzin Belgesi</strong> ve <strong>KVKK Metni</strong> indirilip imzalandıktan sonra sisteme yüklenmelidir. <br/>
-                                Belgeler her öğrenciye özel olarak sistem tarafından üretilir. "Belge Oluştur" butonunu kullanarak ilgili öğrencinin belgesini indiriniz.
+                                "Belge Oluştur" butonuna basarak belgeyi indirin, imzaladıktan sonra üzerinde yazan kodu girerek yükleyiniz.
                             </div>
                         </div>
 
@@ -601,18 +566,21 @@ Bu yarışma kapsamında öğrencimin; kısa film çalışmasında görüntüsü
                                             
                                             <div className="flex gap-2 mb-2">
                                                 <button onClick={() => generateAndDownloadDoc(student.id, 'PARENT')} className="bg-slate-800 text-slate-400 text-[10px] px-2 py-1 rounded border border-slate-700 hover:text-white flex items-center gap-1">
-                                                    <RefreshCw size={10}/> Belge Oluştur
+                                                    <RefreshCw size={10}/> Belge Oluştur & İndir
                                                 </button>
                                             </div>
 
                                             {!student.hasParentalConsent && (
-                                                <input 
-                                                    value={verifyCodes[`${student.id}_PARENT`] || ''} 
-                                                    onChange={(e) => setVerifyCodes({...verifyCodes, [`${student.id}_PARENT`]: e.target.value})}
-                                                    placeholder="5 Haneli Onay Kodu" 
-                                                    className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white outline-none mb-2 text-center tracking-widest font-mono"
-                                                    maxLength={5}
-                                                />
+                                                <div className="flex items-center bg-slate-950 border border-slate-700 rounded-lg overflow-hidden mb-2">
+                                                   <span className="bg-slate-800 px-2 py-2 text-[10px] font-bold text-slate-400 border-r border-slate-700">RFS-VI-</span>
+                                                   <input 
+                                                        value={verifyCodes[`${student.id}_PARENT`] || ''} 
+                                                        onChange={(e) => setVerifyCodes({...verifyCodes, [`${student.id}_PARENT`]: e.target.value})}
+                                                        placeholder="Son 5 Hane" 
+                                                        className="bg-transparent flex-1 p-2 text-xs text-white outline-none text-center tracking-widest font-mono"
+                                                        maxLength={5}
+                                                    />
+                                                </div>
                                             )}
 
                                             <label className={`block w-full border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-all ${student.hasParentalConsent ? 'border-green-900/50 bg-green-900/10' : 'border-slate-700 hover:border-rose-500 hover:bg-slate-800'}`}>
@@ -632,18 +600,21 @@ Bu yarışma kapsamında öğrencimin; kısa film çalışmasında görüntüsü
 
                                             <div className="flex gap-2 mb-2">
                                                 <button onClick={() => generateAndDownloadDoc(student.id, 'KVKK')} className="bg-slate-800 text-slate-400 text-[10px] px-2 py-1 rounded border border-slate-700 hover:text-white flex items-center gap-1">
-                                                    <RefreshCw size={10}/> Belge Oluştur
+                                                    <RefreshCw size={10}/> Belge Oluştur & İndir
                                                 </button>
                                             </div>
 
                                             {!student.hasKvkkConsent && (
-                                                <input 
-                                                    value={verifyCodes[`${student.id}_KVKK`] || ''} 
-                                                    onChange={(e) => setVerifyCodes({...verifyCodes, [`${student.id}_KVKK`]: e.target.value})}
-                                                    placeholder="5 Haneli Onay Kodu" 
-                                                    className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white outline-none mb-2 text-center tracking-widest font-mono"
-                                                    maxLength={5}
-                                                />
+                                                <div className="flex items-center bg-slate-950 border border-slate-700 rounded-lg overflow-hidden mb-2">
+                                                   <span className="bg-slate-800 px-2 py-2 text-[10px] font-bold text-slate-400 border-r border-slate-700">RFS-KV-</span>
+                                                   <input 
+                                                        value={verifyCodes[`${student.id}_KVKK`] || ''} 
+                                                        onChange={(e) => setVerifyCodes({...verifyCodes, [`${student.id}_KVKK`]: e.target.value})}
+                                                        placeholder="Son 5 Hane" 
+                                                        className="bg-transparent flex-1 p-2 text-xs text-white outline-none text-center tracking-widest font-mono"
+                                                        maxLength={5}
+                                                    />
+                                                </div>
                                             )}
 
                                             <label className={`block w-full border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-all ${student.hasKvkkConsent ? 'border-green-900/50 bg-green-900/10' : 'border-slate-700 hover:border-rose-500 hover:bg-slate-800'}`}>
