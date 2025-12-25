@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     Clapperboard, Users, FileText, Video, MessageSquare, AlertCircle, 
     CheckCircle2, Clock, Upload, X, Save, Film, HelpCircle, LogOut, Ban, ShieldAlert,
-    Download, Lock, ExternalLink, RefreshCw, FileCheck, BookOpen, Eye, Calendar, Bell, Copy, Info, Loader2
+    Download, Lock, ExternalLink, RefreshCw, FileCheck, BookOpen, Eye, Calendar, Bell, Copy, Info, Loader2, File
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Category, Theme, ApplicationStatus } from '../types';
@@ -63,6 +63,7 @@ export const Dashboard: React.FC = () => {
 
     // Edit & Upload State
     const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+    const [selectedFiles, setSelectedFiles] = useState<Record<string, File>>({});
     
     // Verification Codes Input State
     const [verifyCodes, setVerifyCodes] = useState<Record<string, string>>({});
@@ -76,6 +77,7 @@ export const Dashboard: React.FC = () => {
     useEffect(() => {
         setVerifyCodes({});
         setDocConfirmations({});
+        setSelectedFiles({});
     }, [currentApplication?.id]);
 
     // Progress Calculation
@@ -215,35 +217,54 @@ export const Dashboard: React.FC = () => {
         }));
     };
 
-    const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>, studentId: string, type: 'PARENT' | 'KVKK') => {
-        const fileInput = e.target;
-        if(!fileInput.files?.[0] || !currentApplication) return;
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setSelectedFiles(prev => ({ ...prev, [key]: file }));
+        }
+    };
+
+    const handleDocUpload = async (studentId: string, type: 'PARENT' | 'KVKK') => {
+        const keyMap = `${studentId}_${type}`;
+        const file = selectedFiles[keyMap];
         
-        const file = fileInput.files[0];
-        const enteredCode = (verifyCodes[`${studentId}_${type}`] || '').trim().toUpperCase();
+        if(!file || !currentApplication) {
+            showToast("Lütfen bir dosya seçiniz.", 'error');
+            return;
+        }
+        
+        const enteredCode = (verifyCodes[keyMap] || '').trim().toUpperCase();
         const student = currentApplication.team.students.find(s => s.id === studentId);
         const expectedCode = type === 'PARENT' ? student?.parentalExpectedId : student?.kvkkExpectedId;
         
         if (!expectedCode) { showToast("Lütfen önce bu belge için bir kod oluşturun.", 'error'); return; }
         if (enteredCode !== expectedCode) { showToast("Kod uyuşmuyor! Lütfen belgeye yazdığınız kodu kontrol edin.", 'error'); return; }
 
-        setUploadingDoc(studentId + type);
+        setUploadingDoc(keyMap);
         try {
             const storagePath = `teams/${currentApplication.id}/students/${studentId}/docs/${type.toLowerCase()}.pdf`;
-            const key = await uploadFileToR2(file, storagePath);
+            const r2Key = await uploadFileToR2(file, storagePath);
             const updatedStudents = currentApplication.team.students.map(s => {
                 if(s.id === studentId) {
-                    return type === 'PARENT' ? { ...s, hasParentalConsent: true, parentalConsentUrl: key } : { ...s, hasKvkkConsent: true, kvkkConsentUrl: key };
+                    return type === 'PARENT' ? { ...s, hasParentalConsent: true, parentalConsentUrl: r2Key } : { ...s, hasKvkkConsent: true, kvkkConsentUrl: r2Key };
                 }
                 return s;
             });
             await updateApplication({ ...currentApplication, team: { ...currentApplication.team, students: updatedStudents } });
+            
+            // Cleanup
+            setSelectedFiles(prev => {
+                const newState = { ...prev };
+                delete newState[keyMap];
+                return newState;
+            });
+            setVerifyCodes(prev => ({ ...prev, [keyMap]: '' }));
+            
             showToast("Belge başarıyla yüklendi.", 'success');
         } catch(err: any) { 
             showToast("Hata: " + err.message, 'error'); 
         } finally { 
             setUploadingDoc(null);
-            fileInput.value = ''; // Reset input to allow re-selection of the same file if needed
         }
     };
 
@@ -453,6 +474,7 @@ export const Dashboard: React.FC = () => {
                                             const confirmationKey = `${student.id}_${type}`;
                                             const isConfirmed = docConfirmations[confirmationKey] || false;
                                             const isUploading = uploadingDoc === confirmationKey;
+                                            const selectedFile = selectedFiles[confirmationKey];
                                             
                                             return (
                                                 <div key={type} className="pt-6 border-t border-slate-800 first:border-t-0 first:pt-0">
@@ -519,22 +541,43 @@ export const Dashboard: React.FC = () => {
                                                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Yükleniyor...</span>
                                                                 </div>
                                                             ) : (
-                                                                <label 
-                                                                    className={`block w-full border-2 border-dashed border-slate-800 hover:border-rose-500/30 hover:bg-slate-800/30 rounded-2xl p-4 text-center cursor-pointer transition-all ${!isConfirmed ? 'opacity-50 hover:border-slate-800 hover:bg-transparent cursor-not-allowed' : ''}`}
-                                                                >
-                                                                    <input 
-                                                                        type="file" 
-                                                                        className="hidden" 
-                                                                        accept=".pdf" 
-                                                                        onClick={(e) => handleUploadClick(e, confirmationKey)}
-                                                                        onChange={(e) => handleDocUpload(e, student.id, type as any)} 
-                                                                        disabled={isUploading}
-                                                                    />
-                                                                    <div className="flex flex-col items-center gap-2">
-                                                                        <Upload size={20} className="text-slate-600 group-hover:text-rose-500" />
-                                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">İmzalı Belgeyi Yükle</span>
-                                                                    </div>
-                                                                </label>
+                                                                <>
+                                                                    <label 
+                                                                        className={`block w-full border-2 border-dashed border-slate-800 hover:border-rose-500/30 hover:bg-slate-800/30 rounded-2xl p-4 text-center cursor-pointer transition-all ${!isConfirmed ? 'opacity-50 hover:border-slate-800 hover:bg-transparent cursor-not-allowed' : ''}`}
+                                                                    >
+                                                                        <input 
+                                                                            type="file" 
+                                                                            className="hidden" 
+                                                                            accept=".pdf" 
+                                                                            onClick={(e) => handleUploadClick(e, confirmationKey)}
+                                                                            onChange={(e) => handleFileSelect(e, confirmationKey)} 
+                                                                            disabled={isUploading}
+                                                                        />
+                                                                        <div className="flex flex-col items-center gap-2">
+                                                                            {selectedFile ? (
+                                                                                <>
+                                                                                    <File size={20} className="text-amber-500" />
+                                                                                    <span className="text-[10px] font-bold text-white max-w-[150px] truncate">{selectedFile.name}</span>
+                                                                                    <span className="text-[9px] text-slate-500">Değiştirmek için tıklayın</span>
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <Upload size={20} className="text-slate-600 group-hover:text-rose-500" />
+                                                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Belgeyi Seç</span>
+                                                                                </>
+                                                                            )}
+                                                                        </div>
+                                                                    </label>
+                                                                    
+                                                                    {selectedFile && (
+                                                                        <button 
+                                                                            onClick={() => handleDocUpload(student.id, type as any)}
+                                                                            className="w-full mt-2 bg-rose-600 hover:bg-rose-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-rose-900/20"
+                                                                        >
+                                                                            Yüklemeyi Tamamla
+                                                                        </button>
+                                                                    )}
+                                                                </>
                                                             )}
                                                         </>
                                                     )}
