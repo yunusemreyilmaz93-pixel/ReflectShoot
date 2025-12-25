@@ -1,4 +1,5 @@
 
+
 export enum UserRole {
   GUEST = 'GUEST',
   PENDING_TEACHER = 'PENDING_TEACHER', // Registered but email not verified or admin not approved
@@ -79,6 +80,8 @@ export interface ScoreDocument {
   criteria: EvaluationCriteria;
   notes: string;
   updatedAt: string;
+  isDraft?: boolean; // NEW: Draft status
+  isRecused?: boolean; // NEW: Jury opted out (conflict of interest)
 }
 
 export interface Team {
@@ -172,7 +175,7 @@ export interface LogEntry {
 export interface ToastMessage {
   id: string;
   message: string;
-  type: 'success' | 'error' | 'info';
+  type: 'success' | 'error' | 'info' | 'warning';
 }
 
 // NEW: Notification System

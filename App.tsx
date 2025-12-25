@@ -1,4 +1,5 @@
 
+
 import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
@@ -18,7 +19,7 @@ import { JuryDashboard } from './pages/JuryDashboard';
 import { PublicVote } from './pages/PublicVote'; // Importapp.auth
 import { AppProvider, useAppContext } from './context/AppContext';
 import { UserRole } from './types';
-import { ShieldAlert, Mail, CheckCircle2, AlertCircle, Info, X, Construction, Settings } from 'lucide-react';
+import { ShieldAlert, Mail, CheckCircle2, AlertCircle, Info, X, Construction, Settings, AlertTriangle } from 'lucide-react';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -54,11 +55,13 @@ const ToastContainer = () => {
           className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-md animate-slideIn transition-all min-w-[300px] ${
             toast.type === 'success' ? 'bg-green-900/90 border-green-700 text-white' : 
             toast.type === 'error' ? 'bg-red-900/90 border-red-700 text-white' : 
+            toast.type === 'warning' ? 'bg-amber-900/90 border-amber-700 text-white' : 
             'bg-slate-900/90 border-slate-700 text-white'
           }`}
         >
            {toast.type === 'success' && <CheckCircle2 size={20} className="text-green-400" />}
            {toast.type === 'error' && <AlertCircle size={20} className="text-red-400" />}
+           {toast.type === 'warning' && <AlertTriangle size={20} className="text-amber-400" />}
            {toast.type === 'info' && <Info size={20} className="text-blue-400" />}
            
            <span className="text-sm font-medium flex-1">{toast.message}</span>

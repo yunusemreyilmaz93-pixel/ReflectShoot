@@ -8,7 +8,7 @@ import {
 import { 
     doc, getDoc, setDoc, updateDoc, collection, query, where, onSnapshot, 
     addDoc, getDocs, deleteDoc, orderBy, serverTimestamp, limit, writeBatch,
-    Timestamp
+    Timestamp, arrayUnion, arrayRemove
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { 
@@ -76,7 +76,7 @@ interface AppContextType {
     updateCMSPrize: (p: CMSPrize) => Promise<void>;
     
     toasts: ToastMessage[];
-    showToast: (msg: string, type?: 'success'|'error'|'info') => void;
+    showToast: (msg: string, type?: 'success'|'error'|'info'|'warning') => void;
     removeToast: (id: string) => void;
     
     notifications: Notification[];
@@ -94,7 +94,7 @@ interface AppContextType {
     
     fetchJuryScores: (appId: string) => Promise<ScoreDocument[]>;
     fetchMyScore: (appId: string) => Promise<ScoreDocument | null>;
-    submitScore: (appId: string, criteria: EvaluationCriteria, notes: string) => Promise<void>;
+    submitScore: (appId: string, criteria: EvaluationCriteria, notes: string, isDraft?: boolean, isRecused?: boolean) => Promise<void>;
     assignJury: (appId: string, juryIds: string[]) => Promise<void>;
     bulkAssignJury: (assignments: {appId: string, juryIds: string[]}[]) => Promise<void>;
     
@@ -159,7 +159,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [auditLogs, setAuditLogs] = useState<LogEntry[]>([]);
 
     // Toast Helper
-    const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const showToast = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
         const id = Math.random().toString(36).substring(7);
         setToasts(prev => [...prev, { id, message, type }]);
         setTimeout(() => removeToast(id), 5000);
@@ -210,15 +210,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         // Public Vote / Finalists for everyone (so guests can see voting page)
         const unsubFinalists = onSnapshot(query(collection(db, "applications"), where("team.isFinalist", "==", true)), (snap) => {
-            // We only merge these if current user is NOT admin/judge/teacher (i.e. Guest)
-            // Or we just update allApplications if it's currently empty or partial.
-            // However, to avoid complexity, we rely on role-based below. 
-            // If Guest, we populate allApplications with finalists only.
             if (!currentUser) {
                  setAllApplications(snap.docs.map(d => ({id:d.id, ...d.data()} as Application)));
             }
         }, (error) => {
-            // Silently ignore if permission denied (rules might restrict if not careful, but public read is allowed for finalists)
             console.log("Public finalist fetch info:", error.message);
         });
 
@@ -228,7 +223,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             unsubAcademy(); unsubGallery(); unsubFaq(); unsubTimeline(); unsubPrizes();
             unsubFinalists();
         }
-    }, [currentUser]); // Re-run if currentUser changes (to toggle finalist listener effect logic)
+    }, [currentUser]);
 
     // --- ROLE BASED LISTENERS ---
     useEffect(() => {
@@ -268,8 +263,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
 
         if (currentUser.role === UserRole.TEACHER || currentUser.role === UserRole.STUDENT) {
-            // My Application
-            // Assuming teacher ID maps to application teacher.id
             const q = query(collection(db, "applications"), where("teacher.id", "==", currentUser.uid));
             unsubs.push(onSnapshot(q, (snap) => {
                 if (!snap.empty) {
@@ -470,30 +463,63 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return d.exists() ? ({id: d.id, ...d.data()} as ScoreDocument) : null;
     };
 
-    const submitScore = async (appId: string, criteria: EvaluationCriteria, notes: string) => {
+    const submitScore = async (appId: string, criteria: EvaluationCriteria, notes: string, isDraft: boolean = false, isRecused: boolean = false) => {
         if(!currentUser) return;
-        const total = criteria.story + criteria.technical + criteria.originality + criteria.themeFit;
+        
+        // Save the individual score document (always)
+        const total = isRecused ? 0 : (criteria.story + criteria.technical + criteria.originality + criteria.themeFit);
         const scoreDoc: ScoreDocument = {
             juryId: currentUser.uid,
             juryName: currentUser.fullName,
             total, criteria, notes,
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
+            isDraft,
+            isRecused
         };
+        
         await setDoc(doc(db, "applications", appId, "scores", currentUser.uid), scoreDoc);
         
-        // Update app aggregates
-        const scores = await fetchJuryScores(appId);
-        const avg = scores.reduce((acc, s) => acc + s.total, 0) / scores.length;
-        
-        await updateDoc(doc(db, "applications", appId), {
-            finalScore: avg,
-            juryCount: scores.length,
-            gradedBy: scores.map(s => s.juryId),
-            status: ApplicationStatus.GRADED
-        });
-        
-        showToast("Puan kaydedildi.", 'success');
-        await logAction("SUBMIT_SCORE", `Puan verildi: ${total}`, appId);
+        // Handle Global Aggregation & Status
+        const appRef = doc(db, "applications", appId);
+
+        if (isDraft) {
+            // DRAFT: Do not update aggregate stats. 
+            // Ensure this user is REMOVED from 'gradedBy' so it appears as pending for others/admins if they were previously finalized.
+            await updateDoc(appRef, {
+                gradedBy: arrayRemove(currentUser.uid)
+            });
+            showToast("Taslak olarak kaydedildi.", 'info');
+        } else {
+            // FINAL or RECUSED: Update aggregate stats.
+            
+            // 1. Fetch all scores to recalculate averages
+            const scores = await fetchJuryScores(appId);
+            
+            // Filter out drafts and recusals for the math
+            const validScores = scores.filter(s => !s.isDraft && !s.isRecused);
+            
+            const avg = validScores.length > 0 
+                ? validScores.reduce((acc, s) => acc + s.total, 0) / validScores.length 
+                : 0;
+            
+            // 2. Update Application Doc
+            // We ADD the user to gradedBy so they see the green checkmark (done).
+            // Even if recused, they are "done" with this app.
+            await updateDoc(appRef, {
+                finalScore: avg,
+                juryCount: validScores.length, // Count only valid scored entries
+                gradedBy: arrayUnion(currentUser.uid),
+                status: ApplicationStatus.GRADED
+            });
+
+            if (isRecused) {
+                showToast("Bu eser için çekimser kaldınız.", 'warning');
+                await logAction("RECUSE_SCORE", `Jüri çekimser kaldı.`, appId);
+            } else {
+                showToast("Puan kaydedildi ve gönderildi.", 'success');
+                await logAction("SUBMIT_SCORE", `Puan verildi: ${total}`, appId);
+            }
+        }
     };
 
     const assignJury = async (appId: string, juryIds: string[]) => {
@@ -526,8 +552,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const submitPublicVote = async (appId: string, fingerprint: string) => {
-        // Check local storage or DB for duplicate votes if needed
-        // Assuming simple one-vote-per-fingerprint-per-app for now
         const q = query(collection(db, "public_votes"), where("voterFingerprint", "==", fingerprint), where("appId", "==", appId));
         const snap = await getDocs(q);
         if(!snap.empty) throw new Error("Bu videoya daha önce oy verdiniz.");

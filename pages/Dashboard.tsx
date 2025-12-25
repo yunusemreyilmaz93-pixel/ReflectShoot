@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
     Clapperboard, Users, FileText, Video, MessageSquare, AlertCircle, 
     CheckCircle2, Clock, Upload, X, Save, Film, HelpCircle, LogOut, Ban, ShieldAlert,
-    Download, Lock, ExternalLink, RefreshCw, FileCheck, BookOpen, Eye, Calendar, Bell, Copy, Info, Loader2, File
+    Download, Lock, ExternalLink, RefreshCw, FileCheck, BookOpen, Eye, Calendar, Bell, Copy, Info, Loader2, File,
+    Plus, Trash2, Edit, AlertOctagon, CheckSquare, Camera, PenTool, Printer, ShieldCheck
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { Category, Theme, ApplicationStatus } from '../types';
+import { Category, Theme, ApplicationStatus, Student } from '../types';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { ChatArea } from '../components/ChatArea';
 import { uploadFileToR2, uploadPublicLogo } from '../lib/cloudStorage';
@@ -38,6 +39,33 @@ const ProgressRing = ({ progress, size = 60, stroke = 4 }: { progress: number, s
     );
 };
 
+// Process Steps Visual Component
+const ProcessSteps = () => (
+    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 mb-8 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none"><Printer size={100} /></div>
+        <h4 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
+            <Info size={16} className="text-blue-500" /> Belge Yükleme Rehberi
+        </h4>
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 relative z-10">
+            {[
+                { icon: RefreshCw, title: "1. Kodu Oluştur", desc: "Sistemden her belge için benzersiz kod üret." },
+                { icon: PenTool, title: "2. Belgeye Yaz", desc: "Kodu çıktısını aldığın belgenin üzerine el yazısıyla yaz." },
+                { icon: Camera, title: "3. Fotoğraf/PDF", desc: "İmzalı ve kodlu belgenin fotoğrafını çek veya tarat." },
+                { icon: Upload, title: "4. Sisteme Yükle", desc: "Beyanı onayla ve dosyayı yükle." }
+            ].map((step, i) => (
+                <div key={i} className="flex flex-col items-center text-center group w-full md:w-1/4">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-amber-500 group-hover:border-amber-500/50 transition-all mb-3 shadow-lg">
+                        <step.icon size={20} />
+                    </div>
+                    <h5 className="text-xs font-black text-white mb-1">{step.title}</h5>
+                    <p className="text-[10px] text-slate-500 leading-tight px-2">{step.desc}</p>
+                    {i < 3 && <div className="hidden md:block absolute top-6 w-8 h-0.5 bg-slate-800 -right-4 transform translate-x-1/2"></div>} 
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
 export const Dashboard: React.FC = () => {
     const { currentUser, currentApplication, createApplication, updateApplication, showToast, systemSettings } = useAppContext();
     const [activeTab, setActiveTab] = useState('STATUS');
@@ -60,6 +88,18 @@ export const Dashboard: React.FC = () => {
     const [formErrors, setFormErrors] = useState<any>({});
     const [isCreating, setIsCreating] = useState(false);
 
+    // Student Management State
+    const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
+    const [editingStudent, setEditingStudent] = useState<Partial<Student> | null>(null);
+
+    // Video Submission Checklist
+    const [videoChecklist, setVideoChecklist] = useState({
+        resolution: false,
+        audio: false,
+        credits: false,
+        copyright: false
+    });
+
     // Edit & Upload State
     const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
     const [selectedFiles, setSelectedFiles] = useState<Record<string, File>>({});
@@ -67,15 +107,12 @@ export const Dashboard: React.FC = () => {
     // Verification Codes Input State
     const [verifyCodes, setVerifyCodes] = useState<Record<string, string>>({});
     
-    // Document Confirmation State (Checkbox)
-    const [docConfirmations, setDocConfirmations] = useState<Record<string, boolean>>({});
-    
-    // Warning Modal State
-    const [showWarningModal, setShowWarningModal] = useState(false);
+    // -- NEW: Declaration Modal State --
+    const [declarationModal, setDeclarationModal] = useState<{ studentId: string, type: 'PARENT' | 'KVKK' } | null>(null);
+    const [declarationAccepted, setDeclarationAccepted] = useState(false);
 
     useEffect(() => {
         setVerifyCodes({});
-        setDocConfirmations({});
         setSelectedFiles({});
     }, [currentApplication?.id]);
 
@@ -114,6 +151,76 @@ export const Dashboard: React.FC = () => {
         ));
     };
 
+    // --- Student Management Logic ---
+
+    const handleOpenStudentModal = (student?: Student) => {
+        if (student) {
+            setEditingStudent(student);
+        } else {
+            // New Student
+            setEditingStudent({ firstName: '', lastName: '', grade: '' });
+        }
+        setIsStudentModalOpen(true);
+    };
+
+    const handleSaveStudent = async () => {
+        if (!currentApplication || !editingStudent) return;
+        if (!editingStudent.firstName || !editingStudent.lastName || !editingStudent.grade) {
+            showToast("Lütfen tüm alanları doldurunuz.", "error");
+            return;
+        }
+
+        let updatedStudents = [...currentApplication.team.students];
+
+        if (editingStudent.id) {
+            // Update existing
+            updatedStudents = updatedStudents.map(s => s.id === editingStudent.id ? { ...s, ...editingStudent } as Student : s);
+        } else {
+            // Add new
+            if (updatedStudents.length >= 6) {
+                showToast("En fazla 6 öğrenci ekleyebilirsiniz.", "error");
+                return;
+            }
+            const newStudent: Student = {
+                id: Math.random().toString(36).substring(7),
+                firstName: editingStudent.firstName!,
+                lastName: editingStudent.lastName!,
+                grade: editingStudent.grade!,
+                hasParentalConsent: false,
+                hasKvkkConsent: false
+            };
+            updatedStudents.push(newStudent);
+        }
+
+        try {
+            await updateApplication({ ...currentApplication, team: { ...currentApplication.team, students: updatedStudents } });
+            showToast("Öğrenci listesi güncellendi.", "success");
+            setIsStudentModalOpen(false);
+            setEditingStudent(null);
+        } catch (e) {
+            showToast("Güncelleme başarısız.", "error");
+        }
+    };
+
+    const handleDeleteStudent = async (studentId: string) => {
+        if (!currentApplication) return;
+        if (currentApplication.team.students.length <= 3) {
+            showToast("Takım en az 3 kişiden oluşmalıdır.", "error");
+            return;
+        }
+        if (!window.confirm("Bu öğrenciyi takımdan çıkarmak istediğinize emin misiniz? Yüklenen belgeler de silinecektir.")) return;
+
+        const updatedStudents = currentApplication.team.students.filter(s => s.id !== studentId);
+        try {
+            await updateApplication({ ...currentApplication, team: { ...currentApplication.team, students: updatedStudents } });
+            showToast("Öğrenci çıkarıldı.", "success");
+        } catch (e) {
+            showToast("Silme işlemi başarısız.", "error");
+        }
+    };
+
+    // --- Code Generation & Upload Logic ---
+
     const handleGenerateCode = async (studentId: string, type: 'PARENT' | 'KVKK') => {
         if (!currentApplication) return;
         
@@ -129,7 +236,6 @@ export const Dashboard: React.FC = () => {
         const prefix = type === 'PARENT' ? 'RFS-VI-' : 'RFS-AR-';
         let newCode = prefix + generateRandomString();
 
-        // Check for local uniqueness
         const isCodeTaken = currentApplication.team.students.some(s => 
             s.parentalExpectedId === newCode || s.kvkkExpectedId === newCode
         );
@@ -162,6 +268,7 @@ export const Dashboard: React.FC = () => {
     if (currentApplication?.status === ApplicationStatus.DISQUALIFIED) {
         return (
             <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-center animate-fadeIn relative overflow-hidden">
+                {/* Disqualified UI remains the same */}
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 pointer-events-none"></div>
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-red-900/10 blur-[150px] rounded-full pointer-events-none"></div>
                 <div className="relative z-10 max-w-lg w-full bg-slate-900/80 backdrop-blur-xl border border-red-900/30 p-10 rounded-3xl shadow-2xl flex flex-col items-center">
@@ -202,18 +309,22 @@ export const Dashboard: React.FC = () => {
         return Object.keys(errs).length === 0;
     };
 
-    const handleUploadClick = (e: React.MouseEvent, confirmationKey: string) => {
-        if (!docConfirmations[confirmationKey]) {
-            e.preventDefault();
-            setShowWarningModal(true);
-        }
+    // --- New Responsibility Logic ---
+
+    const handleOpenDeclarationModal = (studentId: string, type: 'PARENT' | 'KVKK') => {
+        setDeclarationModal({ studentId, type });
+        setDeclarationAccepted(false);
     };
 
-    const toggleConfirmation = (key: string) => {
-        setDocConfirmations(prev => ({
-            ...prev,
-            [key]: !prev[key]
-        }));
+    const handleConfirmDeclaration = () => {
+        if (!declarationModal) return;
+        // Trigger the hidden input
+        const inputId = `file-input-${declarationModal.studentId}-${declarationModal.type}`;
+        const inputElement = document.getElementById(inputId);
+        if (inputElement) {
+            inputElement.click();
+        }
+        setDeclarationModal(null);
     };
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
@@ -245,11 +356,12 @@ export const Dashboard: React.FC = () => {
             const r2Key = await uploadFileToR2(file, storagePath);
             const updatedStudents = currentApplication.team.students.map(s => {
                 if(s.id === studentId) {
-                    return type === 'PARENT' ? { ...s, hasParentalConsent: true, parentalConsentUrl: r2Key } : { ...s, hasKvkkConsent: true, kvkkConsentUrl: r2Key };
+                    return type === 'PARENT' ? { ...s, hasParentalConsent: true, parentalConsentUrl: r2Key, docStatus: 'PENDING' } : { ...s, hasKvkkConsent: true, kvkkConsentUrl: r2Key, docStatus: 'PENDING' };
                 }
                 return s;
             });
-            await updateApplication({ ...currentApplication, team: { ...currentApplication.team, students: updatedStudents } });
+            
+            await updateApplication({ ...currentApplication, team: { ...currentApplication.team, students: updatedStudents as Student[] } });
             
             // Cleanup
             setSelectedFiles(prev => {
@@ -282,7 +394,10 @@ export const Dashboard: React.FC = () => {
         }
     };
 
+    const allVideoChecksPassed = videoChecklist.resolution && videoChecklist.audio && videoChecklist.credits && videoChecklist.copyright;
+
     if (!currentApplication) {
+        // ... (existing Create App UI) ...
         return (
             <div className="max-w-4xl mx-auto px-4 py-12 animate-fadeIn">
                 <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 shadow-2xl">
@@ -365,6 +480,7 @@ export const Dashboard: React.FC = () => {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn">
                 
+                {/* ... (STATUS TAB IS THE SAME) ... */}
                 {activeTab === 'STATUS' && (
                     <div className="grid md:grid-cols-2 gap-8">
                         <div className="space-y-6">
@@ -430,6 +546,8 @@ export const Dashboard: React.FC = () => {
 
                 {activeTab === 'DOCUMENTS' && (
                     <div className="space-y-8">
+                        <ProcessSteps />
+
                         {/* Template Download Section */}
                         <div className="grid md:grid-cols-2 gap-6">
                             <a href={TEMPLATE_PARENT_URL} target="_blank" className="flex items-center justify-between p-6 bg-slate-900 border border-slate-800 rounded-3xl hover:border-amber-500/50 transition-all group shadow-xl">
@@ -458,12 +576,25 @@ export const Dashboard: React.FC = () => {
                             </a>
                         </div>
 
+                        {/* Students Grid */}
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {currentApplication.team.students.map((student) => (
-                                <div key={student.id} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 group hover:border-rose-500/50 transition-all shadow-xl flex flex-col">
+                                <div key={student.id} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 group hover:border-rose-500/50 transition-all shadow-xl flex flex-col relative overflow-hidden">
+                                    
+                                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => handleOpenStudentModal(student)} className="p-1.5 bg-slate-800 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700" title="Düzenle">
+                                            <Edit size={14} />
+                                        </button>
+                                        <button onClick={() => handleDeleteStudent(student.id)} className="p-1.5 bg-slate-800 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-700" title="Sil">
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+
                                     <div className="flex justify-between items-center mb-6">
-                                        <h4 className="font-black text-white text-xl">{student.firstName} {student.lastName}</h4>
-                                        <div className="w-10 h-10 rounded-2xl bg-slate-800 text-slate-400 flex items-center justify-center text-xs font-black border border-slate-700">{student.grade}</div>
+                                        <div>
+                                            <h4 className="font-black text-white text-xl">{student.firstName} {student.lastName}</h4>
+                                            <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">{student.grade}</p>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-8 flex-1">
@@ -471,18 +602,30 @@ export const Dashboard: React.FC = () => {
                                             const isDone = type === 'PARENT' ? student.hasParentalConsent : student.hasKvkkConsent;
                                             const code = type === 'PARENT' ? student.parentalExpectedId : student.kvkkExpectedId;
                                             const confirmationKey = `${student.id}_${type}`;
-                                            const isConfirmed = docConfirmations[confirmationKey] || false;
                                             const isUploading = uploadingDoc === confirmationKey;
                                             const selectedFile = selectedFiles[confirmationKey];
+                                            const isRejected = student.docStatus === 'REJECTED';
                                             
+                                            // Hidden file input ID
+                                            const hiddenInputId = `file-input-${student.id}-${type}`;
+
                                             return (
                                                 <div key={type} className="pt-6 border-t border-slate-800 first:border-t-0 first:pt-0">
                                                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">
                                                         <span>{type === 'PARENT' ? 'Veli İzin Belgesi' : 'KVKK Metni'}</span>
-                                                        {isDone && <span className="bg-amber-900/30 text-amber-500 px-2 py-1 rounded flex items-center gap-1 border border-amber-900/50"><Clock size={12}/> Yüklendi — Onay Bekliyor</span>}
+                                                        {isDone && !isRejected && <span className="bg-green-900/30 text-green-500 px-2 py-1 rounded flex items-center gap-1 border border-green-900/50"><FileCheck size={12}/> Teslim Edildi</span>}
+                                                        {isRejected && <span className="bg-red-900/30 text-red-500 px-2 py-1 rounded flex items-center gap-1 border border-red-900/50 animate-pulse"><AlertOctagon size={12}/> Reddedildi</span>}
                                                     </div>
 
-                                                    {/* Code Management Block */}
+                                                    {isRejected && (
+                                                        <div className="bg-red-900/20 border border-red-900/50 p-3 rounded-xl mb-4 text-xs text-red-300 flex gap-2 items-start">
+                                                            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                                                            <div>
+                                                                <strong>Belge Reddedildi:</strong> Lütfen belgeyi kontrol edip, eksiksiz ve okunaklı olduğundan emin olarak tekrar yükleyiniz.
+                                                            </div>
+                                                        </div>
+                                                    )}
+
                                                     <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-4">
                                                         {!code ? (
                                                             <button 
@@ -509,7 +652,7 @@ export const Dashboard: React.FC = () => {
                                                         )}
                                                     </div>
 
-                                                    {!isDone && (
+                                                    {(!isDone || isRejected) && (
                                                         <>
                                                             <div className="flex items-center bg-slate-950 border border-slate-700 rounded-2xl overflow-hidden mb-4 group-focus-within:border-rose-500/50 transition-all">
                                                                 <span className="bg-slate-900 px-3 py-3 text-[10px] font-black text-slate-500 border-r border-slate-800">GİR:</span>
@@ -522,18 +665,6 @@ export const Dashboard: React.FC = () => {
                                                                 />
                                                             </div>
 
-                                                            <div 
-                                                                onClick={() => toggleConfirmation(confirmationKey)}
-                                                                className="flex items-start gap-3 mb-4 cursor-pointer group/check"
-                                                            >
-                                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all flex-shrink-0 ${isConfirmed ? 'bg-rose-600 border-rose-600' : 'bg-slate-950 border-slate-700 group-hover/check:border-slate-500'}`}>
-                                                                    {isConfirmed && <FileCheck size={12} className="text-white" />}
-                                                                </div>
-                                                                <span className={`text-[10px] leading-tight select-none transition-colors ${isConfirmed ? 'text-slate-300' : 'text-slate-500 group-hover/check:text-slate-400'}`}>
-                                                                    Belgeyi kontrol ettim. Öğrenci bilgileri ve imza mevcuttur.
-                                                                </span>
-                                                            </div>
-
                                                             {isUploading ? (
                                                                 <div className="border-2 border-dashed border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 bg-slate-900/50 animate-pulse">
                                                                     <Loader2 className="animate-spin text-rose-500" size={20} />
@@ -541,17 +672,19 @@ export const Dashboard: React.FC = () => {
                                                                 </div>
                                                             ) : (
                                                                 <>
-                                                                    <label 
-                                                                        className={`block w-full border-2 border-dashed border-slate-800 hover:border-rose-500/30 hover:bg-slate-800/30 rounded-2xl p-4 text-center cursor-pointer transition-all ${!isConfirmed ? 'opacity-50 hover:border-slate-800 hover:bg-transparent cursor-not-allowed' : ''}`}
+                                                                    {/* Hidden File Input */}
+                                                                    <input 
+                                                                        type="file" 
+                                                                        id={hiddenInputId}
+                                                                        className="hidden" 
+                                                                        accept=".pdf" 
+                                                                        onChange={(e) => handleFileSelect(e, confirmationKey)} 
+                                                                    />
+
+                                                                    <button 
+                                                                        onClick={() => handleOpenDeclarationModal(student.id, type as any)}
+                                                                        className="block w-full border-2 border-dashed border-slate-800 hover:border-rose-500/30 hover:bg-slate-800/30 rounded-2xl p-4 text-center cursor-pointer transition-all"
                                                                     >
-                                                                        <input 
-                                                                            type="file" 
-                                                                            className="hidden" 
-                                                                            accept=".pdf" 
-                                                                            onClick={(e) => handleUploadClick(e, confirmationKey)}
-                                                                            onChange={(e) => handleFileSelect(e, confirmationKey)} 
-                                                                            disabled={isUploading}
-                                                                        />
                                                                         <div className="flex flex-col items-center gap-2">
                                                                             {selectedFile ? (
                                                                                 <>
@@ -562,11 +695,11 @@ export const Dashboard: React.FC = () => {
                                                                             ) : (
                                                                                 <>
                                                                                     <Upload size={20} className="text-slate-600 group-hover:text-rose-500" />
-                                                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Belgeyi Seç</span>
+                                                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Belgeyi Seç & Yükle</span>
                                                                                 </>
                                                                             )}
                                                                         </div>
-                                                                    </label>
+                                                                    </button>
                                                                     
                                                                     {selectedFile && (
                                                                         <button 
@@ -581,9 +714,9 @@ export const Dashboard: React.FC = () => {
                                                         </>
                                                     )}
 
-                                                    {isDone && (
-                                                        <div className="p-4 bg-slate-950/50 border border-slate-800 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                            <Info size={16} className="text-slate-500"/> İnceleme Aşamasında
+                                                    {isDone && !isRejected && (
+                                                        <div className="p-4 bg-green-950/20 border border-green-900/30 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-bold text-green-500 uppercase tracking-widest">
+                                                            <CheckCircle2 size={16}/> Belge Geçerli
                                                         </div>
                                                     )}
                                                 </div>
@@ -592,6 +725,19 @@ export const Dashboard: React.FC = () => {
                                     </div>
                                 </div>
                             ))}
+
+                            {/* Add Student Button */}
+                            {currentApplication.team.students.length < 6 && (
+                                <button 
+                                    onClick={() => handleOpenStudentModal()}
+                                    className="bg-slate-900/50 p-6 rounded-3xl border border-slate-800 border-dashed hover:border-rose-500/50 hover:bg-slate-900 transition-all flex flex-col items-center justify-center gap-4 group min-h-[400px]"
+                                >
+                                    <div className="w-16 h-16 rounded-full bg-slate-800 group-hover:bg-rose-600 group-hover:text-white text-slate-500 flex items-center justify-center transition-colors shadow-lg">
+                                        <Plus size={32} />
+                                    </div>
+                                    <span className="font-bold text-slate-400 group-hover:text-white transition-colors">Yeni Öğrenci Ekle</span>
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
@@ -617,14 +763,39 @@ export const Dashboard: React.FC = () => {
                                     <Film size={36}/>
                                 </div>
                                 <h3 className="text-3xl font-black text-white mb-4">Video Teslim Paneli</h3>
-                                <p className="text-slate-400 mb-10 leading-relaxed font-light">Videonuzu ortak klasöre yükledikten sonra mutlaka onay butonuna basınız.</p>
+                                <p className="text-slate-400 mb-10 leading-relaxed font-light">Videonuzu ortak klasöre yükledikten sonra aşağıdaki kontrol listesini tamamlayıp onaylayınız.</p>
                                 
                                 <a href="https://drive.google.com/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-4 bg-white text-slate-900 px-12 py-5 rounded-2xl font-black text-xl hover:bg-slate-200 transition-all shadow-xl mb-10">
                                     <ExternalLink size={24}/> Drive Klasörüne Git
                                 </a>
 
-                                <button onClick={confirmVideoSubmission} className="w-full bg-green-600 hover:bg-green-500 text-white py-5 rounded-2xl font-black text-lg shadow-lg shadow-green-900/20 transition-all">
-                                    Teslimi Tamamla
+                                {/* Checklist */}
+                                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 mb-8 text-left space-y-3">
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Teslim Öncesi Kontrol Listesi</h4>
+                                    {[
+                                        { id: 'resolution', label: 'Video 1080p çözünürlükte render alındı.' },
+                                        { id: 'audio', label: 'Ses dili İngilizce ve anlaşılır.' },
+                                        { id: 'credits', label: 'Türkçe altyazı ve kapanış jeneriği eklendi.' },
+                                        { id: 'copyright', label: 'Telif hakkı içeren materyal kullanılmadı.' }
+                                    ].map(item => (
+                                        <div key={item.id} 
+                                             onClick={() => setVideoChecklist(prev => ({...prev, [item.id]: !prev[item.id as keyof typeof videoChecklist]}))}
+                                             className="flex items-center gap-3 cursor-pointer group"
+                                        >
+                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${videoChecklist[item.id as keyof typeof videoChecklist] ? 'bg-green-500 border-green-500' : 'border-slate-700 group-hover:border-slate-500'}`}>
+                                                {videoChecklist[item.id as keyof typeof videoChecklist] && <CheckCircle2 size={14} className="text-black" />}
+                                            </div>
+                                            <span className={`text-sm ${videoChecklist[item.id as keyof typeof videoChecklist] ? 'text-white' : 'text-slate-400'}`}>{item.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <button 
+                                    onClick={confirmVideoSubmission} 
+                                    disabled={!allVideoChecksPassed}
+                                    className={`w-full py-5 rounded-2xl font-black text-lg shadow-lg transition-all ${allVideoChecksPassed ? 'bg-green-600 hover:bg-green-500 text-white shadow-green-900/20' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
+                                >
+                                    {allVideoChecksPassed ? 'Teslimi Tamamla' : 'Lütfen Kontrol Listesini Onaylayın'}
                                 </button>
                             </div>
                         )}
@@ -637,29 +808,93 @@ export const Dashboard: React.FC = () => {
 
             </div>
 
-            {/* Warning Modal for Unconfirmed Uploads */}
-            {showWarningModal && (
+            {/* Responsibility Declaration Modal */}
+            {declarationModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn">
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full shadow-2xl relative overflow-hidden flex flex-col">
+                        <div className="p-6 border-b border-slate-800 bg-slate-950 flex justify-between items-center">
+                            <h3 className="font-bold text-white flex items-center gap-2">
+                                <ShieldCheck className="text-amber-500" size={20} /> Yasal Sorumluluk Beyanı
+                            </h3>
+                            <button onClick={() => setDeclarationModal(null)} className="text-slate-500 hover:text-white transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-8">
+                            <div className="bg-amber-900/10 border-l-4 border-amber-500 p-4 rounded-r-lg mb-6">
+                                <p className="text-amber-200/80 text-sm leading-relaxed">
+                                    Bu işlem, resmi bir belge teslimidir. Lütfen aşağıdaki metni dikkatle okuyarak onaylayınız.
+                                </p>
+                            </div>
+                            <p className="text-slate-300 text-sm leading-relaxed mb-6 font-light">
+                                "Yüklemekte olduğum bu belgenin; orijinalinin tarafımda saklandığını, üzerindeki bilgilerin ve imzaların gerçek olduğunu, KVKK ve yarışma şartnamesine uygun olduğunu beyan ederim. Olası bir usulsüzlük durumunda tüm hukuki sorumluluğun şahsıma/kurumuma ait olduğunu kabul ediyorum."
+                            </p>
+                            <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-xl hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700">
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center mt-0.5 transition-all ${declarationAccepted ? 'bg-green-600 border-green-600' : 'border-slate-600'}`}>
+                                    {declarationAccepted && <CheckSquare size={14} className="text-white" />}
+                                </div>
+                                <input type="checkbox" className="hidden" checked={declarationAccepted} onChange={(e) => setDeclarationAccepted(e.target.checked)} />
+                                <span className={`text-sm select-none ${declarationAccepted ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'}`}>
+                                    Okudum, anladım ve onaylıyorum.
+                                </span>
+                            </label>
+                        </div>
+                        <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end gap-3">
+                            <button onClick={() => setDeclarationModal(null)} className="px-6 py-3 rounded-xl text-slate-400 hover:text-white font-bold text-sm transition-colors">İptal</button>
+                            <button 
+                                onClick={handleConfirmDeclaration}
+                                disabled={!declarationAccepted}
+                                className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 px-8 py-3 rounded-xl font-black text-sm shadow-lg shadow-amber-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95"
+                            >
+                                Onaylıyorum ve Dosya Seç
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Student Edit/Add Modal */}
+            {isStudentModalOpen && editingStudent && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl relative">
-                        <button 
-                            onClick={() => setShowWarningModal(false)}
-                            className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
-                        >
+                    <div className="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl p-8 relative">
+                        <button onClick={() => setIsStudentModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white">
                             <X size={20} />
                         </button>
-                        <div className="w-16 h-16 bg-rose-900/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-rose-500/30">
-                            <AlertCircle size={32} className="text-rose-500" />
+                        <h3 className="text-xl font-bold text-white mb-6">
+                            {editingStudent.id ? 'Öğrenci Bilgilerini Düzenle' : 'Yeni Öğrenci Ekle'}
+                        </h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Ad</label>
+                                <input 
+                                    value={editingStudent.firstName} 
+                                    onChange={(e) => setEditingStudent({...editingStudent, firstName: e.target.value})}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white outline-none focus:border-rose-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Soyad</label>
+                                <input 
+                                    value={editingStudent.lastName} 
+                                    onChange={(e) => setEditingStudent({...editingStudent, lastName: e.target.value})}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white outline-none focus:border-rose-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Sınıf</label>
+                                <input 
+                                    value={editingStudent.grade} 
+                                    onChange={(e) => setEditingStudent({...editingStudent, grade: e.target.value})}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white outline-none focus:border-rose-500"
+                                />
+                            </div>
+                            <button 
+                                onClick={handleSaveStudent}
+                                className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl mt-4 transition-colors"
+                            >
+                                Kaydet
+                            </button>
                         </div>
-                        <h3 className="text-xl font-black text-white mb-2">Onay Gerekli</h3>
-                        <p className="text-slate-400 text-sm leading-relaxed mb-6">
-                            Lütfen belgeyi kontrol ettiğinizi ve bilgilerin doğruluğunu onay kutusunu işaretleyerek belirtiniz.
-                        </p>
-                        <button 
-                            onClick={() => setShowWarningModal(false)}
-                            className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition-colors border border-slate-700"
-                        >
-                            Anlaşıldı
-                        </button>
                     </div>
                 </div>
             )}
