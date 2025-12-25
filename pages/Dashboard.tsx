@@ -152,7 +152,7 @@ export const Dashboard: React.FC = () => {
             const code = Math.floor(10000 + Math.random() * 90000).toString();
             const fullCode = type === 'PARENT' ? `RFS-VI-${code}` : `RFS-KV-${code}`;
 
-            const fontResponse = await fetch('/fonts/Roboto-Regular.ttf');
+            const fontResponse = await fetch('https://www.reflectandshoot.com/fonts/Roboto-Regular.ttf');
             const fontBuffer = await fontResponse.arrayBuffer();
             let binary = '';
             const bytes = new Uint8Array(fontBuffer);
