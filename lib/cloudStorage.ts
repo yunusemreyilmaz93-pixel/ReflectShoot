@@ -8,9 +8,12 @@
  */
 export const uploadFileToR2 = async (file: File, customKey?: string): Promise<string> => {
     try {
-        // Fix A: Signed URL üretilirken kullanılan Content-Type, PUT'ta birebir aynı olmalıdır.
-        // Tarayıcı boş dönerse application/pdf varsayıyoruz.
-        const contentType = file.type || 'application/pdf';
+        // PDF dosyaları için tarayıcı tipi bazen eksik dönebilir, garantiye alıyoruz.
+        let contentType = file.type;
+        if (!contentType && file.name.toLowerCase().endsWith('.pdf')) {
+            contentType = 'application/pdf';
+        }
+        contentType = contentType || 'application/octet-stream';
 
         // 1. Get Presigned URL from our API
         const apiResponse = await fetch('/api/upload', {
@@ -18,7 +21,7 @@ export const uploadFileToR2 = async (file: File, customKey?: string): Promise<st
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 filename: file.name,
-                contentType: contentType, // Backend'e tam tipi gönderiyoruz
+                contentType: contentType,
                 customKey
             })
         });
@@ -30,9 +33,8 @@ export const uploadFileToR2 = async (file: File, customKey?: string): Promise<st
 
         const { uploadUrl, fileKey } = await apiResponse.json();
 
-        // Validate uploadUrl
-        if (!uploadUrl || typeof uploadUrl !== 'string') {
-            throw new Error('Geçersiz upload URL.');
+        if (!uploadUrl) {
+            throw new Error('Sunucudan geçerli bir yükleme adresi alınamadı.');
         }
 
         // 2. Upload directly to R2 using the Signed URL
@@ -47,14 +49,14 @@ export const uploadFileToR2 = async (file: File, customKey?: string): Promise<st
 
         if (!uploadResponse.ok) {
             const errorText = await uploadResponse.text();
-            console.error('R2 Upload Error Details:', errorText);
-            throw new Error('Dosya sunucuya yüklenemedi. (Hata: ' + uploadResponse.status + ')');
+            console.error('R2 Upload Detail:', errorText);
+            throw new Error(`Dosya R2'ye yüklenemedi. Durum: ${uploadResponse.status}`);
         }
 
         return fileKey; 
     } catch (error: any) {
-        console.error('Upload Failed:', error);
-        throw new Error(error.message || 'Dosya yükleme başarısız.');
+        console.error('uploadFileToR2 Error:', error);
+        throw error;
     }
 };
 
@@ -81,10 +83,6 @@ export const uploadPublicLogo = async (file: File, teamId: string): Promise<stri
 
         const { uploadUrl, key } = await apiResponse.json();
 
-        if (!uploadUrl || typeof uploadUrl !== 'string') {
-            throw new Error('Geçersiz logo upload URL.');
-        }
-
         const uploadResponse = await fetch(uploadUrl, {
             method: 'PUT',
             body: file,
@@ -100,6 +98,6 @@ export const uploadPublicLogo = async (file: File, teamId: string): Promise<stri
         return key;
     } catch (error: any) {
         console.error('Public Upload Failed:', error);
-        throw new Error(error.message || 'Logo yükleme başarısız.');
+        throw error;
     }
 };

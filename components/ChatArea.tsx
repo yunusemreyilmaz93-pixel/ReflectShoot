@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, UserCircle, ShieldCheck, MessageSquare } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
@@ -40,14 +39,14 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ appId, theme = 'dark' }) => 
       setNewMessage('');
   };
 
-  // Theme Classes
+  // Theme Classes - Stripped of rounded logic
   const containerClass = theme === 'dark' 
     ? "bg-slate-950 border-slate-800" 
-    : "bg-white border-slate-100 shadow-lg shadow-slate-200/50 rounded-3xl";
+    : "bg-white border-slate-100 shadow-lg shadow-slate-200/50";
   
   const headerClass = theme === 'dark'
-    ? "bg-slate-900 border-slate-800 text-white"
-    : "bg-white border-slate-50 text-slate-900 rounded-t-3xl pt-6 px-6 pb-4";
+    ? "bg-slate-900 border-slate-800 text-white p-6"
+    : "bg-white border-slate-50 text-slate-900 p-6";
 
   const messageBgMe = "bg-rose-600 text-white shadow-md shadow-rose-900/20";
   const messageBgAdmin = theme === 'dark'
@@ -62,19 +61,23 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ appId, theme = 'dark' }) => 
     : "bg-slate-50 border-slate-200 text-slate-900 focus:border-rose-500 focus:bg-white focus:ring-4 focus:ring-rose-500/10 placeholder-slate-400";
 
   return (
-    <div className={`flex flex-col h-[500px] border overflow-hidden ${containerClass}`}>
+    <div className={`flex flex-col h-[600px] border overflow-hidden ${containerClass}`}>
+        {/* Header Section */}
         <div className={`flex items-center justify-between border-b ${headerClass}`}>
-            <div>
-                <h3 className="text-lg font-bold flex items-center gap-2">
+            <div className="space-y-1">
+                <h3 className="text-xl font-black tracking-tight flex items-center gap-2">
                     Yönetim ile İletişim
                 </h3>
-                <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}>Organizasyon ekibine doğrudan soru sorabilirsiniz.</p>
+                <p className={`text-xs font-medium ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Organizasyon ekibine doğrudan soru sorabilir ve süreçle ilgili bilgi alabilirsiniz.
+                </p>
             </div>
-            <div className={`p-2 rounded-full ${theme === 'dark' ? 'bg-slate-800 text-slate-400' : 'bg-slate-50 text-slate-400'}`}>
-                <MessageSquare size={20} />
+            <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-rose-500' : 'bg-slate-50 border-slate-200 text-rose-600'}`}>
+                <MessageSquare size={24} />
             </div>
         </div>
         
+        {/* Messages Body */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-opacity-50">
             {messages.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-center px-6">
@@ -111,7 +114,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ appId, theme = 'dark' }) => 
             })}
         </div>
 
-        <form onSubmit={handleSend} className={`p-4 border-t flex gap-3 ${theme === 'dark' ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-100 rounded-b-3xl'}`}>
+        {/* Footer Input Section */}
+        <form onSubmit={handleSend} className={`p-4 border-t flex gap-3 ${theme === 'dark' ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-100'}`}>
             <input 
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
