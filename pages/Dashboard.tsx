@@ -1,16 +1,20 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
     Clapperboard, Users, FileText, Video, MessageSquare, AlertCircle, 
     CheckCircle2, Clock, Upload, X, Save, Film, HelpCircle, LogOut, Ban, ShieldAlert,
-    Download, Lock, ExternalLink, RefreshCw, FileCheck, BookOpen, Eye, Calendar, Bell
+    Download, Lock, ExternalLink, RefreshCw, FileCheck, BookOpen, Eye, Calendar, Bell, Copy
 } from 'lucide-react';
-import { jsPDF } from "jspdf";
 import { useAppContext } from '../context/AppContext';
 import { Category, Theme, ApplicationStatus } from '../types';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { ChatArea } from '../components/ChatArea';
 import { uploadFileToR2, uploadPublicLogo } from '../lib/cloudStorage';
 import { CertificateGenerator } from '../components/CertificateGenerator';
+
+// Placeholder Template URLs
+const TEMPLATE_PARENT_URL = "#";
+const TEMPLATE_CONSENT_URL = "#";
 
 // Circular Progress Component
 const ProgressRing = ({ progress, size = 60, stroke = 4 }: { progress: number, size?: number, stroke?: number }) => {
@@ -102,6 +106,51 @@ export const Dashboard: React.FC = () => {
         ));
     };
 
+    const handleGenerateCode = async (studentId: string, type: 'PARENT' | 'KVKK') => {
+        if (!currentApplication) return;
+        
+        const generateRandomString = () => {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let res = '';
+            for (let i = 0; i < 5; i++) {
+                res += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return res;
+        };
+
+        const prefix = type === 'PARENT' ? 'RFS-VI-' : 'RFS-AR-';
+        let newCode = prefix + generateRandomString();
+
+        // Check for local uniqueness
+        const isCodeTaken = currentApplication.team.students.some(s => 
+            s.parentalExpectedId === newCode || s.kvkkExpectedId === newCode
+        );
+
+        if (isCodeTaken) {
+            handleGenerateCode(studentId, type);
+            return;
+        }
+
+        const updatedStudents = currentApplication.team.students.map(s => {
+            if (s.id === studentId) {
+                return type === 'PARENT' ? { ...s, parentalExpectedId: newCode } : { ...s, kvkkExpectedId: newCode };
+            }
+            return s;
+        });
+
+        try {
+            await updateApplication({ ...currentApplication, team: { ...currentApplication.team, students: updatedStudents } });
+            showToast("Belge onay kodu oluşturuldu.", 'success');
+        } catch (e) {
+            showToast("Kod oluşturulurken bir hata oluştu.", 'error');
+        }
+    };
+
+    const copyCode = (code: string) => {
+        navigator.clipboard.writeText(code);
+        showToast("Kod kopyalandı!", 'success');
+    };
+
     if (currentApplication?.status === ApplicationStatus.DISQUALIFIED) {
         return (
             <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-center animate-fadeIn relative overflow-hidden">
@@ -145,73 +194,17 @@ export const Dashboard: React.FC = () => {
         return Object.keys(errs).length === 0;
     };
 
-    const handleDownloadDoc = async (studentId: string, type: 'PARENT' | 'KVKK') => {
-        showToast("Belge hazırlanıyor...", 'info');
-        try {
-            const student = currentApplication!.team.students.find(s => s.id === studentId)!;
-            const code = Math.floor(10000 + Math.random() * 90000).toString();
-            const fullCode = type === 'PARENT' ? `RFS-VI-${code}` : `RFS-KV-${code}`;
-
-            const fontResponse = await fetch('https://www.reflectandshoot.com/fonts/Roboto-Regular.ttf');
-            const fontBuffer = await fontResponse.arrayBuffer();
-            let binary = '';
-            const bytes = new Uint8Array(fontBuffer);
-            for (let i = 0; i < bytes.byteLength; i++) { binary += String.fromCharCode(bytes[i]); }
-            const base64Font = window.btoa(binary);
-
-            const doc = new jsPDF();
-            doc.addFileToVFS("Roboto-Regular.ttf", base64Font);
-            doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
-            doc.setFont("Roboto", "normal");
-
-            const margin = 20;
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const maxLineWidth = pageWidth - (margin * 2);
-
-            doc.setFontSize(12);
-            const title = type === 'PARENT' ? "VELİ İZİN BELGESİ" : "KVKK AÇIK RIZA METNİ";
-            doc.text(title, pageWidth / 2, 20, { align: "center" });
-            
-            doc.setFontSize(10);
-            const bodyText = type === 'PARENT' 
-                ? "Ben, aşağıda bilgileri yer alan öğrencinin velisi olarak; öğrencimin yarışmaya katılmasına izin verdiğimi beyan ederim..." 
-                : "Öğrencime ait kişisel verilerin yarışma kapsamında işlenmesine açık rıza verdiğimi beyan ederim...";
-            const splitText = doc.splitTextToSize(bodyText, maxLineWidth);
-            doc.text(splitText, margin, 40);
-
-            doc.text(`Öğrenci: ${student.firstName} ${student.lastName}`, margin, 100);
-            doc.text(`Takım: ${currentApplication!.team.name}`, margin, 110);
-            
-            doc.setFontSize(18);
-            doc.text(fullCode, pageWidth / 2, 250, { align: "center" });
-
-            // Update state with expected code immediately
-            const updatedStudents = currentApplication!.team.students.map(s => {
-                if (s.id === studentId) {
-                    return type === 'PARENT' ? { ...s, parentalExpectedId: code } : { ...s, kvkkExpectedId: code };
-                }
-                return s;
-            });
-            await updateApplication({ ...currentApplication!, team: { ...currentApplication!.team, students: updatedStudents } });
-            
-            doc.save(`${type === 'PARENT' ? 'Veli_Izin' : 'KVKK'}_${student.firstName}.pdf`);
-            showToast("Belge indirildi. İmzalandıktan sonra kodu girerek yükleyiniz.", 'success');
-        } catch (e) {
-            showToast("Hata oluştu", 'error');
-        }
-    };
-
     const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>, studentId: string, type: 'PARENT' | 'KVKK') => {
         const fileInput = e.target;
         if(!fileInput.files?.[0] || !currentApplication) return;
         
         const file = fileInput.files[0];
-        const enteredCode = (verifyCodes[`${studentId}_${type}`] || '').trim();
+        const enteredCode = (verifyCodes[`${studentId}_${type}`] || '').trim().toUpperCase();
         const student = currentApplication.team.students.find(s => s.id === studentId);
         const expectedCode = type === 'PARENT' ? student?.parentalExpectedId : student?.kvkkExpectedId;
         
-        if (!expectedCode) { showToast("Lütfen önce belgeyi oluşturup indiriniz.", 'error'); return; }
-        if (enteredCode !== expectedCode) { showToast("Hatalı onay kodu!", 'error'); return; }
+        if (!expectedCode) { showToast("Lütfen önce bu belge için bir kod oluşturun.", 'error'); return; }
+        if (enteredCode !== expectedCode) { showToast("Kod uyuşmuyor! Lütfen belgeye yazdığınız kodu kontrol edin.", 'error'); return; }
 
         setUploadingDoc(studentId + type);
         try {
@@ -224,7 +217,7 @@ export const Dashboard: React.FC = () => {
                 return s;
             });
             await updateApplication({ ...currentApplication, team: { ...currentApplication.team, students: updatedStudents } });
-            showToast("Belge yüklendi.", 'success');
+            showToast("Belge başarıyla yüklendi.", 'success');
         } catch(err: any) { showToast("Hata: " + err.message, 'error'); } finally { setUploadingDoc(null); }
     };
 
@@ -390,49 +383,114 @@ export const Dashboard: React.FC = () => {
                 )}
 
                 {activeTab === 'DOCUMENTS' && (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {currentApplication.team.students.map((student) => (
-                            <div key={student.id} className="bg-slate-900 p-6 rounded-2xl border border-slate-800 group hover:border-rose-500/50 transition-colors shadow-lg">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h4 className="font-bold text-white text-lg">{student.firstName} {student.lastName}</h4>
-                                    <div className="w-8 h-8 rounded-full bg-slate-800 text-slate-500 flex items-center justify-center text-[10px] font-bold">{student.grade}</div>
+                    <div className="space-y-8">
+                        {/* Template Download Section */}
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <a href={TEMPLATE_PARENT_URL} target="_blank" className="flex items-center justify-between p-6 bg-slate-900 border border-slate-800 rounded-3xl hover:border-amber-500/50 transition-all group shadow-xl">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500 border border-amber-500/20">
+                                        <Download size={24} />
+                                    </div>
+                                    <div>
+                                        <p className="text-lg font-black text-white leading-tight">Veli İzin Belgesi Şablonu</p>
+                                        <p className="text-xs text-slate-500 mt-1">İndir, yazdır ve veliye imzalat.</p>
+                                    </div>
                                 </div>
+                                <ExternalLink size={20} className="text-slate-700 group-hover:text-amber-500 transition-colors" />
+                            </a>
+                            <a href={TEMPLATE_CONSENT_URL} target="_blank" className="flex items-center justify-between p-6 bg-slate-900 border border-slate-800 rounded-3xl hover:border-teal-500/50 transition-all group shadow-xl">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 bg-teal-500/10 rounded-2xl text-teal-500 border border-teal-500/20">
+                                        <Download size={24} />
+                                    </div>
+                                    <div>
+                                        <p className="text-lg font-black text-white leading-tight">KVKK Açık Rıza Şablonu</p>
+                                        <p className="text-xs text-slate-500 mt-1">İndir, yazdır ve imzalat.</p>
+                                    </div>
+                                </div>
+                                <ExternalLink size={20} className="text-slate-700 group-hover:text-teal-500 transition-colors" />
+                            </a>
+                        </div>
 
-                                <div className="space-y-6">
-                                    {['PARENT', 'KVKK'].map((type) => {
-                                        const isDone = type === 'PARENT' ? student.hasParentalConsent : student.hasKvkkConsent;
-                                        return (
-                                            <div key={type} className="pt-4 border-t border-slate-800">
-                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">
-                                                    <span>{type === 'PARENT' ? 'Veli İzin Belgesi' : 'KVKK Metni'}</span>
-                                                    {isDone && <CheckCircle2 size={14} className="text-green-500"/>}
-                                                </div>
-                                                
-                                                <div className="flex gap-2 mb-3">
-                                                    <button onClick={() => handleDownloadDoc(student.id, type as any)} className="bg-slate-800 hover:bg-slate-700 text-white text-[10px] px-3 py-2 rounded-lg border border-slate-700 flex items-center gap-2 transition-all">
-                                                        <Download size={12}/> Belgeyi Oluştur & İndir
-                                                    </button>
-                                                </div>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {currentApplication.team.students.map((student) => (
+                                <div key={student.id} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 group hover:border-rose-500/50 transition-all shadow-xl flex flex-col">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h4 className="font-black text-white text-xl">{student.firstName} {student.lastName}</h4>
+                                        <div className="w-10 h-10 rounded-2xl bg-slate-800 text-slate-400 flex items-center justify-center text-xs font-black border border-slate-700">{student.grade}</div>
+                                    </div>
 
-                                                {!isDone && (
-                                                    <div className="flex items-center bg-slate-950 border border-slate-700 rounded-xl overflow-hidden mb-3">
-                                                       <span className="bg-slate-800 px-3 py-2 text-[10px] font-black text-slate-500 border-r border-slate-700">KOD:</span>
-                                                       <input value={verifyCodes[`${student.id}_${type}`] || ''} onChange={(e) => setVerifyCodes({...verifyCodes, [`${student.id}_${type}`]: e.target.value})} placeholder="5 Hane" className="bg-transparent flex-1 p-2 text-xs text-white outline-none text-center font-mono tracking-widest" maxLength={5} />
+                                    <div className="space-y-8 flex-1">
+                                        {['PARENT', 'KVKK'].map((type) => {
+                                            const isDone = type === 'PARENT' ? student.hasParentalConsent : student.hasKvkkConsent;
+                                            const code = type === 'PARENT' ? student.parentalExpectedId : student.kvkkExpectedId;
+                                            
+                                            return (
+                                                <div key={type} className="pt-6 border-t border-slate-800 first:border-t-0 first:pt-0">
+                                                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">
+                                                        <span>{type === 'PARENT' ? 'Veli İzin Belgesi' : 'KVKK Metni'}</span>
+                                                        {isDone && <span className="bg-green-900/30 text-green-500 px-2 py-1 rounded flex items-center gap-1"><CheckCircle2 size={12}/> Tamamlandı</span>}
                                                     </div>
-                                                )}
 
-                                                <label className={`block w-full border-2 border-dashed rounded-xl p-3 text-center transition-all ${isDone ? 'border-green-900/30 bg-green-900/5 cursor-default' : 'border-slate-800 hover:border-rose-500/50 hover:bg-slate-800 cursor-pointer'}`}>
-                                                    <input type="file" className="hidden" accept=".pdf" onChange={(e) => handleDocUpload(e, student.id, type as any)} disabled={isDone} />
-                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center justify-center gap-2">
-                                                        {isDone ? <><FileCheck size={14} className="text-green-500"/> Tamamlandı</> : <><Upload size={14}/> PDF Yükle</>}
-                                                    </span>
-                                                </label>
-                                            </div>
-                                        );
-                                    })}
+                                                    {/* Code Management Block */}
+                                                    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-4">
+                                                        {!code ? (
+                                                            <button 
+                                                                onClick={() => handleGenerateCode(student.id, type as any)}
+                                                                className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition-all"
+                                                            >
+                                                                <RefreshCw size={14} className="text-rose-500"/> Doğrulama Kodu Oluştur
+                                                            </button>
+                                                        ) : (
+                                                            <div className="flex flex-col gap-2">
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Belge Üzerindeki Kod</span>
+                                                                    <button onClick={() => copyCode(code)} className="text-slate-500 hover:text-white transition-colors" title="Kodu Kopyala">
+                                                                        <Copy size={14} />
+                                                                    </button>
+                                                                </div>
+                                                                <div className="text-center py-2 bg-slate-900 rounded-lg font-mono text-lg font-black text-rose-500 tracking-widest">
+                                                                    {code}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {!isDone && (
+                                                        <>
+                                                            <div className="flex items-center bg-slate-950 border border-slate-700 rounded-2xl overflow-hidden mb-3 group-focus-within:border-rose-500/50 transition-all">
+                                                                <span className="bg-slate-900 px-3 py-3 text-[10px] font-black text-slate-500 border-r border-slate-800">GİR:</span>
+                                                                <input 
+                                                                    value={verifyCodes[`${student.id}_${type}`] || ''} 
+                                                                    onChange={(e) => setVerifyCodes({...verifyCodes, [`${student.id}_${type}`]: e.target.value.toUpperCase()})} 
+                                                                    placeholder="Kodu Buraya Yazın" 
+                                                                    className="bg-transparent flex-1 p-3 text-xs text-white outline-none font-black tracking-widest placeholder-slate-700" 
+                                                                    maxLength={12} 
+                                                                />
+                                                            </div>
+
+                                                            <label className="block w-full border-2 border-dashed border-slate-800 hover:border-rose-500/30 hover:bg-slate-800/30 rounded-2xl p-4 text-center cursor-pointer transition-all">
+                                                                <input type="file" className="hidden" accept=".pdf" onChange={(e) => handleDocUpload(e, student.id, type as any)} />
+                                                                <div className="flex flex-col items-center gap-2">
+                                                                    <Upload size={20} className="text-slate-600 group-hover:text-rose-500" />
+                                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">İmzalı PDF Yükle</span>
+                                                                </div>
+                                                            </label>
+                                                        </>
+                                                    )}
+
+                                                    {isDone && (
+                                                        <div className="p-4 bg-green-900/5 border border-green-900/20 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black text-green-600 uppercase tracking-widest">
+                                                            <FileCheck size={16}/> Belge Onaylandı
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 )}
 
