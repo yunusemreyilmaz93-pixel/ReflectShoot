@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     Clapperboard, Users, FileText, Video, MessageSquare, AlertCircle, 
     CheckCircle2, Clock, Upload, X, Save, Film, HelpCircle, LogOut, Ban, ShieldAlert,
     Download, Lock, ExternalLink, RefreshCw, FileCheck, BookOpen, Eye, Calendar, Bell, Copy, Info, Loader2, File,
-    Plus, Trash2, Edit, AlertOctagon, CheckSquare, Camera, PenTool, Printer, ShieldCheck
+    Plus, Trash2, Edit, AlertOctagon, CheckSquare, Camera, PenTool, Printer, ShieldCheck,
+    Sparkles, ArrowRight, UploadCloud, Megaphone, Star, PartyPopper, User, RefreshCcw
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Category, Theme, ApplicationStatus, Student } from '../types';
@@ -16,63 +18,103 @@ import { CertificateGenerator } from '../components/CertificateGenerator';
 const TEMPLATE_PARENT_URL = "https://assets.reflectandshoot.com/veli_izin_belgesi.pdf";
 const TEMPLATE_CONSENT_URL = "https://assets.reflectandshoot.com/acik_riza_metni.pdf";
 
-// Circular Progress Component
-const ProgressRing = ({ progress, size = 60, stroke = 4 }: { progress: number, size?: number, stroke?: number }) => {
+// --- COMPONENTS ---
+
+// 1. Premium Circular Progress
+const ProductionStatusRing = ({ progress }: { progress: number }) => {
+    const size = 80;
+    const stroke = 6;
     const radius = (size / 2) - stroke;
     const circumference = radius * 2 * Math.PI;
     const offset = circumference - (progress / 100) * circumference;
 
     return (
-        <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-            <svg width={size} height={size} className="transform -rotate-90">
-                <circle cx={size/2} cy={size/2} r={radius} stroke="currentColor" strokeWidth={stroke} fill="transparent" className="text-slate-800" />
-                <circle 
-                    cx={size/2} cy={size/2} r={radius} stroke="currentColor" strokeWidth={stroke} fill="transparent" 
-                    strokeDasharray={circumference}
-                    style={{ strokeDashoffset: offset, transition: 'stroke-dashoffset 1s ease-in-out' }}
-                    strokeLinecap="round"
-                    className="text-rose-500" 
-                />
-            </svg>
-            <span className="absolute text-[10px] font-black text-white">{progress}%</span>
+        <div className="relative flex items-center justify-center group cursor-default">
+            {/* Glow Effect */}
+            <div className={`absolute inset-0 rounded-full blur-xl opacity-20 transition-all duration-1000 ${progress === 100 ? 'bg-green-500' : 'bg-rose-500'}`}></div>
+            
+            <div className="relative" style={{ width: size, height: size }}>
+                <svg width={size} height={size} className="transform -rotate-90">
+                    <circle cx={size/2} cy={size/2} r={radius} stroke="currentColor" strokeWidth={stroke} fill="transparent" className="text-slate-800" />
+                    <circle 
+                        cx={size/2} cy={size/2} r={radius} stroke="currentColor" strokeWidth={stroke} fill="transparent" 
+                        strokeDasharray={circumference}
+                        style={{ strokeDashoffset: offset, transition: 'stroke-dashoffset 1.5s ease-in-out' }}
+                        strokeLinecap="round"
+                        className={progress === 100 ? 'text-green-500' : 'text-rose-600'} 
+                    />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-lg font-black text-white">{progress}%</span>
+                    <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Hazır</span>
+                </div>
+            </div>
+            
+            {progress === 100 && (
+                <div className="absolute -top-2 -right-2 bg-green-500 text-slate-900 p-1.5 rounded-full shadow-lg animate-bounce">
+                    <CheckCircle2 size={16} />
+                </div>
+            )}
         </div>
     );
 };
 
-// Process Steps Visual Component
-const ProcessSteps = () => (
-    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 mb-8 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none"><Printer size={100} /></div>
-        <h4 className="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center gap-2">
-            <Info size={16} className="text-blue-500" /> Belge Yükleme Rehberi
-        </h4>
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 relative z-10">
-            {[
-                { icon: RefreshCw, title: "1. Kodu Oluştur", desc: "Sistemden her belge için benzersiz kod üret." },
-                { icon: PenTool, title: "2. Belgeye Yaz", desc: "Kodu çıktısını aldığın belgenin üzerine el yazısıyla yaz." },
-                { icon: Camera, title: "3. Fotoğraf/PDF", desc: "İmzalı ve kodlu belgenin fotoğrafını çek veya tarat." },
-                { icon: Upload, title: "4. Sisteme Yükle", desc: "Beyanı onayla ve dosyayı yükle." }
-            ].map((step, i) => (
-                <div key={i} className="flex flex-col items-center text-center group w-full md:w-1/4">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-amber-500 group-hover:border-amber-500/50 transition-all mb-3 shadow-lg">
-                        <step.icon size={20} />
-                    </div>
-                    <h5 className="text-xs font-black text-white mb-1">{step.title}</h5>
-                    <p className="text-[10px] text-slate-500 leading-tight px-2">{step.desc}</p>
-                    {i < 3 && <div className="hidden md:block absolute top-6 w-8 h-0.5 bg-slate-800 -right-4 transform translate-x-1/2"></div>} 
+// 2. Next Action Card (Smart Assistant)
+const NextActionCard = ({ app, onAction }: { app: any, onAction: (tab: string, subAction?: any) => void }) => {
+    let action = { text: "Tüm aşamalar tamamlandı! Arkanıza yaslanın.", btn: "Durumu Kontrol Et", tab: "STATUS", type: "success" };
+    
+    // Logic Chain
+    if (!app.team.logoUrl) {
+        // Logo is usually part of settings, but for now let's assume it's done via settings or not blocking.
+        // Skipping logo check for blocking action to focus on docs.
+    }
+    
+    // Check Students (Dynamic Check)
+    const missingParent = app.team.students.find((s: Student) => !s.hasParentalConsent);
+    const missingKvkk = app.team.students.find((s: Student) => !s.hasKvkkConsent);
+
+    if (app.team.students.length < 3) {
+        action = { text: "Takım en az 3 kişiden oluşmalıdır.", btn: "Öğrenci Ekle", tab: "DOCUMENTS", type: "urgent" };
+    } else if (missingParent) {
+        action = { text: `${missingParent.firstName} isimli öğrencinin Veli İzin Belgesi eksik.`, btn: "Belgeyi Yükle", tab: "DOCUMENTS", type: "warning" };
+    } else if (missingKvkk) {
+        action = { text: `${missingKvkk.firstName} isimli öğrencinin KVKK Metni eksik.`, btn: "Belgeyi Yükle", tab: "DOCUMENTS", type: "warning" };
+    } else if (app.team.videoStatus === 'PENDING' || app.team.videoStatus === 'ERROR') {
+        action = { text: "Prodüksiyon belgeleri tamam. Sırada film teslimi var.", btn: "Videoyu Teslim Et", tab: "VIDEO", type: "info" };
+    } else if (app.team.videoStatus === 'SUBMITTED_LINK') {
+        action = { text: "Video inceleme aşamasında. Onay bekleniyor.", btn: "Detayları Gör", tab: "VIDEO", type: "success" };
+    }
+
+    return (
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 shadow-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 group">
+            {/* Background pattern */}
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none"></div>
+            <div className={`absolute left-0 top-0 bottom-0 w-2 ${action.type === 'success' ? 'bg-green-500' : action.type === 'urgent' ? 'bg-red-500' : action.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
+
+            <div className="flex items-center gap-6 relative z-10 w-full md:w-auto">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 ${action.type === 'success' ? 'bg-green-500/20 text-green-500' : action.type === 'urgent' ? 'bg-red-500/20 text-red-500' : 'bg-amber-500/20 text-amber-500'}`}>
+                    {action.type === 'success' ? <PartyPopper size={28} /> : <Megaphone size={28} className="animate-pulse" />}
                 </div>
-            ))}
+                <div>
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Sıradaki Görev</h4>
+                    <p className="text-lg md:text-xl font-bold text-white leading-tight">{action.text}</p>
+                </div>
+            </div>
+
+            <button 
+                onClick={() => onAction(action.tab)}
+                className="relative z-10 bg-white text-slate-900 hover:bg-slate-200 px-8 py-4 rounded-xl font-black text-sm flex items-center gap-2 transition-all shadow-xl hover:-translate-y-1 whitespace-nowrap w-full md:w-auto justify-center"
+            >
+                {action.btn} <ArrowRight size={16} />
+            </button>
         </div>
-    </div>
-);
+    );
+};
 
 export const Dashboard: React.FC = () => {
     const { currentUser, currentApplication, createApplication, updateApplication, showToast, systemSettings } = useAppContext();
     const [activeTab, setActiveTab] = useState('STATUS');
     
-    // UI States
-    const [isGrainEnabled] = useState(true);
-
     // Create App Form State
     const [teamForm, setTeamForm] = useState({
         teamName: '',
@@ -107,7 +149,7 @@ export const Dashboard: React.FC = () => {
     // Verification Codes Input State
     const [verifyCodes, setVerifyCodes] = useState<Record<string, string>>({});
     
-    // -- NEW: Declaration Modal State --
+    // Declaration Modal State
     const [declarationModal, setDeclarationModal] = useState<{ studentId: string, type: 'PARENT' | 'KVKK' } | null>(null);
     const [declarationAccepted, setDeclarationAccepted] = useState(false);
 
@@ -125,8 +167,12 @@ export const Dashboard: React.FC = () => {
         const hasLogo = currentApplication.team.logoUrl ? 1 : 0;
         const hasVideo = currentApplication.team.videoStatus !== 'PENDING' ? 1 : 0;
         
-        const totalItems = totalDocs + 2;
+        const totalItems = totalDocs + 2; // Docs + Logo + Video
         const completedItems = uploadedDocs + hasLogo + hasVideo;
+        
+        // Avoid division by zero
+        if(totalItems === 0) return 0;
+        
         return Math.round((completedItems / totalItems) * 100);
     };
 
@@ -151,15 +197,36 @@ export const Dashboard: React.FC = () => {
         ));
     };
 
-    // --- Student Management Logic ---
+    // --- Dynamic Data Helpers ---
+    const getRemainingDays = () => {
+        const end = new Date(systemSettings.dates.videoUploadEnd);
+        const now = new Date();
+        const diff = end.getTime() - now.getTime();
+        const days = Math.ceil(diff / (1000 * 3600 * 24));
+        return days > 0 ? days : 0;
+    };
+
+    const getMissingDocsCount = () => {
+        if (!currentApplication) return 0;
+        let count = 0;
+        currentApplication.team.students.forEach(s => {
+            if (!s.hasParentalConsent) count++;
+            if (!s.hasKvkkConsent) count++;
+        });
+        return count;
+    };
+
+    // --- Actions ---
+
+    const handleActionRedirect = (tab: string) => {
+        setActiveTab(tab);
+        // Scroll to content
+        const el = document.getElementById('dashboard-content');
+        if(el) el.scrollIntoView({ behavior: 'smooth' });
+    };
 
     const handleOpenStudentModal = (student?: Student) => {
-        if (student) {
-            setEditingStudent(student);
-        } else {
-            // New Student
-            setEditingStudent({ firstName: '', lastName: '', grade: '' });
-        }
+        setEditingStudent(student || { firstName: '', lastName: '', grade: '' });
         setIsStudentModalOpen(true);
     };
 
@@ -173,10 +240,8 @@ export const Dashboard: React.FC = () => {
         let updatedStudents = [...currentApplication.team.students];
 
         if (editingStudent.id) {
-            // Update existing
             updatedStudents = updatedStudents.map(s => s.id === editingStudent.id ? { ...s, ...editingStudent } as Student : s);
         } else {
-            // Add new
             if (updatedStudents.length >= 6) {
                 showToast("En fazla 6 öğrenci ekleyebilirsiniz.", "error");
                 return;
@@ -194,7 +259,7 @@ export const Dashboard: React.FC = () => {
 
         try {
             await updateApplication({ ...currentApplication, team: { ...currentApplication.team, students: updatedStudents } });
-            showToast("Öğrenci listesi güncellendi.", "success");
+            showToast("Kadro güncellendi.", "success");
             setIsStudentModalOpen(false);
             setEditingStudent(null);
         } catch (e) {
@@ -208,7 +273,7 @@ export const Dashboard: React.FC = () => {
             showToast("Takım en az 3 kişiden oluşmalıdır.", "error");
             return;
         }
-        if (!window.confirm("Bu öğrenciyi takımdan çıkarmak istediğinize emin misiniz? Yüklenen belgeler de silinecektir.")) return;
+        if (!window.confirm("Bu öğrenciyi takımdan çıkarmak istediğinize emin misiniz?")) return;
 
         const updatedStudents = currentApplication.team.students.filter(s => s.id !== studentId);
         try {
@@ -219,31 +284,21 @@ export const Dashboard: React.FC = () => {
         }
     };
 
-    // --- Code Generation & Upload Logic ---
-
     const handleGenerateCode = async (studentId: string, type: 'PARENT' | 'KVKK') => {
         if (!currentApplication) return;
         
+        // 5-digit number
         const generateRandomString = () => {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let res = '';
-            for (let i = 0; i < 5; i++) {
-                res += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return res;
+            return Math.floor(10000 + Math.random() * 90000).toString();
         };
 
-        const prefix = type === 'PARENT' ? 'RFS-VI-' : 'RFS-AR-';
-        let newCode = prefix + generateRandomString();
+        let newCode = generateRandomString();
 
         const isCodeTaken = currentApplication.team.students.some(s => 
             s.parentalExpectedId === newCode || s.kvkkExpectedId === newCode
         );
 
-        if (isCodeTaken) {
-            handleGenerateCode(studentId, type);
-            return;
-        }
+        if (isCodeTaken) { handleGenerateCode(studentId, type); return; }
 
         const updatedStudents = currentApplication.team.students.map(s => {
             if (s.id === studentId) {
@@ -254,9 +309,9 @@ export const Dashboard: React.FC = () => {
 
         try {
             await updateApplication({ ...currentApplication, team: { ...currentApplication.team, students: updatedStudents } });
-            showToast("Belge onay kodu oluşturuldu.", 'success');
+            showToast("Kod oluşturuldu.", 'success');
         } catch (e) {
-            showToast("Kod oluşturulurken bir hata oluştu.", 'error');
+            showToast("Hata oluştu.", 'error');
         }
     };
 
@@ -265,52 +320,6 @@ export const Dashboard: React.FC = () => {
         showToast("Kod kopyalandı!", 'success');
     };
 
-    if (currentApplication?.status === ApplicationStatus.DISQUALIFIED) {
-        return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-center animate-fadeIn relative overflow-hidden">
-                {/* Disqualified UI remains the same */}
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 pointer-events-none"></div>
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-red-900/10 blur-[150px] rounded-full pointer-events-none"></div>
-                <div className="relative z-10 max-w-lg w-full bg-slate-900/80 backdrop-blur-xl border border-red-900/30 p-10 rounded-3xl shadow-2xl flex flex-col items-center">
-                    <div className="relative mb-8">
-                        <div className="absolute inset-0 bg-red-500/20 blur-xl rounded-full animate-pulse"></div>
-                        <div className="relative w-24 h-24 bg-slate-950 border border-red-500/50 rounded-full flex items-center justify-center shadow-2xl">
-                            <Ban size={48} className="text-red-500" />
-                        </div>
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-black text-white mb-4 tracking-tight">Erişim Engellendi</h1>
-                    <p className="text-lg text-slate-300 mb-8 leading-relaxed font-light">Üzgünüz, yarışmamıza katılım sağlamanız mümkün değildir.</p>
-                    <div className="bg-red-950/30 border border-red-900/50 p-5 rounded-2xl flex items-start gap-4 text-left w-full">
-                        <ShieldAlert className="text-red-500 flex-shrink-0 mt-1" size={24} />
-                        <div>
-                            <strong className="text-red-400 block mb-1 text-sm font-bold uppercase tracking-wider">DİSKALİFİYE EDİLDİ</strong>
-                            <p className="text-xs text-red-200/70 leading-relaxed">
-                                Yarışma kurallarına aykırı durumlar tespit edildiği için <strong>{currentApplication.team.name}</strong> takımının kaydı dondurulmuştur. Bu panel üzerinden işlem yapılamaz.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    const handleCreateSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if(!validateCreate()) return;
-        setIsCreating(true);
-        try { await createApplication(teamForm); } catch (e: any) { showToast(e.message, 'error'); } finally { setIsCreating(false); }
-    };
-
-    const validateCreate = () => {
-        const errs: any = {};
-        if(!teamForm.teamName) errs.teamName = "Takım adı gereklidir.";
-        if(teamForm.students.some(s => !s.firstName || !s.lastName || !s.grade)) errs.students = "Tüm öğrenci bilgileri doldurulmalıdır.";
-        setFormErrors(errs);
-        return Object.keys(errs).length === 0;
-    };
-
-    // --- New Responsibility Logic ---
-
     const handleOpenDeclarationModal = (studentId: string, type: 'PARENT' | 'KVKK') => {
         setDeclarationModal({ studentId, type });
         setDeclarationAccepted(false);
@@ -318,12 +327,9 @@ export const Dashboard: React.FC = () => {
 
     const handleConfirmDeclaration = () => {
         if (!declarationModal) return;
-        // Trigger the hidden input
         const inputId = `file-input-${declarationModal.studentId}-${declarationModal.type}`;
         const inputElement = document.getElementById(inputId);
-        if (inputElement) {
-            inputElement.click();
-        }
+        if (inputElement) { inputElement.click(); }
         setDeclarationModal(null);
     };
 
@@ -338,17 +344,14 @@ export const Dashboard: React.FC = () => {
         const keyMap = `${studentId}_${type}`;
         const file = selectedFiles[keyMap];
         
-        if(!file || !currentApplication) {
-            showToast("Lütfen bir dosya seçiniz.", 'error');
-            return;
-        }
+        if(!file || !currentApplication) { showToast("Dosya seçilmedi.", 'error'); return; }
         
-        const enteredCode = (verifyCodes[keyMap] || '').trim().toUpperCase();
+        const enteredCode = (verifyCodes[keyMap] || '').trim();
         const student = currentApplication.team.students.find(s => s.id === studentId);
         const expectedCode = type === 'PARENT' ? student?.parentalExpectedId : student?.kvkkExpectedId;
         
-        if (!expectedCode) { showToast("Lütfen önce bu belge için bir kod oluşturun.", 'error'); return; }
-        if (enteredCode !== expectedCode) { showToast("Kod uyuşmuyor! Lütfen belgeye yazdığınız kodu kontrol edin.", 'error'); return; }
+        if (!expectedCode) { showToast("Önce kod oluşturun.", 'error'); return; }
+        if (enteredCode !== expectedCode) { showToast("Girdiğiniz kod belge üzerindeki kodla eşleşmiyor!", 'error'); return; }
 
         setUploadingDoc(keyMap);
         try {
@@ -360,22 +363,38 @@ export const Dashboard: React.FC = () => {
                 }
                 return s;
             });
-            
             await updateApplication({ ...currentApplication, team: { ...currentApplication.team, students: updatedStudents as Student[] } });
             
-            // Cleanup
-            setSelectedFiles(prev => {
-                const newState = { ...prev };
-                delete newState[keyMap];
-                return newState;
-            });
+            setSelectedFiles(prev => { const n = {...prev}; delete n[keyMap]; return n; });
             setVerifyCodes(prev => ({ ...prev, [keyMap]: '' }));
-            
             showToast("Belge başarıyla yüklendi.", 'success');
         } catch(err: any) { 
             showToast("Hata: " + err.message, 'error'); 
         } finally { 
             setUploadingDoc(null);
+        }
+    };
+
+    const handleDeleteDoc = async (studentId: string, type: 'PARENT' | 'KVKK') => {
+        if (!currentApplication) return;
+        if (!window.confirm("Yüklenen belgeyi silmek ve yeniden yüklemek istediğinize emin misiniz?")) return;
+
+        const updatedStudents = currentApplication.team.students.map(s => {
+            if (s.id === studentId) {
+                if (type === 'PARENT') {
+                    return { ...s, hasParentalConsent: false, parentalConsentUrl: undefined, docStatus: undefined };
+                } else {
+                    return { ...s, hasKvkkConsent: false, kvkkConsentUrl: undefined, docStatus: undefined };
+                }
+            }
+            return s;
+        });
+
+        try {
+            await updateApplication({ ...currentApplication, team: { ...currentApplication.team, students: updatedStudents as Student[] } });
+            showToast("Belge silindi.", "success");
+        } catch (e) {
+            showToast("Silme işlemi başarısız.", "error");
         }
     };
 
@@ -388,37 +407,81 @@ export const Dashboard: React.FC = () => {
                 status: ApplicationStatus.FINAL_SUBMITTED 
             };
             await updateApplication(updated);
-            showToast("Video teslimi başarıyla tamamlandı. Yönetici onayı bekleniyor.", 'success');
+            showToast("Video teslim edildi!", 'success');
         } catch (error) {
-            showToast("Video teslimi sırasında bir hata oluştu.", 'error');
+            showToast("Hata oluştu.", 'error');
         }
     };
 
-    const allVideoChecksPassed = videoChecklist.resolution && videoChecklist.audio && videoChecklist.credits && videoChecklist.copyright;
-
-    if (!currentApplication) {
-        // ... (existing Create App UI) ...
+    // --- Disqualified View ---
+    if (currentApplication?.status === ApplicationStatus.DISQUALIFIED) {
         return (
-            <div className="max-w-4xl mx-auto px-4 py-12 animate-fadeIn">
-                <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 shadow-2xl">
-                    <h2 className="text-3xl font-black text-white mb-6 flex items-center gap-3">
-                        <Clapperboard className="text-rose-500" size={32}/> Takımını Kur
+            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-center animate-fadeIn relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 pointer-events-none"></div>
+                <div className="relative z-10 max-w-lg w-full bg-slate-900/80 backdrop-blur-xl border border-red-900/30 p-10 rounded-3xl shadow-2xl flex flex-col items-center">
+                    <div className="relative mb-8">
+                        <div className="absolute inset-0 bg-red-500/20 blur-xl rounded-full animate-pulse"></div>
+                        <div className="relative w-24 h-24 bg-slate-950 border border-red-500/50 rounded-full flex items-center justify-center shadow-2xl">
+                            <Ban size={48} className="text-red-500" />
+                        </div>
+                    </div>
+                    <h1 className="text-3xl font-black text-white mb-4">Erişim Engellendi</h1>
+                    <p className="text-lg text-slate-300 mb-8 font-light">Üzgünüz, takımınız diskalifiye edilmiştir.</p>
+                </div>
+            </div>
+        );
+    }
+
+    // --- Create Application View ---
+    if (!currentApplication) {
+        const handleCreateSubmit = async (e: React.FormEvent) => {
+            e.preventDefault();
+            if(!validateCreate()) return;
+            setIsCreating(true);
+            try { await createApplication(teamForm); } catch (e: any) { showToast(e.message, 'error'); } finally { setIsCreating(false); }
+        };
+        const validateCreate = () => {
+            const errs: any = {};
+            if(!teamForm.teamName) errs.teamName = "Takım adı gereklidir.";
+            if(teamForm.students.some(s => !s.firstName || !s.lastName || !s.grade)) errs.students = "Tüm öğrenci bilgileri doldurulmalıdır.";
+            setFormErrors(errs);
+            return Object.keys(errs).length === 0;
+        };
+
+        return (
+            <div className="max-w-4xl mx-auto px-4 py-12 animate-fadeIn min-h-screen flex items-center">
+                <div className="w-full bg-slate-900 border border-slate-700 rounded-[2rem] p-8 md:p-12 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-[80px] pointer-events-none -mr-20 -mt-20"></div>
+                    <h2 className="text-3xl md:text-4xl font-black text-white mb-8 flex items-center gap-4">
+                        <Clapperboard className="text-rose-500" size={40}/> Prodüksiyonu Başlat
                     </h2>
-                    <form onSubmit={handleCreateSubmit} className="space-y-8">
-                        <div className="grid md:grid-cols-2 gap-6">
+                    <form onSubmit={handleCreateSubmit} className="space-y-8 relative z-10">
+                        <div className="grid md:grid-cols-2 gap-8">
                             <div>
-                                <label className="block text-sm font-bold text-slate-400 mb-2">Takım Adı</label>
-                                <input name="teamName" value={teamForm.teamName} onChange={(e) => setTeamForm({...teamForm, teamName: e.target.value})} maxLength={40} className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none" />
+                                <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Takım Adı</label>
+                                <input name="teamName" value={teamForm.teamName} onChange={(e) => setTeamForm({...teamForm, teamName: e.target.value})} maxLength={40} className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold placeholder-slate-700 transition-colors" placeholder="Örn: Yıldızlar Ekibi" />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-400 mb-2">Kategori</label>
-                                <select name="category" value={teamForm.category} onChange={(e) => setTeamForm({...teamForm, category: e.target.value as Category})} className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white focus:border-rose-500 outline-none">
+                                <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Kategori</label>
+                                <select name="category" value={teamForm.category} onChange={(e) => setTeamForm({...teamForm, category: e.target.value as Category})} className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold transition-colors">
                                     {Object.values(Category).map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                         </div>
-                        <button type="submit" disabled={isCreating} className="w-full bg-rose-600 hover:bg-rose-500 text-white py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2">
-                            {isCreating ? 'Oluşturuluyor...' : 'Takımı Oluştur ve Başvur'}
+                        <div className="bg-slate-950/50 p-6 rounded-2xl border border-slate-800">
+                            <h4 className="text-white font-bold mb-4 flex items-center gap-2"><Users size={18} className="text-teal-500"/> İlk 3 Öğrenci (Zorunlu)</h4>
+                            <div className="grid gap-4">
+                                {teamForm.students.map((s, i) => (
+                                    <div key={i} className="grid grid-cols-3 gap-4">
+                                        <input placeholder="Ad" value={s.firstName} onChange={e => { const n=[...teamForm.students]; n[i].firstName=e.target.value; setTeamForm({...teamForm, students:n}) }} className="bg-slate-900 border border-slate-700 rounded-lg p-3 text-white outline-none focus:border-teal-500" />
+                                        <input placeholder="Soyad" value={s.lastName} onChange={e => { const n=[...teamForm.students]; n[i].lastName=e.target.value; setTeamForm({...teamForm, students:n}) }} className="bg-slate-900 border border-slate-700 rounded-lg p-3 text-white outline-none focus:border-teal-500" />
+                                        <input placeholder="Sınıf (Örn: 11-A)" value={s.grade} onChange={e => { const n=[...teamForm.students]; n[i].grade=e.target.value; setTeamForm({...teamForm, students:n}) }} className="bg-slate-900 border border-slate-700 rounded-lg p-3 text-white outline-none focus:border-teal-500" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <button type="submit" disabled={isCreating} className="w-full bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white py-5 rounded-2xl font-black text-xl shadow-lg shadow-rose-900/30 transition-all flex items-center justify-center gap-3 transform hover:-translate-y-1">
+                            {isCreating ? 'Sahne Kuruluyor...' : 'Motor! (Başvuruyu Tamamla)'}
                         </button>
                     </form>
                 </div>
@@ -427,105 +490,142 @@ export const Dashboard: React.FC = () => {
     }
 
     const progress = calculateProgress();
+    const allVideoChecksPassed = videoChecklist.resolution && videoChecklist.audio && videoChecklist.credits && videoChecklist.copyright;
+    const missingDocsCount = getMissingDocsCount();
+    const remainingDays = getRemainingDays();
 
     return (
-        <div className="bg-slate-950 min-h-screen text-slate-200 font-sans pb-20 relative">
-            {/* Cinematic Grain Effect */}
-            {isGrainEnabled && (
-                <div className="fixed inset-0 pointer-events-none z-[100] opacity-[0.03] mix-blend-overlay" 
-                     style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }}></div>
-            )}
+        <div className="bg-slate-950 min-h-screen text-slate-200 font-sans pb-24 relative overflow-x-hidden">
+            {/* Background Texture */}
+            <div className="fixed inset-0 pointer-events-none z-[0] opacity-[0.03] mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
 
-            {/* Header */}
-            <div className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            {/* --- HERO SECTION: Director's Cut Style --- */}
+            <div className="relative pt-8 pb-12 bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800 z-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    
+                    {/* Top Bar: Identity */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
                         <div className="flex items-center gap-6">
-                            <div className="flex items-center gap-4">
-                                {currentApplication.team.logoUrl && (
-                                    <img src={currentApplication.team.logoUrl} className="w-12 h-12 rounded-lg object-cover border border-slate-700 shadow-lg" alt="Logo" />
+                            <div className="relative group">
+                                <div className="absolute inset-0 bg-rose-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                                {currentApplication.team.logoUrl ? (
+                                    <img src={currentApplication.team.logoUrl} className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-700 relative z-10 shadow-2xl" alt="Logo" />
+                                ) : (
+                                    <div className="w-20 h-20 rounded-2xl bg-slate-800 border-2 border-slate-700 flex items-center justify-center relative z-10 text-slate-500">
+                                        <Camera size={32} />
+                                    </div>
                                 )}
-                                <div>
-                                    <h1 className="text-2xl font-black text-white leading-tight flex items-center gap-3">
-                                        {currentApplication.team.name}
-                                        {progress === 100 && <CheckCircle2 className="text-green-500" size={20}/>}
-                                    </h1>
-                                    <p className="text-slate-400 text-sm flex items-center gap-2">
-                                        {currentApplication.teacher.school} <span className="w-1 h-1 rounded-full bg-slate-600"></span> {currentApplication.team.category}
-                                    </p>
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-3 mb-1">
+                                    <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">{currentApplication.team.name}</h1>
+                                    <span className="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                        {currentApplication.team.category}
+                                    </span>
                                 </div>
+                                <p className="text-slate-400 font-medium flex items-center gap-2">
+                                    <Clapperboard size={14} className="text-rose-500"/> {currentApplication.teacher.school}
+                                </p>
                             </div>
                         </div>
-                        
-                        <div className="flex items-center gap-3">
-                            <div className="bg-slate-800 border border-slate-700 px-6 py-2 rounded-xl text-center hidden sm:flex flex-col items-center justify-center gap-1.5">
-                                <span className="block text-[9px] font-black text-slate-500 uppercase tracking-widest">Hazırlık Oranı</span>
-                                <ProgressRing progress={progress} size={44} stroke={4} />
+
+                        {/* Production Status */}
+                        <div className="flex items-center gap-6 bg-slate-900/50 p-4 rounded-3xl border border-slate-800/50 backdrop-blur-sm">
+                            <div className="text-right hidden sm:block">
+                                <span className="block text-white font-bold text-lg leading-none mb-1">Hazırlık Süreci</span>
+                                <span className="block text-slate-500 text-xs font-medium uppercase tracking-wider">{progress === 100 ? 'Tamamlandı' : 'Devam Ediyor'}</span>
                             </div>
-                            <div className={`px-4 py-3 rounded-xl text-xs font-bold text-white uppercase tracking-wider bg-slate-700`}>
-                                {currentApplication.status}
-                            </div>
+                            <ProductionStatusRing progress={progress} />
                         </div>
                     </div>
 
-                    <div className="flex gap-6 mt-8 overflow-x-auto">
-                        {['STATUS', 'DOCUMENTS', 'VIDEO', 'CHAT'].map(tab => (
-                            <button key={tab} onClick={() => setActiveTab(tab)} className={`pb-3 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${activeTab === tab ? 'text-rose-500 border-rose-500' : 'text-slate-400 border-transparent hover:text-white'}`}>
-                                {tab === 'STATUS' ? 'Genel Bakış' : tab === 'DOCUMENTS' ? 'Belgeler & Takım' : tab === 'VIDEO' ? 'Video Teslim' : 'İletişim'}
+                    {/* Dynamic CTA */}
+                    <div className="mb-8">
+                        <NextActionCard app={currentApplication} onAction={handleActionRedirect} />
+                    </div>
+
+                    {/* Navigation Tabs */}
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                        {[
+                            { id: 'STATUS', label: 'Genel Bakış', icon: AlertOctagon },
+                            { id: 'DOCUMENTS', label: 'Belgeler & Kadro', icon: Users },
+                            { id: 'VIDEO', label: 'Video Teslim', icon: Film },
+                            { id: 'CHAT', label: 'Yönetimle İletişim', icon: MessageSquare }
+                        ].map(tab => (
+                            <button 
+                                key={tab.id} 
+                                onClick={() => setActiveTab(tab.id)} 
+                                className={`
+                                    flex items-center gap-2 px-6 py-4 rounded-xl font-bold text-sm transition-all whitespace-nowrap border-b-4 
+                                    ${activeTab === tab.id 
+                                        ? 'bg-slate-800 text-white border-rose-500 shadow-lg' 
+                                        : 'bg-transparent text-slate-500 border-transparent hover:bg-slate-900 hover:text-white'}
+                                `}
+                            >
+                                <tab.icon size={18} className={activeTab === tab.id ? 'text-rose-500' : ''} />
+                                {tab.label}
                             </button>
                         ))}
                     </div>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn">
+            {/* --- CONTENT AREA --- */}
+            <div id="dashboard-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10 animate-fadeIn">
                 
-                {/* ... (STATUS TAB IS THE SAME) ... */}
+                {/* 1. STATUS TAB */}
                 {activeTab === 'STATUS' && (
-                    <div className="grid md:grid-cols-2 gap-8">
-                        <div className="space-y-6">
-                            <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
-                                <h3 className="font-bold text-white mb-6 flex items-center gap-2"><HelpCircle size={20} className="text-teal-500"/> Proje Künyesi</h3>
-                                <div className="space-y-4">
-                                    <div className="flex justify-between border-b border-slate-800 pb-3">
-                                        <span className="text-slate-500 text-sm">Tema</span>
-                                        <span className="text-white text-sm font-bold">{currentApplication.team.theme}</span>
+                    <div className="grid lg:grid-cols-2 gap-8">
+                        {/* Left Column */}
+                        <div className="space-y-8">
+                            <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-xl relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity"><BookOpen size={100} /></div>
+                                <h3 className="font-bold text-white mb-6 flex items-center gap-3 text-lg"><Info size={22} className="text-teal-500"/> Proje Teması</h3>
+                                <div className="space-y-6 relative z-10">
+                                    <div className="flex justify-between border-b border-slate-800 pb-4">
+                                        <span className="text-slate-500 font-medium">Seçilen Tema</span>
+                                        <span className="text-white font-bold text-lg">{currentApplication.team.theme}</span>
                                     </div>
                                     {currentApplication.team.theme === Theme.AYET && currentApplication.team.selectedVerse && verseDetails[currentApplication.team.selectedVerse] && (
-                                        <div className="mt-4 p-5 bg-slate-950 border border-slate-800 rounded-2xl space-y-4 shadow-inner">
+                                        <div className="p-6 bg-slate-950 border border-slate-800 rounded-2xl space-y-4 shadow-inner">
                                             <p className="text-right text-2xl font-serif text-amber-400 leading-loose" dir="rtl">{renderVerseText(verseDetails[currentApplication.team.selectedVerse].arabic, true)}</p>
-                                            <p className="text-sm text-slate-300 italic">"{renderVerseText(verseDetails[currentApplication.team.selectedVerse].turkish, false)}"</p>
+                                            <div className="w-full h-px bg-slate-800"></div>
+                                            <p className="text-sm text-slate-300 italic leading-relaxed">"{renderVerseText(verseDetails[currentApplication.team.selectedVerse].turkish, false)}"</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Team Calendar / Reminders */}
-                            <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl overflow-hidden relative group">
-                                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Calendar size={80}/></div>
-                                <h3 className="font-bold text-white mb-6 flex items-center gap-2"><Bell size={20} className="text-amber-500"/> Hatırlatıcılar</h3>
+                            <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-xl">
+                                <h3 className="font-bold text-white mb-6 flex items-center gap-3 text-lg"><Bell size={22} className="text-amber-500"/> Hatırlatıcılar</h3>
                                 <div className="space-y-4">
-                                    <div className="p-4 bg-rose-900/10 border border-rose-500/20 rounded-xl flex gap-3">
-                                        <div className="w-10 h-10 bg-rose-500/20 rounded-lg flex items-center justify-center flex-shrink-0"><Clock className="text-rose-500" size={20}/></div>
+                                    <div className="p-5 bg-rose-900/10 border border-rose-500/20 rounded-2xl flex gap-4 transition-transform hover:scale-[1.02]">
+                                        <div className="w-12 h-12 bg-rose-500/20 rounded-xl flex items-center justify-center flex-shrink-0"><Clock className="text-rose-500" size={24}/></div>
                                         <div>
-                                            <p className="text-sm font-bold text-rose-200">Video Teslimi İçin Son Günler</p>
-                                            <p className="text-xs text-slate-500">20 Mart tarihine kadar videonuzu yüklediğinizden emin olun.</p>
+                                            <p className="font-bold text-rose-200">Video Teslimi</p>
+                                            <p className="text-xs text-slate-400 mt-1">Son teslim tarihine <strong className="text-white">{remainingDays} gün</strong> kaldı. ({new Date(systemSettings.dates.videoUploadEnd).toLocaleDateString()})</p>
                                         </div>
                                     </div>
-                                    <div className="p-4 bg-teal-900/10 border border-teal-500/20 rounded-xl flex gap-3">
-                                        <div className="w-10 h-10 bg-teal-500/20 rounded-lg flex items-center justify-center flex-shrink-0"><FileCheck className="text-teal-500" size={20}/></div>
+                                    <div className="p-5 bg-teal-900/10 border border-teal-500/20 rounded-2xl flex gap-4 transition-transform hover:scale-[1.02]">
+                                        <div className="w-12 h-12 bg-teal-500/20 rounded-xl flex items-center justify-center flex-shrink-0"><FileCheck className="text-teal-500" size={24}/></div>
                                         <div>
-                                            <p className="text-sm font-bold text-teal-200">Belge Onayları</p>
-                                            <p className="text-xs text-slate-500">Tüm öğrencilerin belgelerini sisteme girmeyi unutmayın. (%{progress})</p>
+                                            <p className="font-bold text-teal-200">Belge Onayları</p>
+                                            {missingDocsCount > 0 ? (
+                                                <p className="text-xs text-slate-400 mt-1">Takımda <strong className="text-white">{missingDocsCount} adet</strong> eksik belge bulunuyor.</p>
+                                            ) : (
+                                                <p className="text-xs text-green-400 mt-1">Harika! Tüm belgeler tamamlandı.</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
-                            <h3 className="font-bold text-white mb-6 flex items-center gap-2"><Clock size={20} className="text-blue-500"/> Süreç Takibi</h3>
-                            <div className="space-y-8 relative pl-6 border-l-2 border-slate-800 ml-3 animate-slideDown">
+                        {/* Right Column: Timeline */}
+                        <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-xl">
+                            <h3 className="font-bold text-white mb-8 flex items-center gap-3 text-lg"><Clock size={22} className="text-blue-500"/> Süreç Takibi</h3>
+                            <div className="space-y-8 relative pl-4">
+                                <div className="absolute left-[27px] top-4 bottom-4 w-0.5 bg-slate-800"></div>
                                 {[
                                     { label: 'Başvuru Oluşturuldu', done: true, date: new Date(currentApplication.submittedAt).toLocaleDateString() },
                                     { label: 'Belgeler Tamamlandı', done: currentApplication.team.students.every(s => s.hasParentalConsent && s.hasKvkkConsent) },
@@ -533,10 +633,12 @@ export const Dashboard: React.FC = () => {
                                     { label: 'Ön Eleme Sonucu', done: currentApplication.team.isPreliminaryStageComplete },
                                     { label: 'Gala Gecesi', done: false }
                                 ].map((step, i) => (
-                                    <div key={i} className="relative">
-                                        <div className={`absolute -left-[31px] top-1 w-4 h-4 rounded-full border-4 shadow-lg transition-colors duration-500 ${step.done ? 'bg-green-500 border-slate-900' : 'bg-slate-800 border-slate-900'}`}></div>
-                                        <p className={`text-sm font-bold ${step.done ? 'text-white' : 'text-slate-500'}`}>{step.label}</p>
-                                        {step.date && <p className="text-[10px] text-slate-600 mt-1">{step.date}</p>}
+                                    <div key={i} className="relative flex items-center gap-6 group">
+                                        <div className={`w-6 h-6 rounded-full border-4 relative z-10 flex-shrink-0 transition-all duration-500 ${step.done ? 'bg-green-500 border-slate-900 shadow-[0_0_15px_rgba(34,197,94,0.5)]' : 'bg-slate-800 border-slate-900'}`}></div>
+                                        <div className={`flex-1 p-4 rounded-2xl border transition-all ${step.done ? 'bg-slate-800 border-slate-700' : 'bg-transparent border-transparent opacity-50'}`}>
+                                            <p className={`text-sm font-bold ${step.done ? 'text-white' : 'text-slate-500'}`}>{step.label}</p>
+                                            {step.date && <p className="text-[10px] text-slate-500 mt-1 font-mono">{step.date}</p>}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -544,259 +646,288 @@ export const Dashboard: React.FC = () => {
                     </div>
                 )}
 
+                {/* 2. DOCUMENTS TAB (Cast & Crew) - REDESIGNED */}
                 {activeTab === 'DOCUMENTS' && (
-                    <div className="space-y-8">
-                        <ProcessSteps />
+                    <div className="space-y-12">
+                        
+                        {/* Guide Section */}
+                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-slate-800 rounded-full blur-[80px] pointer-events-none -mr-20 -mt-20"></div>
+                            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-8 flex items-center gap-2">
+                                <Info size={16} className="text-blue-500"/> Belge Yükleme Rehberi
+                            </h3>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 relative z-10">
+                                {[
+                                    { icon: RefreshCw, title: '1. Kodu Oluştur', desc: 'Sistemden her belge için benzersiz kod üret.' },
+                                    { icon: PenTool, title: '2. Belgeye Yaz', desc: 'Kodu çıktısını aldığın belgenin üzerine el yazısıyla yaz.' },
+                                    { icon: Camera, title: '3. Fotoğraf/PDF', desc: 'İmzalı ve kodlu belgenin fotoğrafını çek veya tarat.' },
+                                    { icon: Upload, title: '4. Sisteme Yükle', desc: 'Beyanı onayla ve dosyayı yükle.' }
+                                ].map((step, i) => (
+                                    <div key={i} className="text-center group">
+                                        <div className="w-14 h-14 mx-auto bg-slate-800 rounded-2xl flex items-center justify-center mb-4 border border-slate-700 group-hover:border-blue-500/50 group-hover:bg-slate-900 transition-all shadow-lg">
+                                            <step.icon size={24} className="text-slate-400 group-hover:text-blue-400 transition-colors" />
+                                        </div>
+                                        <h4 className="text-white font-bold text-sm mb-1">{step.title}</h4>
+                                        <p className="text-[10px] text-slate-500 max-w-[150px] mx-auto leading-relaxed">{step.desc}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
-                        {/* Template Download Section */}
+                        {/* Download Cards */}
                         <div className="grid md:grid-cols-2 gap-6">
-                            <a href={TEMPLATE_PARENT_URL} target="_blank" className="flex items-center justify-between p-6 bg-slate-900 border border-slate-800 rounded-3xl hover:border-amber-500/50 transition-all group shadow-xl">
+                            <a href={TEMPLATE_PARENT_URL} target="_blank" className="group bg-slate-900 p-6 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500 border border-amber-500/20">
-                                        <Download size={24} />
+                                    <div className="p-3 bg-amber-900/20 rounded-xl text-amber-500 border border-amber-900/50">
+                                        <Download size={24}/>
                                     </div>
                                     <div>
-                                        <p className="text-lg font-black text-white leading-tight">Veli İzin Belgesi</p>
-                                        <p className="text-xs text-slate-500 mt-1">İndir, yazdır ve veliye imzalat.</p>
+                                        <h4 className="font-bold text-white group-hover:text-amber-500 transition-colors">Veli İzin Belgesi</h4>
+                                        <p className="text-xs text-slate-500">İndir, yazdır ve veliye imzalat.</p>
                                     </div>
                                 </div>
-                                <ExternalLink size={20} className="text-slate-700 group-hover:text-amber-500 transition-colors" />
+                                <ExternalLink size={16} className="text-slate-600 group-hover:text-white transition-colors" />
                             </a>
-                            <a href={TEMPLATE_CONSENT_URL} target="_blank" className="flex items-center justify-between p-6 bg-slate-900 border border-slate-800 rounded-3xl hover:border-teal-500/50 transition-all group shadow-xl">
+                            <a href={TEMPLATE_CONSENT_URL} target="_blank" className="group bg-slate-900 p-6 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-teal-500/10 rounded-2xl text-teal-500 border border-teal-500/20">
-                                        <Download size={24} />
+                                    <div className="p-3 bg-teal-900/20 rounded-xl text-teal-500 border border-teal-900/50">
+                                        <Download size={24}/>
                                     </div>
                                     <div>
-                                        <p className="text-lg font-black text-white leading-tight">KVKK Açık Rıza Metni</p>
-                                        <p className="text-xs text-slate-500 mt-1">İndir, yazdır ve imzalat.</p>
+                                        <h4 className="font-bold text-white group-hover:text-teal-500 transition-colors">KVKK Açık Rıza Metni</h4>
+                                        <p className="text-xs text-slate-500">İndir, yazdır ve imzalat.</p>
                                     </div>
                                 </div>
-                                <ExternalLink size={20} className="text-slate-700 group-hover:text-teal-500 transition-colors" />
+                                <ExternalLink size={16} className="text-slate-600 group-hover:text-white transition-colors" />
                             </a>
                         </div>
 
-                        {/* Students Grid */}
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {/* Cast Grid */}
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {currentApplication.team.students.map((student) => (
-                                <div key={student.id} className="bg-slate-900 p-6 rounded-3xl border border-slate-800 group hover:border-rose-500/50 transition-all shadow-xl flex flex-col relative overflow-hidden">
+                                <div key={student.id} className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
                                     
-                                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => handleOpenStudentModal(student)} className="p-1.5 bg-slate-800 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700" title="Düzenle">
-                                            <Edit size={14} />
-                                        </button>
-                                        <button onClick={() => handleDeleteStudent(student.id)} className="p-1.5 bg-slate-800 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-700" title="Sil">
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-
-                                    <div className="flex justify-between items-center mb-6">
+                                    {/* Student Header */}
+                                    <div className="p-6 pb-4 flex justify-between items-start">
                                         <div>
-                                            <h4 className="font-black text-white text-xl">{student.firstName} {student.lastName}</h4>
-                                            <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">{student.grade}</p>
+                                            <h4 className="font-black text-white text-xl leading-tight">{student.firstName} {student.lastName}</h4>
+                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">{student.grade}</span>
+                                        </div>
+                                        {/* Actions */}
+                                        <div className="flex gap-1">
+                                            {/* Edit/Delete can be here if needed */}
                                         </div>
                                     </div>
 
-                                    <div className="space-y-8 flex-1">
-                                        {['PARENT', 'KVKK'].map((type) => {
-                                            const isDone = type === 'PARENT' ? student.hasParentalConsent : student.hasKvkkConsent;
-                                            const code = type === 'PARENT' ? student.parentalExpectedId : student.kvkkExpectedId;
-                                            const confirmationKey = `${student.id}_${type}`;
-                                            const isUploading = uploadingDoc === confirmationKey;
-                                            const selectedFile = selectedFiles[confirmationKey];
-                                            const isRejected = student.docStatus === 'REJECTED';
-                                            
-                                            // Hidden file input ID
-                                            const hiddenInputId = `file-input-${student.id}-${type}`;
-
-                                            return (
-                                                <div key={type} className="pt-6 border-t border-slate-800 first:border-t-0 first:pt-0">
-                                                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">
-                                                        <span>{type === 'PARENT' ? 'Veli İzin Belgesi' : 'KVKK Metni'}</span>
-                                                        {isDone && !isRejected && <span className="bg-green-900/30 text-green-500 px-2 py-1 rounded flex items-center gap-1 border border-green-900/50"><FileCheck size={12}/> Teslim Edildi</span>}
-                                                        {isRejected && <span className="bg-red-900/30 text-red-500 px-2 py-1 rounded flex items-center gap-1 border border-red-900/50 animate-pulse"><AlertOctagon size={12}/> Reddedildi</span>}
+                                    {/* Documents Sections */}
+                                    <div className="px-6 pb-6 space-y-4">
+                                        {/* 1. Parent Consent */}
+                                        <div className="bg-slate-950/50 rounded-2xl border border-dashed border-slate-800 p-5 relative group/section hover:border-slate-700 transition-colors">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">VELİ İZİN BELGESİ</span>
+                                                {student.hasParentalConsent && (
+                                                    <div className="flex items-center gap-1 bg-green-900/20 text-green-500 text-[10px] font-bold px-2 py-1 rounded border border-green-900/50">
+                                                        <CheckSquare size={12}/> TESLİM EDİLDİ
                                                     </div>
+                                                )}
+                                            </div>
 
-                                                    {isRejected && (
-                                                        <div className="bg-red-900/20 border border-red-900/50 p-3 rounded-xl mb-4 text-xs text-red-300 flex gap-2 items-start">
-                                                            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
-                                                            <div>
-                                                                <strong>Belge Reddedildi:</strong> Lütfen belgeyi kontrol edip, eksiksiz ve okunaklı olduğundan emin olarak tekrar yükleyiniz.
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-4">
-                                                        {!code ? (
-                                                            <button 
-                                                                onClick={() => handleGenerateCode(student.id, type as any)}
-                                                                className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold rounded-xl border border-slate-700 flex items-center justify-center gap-2 transition-all"
-                                                            >
-                                                                <RefreshCw size={14} className="text-rose-500"/> Doğrulama Kodu Oluştur
-                                                            </button>
-                                                        ) : (
-                                                            <div className="flex flex-col gap-2">
-                                                                <div className="flex flex-col gap-1">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Belgeye Yazılan Kod</span>
-                                                                        <button onClick={() => copyCode(code)} className="text-slate-500 hover:text-white transition-colors" title="Kodu Kopyala">
-                                                                            <Copy size={14} />
-                                                                        </button>
-                                                                    </div>
-                                                                    <p className="text-[10px] font-bold text-amber-500 leading-tight">Bu kod hem sisteme girilmeli hem de belge üzerinde el yazısıyla yer almalıdır.</p>
-                                                                </div>
-                                                                <div className="text-center py-2 bg-slate-900 rounded-lg font-mono text-lg font-black text-rose-500 tracking-widest">
-                                                                    {code}
-                                                                </div>
-                                                            </div>
-                                                        )}
+                                            {student.hasParentalConsent ? (
+                                                <div className="text-center py-4">
+                                                    <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2 text-green-500">
+                                                        <CheckCircle2 size={24} />
                                                     </div>
-
-                                                    {(!isDone || isRejected) && (
+                                                    <p className="text-xs text-green-400 font-bold">Belge Geçerli</p>
+                                                    <button onClick={() => handleDeleteDoc(student.id, 'PARENT')} className="mt-4 text-[10px] text-red-400 hover:text-red-300 flex items-center justify-center gap-1 w-full py-2 hover:bg-red-900/10 rounded transition-colors">
+                                                        <Trash2 size={12}/> Sil ve Yeniden Yükle
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    {!student.parentalExpectedId ? (
+                                                        <button onClick={() => handleGenerateCode(student.id, 'PARENT')} className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors border border-slate-700">
+                                                            KODU OLUŞTUR
+                                                        </button>
+                                                    ) : (
                                                         <>
-                                                            <div className="flex items-center bg-slate-950 border border-slate-700 rounded-2xl overflow-hidden mb-4 group-focus-within:border-rose-500/50 transition-all">
-                                                                <span className="bg-slate-900 px-3 py-3 text-[10px] font-black text-slate-500 border-r border-slate-800">GİR:</span>
+                                                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-center relative">
+                                                                <span className="text-[9px] text-slate-500 uppercase tracking-wider block mb-1">Belgeye Yazılan Kod</span>
+                                                                <div className="text-xl font-black text-rose-500 tracking-widest font-mono select-all">{student.parentalExpectedId}</div>
+                                                                <p className="text-[9px] text-amber-500/80 mt-2 leading-tight">Bu kod hem sisteme girilmeli hem de belge üzerinde el yazısıyla yer almalıdır.</p>
+                                                                <button onClick={() => copyCode(student.parentalExpectedId!)} className="absolute top-2 right-2 text-slate-600 hover:text-white"><Copy size={12}/></button>
+                                                            </div>
+                                                            
+                                                            <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2">
+                                                                <span className="text-[10px] font-bold text-slate-500 uppercase">GİR:</span>
                                                                 <input 
-                                                                    value={verifyCodes[`${student.id}_${type}`] || ''} 
-                                                                    onChange={(e) => setVerifyCodes({...verifyCodes, [`${student.id}_${type}`]: e.target.value.toUpperCase()})} 
-                                                                    placeholder="Kodu Buraya Yazın" 
-                                                                    className="bg-transparent flex-1 p-3 text-xs text-white outline-none font-black tracking-widest placeholder-slate-700" 
-                                                                    maxLength={12} 
+                                                                    value={verifyCodes[`${student.id}_PARENT`] || ''}
+                                                                    onChange={(e) => setVerifyCodes({...verifyCodes, [`${student.id}_PARENT`]: e.target.value})}
+                                                                    className="bg-transparent text-white text-sm font-bold w-full outline-none placeholder-slate-700"
+                                                                    placeholder="Kodu Buraya Yazın"
+                                                                    maxLength={5}
                                                                 />
                                                             </div>
 
-                                                            {isUploading ? (
-                                                                <div className="border-2 border-dashed border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 bg-slate-900/50 animate-pulse">
-                                                                    <Loader2 className="animate-spin text-rose-500" size={20} />
-                                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Yükleniyor...</span>
-                                                                </div>
-                                                            ) : (
-                                                                <>
-                                                                    {/* Hidden File Input */}
-                                                                    <input 
-                                                                        type="file" 
-                                                                        id={hiddenInputId}
-                                                                        className="hidden" 
-                                                                        accept=".pdf" 
-                                                                        onChange={(e) => handleFileSelect(e, confirmationKey)} 
-                                                                    />
-
-                                                                    <button 
-                                                                        onClick={() => handleOpenDeclarationModal(student.id, type as any)}
-                                                                        className="block w-full border-2 border-dashed border-slate-800 hover:border-rose-500/30 hover:bg-slate-800/30 rounded-2xl p-4 text-center cursor-pointer transition-all"
-                                                                    >
-                                                                        <div className="flex flex-col items-center gap-2">
-                                                                            {selectedFile ? (
-                                                                                <>
-                                                                                    <File size={20} className="text-amber-500" />
-                                                                                    <span className="text-[10px] font-bold text-white max-w-[150px] truncate">{selectedFile.name}</span>
-                                                                                    <span className="text-[9px] text-slate-500">Değiştirmek için tıklayın</span>
-                                                                                </>
-                                                                            ) : (
-                                                                                <>
-                                                                                    <Upload size={20} className="text-slate-600 group-hover:text-rose-500" />
-                                                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Belgeyi Seç & Yükle</span>
-                                                                                </>
-                                                                            )}
-                                                                        </div>
-                                                                    </button>
-                                                                    
-                                                                    {selectedFile && (
-                                                                        <button 
-                                                                            onClick={() => handleDocUpload(student.id, type as any)}
-                                                                            className="w-full mt-2 bg-rose-600 hover:bg-rose-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-rose-900/20"
-                                                                        >
-                                                                            Yüklemeyi Tamamla
-                                                                        </button>
-                                                                    )}
-                                                                </>
-                                                            )}
+                                                            <input type="file" id={`file-input-${student.id}-PARENT`} className="hidden" accept=".pdf" onChange={(e) => handleFileSelect(e, `${student.id}_PARENT`)} />
+                                                            
+                                                            <button 
+                                                                onClick={() => handleOpenDeclarationModal(student.id, 'PARENT')}
+                                                                className="w-full py-3 border border-slate-700 hover:border-slate-500 border-dashed rounded-xl text-xs font-bold text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2 group/btn"
+                                                            >
+                                                                {uploadingDoc === `${student.id}_PARENT` ? <Loader2 className="animate-spin" size={14}/> : <UploadCloud size={14} className="group-hover/btn:text-rose-500 transition-colors"/>} 
+                                                                {selectedFiles[`${student.id}_PARENT`] ? 'Dosya Seçildi - Yükle' : 'BELGEYİ SEÇ & YÜKLE'}
+                                                            </button>
                                                         </>
                                                     )}
+                                                </div>
+                                            )}
+                                        </div>
 
-                                                    {isDone && !isRejected && (
-                                                        <div className="p-4 bg-green-950/20 border border-green-900/30 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-bold text-green-500 uppercase tracking-widest">
-                                                            <CheckCircle2 size={16}/> Belge Geçerli
-                                                        </div>
+                                        {/* 2. KVKK Consent */}
+                                        <div className="bg-slate-950/50 rounded-2xl border border-dashed border-slate-800 p-5 relative group/section hover:border-slate-700 transition-colors">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">KVKK METNİ</span>
+                                                {student.hasKvkkConsent && (
+                                                    <div className="flex items-center gap-1 bg-green-900/20 text-green-500 text-[10px] font-bold px-2 py-1 rounded border border-green-900/50">
+                                                        <CheckSquare size={12}/> TESLİM EDİLDİ
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {student.hasKvkkConsent ? (
+                                                <div className="text-center py-4">
+                                                    <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2 text-green-500">
+                                                        <CheckCircle2 size={24} />
+                                                    </div>
+                                                    <p className="text-xs text-green-400 font-bold">Belge Geçerli</p>
+                                                    <button onClick={() => handleDeleteDoc(student.id, 'KVKK')} className="mt-4 text-[10px] text-red-400 hover:text-red-300 flex items-center justify-center gap-1 w-full py-2 hover:bg-red-900/10 rounded transition-colors">
+                                                        <Trash2 size={12}/> Sil ve Yeniden Yükle
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    {!student.kvkkExpectedId ? (
+                                                        <button onClick={() => handleGenerateCode(student.id, 'KVKK')} className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors border border-slate-700">
+                                                            KODU OLUŞTUR
+                                                        </button>
+                                                    ) : (
+                                                        <>
+                                                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-center relative">
+                                                                <span className="text-[9px] text-slate-500 uppercase tracking-wider block mb-1">Belgeye Yazılan Kod</span>
+                                                                <div className="text-xl font-black text-rose-500 tracking-widest font-mono select-all">{student.kvkkExpectedId}</div>
+                                                                <p className="text-[9px] text-amber-500/80 mt-2 leading-tight">Bu kod hem sisteme girilmeli hem de belge üzerinde el yazısıyla yer almalıdır.</p>
+                                                                <button onClick={() => copyCode(student.kvkkExpectedId!)} className="absolute top-2 right-2 text-slate-600 hover:text-white"><Copy size={12}/></button>
+                                                            </div>
+                                                            
+                                                            <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2">
+                                                                <span className="text-[10px] font-bold text-slate-500 uppercase">GİR:</span>
+                                                                <input 
+                                                                    value={verifyCodes[`${student.id}_KVKK`] || ''}
+                                                                    onChange={(e) => setVerifyCodes({...verifyCodes, [`${student.id}_KVKK`]: e.target.value})}
+                                                                    className="bg-transparent text-white text-sm font-bold w-full outline-none placeholder-slate-700"
+                                                                    placeholder="Kodu Buraya Yazın"
+                                                                    maxLength={5}
+                                                                />
+                                                            </div>
+
+                                                            <input type="file" id={`file-input-${student.id}-KVKK`} className="hidden" accept=".pdf" onChange={(e) => handleFileSelect(e, `${student.id}_KVKK`)} />
+                                                            
+                                                            <button 
+                                                                onClick={() => handleOpenDeclarationModal(student.id, 'KVKK')}
+                                                                className="w-full py-3 border border-slate-700 hover:border-slate-500 border-dashed rounded-xl text-xs font-bold text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2 group/btn"
+                                                            >
+                                                                {uploadingDoc === `${student.id}_KVKK` ? <Loader2 className="animate-spin" size={14}/> : <UploadCloud size={14} className="group-hover/btn:text-rose-500 transition-colors"/>} 
+                                                                {selectedFiles[`${student.id}_KVKK`] ? 'Dosya Seçildi - Yükle' : 'BELGEYİ SEÇ & YÜKLE'}
+                                                            </button>
+                                                        </>
                                                     )}
                                                 </div>
-                                            );
-                                        })}
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
 
-                            {/* Add Student Button */}
+                            {/* Add Student Card */}
                             {currentApplication.team.students.length < 6 && (
                                 <button 
                                     onClick={() => handleOpenStudentModal()}
-                                    className="bg-slate-900/50 p-6 rounded-3xl border border-slate-800 border-dashed hover:border-rose-500/50 hover:bg-slate-900 transition-all flex flex-col items-center justify-center gap-4 group min-h-[400px]"
+                                    className="group flex flex-col items-center justify-center gap-4 bg-slate-900/30 border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-3xl transition-all min-h-[500px]"
                                 >
-                                    <div className="w-16 h-16 rounded-full bg-slate-800 group-hover:bg-rose-600 group-hover:text-white text-slate-500 flex items-center justify-center transition-colors shadow-lg">
+                                    <div className="w-16 h-16 rounded-full bg-slate-800 group-hover:bg-rose-600 group-hover:text-white text-slate-600 flex items-center justify-center transition-all shadow-lg">
                                         <Plus size={32} />
                                     </div>
-                                    <span className="font-bold text-slate-400 group-hover:text-white transition-colors">Yeni Öğrenci Ekle</span>
+                                    <span className="font-bold text-slate-500 group-hover:text-white transition-colors">Yeni Öğrenci Ekle</span>
                                 </button>
                             )}
                         </div>
                     </div>
                 )}
 
+                {/* 3. VIDEO TAB (Cinema Room) */}
                 {activeTab === 'VIDEO' && (
-                    <div className="max-w-3xl mx-auto">
+                    <div className="max-w-5xl mx-auto">
                         {!isVideoTime() ? (
-                            <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-16 shadow-2xl text-center flex flex-col items-center">
-                                <div className="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center mb-8 border border-slate-700 shadow-inner">
+                            <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-16 shadow-2xl text-center flex flex-col items-center relative overflow-hidden">
+                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-5 pointer-events-none"></div>
+                                <div className="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center mb-8 border border-slate-700 shadow-inner relative z-10">
                                     <Lock size={40} className="text-slate-500" />
                                 </div>
-                                <h3 className="text-3xl font-black text-white mb-4">Video Teslimi Henüz Kapalı</h3>
-                                <p className="text-slate-400 max-w-sm leading-relaxed font-light">
+                                <h3 className="text-3xl font-black text-white mb-4 relative z-10">Sinema Salonu Kapalı</h3>
+                                <p className="text-slate-400 max-w-sm leading-relaxed font-light relative z-10">
                                     Video teslim süreci <strong>{new Date(systemSettings.dates.videoUploadStart).toLocaleDateString('tr-TR')}</strong> tarihinde başlayacaktır.
                                 </p>
-                                <div className="mt-8 px-6 py-3 bg-rose-900/20 border border-rose-500/20 rounded-full text-xs font-bold text-rose-400 uppercase tracking-widest">
-                                    Sistem Beklemede
-                                </div>
                             </div>
                         ) : (
-                            <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-12 shadow-2xl text-center">
-                                <div className="w-20 h-20 bg-rose-600/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-8 border border-rose-500/20 shadow-lg shadow-rose-900/10">
-                                    <Film size={36}/>
-                                </div>
-                                <h3 className="text-3xl font-black text-white mb-4">Video Teslim Paneli</h3>
-                                <p className="text-slate-400 mb-10 leading-relaxed font-light">Videonuzu ortak klasöre yükledikten sonra aşağıdaki kontrol listesini tamamlayıp onaylayınız.</p>
+                            <div className="relative bg-black rounded-[2rem] border-4 border-slate-800 shadow-2xl overflow-hidden group">
+                                {/* Curtain Effect */}
+                                <div className="absolute top-0 left-0 w-12 h-full bg-gradient-to-r from-red-950 to-transparent opacity-50 z-10"></div>
+                                <div className="absolute top-0 right-0 w-12 h-full bg-gradient-to-l from-red-950 to-transparent opacity-50 z-10"></div>
                                 
-                                <a href="https://drive.google.com/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-4 bg-white text-slate-900 px-12 py-5 rounded-2xl font-black text-xl hover:bg-slate-200 transition-all shadow-xl mb-10">
-                                    <ExternalLink size={24}/> Drive Klasörüne Git
-                                </a>
+                                <div className="p-12 md:p-16 flex flex-col items-center justify-center text-center relative z-20">
+                                    <div className="w-24 h-24 bg-rose-600 rounded-full flex items-center justify-center mb-8 shadow-[0_0_50px_rgba(225,29,72,0.5)] animate-pulse">
+                                        <Film size={40} className="text-white"/>
+                                    </div>
+                                    <h3 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">Final Sahnesi</h3>
+                                    <p className="text-xl text-slate-400 mb-10 max-w-2xl leading-relaxed">
+                                        Filminizi Google Drive'a yükleyin, bağlantıyı alın ve aşağıdaki adımları tamamlayarak galaya adınızı yazdırın.
+                                    </p>
 
-                                {/* Checklist */}
-                                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 mb-8 text-left space-y-3">
-                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Teslim Öncesi Kontrol Listesi</h4>
-                                    {[
-                                        { id: 'resolution', label: 'Video 1080p çözünürlükte render alındı.' },
-                                        { id: 'audio', label: 'Ses dili İngilizce ve anlaşılır.' },
-                                        { id: 'credits', label: 'Türkçe altyazı ve kapanış jeneriği eklendi.' },
-                                        { id: 'copyright', label: 'Telif hakkı içeren materyal kullanılmadı.' }
-                                    ].map(item => (
-                                        <div key={item.id} 
-                                             onClick={() => setVideoChecklist(prev => ({...prev, [item.id]: !prev[item.id as keyof typeof videoChecklist]}))}
-                                             className="flex items-center gap-3 cursor-pointer group"
-                                        >
-                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${videoChecklist[item.id as keyof typeof videoChecklist] ? 'bg-green-500 border-green-500' : 'border-slate-700 group-hover:border-slate-500'}`}>
-                                                {videoChecklist[item.id as keyof typeof videoChecklist] && <CheckCircle2 size={14} className="text-black" />}
-                                            </div>
-                                            <span className={`text-sm ${videoChecklist[item.id as keyof typeof videoChecklist] ? 'text-white' : 'text-slate-400'}`}>{item.label}</span>
+                                    <a href="https://drive.google.com/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-3 bg-white text-black px-8 py-4 rounded-xl font-black text-lg hover:bg-slate-200 transition-all shadow-xl hover:-translate-y-1 mb-12">
+                                        <ExternalLink size={20}/> Drive'a Git
+                                    </a>
+
+                                    <div className="w-full max-w-2xl bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl p-8 text-left">
+                                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6 border-b border-slate-800 pb-2">Yönetmen Kontrol Listesi</h4>
+                                        <div className="space-y-4">
+                                            {[
+                                                { id: 'resolution', label: '1080p Çözünürlük (FHD)' },
+                                                { id: 'audio', label: 'Ses Dili: İngilizce' },
+                                                { id: 'credits', label: 'Türkçe Altyazı & Jenerik' },
+                                                { id: 'copyright', label: 'Telif Hakkı İhlali Yok' }
+                                            ].map(item => (
+                                                <div 
+                                                    key={item.id} 
+                                                    onClick={() => setVideoChecklist(prev => ({...prev, [item.id]: !prev[item.id as keyof typeof videoChecklist]}))}
+                                                    className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer border transition-all ${videoChecklist[item.id as keyof typeof videoChecklist] ? 'bg-green-900/20 border-green-500/50' : 'bg-slate-950 border-slate-800 hover:border-slate-600'}`}
+                                                >
+                                                    <div className={`w-6 h-6 rounded flex items-center justify-center border transition-colors ${videoChecklist[item.id as keyof typeof videoChecklist] ? 'bg-green-500 border-green-500' : 'border-slate-600'}`}>
+                                                        {videoChecklist[item.id as keyof typeof videoChecklist] && <CheckSquare size={16} className="text-white" />}
+                                                    </div>
+                                                    <span className={`font-bold ${videoChecklist[item.id as keyof typeof videoChecklist] ? 'text-white' : 'text-slate-400'}`}>{item.label}</span>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
 
-                                <button 
-                                    onClick={confirmVideoSubmission} 
-                                    disabled={!allVideoChecksPassed}
-                                    className={`w-full py-5 rounded-2xl font-black text-lg shadow-lg transition-all ${allVideoChecksPassed ? 'bg-green-600 hover:bg-green-500 text-white shadow-green-900/20' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
-                                >
-                                    {allVideoChecksPassed ? 'Teslimi Tamamla' : 'Lütfen Kontrol Listesini Onaylayın'}
-                                </button>
+                                        <button 
+                                            onClick={confirmVideoSubmission} 
+                                            disabled={!allVideoChecksPassed}
+                                            className={`w-full mt-8 py-5 rounded-xl font-black text-lg uppercase tracking-wider shadow-xl transition-all ${allVideoChecksPassed ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/30 hover:-translate-y-1' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
+                                        >
+                                            {allVideoChecksPassed ? 'Teslimi Onayla ve Bitir' : 'Listeyi Tamamlayın'}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -808,7 +939,8 @@ export const Dashboard: React.FC = () => {
 
             </div>
 
-            {/* Responsibility Declaration Modal */}
+            {/* --- MODALS --- */}
+            {/* Responsibility Modal */}
             {declarationModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn">
                     <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full shadow-2xl relative overflow-hidden flex flex-col">
@@ -827,7 +959,7 @@ export const Dashboard: React.FC = () => {
                                 </p>
                             </div>
                             <p className="text-slate-300 text-sm leading-relaxed mb-6 font-light">
-                                "Yüklemekte olduğum bu belgenin; orijinalinin tarafımda saklandığını, üzerindeki bilgilerin ve imzaların gerçek olduğunu, KVKK ve yarışma şartnamesine uygun olduğunu beyan ederim. Olası bir usulsüzlük durumunda tüm hukuki sorumluluğun şahsıma/kurumuma ait olduğunu kabul ediyorum."
+                                "Yüklemekte olduğum bu belgenin; orijinalinin tarafımda saklandığını, üzerindeki bilgilerin ve imzaların gerçek olduğunu, KVKK ve yarışma şartnamesine uygun olduğunu beyan ederim."
                             </p>
                             <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-xl hover:bg-slate-800/50 transition-colors border border-transparent hover:border-slate-700">
                                 <div className={`w-5 h-5 rounded border flex items-center justify-center mt-0.5 transition-all ${declarationAccepted ? 'bg-green-600 border-green-600' : 'border-slate-600'}`}>
@@ -853,7 +985,7 @@ export const Dashboard: React.FC = () => {
                 </div>
             )}
 
-            {/* Student Edit/Add Modal */}
+            {/* Student Edit Modal */}
             {isStudentModalOpen && editingStudent && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
                     <div className="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl p-8 relative">
@@ -861,7 +993,7 @@ export const Dashboard: React.FC = () => {
                             <X size={20} />
                         </button>
                         <h3 className="text-xl font-bold text-white mb-6">
-                            {editingStudent.id ? 'Öğrenci Bilgilerini Düzenle' : 'Yeni Öğrenci Ekle'}
+                            {editingStudent.id ? 'Oyuncu Kartını Düzenle' : 'Yeni Oyuncu Ekle'}
                         </h3>
                         <div className="space-y-4">
                             <div>
@@ -892,7 +1024,7 @@ export const Dashboard: React.FC = () => {
                                 onClick={handleSaveStudent}
                                 className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl mt-4 transition-colors"
                             >
-                                Kaydet
+                                Değişiklikleri Kaydet
                             </button>
                         </div>
                     </div>
@@ -900,10 +1032,10 @@ export const Dashboard: React.FC = () => {
             )}
 
             <style>{`
-                .animate-slideDown { animation: slideDown 0.8s ease-out forwards; }
-                @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+                .scrollbar-hide::-webkit-scrollbar { display: none; }
+                .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
             `}</style>
         </div>
     );

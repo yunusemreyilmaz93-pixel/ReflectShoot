@@ -1,12 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, School, MapPin, Lock, ArrowRight, CheckSquare, X, Info, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { UserRole } from '../types';
 
 export const Apply: React.FC = () => {
   const navigate = useNavigate();
-  const { registerTeacher, showToast, cmsLinks } = useAppContext();
+  const { registerTeacher, showToast, cmsLinks, currentUser, loading } = useAppContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -30,6 +31,19 @@ export const Apply: React.FC = () => {
   const [modalContent, setModalContent] = useState<{title: string, content: React.ReactNode} | null>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Redirect authenticated users
+  useEffect(() => {
+    if (!loading && currentUser) {
+        if (currentUser.role === UserRole.ADMIN) {
+            navigate('/admin');
+        } else if (currentUser.role === UserRole.JUDGE) {
+            navigate('/jury');
+        } else {
+            navigate('/dashboard');
+        }
+    }
+  }, [currentUser, loading, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setFormData({...formData, [e.target.name]: e.target.value});
@@ -157,6 +171,14 @@ export const Apply: React.FC = () => {
               break;
       }
   };
+
+  if (loading) {
+      return (
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500"></div>
+          </div>
+      );
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen py-24 flex flex-col justify-center sm:px-6 lg:px-8 font-sans">
