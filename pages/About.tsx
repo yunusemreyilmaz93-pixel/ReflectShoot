@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   CheckCircle2, 
@@ -188,7 +187,7 @@ export const About: React.FC = () => {
                 <div className="bg-slate-800 p-8 md:p-10 rounded-2xl shadow-xl border border-slate-700 hover:border-slate-600 transition-all duration-300">
                     <div className="flex flex-col sm:flex-row items-start gap-8 mb-8">
                         <div className="w-24 h-24 flex-shrink-0 flex items-center justify-center p-2 bg-white rounded-xl border border-slate-600 shadow-md">
-                            <img src="https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/20113118_yeni_logo_konyaihl.png" alt="Konya Anadolu İHL" className="w-full h-full object-contain" />
+                            <img src="https://assets.reflectandshoot.com/20113118_yeni_logo_konyaihl.png" alt="Konya Anadolu İHL" className="w-full h-full object-contain" />
                         </div>
                         <div>
                             <span className="inline-block px-3 py-1 bg-amber-900/30 border border-amber-500/30 text-amber-500 text-[10px] font-bold uppercase tracking-widest rounded-full mb-2">Düzenleyen Kurum</span>
@@ -208,7 +207,7 @@ export const About: React.FC = () => {
                 <div className="bg-slate-800 p-8 md:p-10 rounded-2xl shadow-xl border border-slate-700 hover:border-slate-600 transition-all duration-300">
                     <div className="flex flex-col sm:flex-row items-start gap-8 mb-8">
                         <div className="w-24 h-24 flex-shrink-0 flex items-center justify-center p-2 bg-white rounded-xl border border-slate-600 shadow-md">
-                            <img src="https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-12-14%20203957.png" alt="TİMAV Vakfı" className="w-full h-full object-contain" />
+                            <img src="https://assets.reflectandshoot.com/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-12-14%20203957.png" alt="TİMAV Vakfı" className="w-full h-full object-contain" />
                         </div>
                         <div>
                             <span className="inline-block px-3 py-1 bg-rose-900/30 border border-rose-500/30 text-rose-500 text-[10px] font-bold uppercase tracking-widest rounded-full mb-2">Ana Sponsor</span>

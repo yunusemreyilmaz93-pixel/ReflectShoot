@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
     Clapperboard, Users, FileText, Video, MessageSquare, AlertCircle, 
@@ -13,8 +12,8 @@ import { uploadFileToR2, uploadPublicLogo } from '../lib/cloudStorage';
 import { CertificateGenerator } from '../components/CertificateGenerator';
 
 // Placeholder Template URLs
-const TEMPLATE_PARENT_URL = "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/veli_izin_belgesi.pdf";
-const TEMPLATE_CONSENT_URL = "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/acik_riza_metni.pdf";
+const TEMPLATE_PARENT_URL = "https://assets.reflectandshoot.com/veli_izin_belgesi.pdf";
+const TEMPLATE_CONSENT_URL = "https://assets.reflectandshoot.com/acik_riza_metni.pdf";
 
 // Circular Progress Component
 const ProgressRing = ({ progress, size = 60, stroke = 4 }: { progress: number, size?: number, stroke?: number }) => {

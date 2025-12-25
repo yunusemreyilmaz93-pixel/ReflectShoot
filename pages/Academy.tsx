@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   BookOpen, Film, Video, Link as LinkIcon, FileText, Search, Sprout, Star, PlayCircle, ChevronRight, Bookmark, Library,
@@ -12,6 +11,8 @@ import { useAppContext } from '../context/AppContext';
 const getTitleImage = (title: string): string => {
     const map: Record<string, string> = {
         'Mobil Sinemacılık: Telefonla Film Çekmek': 'https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/academycontent/Mobil%20Sinemac%C4%B1l%C4%B1k-Telefonla%20Film%20%C3%87ekmek%20Cover.png',
+        'Karakter Oluşturma Tip Değil Karakter': 'https://assets.reflectandshoot.com/academycontent/Karakter_Olusturma_Tip_Degil_Karakter_Cover.png',
+        'Senaryoda Diyalog Sanatı: Kelimelerin Ötesini Konuşmak': 'https://assets.reflectandshoot.com/academycontent/Senaryoda-Diyalog-Sanati-Kelimelerin-Otesini-Konusmak_cover.png'
     };
     return map[title] || 'https://images.unsplash.com/photo-1478720568477-152d9b164e63?auto=format&fit=crop&q=80&w=800'; 
 };

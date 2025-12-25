@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { ChevronDown, Search, MessageCircle, HelpCircle, PenTool, Award, Users, MapPin, Phone, Mail, Send, CheckCircle2, AlertCircle, Cpu, Clock, Trophy, LayoutGrid } from 'lucide-react';
 import { send } from '@emailjs/browser';
@@ -298,7 +297,7 @@ export const FAQ: React.FC = () => {
                         <div className="space-y-4">
                             <div className="flex items-center gap-4 mb-2">
                                  <div className="w-16 h-16 bg-white rounded-xl p-1 flex items-center justify-center shadow-lg">
-                                    <img src="https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/20113118_yeni_logo_konyaihl.png" alt="Konya İHL" className="w-full h-full object-contain" />
+                                    <img src="https://assets.reflectandshoot.com/20113118_yeni_logo_konyaihl.png" alt="Konya İHL" className="w-full h-full object-contain" />
                                  </div>
                                  <h4 className="font-black text-white text-base leading-tight">Konya Anadolu<br/>İmam Hatip Lisesi</h4>
                             </div>
@@ -331,7 +330,7 @@ export const FAQ: React.FC = () => {
                         <div className="space-y-4">
                             <div className="flex items-center gap-4 mb-2">
                                  <div className="w-16 h-16 bg-white rounded-xl p-1 flex items-center justify-center shadow-lg">
-                                    <img src="https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-12-14%20203957.png" alt="TİMAV" className="w-full h-full object-contain" />
+                                    <img src="https://assets.reflectandshoot.com/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-12-14%20203957.png" alt="TİMAV" className="w-full h-full object-contain" />
                                  </div>
                                  <h4 className="font-black text-white text-base leading-tight">TİMAV<br/><span className="text-sm font-normal text-slate-400">Türkiye İmam Hatipliler Vakfı</span></h4>
                             </div>

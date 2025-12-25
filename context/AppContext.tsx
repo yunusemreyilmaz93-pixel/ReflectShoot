@@ -18,7 +18,7 @@ import {
     ScoreDocument, Team, Student, EvaluationCriteria, Category, NotificationTarget
 } from '../types';
 
-const PUBLIC_ASSETS_BASE_URL = "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev";
+const PUBLIC_ASSETS_BASE_URL = "https://assets.reflectandshoot.com";
 
 // Helper to remove undefined values for Firestore
 const sanitizeData = (obj: any): any => {
@@ -142,7 +142,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [cmsGeneral, setCMSGeneral] = useState<CMSGeneral>({
         contactEmail: '', contactPhone: '', contactAddress: '', socialInstagram: '#', socialTwitter: '#', socialYoutube: '#', footerText: ''
     });
-    const [cmsLinks, setCMSLinks] = useState<CMSLinks>({ specUrl: '', parentalUrl: '', kvkkUrl: '', posterUrl: '' });
+    const [cmsLinks, setCMSLinks] = useState<CMSLinks>({ 
+        specUrl: '', 
+        parentalUrl: 'https://assets.reflectandshoot.com/veli_izin_belgesi.pdf', 
+        kvkkUrl: 'https://assets.reflectandshoot.com/acik_riza_metni.pdf', 
+        posterUrl: '' 
+    });
     const [cmsAcademy, setCmsAcademy] = useState<CMSAcademyItem[]>([]);
     const [cmsGallery, setCmsGallery] = useState<CMSGalleryItem[]>([]);
     const [cmsFaqs, setCmsFaqs] = useState<CMSFaqItem[]>([]);
