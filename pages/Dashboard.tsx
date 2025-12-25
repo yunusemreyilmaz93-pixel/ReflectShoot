@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     Clapperboard, Users, FileText, Video, MessageSquare, AlertCircle, 
     CheckCircle2, Clock, Upload, X, Save, Film, HelpCircle, LogOut, Ban, ShieldAlert,
-    Download, Lock, ExternalLink, RefreshCw, FileCheck, BookOpen, Eye, Calendar, Bell, Copy
+    Download, Lock, ExternalLink, RefreshCw, FileCheck, BookOpen, Eye, Calendar, Bell, Copy, Info, Loader2
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Category, Theme, ApplicationStatus } from '../types';
@@ -13,8 +13,8 @@ import { uploadFileToR2, uploadPublicLogo } from '../lib/cloudStorage';
 import { CertificateGenerator } from '../components/CertificateGenerator';
 
 // Placeholder Template URLs
-const TEMPLATE_PARENT_URL = "#";
-const TEMPLATE_CONSENT_URL = "#";
+const TEMPLATE_PARENT_URL = "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/veli_izin_belgesi.pdf";
+const TEMPLATE_CONSENT_URL = "https://pub-445f38f2d68348d4914aa2bac116cf06.r2.dev/acik_riza_metni.pdf";
 
 // Circular Progress Component
 const ProgressRing = ({ progress, size = 60, stroke = 4 }: { progress: number, size?: number, stroke?: number }) => {
@@ -66,9 +66,16 @@ export const Dashboard: React.FC = () => {
     
     // Verification Codes Input State
     const [verifyCodes, setVerifyCodes] = useState<Record<string, string>>({});
+    
+    // Document Confirmation State (Checkbox)
+    const [docConfirmations, setDocConfirmations] = useState<Record<string, boolean>>({});
+    
+    // Warning Modal State
+    const [showWarningModal, setShowWarningModal] = useState(false);
 
     useEffect(() => {
         setVerifyCodes({});
+        setDocConfirmations({});
     }, [currentApplication?.id]);
 
     // Progress Calculation
@@ -194,6 +201,20 @@ export const Dashboard: React.FC = () => {
         return Object.keys(errs).length === 0;
     };
 
+    const handleUploadClick = (e: React.MouseEvent, confirmationKey: string) => {
+        if (!docConfirmations[confirmationKey]) {
+            e.preventDefault();
+            setShowWarningModal(true);
+        }
+    };
+
+    const toggleConfirmation = (key: string) => {
+        setDocConfirmations(prev => ({
+            ...prev,
+            [key]: !prev[key]
+        }));
+    };
+
     const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>, studentId: string, type: 'PARENT' | 'KVKK') => {
         const fileInput = e.target;
         if(!fileInput.files?.[0] || !currentApplication) return;
@@ -218,7 +239,12 @@ export const Dashboard: React.FC = () => {
             });
             await updateApplication({ ...currentApplication, team: { ...currentApplication.team, students: updatedStudents } });
             showToast("Belge başarıyla yüklendi.", 'success');
-        } catch(err: any) { showToast("Hata: " + err.message, 'error'); } finally { setUploadingDoc(null); }
+        } catch(err: any) { 
+            showToast("Hata: " + err.message, 'error'); 
+        } finally { 
+            setUploadingDoc(null);
+            fileInput.value = ''; // Reset input to allow re-selection of the same file if needed
+        }
     };
 
     const confirmVideoSubmission = async () => {
@@ -392,7 +418,7 @@ export const Dashboard: React.FC = () => {
                                         <Download size={24} />
                                     </div>
                                     <div>
-                                        <p className="text-lg font-black text-white leading-tight">Veli İzin Belgesi Şablonu</p>
+                                        <p className="text-lg font-black text-white leading-tight">Veli İzin Belgesi</p>
                                         <p className="text-xs text-slate-500 mt-1">İndir, yazdır ve veliye imzalat.</p>
                                     </div>
                                 </div>
@@ -404,7 +430,7 @@ export const Dashboard: React.FC = () => {
                                         <Download size={24} />
                                     </div>
                                     <div>
-                                        <p className="text-lg font-black text-white leading-tight">KVKK Açık Rıza Şablonu</p>
+                                        <p className="text-lg font-black text-white leading-tight">KVKK Açık Rıza Metni</p>
                                         <p className="text-xs text-slate-500 mt-1">İndir, yazdır ve imzalat.</p>
                                     </div>
                                 </div>
@@ -424,12 +450,15 @@ export const Dashboard: React.FC = () => {
                                         {['PARENT', 'KVKK'].map((type) => {
                                             const isDone = type === 'PARENT' ? student.hasParentalConsent : student.hasKvkkConsent;
                                             const code = type === 'PARENT' ? student.parentalExpectedId : student.kvkkExpectedId;
+                                            const confirmationKey = `${student.id}_${type}`;
+                                            const isConfirmed = docConfirmations[confirmationKey] || false;
+                                            const isUploading = uploadingDoc === confirmationKey;
                                             
                                             return (
                                                 <div key={type} className="pt-6 border-t border-slate-800 first:border-t-0 first:pt-0">
                                                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">
                                                         <span>{type === 'PARENT' ? 'Veli İzin Belgesi' : 'KVKK Metni'}</span>
-                                                        {isDone && <span className="bg-green-900/30 text-green-500 px-2 py-1 rounded flex items-center gap-1"><CheckCircle2 size={12}/> Tamamlandı</span>}
+                                                        {isDone && <span className="bg-amber-900/30 text-amber-500 px-2 py-1 rounded flex items-center gap-1 border border-amber-900/50"><Clock size={12}/> Yüklendi — Onay Bekliyor</span>}
                                                     </div>
 
                                                     {/* Code Management Block */}
@@ -443,11 +472,14 @@ export const Dashboard: React.FC = () => {
                                                             </button>
                                                         ) : (
                                                             <div className="flex flex-col gap-2">
-                                                                <div className="flex items-center justify-between">
-                                                                    <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Belge Üzerindeki Kod</span>
-                                                                    <button onClick={() => copyCode(code)} className="text-slate-500 hover:text-white transition-colors" title="Kodu Kopyala">
-                                                                        <Copy size={14} />
-                                                                    </button>
+                                                                <div className="flex flex-col gap-1">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Belgeye Yazılan Kod</span>
+                                                                        <button onClick={() => copyCode(code)} className="text-slate-500 hover:text-white transition-colors" title="Kodu Kopyala">
+                                                                            <Copy size={14} />
+                                                                        </button>
+                                                                    </div>
+                                                                    <p className="text-[10px] font-bold text-amber-500 leading-tight">Bu kod hem sisteme girilmeli hem de belge üzerinde el yazısıyla yer almalıdır.</p>
                                                                 </div>
                                                                 <div className="text-center py-2 bg-slate-900 rounded-lg font-mono text-lg font-black text-rose-500 tracking-widest">
                                                                     {code}
@@ -458,7 +490,7 @@ export const Dashboard: React.FC = () => {
 
                                                     {!isDone && (
                                                         <>
-                                                            <div className="flex items-center bg-slate-950 border border-slate-700 rounded-2xl overflow-hidden mb-3 group-focus-within:border-rose-500/50 transition-all">
+                                                            <div className="flex items-center bg-slate-950 border border-slate-700 rounded-2xl overflow-hidden mb-4 group-focus-within:border-rose-500/50 transition-all">
                                                                 <span className="bg-slate-900 px-3 py-3 text-[10px] font-black text-slate-500 border-r border-slate-800">GİR:</span>
                                                                 <input 
                                                                     value={verifyCodes[`${student.id}_${type}`] || ''} 
@@ -469,19 +501,47 @@ export const Dashboard: React.FC = () => {
                                                                 />
                                                             </div>
 
-                                                            <label className="block w-full border-2 border-dashed border-slate-800 hover:border-rose-500/30 hover:bg-slate-800/30 rounded-2xl p-4 text-center cursor-pointer transition-all">
-                                                                <input type="file" className="hidden" accept=".pdf" onChange={(e) => handleDocUpload(e, student.id, type as any)} />
-                                                                <div className="flex flex-col items-center gap-2">
-                                                                    <Upload size={20} className="text-slate-600 group-hover:text-rose-500" />
-                                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">İmzalı PDF Yükle</span>
+                                                            <div 
+                                                                onClick={() => toggleConfirmation(confirmationKey)}
+                                                                className="flex items-start gap-3 mb-4 cursor-pointer group/check"
+                                                            >
+                                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all flex-shrink-0 ${isConfirmed ? 'bg-rose-600 border-rose-600' : 'bg-slate-950 border-slate-700 group-hover/check:border-slate-500'}`}>
+                                                                    {isConfirmed && <FileCheck size={12} className="text-white" />}
                                                                 </div>
-                                                            </label>
+                                                                <span className={`text-[10px] leading-tight select-none transition-colors ${isConfirmed ? 'text-slate-300' : 'text-slate-500 group-hover/check:text-slate-400'}`}>
+                                                                    Belgeyi kontrol ettim. Öğrenci bilgileri ve imza mevcuttur.
+                                                                </span>
+                                                            </div>
+
+                                                            {isUploading ? (
+                                                                <div className="border-2 border-dashed border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 bg-slate-900/50 animate-pulse">
+                                                                    <Loader2 className="animate-spin text-rose-500" size={20} />
+                                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Yükleniyor...</span>
+                                                                </div>
+                                                            ) : (
+                                                                <label 
+                                                                    className={`block w-full border-2 border-dashed border-slate-800 hover:border-rose-500/30 hover:bg-slate-800/30 rounded-2xl p-4 text-center cursor-pointer transition-all ${!isConfirmed ? 'opacity-50 hover:border-slate-800 hover:bg-transparent cursor-not-allowed' : ''}`}
+                                                                >
+                                                                    <input 
+                                                                        type="file" 
+                                                                        className="hidden" 
+                                                                        accept=".pdf" 
+                                                                        onClick={(e) => handleUploadClick(e, confirmationKey)}
+                                                                        onChange={(e) => handleDocUpload(e, student.id, type as any)} 
+                                                                        disabled={isUploading}
+                                                                    />
+                                                                    <div className="flex flex-col items-center gap-2">
+                                                                        <Upload size={20} className="text-slate-600 group-hover:text-rose-500" />
+                                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">İmzalı Belgeyi Yükle</span>
+                                                                    </div>
+                                                                </label>
+                                                            )}
                                                         </>
                                                     )}
 
                                                     {isDone && (
-                                                        <div className="p-4 bg-green-900/5 border border-green-900/20 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black text-green-600 uppercase tracking-widest">
-                                                            <FileCheck size={16}/> Belge Onaylandı
+                                                        <div className="p-4 bg-slate-950/50 border border-slate-800 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                            <Info size={16} className="text-slate-500"/> İnceleme Aşamasında
                                                         </div>
                                                     )}
                                                 </div>
@@ -534,6 +594,33 @@ export const Dashboard: React.FC = () => {
                 )}
 
             </div>
+
+            {/* Warning Modal for Unconfirmed Uploads */}
+            {showWarningModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl relative">
+                        <button 
+                            onClick={() => setShowWarningModal(false)}
+                            className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+                        <div className="w-16 h-16 bg-rose-900/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-rose-500/30">
+                            <AlertCircle size={32} className="text-rose-500" />
+                        </div>
+                        <h3 className="text-xl font-black text-white mb-2">Onay Gerekli</h3>
+                        <p className="text-slate-400 text-sm leading-relaxed mb-6">
+                            Lütfen belgeyi kontrol ettiğinizi ve bilgilerin doğruluğunu onay kutusunu işaretleyerek belirtiniz.
+                        </p>
+                        <button 
+                            onClick={() => setShowWarningModal(false)}
+                            className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition-colors border border-slate-700"
+                        >
+                            Anlaşıldı
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 .animate-slideDown { animation: slideDown 0.8s ease-out forwards; }
