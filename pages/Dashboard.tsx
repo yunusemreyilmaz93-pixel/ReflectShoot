@@ -296,6 +296,8 @@ export const Dashboard: React.FC = () => {
         
         if (type === 'PARENT') {
             newCode = `RAS-VI-${newCode}`;
+        } else {
+            newCode = `RAS-AR-${newCode}`;
         }
 
         const isCodeTaken = currentApplication.team.students.some(s => 
@@ -331,9 +333,8 @@ export const Dashboard: React.FC = () => {
 
     const handleConfirmDeclaration = () => {
         if (!declarationModal) return;
-        const inputId = `file-input-${declarationModal.studentId}-${declarationModal.type}`;
-        const inputElement = document.getElementById(inputId);
-        if (inputElement) { inputElement.click(); }
+        // Trigger upload
+        handleDocUpload(declarationModal.studentId, declarationModal.type);
         setDeclarationModal(null);
     };
 
@@ -654,25 +655,25 @@ export const Dashboard: React.FC = () => {
                 {activeTab === 'DOCUMENTS' && (
                     <div className="space-y-12">
                         
-                        {/* Guide Section */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-slate-800 rounded-full blur-[80px] pointer-events-none -mr-20 -mt-20"></div>
-                            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-8 flex items-center gap-2">
-                                <Info size={16} className="text-blue-500"/> Belge Yükleme Rehberi
+                        {/* Guide Section - Enlarged & Redesigned */}
+                        <div className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-blue-500/20 rounded-[2.5rem] p-10 relative overflow-hidden shadow-2xl group">
+                            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none -mr-20 -mt-20"></div>
+                            <h3 className="text-xl font-black text-white uppercase tracking-widest mb-10 flex items-center gap-3">
+                                <Info size={24} className="text-blue-500"/> Belge Yükleme Rehberi
                             </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 relative z-10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
                                 {[
                                     { icon: RefreshCw, title: '1. Kodu Oluştur', desc: 'Sistemden her belge için benzersiz kod üret.' },
                                     { icon: PenTool, title: '2. Belgeye Yaz', desc: 'Kodu çıktısını aldığın belgenin üzerine el yazısıyla yaz.' },
-                                    { icon: Camera, title: '3. Fotoğraf/PDF', desc: 'İmzalı ve kodlu belgenin fotoğrafını çek veya tarat.' },
+                                    { icon: Camera, title: '3. PDF Olarak Tara', desc: 'İmzalı ve kodlu belgenizi PDF formatında taratın.' },
                                     { icon: Upload, title: '4. Sisteme Yükle', desc: 'Beyanı onayla ve dosyayı yükle.' }
                                 ].map((step, i) => (
-                                    <div key={i} className="text-center group">
-                                        <div className="w-14 h-14 mx-auto bg-slate-800 rounded-2xl flex items-center justify-center mb-4 border border-slate-700 group-hover:border-blue-500/50 group-hover:bg-slate-900 transition-all shadow-lg">
-                                            <step.icon size={24} className="text-slate-400 group-hover:text-blue-400 transition-colors" />
+                                    <div key={i} className="flex flex-col items-center text-center group/item hover:-translate-y-1 transition-transform duration-300">
+                                        <div className="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center mb-6 border-2 border-slate-700 group-hover/item:border-blue-500 group-hover/item:bg-slate-900 transition-all shadow-xl">
+                                            <step.icon size={32} className="text-slate-400 group-hover/item:text-blue-400 transition-colors" />
                                         </div>
-                                        <h4 className="text-white font-bold text-sm mb-1">{step.title}</h4>
-                                        <p className="text-[10px] text-slate-500 max-w-[150px] mx-auto leading-relaxed">{step.desc}</p>
+                                        <h4 className="text-white font-bold text-lg mb-2">{step.title}</h4>
+                                        <p className="text-sm text-slate-400 leading-relaxed font-light max-w-[200px]">{step.desc}</p>
                                     </div>
                                 ))}
                             </div>
@@ -774,13 +775,28 @@ export const Dashboard: React.FC = () => {
 
                                                             <input type="file" id={`file-input-${student.id}-PARENT`} className="hidden" accept=".pdf" onChange={(e) => handleFileSelect(e, `${student.id}_PARENT`)} />
                                                             
-                                                            <button 
-                                                                onClick={() => handleOpenDeclarationModal(student.id, 'PARENT')}
-                                                                className="w-full py-3 border border-slate-700 hover:border-slate-500 border-dashed rounded-xl text-xs font-bold text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2 group/btn"
-                                                            >
-                                                                {uploadingDoc === `${student.id}_PARENT` ? <Loader2 className="animate-spin" size={14}/> : <UploadCloud size={14} className="group-hover/btn:text-rose-500 transition-colors"/>} 
-                                                                {selectedFiles[`${student.id}_PARENT`] ? 'Dosya Seçildi - Yükle' : 'BELGEYİ SEÇ & YÜKLE'}
-                                                            </button>
+                                                            <div className="grid grid-cols-2 gap-3">
+                                                                <button 
+                                                                    onClick={() => document.getElementById(`file-input-${student.id}-PARENT`)?.click()}
+                                                                    className={`py-3 rounded-xl text-xs font-bold transition-all border ${selectedFiles[`${student.id}_PARENT`] ? 'bg-slate-800 border-green-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                                                                >
+                                                                    {selectedFiles[`${student.id}_PARENT`] ? 'Dosya Değiştir' : 'BELGEYİ SEÇ'}
+                                                                </button>
+
+                                                                <button 
+                                                                    onClick={() => handleOpenDeclarationModal(student.id, 'PARENT')}
+                                                                    disabled={!selectedFiles[`${student.id}_PARENT`]}
+                                                                    className={`py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${selectedFiles[`${student.id}_PARENT`] ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20 hover:bg-rose-500' : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-800'}`}
+                                                                >
+                                                                    {uploadingDoc === `${student.id}_PARENT` ? <Loader2 className="animate-spin" size={14}/> : <UploadCloud size={14}/>} 
+                                                                    YÜKLE
+                                                                </button>
+                                                            </div>
+                                                            {selectedFiles[`${student.id}_PARENT`] && (
+                                                                <div className="text-[10px] text-green-400 font-mono truncate px-1">
+                                                                    Seçilen: {selectedFiles[`${student.id}_PARENT`].name}
+                                                                </div>
+                                                            )}
                                                         </>
                                                     )}
                                                 </div>
@@ -830,19 +846,34 @@ export const Dashboard: React.FC = () => {
                                                                     onChange={(e) => setVerifyCodes({...verifyCodes, [`${student.id}_KVKK`]: e.target.value})}
                                                                     className="bg-transparent text-white text-sm font-bold w-full outline-none placeholder-slate-700"
                                                                     placeholder="Kodu Buraya Yazın"
-                                                                    maxLength={5}
+                                                                    maxLength={12}
                                                                 />
                                                             </div>
 
                                                             <input type="file" id={`file-input-${student.id}-KVKK`} className="hidden" accept=".pdf" onChange={(e) => handleFileSelect(e, `${student.id}_KVKK`)} />
                                                             
-                                                            <button 
-                                                                onClick={() => handleOpenDeclarationModal(student.id, 'KVKK')}
-                                                                className="w-full py-3 border border-slate-700 hover:border-slate-500 border-dashed rounded-xl text-xs font-bold text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2 group/btn"
-                                                            >
-                                                                {uploadingDoc === `${student.id}_KVKK` ? <Loader2 className="animate-spin" size={14}/> : <UploadCloud size={14} className="group-hover/btn:text-rose-500 transition-colors"/>} 
-                                                                {selectedFiles[`${student.id}_KVKK`] ? 'Dosya Seçildi - Yükle' : 'BELGEYİ SEÇ & YÜKLE'}
-                                                            </button>
+                                                            <div className="grid grid-cols-2 gap-3">
+                                                                <button 
+                                                                    onClick={() => document.getElementById(`file-input-${student.id}-KVKK`)?.click()}
+                                                                    className={`py-3 rounded-xl text-xs font-bold transition-all border ${selectedFiles[`${student.id}_KVKK`] ? 'bg-slate-800 border-green-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}`}
+                                                                >
+                                                                    {selectedFiles[`${student.id}_KVKK`] ? 'Dosya Değiştir' : 'BELGEYİ SEÇ'}
+                                                                </button>
+
+                                                                <button 
+                                                                    onClick={() => handleOpenDeclarationModal(student.id, 'KVKK')}
+                                                                    disabled={!selectedFiles[`${student.id}_KVKK`]}
+                                                                    className={`py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${selectedFiles[`${student.id}_KVKK`] ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20 hover:bg-rose-500' : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-800'}`}
+                                                                >
+                                                                    {uploadingDoc === `${student.id}_KVKK` ? <Loader2 className="animate-spin" size={14}/> : <UploadCloud size={14}/>} 
+                                                                    YÜKLE
+                                                                </button>
+                                                            </div>
+                                                            {selectedFiles[`${student.id}_KVKK`] && (
+                                                                <div className="text-[10px] text-green-400 font-mono truncate px-1">
+                                                                    Seçilen: {selectedFiles[`${student.id}_KVKK`].name}
+                                                                </div>
+                                                            )}
                                                         </>
                                                     )}
                                                 </div>
@@ -982,7 +1013,7 @@ export const Dashboard: React.FC = () => {
                                 disabled={!declarationAccepted}
                                 className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 px-8 py-3 rounded-xl font-black text-sm shadow-lg shadow-amber-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95"
                             >
-                                Onaylıyorum ve Dosya Seç
+                                Onaylıyorum ve Yükle
                             </button>
                         </div>
                     </div>
