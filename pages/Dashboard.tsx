@@ -116,7 +116,11 @@ const NextActionCard = ({ app, onAction }: { app: any, onAction: (tab: string, s
 export const Dashboard: React.FC = () => {
     const { currentUser, currentApplication, createApplication, updateApplication, showToast, systemSettings } = useAppContext();
     const [activeTab, setActiveTab] = useState('STATUS');
-    const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+    
+    // Notification Logic States
+    const [latestMessageId, setLatestMessageId] = useState<string | null>(null);
+    const [lastReadMessageId, setLastReadMessageId] = useState<string | null>(null);
+    const [isLastMessageFromAdmin, setIsLastMessageFromAdmin] = useState(false);
     
     // Create App Form State
     const [teamForm, setTeamForm] = useState({
@@ -173,18 +177,22 @@ export const Dashboard: React.FC = () => {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             if (!snapshot.empty) {
-                const lastMsg = snapshot.docs[0].data();
-                // If last message is from ADMIN, show the alert
-                if (lastMsg.senderRole === UserRole.ADMIN) {
-                    setHasUnreadMessages(true);
-                } else {
-                    setHasUnreadMessages(false);
-                }
+                const doc = snapshot.docs[0];
+                const msgData = doc.data();
+                setLatestMessageId(doc.id);
+                setIsLastMessageFromAdmin(msgData.senderRole === UserRole.ADMIN);
             }
         });
 
         return () => unsubscribe();
     }, [currentApplication?.id]);
+
+    // Mark as read when entering CHAT tab
+    useEffect(() => {
+        if (activeTab === 'CHAT' && latestMessageId) {
+            setLastReadMessageId(latestMessageId);
+        }
+    }, [activeTab, latestMessageId]);
 
     // Progress Calculation
     const calculateProgress = () => {
@@ -527,6 +535,15 @@ export const Dashboard: React.FC = () => {
     const missingDocsCount = getMissingDocsCount();
     const remainingDays = getRemainingDays();
 
+    // Logic for Chat Indicator
+    // If user is on CHAT tab, it's green (active/viewing).
+    // If user is NOT on CHAT tab:
+    //   - If there is a new message from Admin since last read -> RED PULSE
+    //   - If last message was read (or user's own) -> NO DOT (or we can make it green if we want persistent 'ok' status, but standard is no dot or green check. 
+    //     Prompt says: "Bir kere yeşile döndükten sonra artık kırmızıya dönmesin geri... O kısma girince öğretmen indikatör yeşile dönsün ve öyle kalsın."
+    //     This implies it stays green while in tab. When leaving, if no new message, it shouldn't be red.
+    const showRedDot = isLastMessageFromAdmin && latestMessageId !== lastReadMessageId && activeTab !== 'CHAT';
+    
     return (
         <div className="bg-slate-950 min-h-screen text-slate-200 font-sans pb-24 relative overflow-x-hidden">
             {/* Background Texture */}
@@ -600,7 +617,7 @@ export const Dashboard: React.FC = () => {
                                 {tab.id === 'CHAT' && (
                                     activeTab === 'CHAT' ? (
                                          <span className="ml-2 relative inline-flex rounded-full h-3 w-3 bg-green-500 shadow-[0_0_10px_#22c55e]"></span>
-                                    ) : hasUnreadMessages ? (
+                                    ) : showRedDot ? (
                                         <span className="ml-2 relative flex h-3 w-3">
                                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                                           <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
