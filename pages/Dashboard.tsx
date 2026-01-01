@@ -293,6 +293,10 @@ export const Dashboard: React.FC = () => {
         };
 
         let newCode = generateRandomString();
+        
+        if (type === 'PARENT') {
+            newCode = `RAS-VI-${newCode}`;
+        }
 
         const isCodeTaken = currentApplication.team.students.some(s => 
             s.parentalExpectedId === newCode || s.kvkkExpectedId === newCode
@@ -764,7 +768,7 @@ export const Dashboard: React.FC = () => {
                                                                     onChange={(e) => setVerifyCodes({...verifyCodes, [`${student.id}_PARENT`]: e.target.value})}
                                                                     className="bg-transparent text-white text-sm font-bold w-full outline-none placeholder-slate-700"
                                                                     placeholder="Kodu Buraya Yazın"
-                                                                    maxLength={5}
+                                                                    maxLength={12}
                                                                 />
                                                             </div>
 
