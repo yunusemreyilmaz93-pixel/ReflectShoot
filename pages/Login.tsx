@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
@@ -93,8 +92,8 @@ export const Login: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans relative">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-10">
-        <div className="mx-auto h-20 w-20 bg-gradient-to-br from-rose-900 to-rose-800 rounded-2xl flex items-center justify-center shadow-xl transform rotate-3 mb-6 border border-white/10">
-             <ShieldCheck className="h-10 w-10 text-amber-400" />
+        <div className="mx-auto h-24 w-24 flex items-center justify-center mb-6">
+             <img src="https://assets.reflectandshoot.com/Reflect_Shoot_Logo.png" alt="Logo" className="w-full h-full object-contain drop-shadow-xl" />
         </div>
         <h2 className="text-4xl font-black text-gray-900 tracking-tight">
           Sisteme Giriş Yap

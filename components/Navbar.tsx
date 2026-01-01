@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Film, LogOut, LayoutDashboard, UserCircle, UserPlus, Clapperboard, Video, Vote } from 'lucide-react';
@@ -64,9 +63,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
         <div className="flex items-center justify-between h-20">
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="bg-gradient-to-br from-amber-400 to-amber-600 p-2 rounded-lg text-slate-900 shadow-[0_0_15px_rgba(251,191,36,0.3)] group-hover:shadow-[0_0_25px_rgba(251,191,36,0.5)] transition-all duration-300">
-                <Film size={24} />
-              </div>
+              <img src="https://assets.reflectandshoot.com/Reflect_Shoot_Logo.png" alt="Reflect&Shoot Logo" className="w-12 h-12 object-contain drop-shadow-[0_0_15px_rgba(251,191,36,0.3)] transition-transform group-hover:scale-105" />
               <div className="flex flex-col">
                 <span className="font-black text-xl tracking-tight text-white group-hover:text-amber-400 transition-colors">Reflect&Shoot</span>
                 <span className="text-[10px] text-slate-400 font-bold tracking-[0.2em] group-hover:text-white transition-colors">OKU, ANLA, ANLAT</span>
