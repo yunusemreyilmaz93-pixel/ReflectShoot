@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, UserCircle, ShieldCheck, MessageSquare } from 'lucide-react';
+import { Send, UserCircle, ShieldCheck, MessageSquare, HelpCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { ChatMessage, UserRole } from '../types';
 import { collection, query, orderBy, onSnapshot, getFirestore } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { Link } from 'react-router-dom';
 
 interface ChatAreaProps {
   appId: string;
@@ -75,6 +76,21 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ appId, theme = 'dark' }) => 
             <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-rose-500' : 'bg-slate-50 border-slate-200 text-rose-600'}`}>
                 <MessageSquare size={24} />
             </div>
+        </div>
+
+        {/* FAQ Banner */}
+        <div className={`px-4 py-3 flex items-center justify-between text-xs font-medium border-b ${theme === 'dark' ? 'bg-blue-900/10 border-blue-900/20 text-blue-300' : 'bg-blue-50 border-blue-100 text-blue-700'}`}>
+            <div className="flex items-center gap-2">
+                <HelpCircle size={16} className={theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} />
+                <span>Sorunuzun cevabı hazır olabilir.</span>
+            </div>
+            <Link 
+                to="/faq" 
+                target="_blank"
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-blue-100 hover:bg-blue-200 text-blue-800'}`}
+            >
+                SSS'ye Git
+            </Link>
         </div>
         
         {/* Messages Body */}

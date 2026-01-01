@@ -1002,10 +1002,19 @@ const AdminUsers = () => {
 };
 
 const AdminInbox = () => {
-    const { contactMessages, markContactMessageAsRead } = useAppContext();
+    const { contactMessages, markContactMessageAsRead, replyToContactMessage } = useAppContext();
     const [filter, setFilter] = useState<'ALL' | 'UNREAD'>('ALL');
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
+    const [replyText, setReplyText] = useState('');
 
     const filtered = contactMessages.filter(m => filter === 'ALL' || (filter === 'UNREAD' && m.status === 'UNREAD'));
+
+    const handleReply = async (msgId: string) => {
+        if (!replyText.trim()) return;
+        await replyToContactMessage(msgId, replyText);
+        setReplyingTo(null);
+        setReplyText('');
+    };
 
     return (
         <div className="space-y-6 animate-fadeIn">
@@ -1020,18 +1029,53 @@ const AdminInbox = () => {
                     <div key={msg.id} className={`bg-slate-800 p-6 rounded-xl border transition-all ${msg.status === 'UNREAD' ? 'border-rose-500/50 shadow-lg shadow-rose-900/10' : 'border-slate-700 opacity-75'}`}>
                         <div className="flex justify-between items-start mb-4">
                             <div>
-                                <h4 className="font-bold text-white text-lg">{msg.title}</h4>
+                                <h4 className="font-bold text-white text-lg flex items-center gap-2">
+                                    {msg.title}
+                                    {msg.source === 'DASHBOARD_CHAT' && <span className="text-[10px] bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30">PANEL</span>}
+                                    {msg.status === 'REPLIED' && <span className="text-[10px] bg-green-900/30 text-green-400 px-2 py-0.5 rounded border border-green-500/30">CEVAPLANDI</span>}
+                                </h4>
                                 <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
                                     <span className="text-slate-300 font-bold">{msg.name}</span> &bull; {msg.email} &bull; {new Date(msg.createdAt).toLocaleString('tr-TR')}
                                 </div>
                             </div>
-                            {msg.status === 'UNREAD' && (
-                                <button onClick={() => markContactMessageAsRead(msg.id)} className="text-xs bg-rose-900/30 text-rose-400 px-3 py-1 rounded border border-rose-500/30 hover:bg-rose-900/50 transition-colors flex items-center gap-1">
-                                    <MailOpen size={12} /> Okundu İşaretle
-                                </button>
-                            )}
+                            <div className="flex items-center gap-2">
+                                {msg.status === 'UNREAD' && (
+                                    <button onClick={() => markContactMessageAsRead(msg.id)} className="text-xs bg-slate-700 text-slate-300 px-3 py-1.5 rounded hover:bg-slate-600 transition-colors flex items-center gap-1">
+                                        <MailOpen size={12} /> Okundu
+                                    </button>
+                                )}
+                                {msg.source === 'DASHBOARD_CHAT' && (
+                                    <button onClick={() => { setReplyingTo(replyingTo === msg.id ? null : msg.id); setReplyText(''); }} className="text-xs bg-rose-600 text-white px-3 py-1.5 rounded hover:bg-rose-500 transition-colors flex items-center gap-1 font-bold">
+                                        <Send size={12} /> Cevapla
+                                    </button>
+                                )}
+                                {msg.source !== 'DASHBOARD_CHAT' && (
+                                    <a href={`mailto:${msg.email}?subject=Re: ${msg.title}`} className="text-xs bg-slate-700 text-slate-300 px-3 py-1.5 rounded hover:bg-slate-600 transition-colors flex items-center gap-1">
+                                        <Mail size={12} /> E-posta At
+                                    </a>
+                                )}
+                            </div>
                         </div>
-                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap mb-4">{msg.message}</p>
+                        
+                        {/* Reply Area */}
+                        {replyingTo === msg.id && (
+                            <div className="mt-4 pt-4 border-t border-slate-700 bg-slate-900/50 p-4 rounded-xl">
+                                <label className="text-xs font-bold text-slate-400 mb-2 block">Cevabınız (Panele iletilir)</label>
+                                <textarea 
+                                    value={replyText}
+                                    onChange={(e) => setReplyText(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white text-sm focus:border-rose-500 outline-none min-h-[100px]"
+                                    placeholder="Mesajınızı yazın..."
+                                />
+                                <div className="flex justify-end gap-2 mt-3">
+                                    <button onClick={() => setReplyingTo(null)} className="text-xs text-slate-400 hover:text-white px-3 py-2">İptal</button>
+                                    <button onClick={() => handleReply(msg.id)} className="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2">
+                                        <Send size={14}/> Gönder
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>

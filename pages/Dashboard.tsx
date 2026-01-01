@@ -8,11 +8,13 @@ import {
     Sparkles, ArrowRight, UploadCloud, Megaphone, Star, PartyPopper, User, RefreshCcw
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { Category, Theme, ApplicationStatus, Student } from '../types';
+import { Category, Theme, ApplicationStatus, Student, UserRole } from '../types';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { ChatArea } from '../components/ChatArea';
 import { uploadFileToR2, uploadPublicLogo } from '../lib/cloudStorage';
 import { CertificateGenerator } from '../components/CertificateGenerator';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 // Placeholder Template URLs
 const TEMPLATE_PARENT_URL = "https://assets.reflectandshoot.com/veli_izin_belgesi.pdf";
@@ -114,6 +116,7 @@ const NextActionCard = ({ app, onAction }: { app: any, onAction: (tab: string, s
 export const Dashboard: React.FC = () => {
     const { currentUser, currentApplication, createApplication, updateApplication, showToast, systemSettings } = useAppContext();
     const [activeTab, setActiveTab] = useState('STATUS');
+    const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
     
     // Create App Form State
     const [teamForm, setTeamForm] = useState({
@@ -156,6 +159,31 @@ export const Dashboard: React.FC = () => {
     useEffect(() => {
         setVerifyCodes({});
         setSelectedFiles({});
+    }, [currentApplication?.id]);
+
+    // Listener for new messages
+    useEffect(() => {
+        if (!currentApplication) return;
+        
+        const q = query(
+            collection(db, "applications", currentApplication.id, "messages"),
+            orderBy("createdAt", "desc"),
+            limit(1)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                const lastMsg = snapshot.docs[0].data();
+                // If last message is from ADMIN, show the alert
+                if (lastMsg.senderRole === UserRole.ADMIN) {
+                    setHasUnreadMessages(true);
+                } else {
+                    setHasUnreadMessages(false);
+                }
+            }
+        });
+
+        return () => unsubscribe();
     }, [currentApplication?.id]);
 
     // Progress Calculation
@@ -569,6 +597,16 @@ export const Dashboard: React.FC = () => {
                             >
                                 <tab.icon size={18} className={activeTab === tab.id ? 'text-rose-500' : ''} />
                                 {tab.label}
+                                {tab.id === 'CHAT' && (
+                                    activeTab === 'CHAT' ? (
+                                         <span className="ml-2 relative inline-flex rounded-full h-3 w-3 bg-green-500 shadow-[0_0_10px_#22c55e]"></span>
+                                    ) : hasUnreadMessages ? (
+                                        <span className="ml-2 relative flex h-3 w-3">
+                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                          <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                                        </span>
+                                    ) : null
+                                )}
                             </button>
                         ))}
                     </div>

@@ -85,6 +85,7 @@ interface AppContextType {
     contactMessages: ContactMessage[];
     sendContactMessage: (data: any) => Promise<void>;
     markContactMessageAsRead: (id: string) => Promise<void>;
+    replyToContactMessage: (messageId: string, replyText: string) => Promise<void>;
     
     allUsers: UserProfile[];
     updateUserRole: (uid: string, role: UserRole) => Promise<void>;
@@ -446,6 +447,39 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         await updateDoc(doc(db, "contact_messages", id), { status: 'READ' });
     };
 
+    const replyToContactMessage = async (messageId: string, replyText: string) => {
+        if (!currentUser) return;
+        
+        const msgRef = doc(db, "contact_messages", messageId);
+        const msgSnap = await getDoc(msgRef);
+        
+        if (!msgSnap.exists()) throw new Error("Mesaj bulunamadı");
+        
+        const msgData = msgSnap.data() as ContactMessage;
+        
+        // 1. If it's a dashboard chat message, send reply to the chat
+        if (msgData.source === 'DASHBOARD_CHAT' && msgData.applicationId) {
+             await addDoc(collection(db, "applications", msgData.applicationId, "messages"), {
+                senderId: currentUser.uid,
+                senderName: "Yönetim", 
+                senderRole: UserRole.ADMIN,
+                text: replyText,
+                createdAt: new Date().toISOString()
+            });
+            // Update status to REPLIED
+            await updateDoc(msgRef, { status: 'REPLIED' });
+            showToast("Cevap panele gönderildi.", 'success');
+        } else {
+            // For now, we only support direct chat replies in this flow.
+            // Email replies would typically be handled via mailto or a backend service.
+            // But we can mark it as replied manually if needed.
+            await updateDoc(msgRef, { status: 'REPLIED' });
+            showToast("Mesaj cevaplandı olarak işaretlendi.", 'info');
+        }
+        
+        await logAction("REPLY_MESSAGE", `Mesaja cevap verildi: ${messageId}`, msgData.applicationId);
+    };
+
     const markNotificationAsRead = async (id: string) => {
         await updateDoc(doc(db, "notifications", id), { read: true });
     };
@@ -541,14 +575,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const sendMessage = async (appId: string, text: string) => {
         if(!currentUser) return;
+        
+        const timestamp = new Date().toISOString();
+
         const msg: any = {
             senderId: currentUser.uid,
             senderName: currentUser.fullName,
             senderRole: currentUser.role,
             text,
-            createdAt: new Date().toISOString()
+            createdAt: timestamp
         };
         await addDoc(collection(db, "applications", appId, "messages"), msg);
+
+        // Forward teacher chat messages to admin inbox (contact_messages collection)
+        if (currentUser.role === UserRole.TEACHER) {
+             let title = "Panel Mesajı";
+             if (currentApplication && currentApplication.id === appId) {
+                 title = `Mesaj: ${currentApplication.team.name}`;
+             }
+
+             await addDoc(collection(db, "contact_messages"), {
+                name: currentUser.fullName,
+                email: currentUser.email,
+                title: title,
+                message: text,
+                createdAt: timestamp,
+                status: 'UNREAD',
+                source: 'DASHBOARD_CHAT',
+                applicationId: appId 
+             });
+        }
     };
 
     const submitPublicVote = async (appId: string, fingerprint: string) => {
@@ -632,7 +688,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             cmsPrizes, updateCMSPrize,
             toasts, showToast, removeToast,
             notifications, markNotificationAsRead,
-            contactMessages, sendContactMessage, markContactMessageAsRead,
+            contactMessages, sendContactMessage, markContactMessageAsRead, replyToContactMessage,
             allUsers, updateUserRole,
             auditLogs, logAction,
             fetchJuryScores, fetchMyScore, submitScore, assignJury, bulkAssignJury,

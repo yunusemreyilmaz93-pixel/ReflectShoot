@@ -1,5 +1,3 @@
-
-
 export enum UserRole {
   GUEST = 'GUEST',
   PENDING_TEACHER = 'PENDING_TEACHER', // Registered but email not verified or admin not approved
@@ -210,7 +208,9 @@ export interface ContactMessage {
     title: string; // Subject
     message: string;
     createdAt: string;
-    status: 'READ' | 'UNREAD';
+    status: 'READ' | 'UNREAD' | 'REPLIED';
+    source?: 'DASHBOARD_CHAT' | 'CONTACT_FORM';
+    applicationId?: string;
 }
 
 // NEW: Vote
