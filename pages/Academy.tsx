@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   BookOpen, Film, Video, Link as LinkIcon, FileText, Search, Sprout, Star, PlayCircle, ChevronRight, Bookmark, Library,
   CheckCircle2, Lock, Camera, MonitorPlay, Scissors, Download, Calendar, Mic2, Palette, Cpu, Layers, Zap, Clock,
@@ -20,15 +20,15 @@ const getTitleImage = (title: string): string => {
 export const Academy: React.FC = () => {
   const { cmsAcademy, currentApplication } = useAppContext();
   const navigate = useNavigate();
+  const [activeCategory, setActiveCategory] = useState('Tümü');
   
   const isFinalist = currentApplication?.team.isFinalist;
 
-  // Filter out finalist content for general view, unless user is finalist (though logic below handles visual lock/display)
-  // For the main grid, we generally want to show "Starter Pack" or "General" items. 
-  // Let's show all items that are NOT flagged as 'isFinalistContent' in the main grid, OR show them but maybe mark them.
-  // The user asked to show "Yarışmaya Hazırlık Seti" (Starter Pack).
-  
+  // Filter out finalist content for general view
   const publicAcademyItems = cmsAcademy.filter(item => !item.isFinalistContent);
+
+  // Apply Category Filter
+  const filteredItems = publicAcademyItems.filter(item => activeCategory === 'Tümü' || item.category === activeCategory);
 
   const handleCardClick = (item: any) => {
       // Direct access to PDF if available, otherwise open URL
@@ -39,7 +39,56 @@ export const Academy: React.FC = () => {
       }
   };
 
-  // -- Finalist Masterclass Data (Hardcoded for now as per design, but could be dynamic later) --
+  // Helper to determine styles based on category
+  const getCategoryStyle = (category: string) => {
+      switch(category) {
+          case 'Senaryo & Tema': return { 
+              badge: 'bg-slate-950 text-amber-500 border-amber-500/50 shadow-lg shadow-amber-900/20', 
+              btn: 'text-amber-500 hover:text-amber-400', 
+              title: 'group-hover:text-amber-400',
+              activeBtn: 'bg-amber-500 text-slate-900 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]',
+              inactiveBtn: 'text-amber-500 border-amber-500/30 hover:bg-amber-500/10'
+          };
+          case 'Teknik & Kurgu': return { 
+              badge: 'bg-slate-950 text-cyan-500 border-cyan-500/50 shadow-lg shadow-cyan-900/20', 
+              btn: 'text-cyan-500 hover:text-cyan-400', 
+              title: 'group-hover:text-cyan-400',
+              activeBtn: 'bg-cyan-500 text-slate-900 border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.3)]',
+              inactiveBtn: 'text-cyan-500 border-cyan-500/30 hover:bg-cyan-500/10'
+          };
+          case 'Yapay Zeka': return { 
+              badge: 'bg-slate-950 text-purple-500 border-purple-500/50 shadow-lg shadow-purple-900/20', 
+              btn: 'text-purple-500 hover:text-purple-400', 
+              title: 'group-hover:text-purple-400',
+              activeBtn: 'bg-purple-500 text-white border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.3)]',
+              inactiveBtn: 'text-purple-500 border-purple-500/30 hover:bg-purple-500/10'
+          };
+          case 'İlham & Rehber': return { 
+              badge: 'bg-slate-950 text-rose-500 border-rose-500/50 shadow-lg shadow-rose-900/20', 
+              btn: 'text-rose-500 hover:text-rose-400', 
+              title: 'group-hover:text-rose-400',
+              activeBtn: 'bg-rose-500 text-white border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.3)]',
+              inactiveBtn: 'text-rose-500 border-rose-500/30 hover:bg-rose-500/10'
+          };
+          default: return { 
+              badge: 'bg-slate-950 text-slate-300 border-slate-600 shadow-lg', 
+              btn: 'text-blue-400 hover:text-blue-300', 
+              title: 'group-hover:text-emerald-400',
+              activeBtn: 'bg-slate-200 text-slate-900 border-slate-200',
+              inactiveBtn: 'text-slate-400 border-slate-700 hover:bg-slate-800'
+          };
+      }
+  };
+
+  const categories = [
+      { id: 'Tümü', label: 'Tümü' },
+      { id: 'Senaryo & Tema', label: 'Senaryo' },
+      { id: 'Teknik & Kurgu', label: 'Teknik' },
+      { id: 'Yapay Zeka', label: 'Yapay Zeka' },
+      { id: 'İlham & Rehber', label: 'İlham' }
+  ];
+
+  // -- Finalist Masterclass Data --
   const masterclassSchedule = [
       {
           date: '6 Nisan',
@@ -84,6 +133,7 @@ export const Academy: React.FC = () => {
       
       {/* 1. Cinematic Hero Section */}
       <div className="bg-gradient-to-b from-rose-950 via-slate-900 to-slate-950 text-white pt-32 pb-16 relative overflow-hidden">
+        {/* Texture & Effects */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none"></div>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[500px] bg-rose-500/10 blur-[120px] rounded-full pointer-events-none mix-blend-screen"></div>
         
@@ -109,29 +159,49 @@ export const Academy: React.FC = () => {
 
          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
              
-             {/* Section Title */}
-             <div className="mb-8">
-                 <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                     <Sprout className="text-green-500"/> Yarışmaya Hazırlık Seti
-                 </h2>
-                 <p className="text-slate-400 text-sm mt-1">
-                     Başlangıç seviyesindeki ekipler için seçilmiş temel ve zorunlu içerikler.
-                 </p>
+             {/* Section Title & Filters */}
+             <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
+                 <div>
+                     <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                         <Sprout className="text-green-500"/> Yarışmaya Hazırlık Seti
+                     </h2>
+                     <p className="text-slate-400 text-sm mt-1 max-w-md">
+                         Başlangıç seviyesindeki ekipler için seçilmiş temel ve zorunlu içerikler.
+                     </p>
+                 </div>
+                 
+                 <div className="flex flex-wrap gap-2 justify-end">
+                     {categories.map((cat) => {
+                         const style = getCategoryStyle(cat.id);
+                         const isActive = activeCategory === cat.id;
+                         return (
+                             <button
+                                 key={cat.id}
+                                 onClick={() => setActiveCategory(cat.id)}
+                                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all ${isActive ? style.activeBtn : style.inactiveBtn}`}
+                             >
+                                 {cat.label}
+                             </button>
+                         );
+                     })}
+                 </div>
              </div>
 
              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {publicAcademyItems.length === 0 && (
+                {filteredItems.length === 0 && (
                     <div className="col-span-full py-24 text-center bg-slate-800/30 rounded-3xl border border-slate-700 border-dashed flex flex-col items-center animate-fadeIn">
                         <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-4 border border-slate-700">
                             <Search size={32} className="text-slate-500"/>
                         </div>
                         <h3 className="text-white font-bold text-xl mb-2">İçerik Bulunamadı</h3>
-                        <p className="text-slate-500 text-sm mb-6">Henüz eğitim materyali eklenmemiş.</p>
+                        <p className="text-slate-500 text-sm mb-6">Bu kategoride henüz eğitim materyali eklenmemiş.</p>
+                        <button onClick={() => setActiveCategory('Tümü')} className="text-blue-400 text-sm font-bold hover:underline">Tümünü Göster</button>
                     </div>
                 )}
                 
-                {publicAcademyItems.map((item) => {
+                {filteredItems.map((item) => {
                     const imageUrl = item.coverImage || getTitleImage(item.title);
+                    const styles = getCategoryStyle(item.category);
 
                     return (
                         <div 
@@ -155,7 +225,7 @@ export const Academy: React.FC = () => {
                                     <BookOpen size={18}/>
                                 </div>
                                 <div className="absolute top-4 left-4">
-                                    <span className="text-[10px] bg-slate-900/80 text-white px-2 py-1 rounded border border-white/10 backdrop-blur-sm uppercase tracking-wider font-bold">
+                                    <span className={`text-[10px] px-3 py-1.5 rounded-lg border uppercase tracking-wider font-bold ${styles.badge}`}>
                                         {item.category}
                                     </span>
                                 </div>
@@ -163,7 +233,7 @@ export const Academy: React.FC = () => {
                             
                             {/* Content */}
                             <div className={`p-8 flex flex-col flex-1 relative z-10 bg-slate-900`}>
-                                <h3 className={`font-bold text-white mb-3 transition-colors leading-tight group-hover:text-emerald-400 text-xl`}>
+                                <h3 className={`font-bold text-white mb-3 transition-colors leading-tight text-xl ${styles.title}`}>
                                     {item.title}
                                 </h3>
                                 <p className="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-3 font-light">
@@ -173,7 +243,7 @@ export const Academy: React.FC = () => {
                                 <div className="mt-auto pt-6 border-t border-slate-800 flex items-center justify-between">
                                     <div className="flex gap-2">
                                         <button 
-                                            className="text-blue-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1 hover:underline"
+                                            className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1 hover:underline ${styles.btn}`}
                                             onClick={(e) => { e.stopPropagation(); handleCardClick(item); }}
                                         >
                                             Görüntüle <ExternalLink size={12}/>
