@@ -486,7 +486,7 @@ export const Home: React.FC = () => {
                     <p className="text-slate-400 leading-relaxed mb-8 font-light text-lg">
                         Asr-ı Saadet'in yıldızları olan sahabelerin hayatlarından, fedakarlıklarından ve erdemli duruşlarından kesitler.
                     </p>
-                    <div className="bg-slate-900 p-5 rounded-xl border-l-4 border-rose-500 text-xs text-slate-400 italic">
+                    <div className="bg-slate-950 p-5 rounded-xl border-l-4 border-rose-500 text-xs text-slate-400 italic">
                         "Tarihsel gerçekliğe sadık kalınarak dramatize edilmelidir."
                     </div>
                 </div>
@@ -599,6 +599,57 @@ export const Home: React.FC = () => {
           >
              Ödül Kürsüsünü İncele <ArrowRight className="group-hover:translate-x-1 transition-transform" />
           </Link>
+        </div>
+      </section>
+
+      {/* 7. Partners Section */}
+      <section className="py-24 bg-slate-950 border-t border-white/5 relative z-10 overflow-hidden">
+        {/* Background glow for premium feel */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-amber-500/5 blur-[100px] pointer-events-none"></div>
+
+        <div className="max-w-7xl mx-auto px-4 text-center relative z-10">
+            
+            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-16">
+               Düzenleyen Kurumlar ve <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-300 to-amber-500">Paydaşlar</span>
+            </h2>
+            
+            <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24">
+                {/* Konya AİHL */}
+                <div className="group flex flex-col items-center gap-6">
+                    <div className="h-32 w-32 md:h-44 md:w-44 bg-white/5 rounded-full flex items-center justify-center p-6 border border-white/10 group-hover:border-amber-500/50 group-hover:bg-white/10 transition-all duration-500 shadow-[0_0_30px_rgba(255,255,255,0.05)] group-hover:shadow-[0_0_50px_rgba(245,158,11,0.2)]">
+                        <img 
+                            src="https://assets.reflectandshoot.com/20113118_yeni_logo_konyaihl.png" 
+                            alt="Konya Anadolu İHL" 
+                            className="w-full h-full object-contain filter drop-shadow-lg scale-110 group-hover:scale-125 transition-all duration-500"
+                        />
+                    </div>
+                    <span className="text-slate-300 text-sm md:text-base font-bold uppercase tracking-wider group-hover:text-amber-400 transition-colors">Konya AİHL</span>
+                </div>
+
+                {/* TİMAV */}
+                <div className="group flex flex-col items-center gap-6">
+                    <div className="h-32 w-32 md:h-44 md:w-44 bg-white/5 rounded-full flex items-center justify-center p-6 border border-white/10 group-hover:border-rose-500/50 group-hover:bg-white/10 transition-all duration-500 shadow-[0_0_30px_rgba(255,255,255,0.05)] group-hover:shadow-[0_0_50px_rgba(225,29,72,0.2)]">
+                        <img 
+                            src="https://assets.reflectandshoot.com/timav_logo.png" 
+                            alt="TİMAV" 
+                            className="w-full h-full object-contain filter drop-shadow-lg scale-110 group-hover:scale-125 transition-all duration-500"
+                        />
+                    </div>
+                    <span className="text-slate-300 text-sm md:text-base font-bold uppercase tracking-wider group-hover:text-rose-400 transition-colors">TİMAV</span>
+                </div>
+
+                {/* Selçuk Üniversitesi */}
+                <div className="group flex flex-col items-center gap-6">
+                    <div className="h-32 w-32 md:h-44 md:w-44 bg-white/5 rounded-full flex items-center justify-center p-6 border border-white/10 group-hover:border-blue-500/50 group-hover:bg-white/10 transition-all duration-500 shadow-[0_0_30px_rgba(255,255,255,0.05)] group-hover:shadow-[0_0_50px_rgba(59,130,246,0.2)]">
+                        <img 
+                            src="https://www.selcuk.edu.tr/img/logo_tr.png" 
+                            alt="Selçuk Üniversitesi" 
+                            className="w-full h-full object-contain filter drop-shadow-lg scale-110 group-hover:scale-125 transition-all duration-500"
+                        />
+                    </div>
+                    <span className="text-slate-300 text-sm md:text-base font-bold uppercase tracking-wider group-hover:text-blue-400 transition-colors">Selçuk Üniversitesi</span>
+                </div>
+            </div>
         </div>
       </section>
 
