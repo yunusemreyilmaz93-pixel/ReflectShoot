@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Camera, Train, Utensils, Bed, Compass, Landmark, Bus, Info, CloudSun, ShoppingBag, Thermometer, Shirt, Map, Clock, Navigation, Wifi, BatteryCharging, Phone, X, AlertCircle, Footprints, History, Coffee, Moon, ExternalLink, Aperture, CheckSquare, Share2 } from 'lucide-react';
+import { Camera, Train, Utensils, Bed, Compass, Landmark, Bus, Info, CloudSun, ShoppingBag, Thermometer, Shirt, Map, Clock, Navigation, Wifi, BatteryCharging, Phone, X, AlertCircle, Footprints, History, Coffee, Moon, ExternalLink, Aperture, CheckSquare, Share2, Ticket, ArrowRight, MapPin } from 'lucide-react';
 
 interface LocationDetail {
     hours: string;
@@ -157,12 +157,23 @@ export const CityGuide: React.FC = () => {
   return (
     <div className="bg-slate-950 min-h-screen font-sans selection:bg-amber-500 selection:text-black pb-24">
       
-      {/* 1. Hero Section */}
+      {/* 1. Hero Section (VIDEO BACKGROUND) */}
       <div className="relative h-[75vh] w-full overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: 'url("https://assets.reflectandshoot.com/city_guide/Konya_City_Collage.jpg")' }}>
-           <div className="absolute inset-0 bg-slate-950/80"></div>
-           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/90"></div>
-        </div>
+        {/* Video Background */}
+        <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            className="absolute inset-0 w-full h-full object-cover"
+            poster="https://assets.reflectandshoot.com/city_guide/Konya_City_Collage.jpg" // Fallback
+        >
+            <source src="https://assets.reflectandshoot.com/city_guide/Konya_tanitim_filmi.mp4" type="video/mp4" />
+        </video>
+
+        {/* Overlay Gradients */}
+        <div className="absolute inset-0 bg-slate-950/60"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/90"></div>
 
         <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4 animate-fadeIn">
            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 text-xs font-bold tracking-[0.25em] uppercase mb-6 backdrop-blur-md">
@@ -177,11 +188,12 @@ export const CityGuide: React.FC = () => {
            </p>
 
            {/* Quick Nav */}
-           <div className="mt-10 flex flex-wrap justify-center gap-4">
+           <div className="mt-10 flex flex-wrap justify-center gap-2 md:gap-4">
               {[
                   { id: 'weather', label: 'Bavul & Hava', icon: CloudSun },
                   { id: 'story', label: 'Şehrin Ruhu', icon: History },
                   { id: 'itineraries', label: 'Hazır Rotalar', icon: Footprints },
+                  { id: 'transfer', label: 'Gala Transfer', icon: Bus },
                   { id: 'locations', label: 'Gezilecek Yerler', icon: Map },
                   { id: 'tasks', label: 'Gezgin Checklist', icon: CheckSquare },
                   { id: 'survival', label: 'Pratik Bilgiler', icon: Info },
@@ -189,7 +201,7 @@ export const CityGuide: React.FC = () => {
                   <button 
                     key={item.id} 
                     onClick={() => scrollTo(item.id)}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900/60 hover:bg-white hover:text-black text-white border border-white/10 backdrop-blur-md transition-all duration-300 font-bold text-sm group"
+                    className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl bg-slate-900/60 hover:bg-white hover:text-black text-white border border-white/10 backdrop-blur-md transition-all duration-300 font-bold text-xs md:text-sm group"
                   >
                       <item.icon size={16} className="group-hover:text-rose-600 transition-colors" /> {item.label}
                   </button>
@@ -201,7 +213,7 @@ export const CityGuide: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-20 space-y-24">
           
           {/* 2. Weather & Prep Widget */}
-          <section id="weather" className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 scroll-mt-32">
+          <section id="weather" className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 scroll-mt-32">
               <div className="flex-1 text-center md:text-left">
                   <h3 className="text-2xl font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-3">
                       <Thermometer className="text-amber-500"/> Mayıs'ta Konya
@@ -209,7 +221,7 @@ export const CityGuide: React.FC = () => {
                   <p className="text-slate-400 text-sm">Gala zamanı (Mayıs sonu) Konya baharın en güzel zamanlarını yaşar.</p>
               </div>
               
-              <div className="flex gap-8 items-center border-x border-slate-800 px-8">
+              <div className="flex gap-8 items-center border-x border-slate-800 px-8 w-full md:w-auto justify-center md:justify-start">
                   <div className="text-center">
                       <span className="block text-3xl font-black text-white">22°C</span>
                       <span className="text-xs text-amber-400 font-bold uppercase tracking-wider">Gündüz</span>
@@ -220,9 +232,9 @@ export const CityGuide: React.FC = () => {
                   </div>
               </div>
 
-              <div className="flex-1">
+              <div className="flex-1 w-full md:w-auto">
                   <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 flex gap-4 items-start">
-                      <div className="bg-slate-800 p-2 rounded-lg text-slate-300">
+                      <div className="bg-slate-800 p-2 rounded-lg text-slate-300 flex-shrink-0">
                           <Shirt size={20} />
                       </div>
                       <div>
@@ -237,9 +249,9 @@ export const CityGuide: React.FC = () => {
 
           {/* 3. Storytelling Section */}
           <section id="story" className="scroll-mt-32">
-              <div className="flex flex-col md:flex-row gap-12 items-center">
-                  <div className="flex-1 space-y-6">
-                      <div className="inline-flex items-center gap-2 text-rose-500 font-bold uppercase tracking-widest text-xs">
+              <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center">
+                  <div className="flex-1 space-y-6 text-center md:text-left">
+                      <div className="inline-flex items-center gap-2 text-rose-500 font-bold uppercase tracking-widest text-xs justify-center md:justify-start">
                           <Landmark size={14}/> Tarihsel Bağlam
                       </div>
                       <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
@@ -252,9 +264,9 @@ export const CityGuide: React.FC = () => {
                           Film festivaline geldiğiniz bu şehirde, her sokak başında Selçuklu mimarisinin geometrik zarafetini ve sufilik geleneğinin huzurunu hissedeceksiniz. Hikayelerinizi kurgularken bu atmosferden ilham alın.
                       </p>
                   </div>
-                  <div className="flex-1 relative">
+                  <div className="flex-1 relative w-full">
                       <div className="absolute inset-0 bg-amber-500 blur-[100px] opacity-20 rounded-full"></div>
-                      <div className="relative h-full min-h-[400px] rounded-[2rem] overflow-hidden shadow-2xl border border-slate-700 group">
+                      <div className="relative h-full min-h-[300px] md:min-h-[400px] rounded-[2rem] overflow-hidden shadow-2xl border border-slate-700 group">
                           <img 
                             src="https://assets.reflectandshoot.com/city_guide/baskent.png" 
                             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
@@ -293,6 +305,83 @@ export const CityGuide: React.FC = () => {
               </div>
           </section>
 
+          {/* 4.5 TRANSFER INFO (Gala Day) - NEW SECTION */}
+          <section id="transfer" className="scroll-mt-32">
+              <div className="relative rounded-[2.5rem] bg-gradient-to-r from-slate-900 to-slate-950 border border-amber-500/20 shadow-2xl overflow-hidden group">
+                  {/* Decorative Elements */}
+                  <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-amber-600/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none"></div>
+                  <div className="absolute inset-y-0 left-0 w-2 bg-amber-500"></div>
+                  
+                  <div className="p-8 md:p-14 relative z-10 flex flex-col md:flex-row gap-12 items-center">
+                      
+                      {/* Ticket Header */}
+                      <div className="flex-1 text-center md:text-left space-y-6">
+                          <div className="inline-flex items-center gap-3 text-amber-500 font-black tracking-[0.2em] uppercase text-xs border border-amber-500/30 px-4 py-2 rounded-full bg-amber-500/5">
+                              <Ticket size={16} /> Resmi Transfer Programı
+                          </div>
+                          <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
+                              Gala Günü <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-500 to-amber-200">Transfer Planı</span>
+                          </h2>
+                          <p className="text-slate-400 text-lg font-light leading-relaxed">
+                              Tüm finalist ekiplerimiz için pansiyondan gala merkezine özel VIP transfer organize edilmiştir. 
+                              Lütfen belirtilen saatte "Sete Hazır" (Ready on Set) olunuz.
+                          </p>
+                      </div>
+
+                      {/* Ticket Body / Schedule */}
+                      <div className="flex-1 w-full bg-slate-900/80 backdrop-blur-md rounded-2xl border-2 border-dashed border-slate-700 p-6 md:p-8 relative">
+                          {/* Holes */}
+                          <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-950 rounded-full border-r border-slate-700 hidden md:block"></div>
+                          <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-950 rounded-full border-l border-slate-700 hidden md:block"></div>
+
+                          <div className="space-y-8">
+                              {/* Row 1 */}
+                              <div className="flex flex-col md:flex-row justify-between items-center border-b border-slate-800 pb-6 gap-4 text-center md:text-left">
+                                  <div>
+                                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">CALL TIME (KALKIŞ)</span>
+                                      <span className="text-3xl font-black text-white flex items-center justify-center md:justify-start gap-2">
+                                          09:30 <Clock className="text-amber-500" size={20}/>
+                                      </span>
+                                  </div>
+                                  <div className="md:text-right">
+                                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">TARİH</span>
+                                      <span className="text-xl font-bold text-white">22 Mayıs 2026</span>
+                                  </div>
+                              </div>
+
+                              {/* Row 2: Route */}
+                              <div className="flex flex-col sm:flex-row items-center gap-4">
+                                  <div className="flex sm:flex-col items-center gap-1 sm:gap-0">
+                                      <div className="w-3 h-3 bg-slate-500 rounded-full"></div>
+                                      <div className="w-10 h-0.5 sm:h-10 sm:w-0.5 bg-slate-700 sm:border-l border-b border-dashed border-slate-500"></div>
+                                      <div className="w-3 h-3 bg-amber-500 rounded-full shadow-[0_0_10px_#f59e0b]"></div>
+                                  </div>
+                                  <div className="flex-1 space-y-6 text-center sm:text-left">
+                                      <div>
+                                          <h4 className="text-slate-300 font-bold text-sm">Konya İHL Pansiyonu</h4>
+                                          <p className="text-slate-500 text-xs">Toplanma Alanı</p>
+                                      </div>
+                                      <div>
+                                          <h4 className="text-white font-bold text-lg">Taş Bina</h4>
+                                          <p className="text-amber-500 text-xs font-bold uppercase tracking-wider">Kültür Sanat</p>
+                                      </div>
+                                  </div>
+                                  <div className="bg-amber-500/10 p-4 rounded-xl text-amber-500 border border-amber-500/20">
+                                      <Bus size={32} />
+                                  </div>
+                              </div>
+
+                              {/* Footer */}
+                              <div className="pt-4 flex items-center justify-center gap-2 text-xs text-slate-500 font-mono">
+                                  <Info size={12}/> Tören 10:30'da Başlayacaktır.
+                              </div>
+                          </div>
+                      </div>
+
+                  </div>
+              </div>
+          </section>
+
           {/* 5. Locations (Interactive Modal) */}
           <section id="locations" className="scroll-mt-32">
               <div className="mb-16 text-center">
@@ -304,7 +393,23 @@ export const CityGuide: React.FC = () => {
                   </p>
               </div>
 
-              <div className="space-y-20">
+              {/* MAP EMBED */}
+              <div className="mb-20 rounded-[2.5rem] overflow-hidden border-4 border-slate-800 shadow-2xl bg-slate-900 relative group">
+                   <div className="absolute top-4 right-4 z-10 bg-slate-900/90 backdrop-blur text-white text-xs px-4 py-2 rounded-xl border border-slate-700 font-bold shadow-lg flex items-center gap-2 pointer-events-none">
+                      <MapPin size={14} className="text-rose-500" /> İnteraktif Harita
+                   </div>
+                   <iframe 
+                      src="https://www.google.com/maps/d/u/0/embed?mid=1kyRW12627Ze-7E7YTlbL2yF7Rej4gSA&ehbc=2E312F" 
+                      width="100%" 
+                      height="480" 
+                      className="w-full h-[350px] md:h-[600px]"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                   ></iframe>
+              </div>
+
+              <div className="space-y-16 md:space-y-20">
                   {touristLocations.map((loc, idx) => (
                       <div key={idx} className={`flex flex-col lg:flex-row gap-10 items-center ${idx % 2 === 1 ? 'lg:flex-row-reverse' : ''}`}>
                           {/* Image Side */}
@@ -330,19 +435,19 @@ export const CityGuide: React.FC = () => {
                           </div>
 
                           {/* Content Side */}
-                          <div className="w-full lg:w-1/2 space-y-6">
+                          <div className="w-full lg:w-1/2 space-y-6 text-center lg:text-left">
                               <div>
                                   <h3 className="text-3xl font-black text-white mb-2">{loc.title}</h3>
                                   <p className="text-rose-500 font-bold text-sm uppercase tracking-widest">{loc.subtitle}</p>
                               </div>
                               
-                              <p className="text-slate-300 text-lg leading-relaxed font-light border-l-4 border-slate-800 pl-6">
+                              <p className="text-slate-300 text-lg leading-relaxed font-light border-l-0 lg:border-l-4 border-slate-800 lg:pl-6">
                                   {loc.description}
                               </p>
 
                               <button 
                                 onClick={() => setSelectedLocation(loc)}
-                                className="text-amber-500 text-sm font-bold flex items-center gap-2 hover:gap-3 transition-all group"
+                                className="text-amber-500 text-sm font-bold flex items-center gap-2 hover:gap-3 transition-all group justify-center lg:justify-start w-full lg:w-auto"
                               >
                                   Ziyaret Detaylarını Gör <Navigation size={16} />
                               </button>
@@ -354,12 +459,12 @@ export const CityGuide: React.FC = () => {
 
           {/* 5.5 NEW Checklist Section */}
           <section id="tasks" className="scroll-mt-32">
-              <div className="bg-gradient-to-r from-rose-900/20 to-slate-900 border border-rose-900/30 rounded-[2.5rem] p-10 relative overflow-hidden">
+              <div className="bg-gradient-to-r from-rose-900/20 to-slate-900 border border-rose-900/30 rounded-[2.5rem] p-8 md:p-10 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-[80px] -mr-20 -mt-20"></div>
                   
                   <div className="flex flex-col md:flex-row gap-10 items-start relative z-10">
-                      <div className="flex-1">
-                          <h2 className="text-3xl font-black text-white mb-4 flex items-center gap-3">
+                      <div className="flex-1 text-center md:text-left w-full">
+                          <h2 className="text-3xl font-black text-white mb-4 flex items-center justify-center md:justify-start gap-3">
                               <CheckSquare className="text-rose-500"/> Festival Görevleri
                           </h2>
                           <p className="text-slate-400 mb-6 font-light">
@@ -400,11 +505,11 @@ export const CityGuide: React.FC = () => {
 
           {/* 6. Food */}
           <section id="food" className="scroll-mt-32">
-              <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-10 md:p-16 relative overflow-hidden">
+              <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 md:p-16 relative overflow-hidden">
                   <div className="relative z-10 grid md:grid-cols-2 gap-12">
                       <div className="space-y-8">
-                          <div>
-                              <h2 className="text-4xl font-black text-white tracking-tight flex items-center gap-3 mb-4">
+                          <div className="text-center md:text-left">
+                              <h2 className="text-4xl font-black text-white tracking-tight flex items-center justify-center md:justify-start gap-3 mb-4">
                                   <Utensils className="text-amber-500" /> Lezzet Ritüelleri
                               </h2>
                               <p className="text-slate-400 text-lg">
@@ -481,14 +586,14 @@ export const CityGuide: React.FC = () => {
 
           {/* 8. Souvenirs & Shopping */}
           <section id="souvenirs" className="scroll-mt-32 border-t border-slate-800 pt-16">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
                   <div>
-                      <h2 className="text-3xl font-black text-white flex items-center gap-3">
+                      <h2 className="text-3xl font-black text-white flex items-center justify-center md:justify-start gap-3">
                           <ShoppingBag className="text-rose-500" /> Alışveriş & Hediyelik
                       </h2>
-                      <p className="text-slate-400 mt-2 text-sm max-w-md">Dönerken çantanızda olması gerekenler.</p>
+                      <p className="text-slate-400 mt-2 text-sm max-w-md mx-auto md:mx-0">Dönerken çantanızda olması gerekenler.</p>
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex flex-wrap gap-2 md:gap-4 justify-center md:justify-start">
                       {['Mevlana Şekeri', 'Etliekmek (Paket)', 'Magnet', 'Tulum Peyniri'].map((item, i) => (
                           <span key={i} className="px-4 py-2 bg-slate-900 border border-slate-700 rounded-full text-xs font-bold text-slate-300">
                               {item}
@@ -531,7 +636,7 @@ export const CityGuide: React.FC = () => {
                           <p className="text-slate-300 text-lg leading-relaxed font-light">
                               Değerli finalistlerimiz ve danışman öğretmenlerimiz, sizleri okulumuzun modern imkanlara sahip pansiyonunda ağırlamaktan mutluluk duyacağız.
                           </p>
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="flex items-center gap-3 p-3 bg-slate-950 rounded-xl border border-slate-800">
                                   <CheckCircleIcon /> <span className="text-sm text-slate-300">Ücretsiz Konaklama</span>
                               </div>
@@ -561,8 +666,8 @@ export const CityGuide: React.FC = () => {
 
       {/* LOCATION DETAIL MODAL */}
       {selectedLocation && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-fadeIn">
-              <div className="bg-slate-900 w-full max-w-4xl rounded-3xl border border-slate-700 shadow-2xl relative overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-4 bg-black/95 backdrop-blur-md animate-fadeIn">
+              <div className="bg-slate-900 w-full md:max-w-4xl h-full md:h-auto md:max-h-[90vh] md:rounded-3xl border-0 md:border border-slate-700 shadow-2xl relative overflow-y-auto flex flex-col md:flex-row">
                   
                   {/* Close Button */}
                   <button 
@@ -573,7 +678,7 @@ export const CityGuide: React.FC = () => {
                   </button>
 
                   {/* Left: Image */}
-                  <div className="w-full md:w-2/5 h-64 md:h-auto relative">
+                  <div className="w-full md:w-2/5 h-64 md:h-auto relative flex-shrink-0">
                       <img src={selectedLocation.image} alt={selectedLocation.title} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent md:bg-gradient-to-r"></div>
                       <div className="absolute bottom-4 left-4">
@@ -584,7 +689,7 @@ export const CityGuide: React.FC = () => {
                   </div>
 
                   {/* Right: Details */}
-                  <div className="w-full md:w-3/5 p-8 overflow-y-auto custom-scrollbar">
+                  <div className="w-full md:w-3/5 p-6 md:p-8">
                       <h3 className="text-3xl font-black text-white mb-2">{selectedLocation.title}</h3>
                       <p className="text-rose-500 text-sm font-bold uppercase tracking-widest mb-6">{selectedLocation.subtitle}</p>
                       
