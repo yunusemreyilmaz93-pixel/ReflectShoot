@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Film, LogOut, LayoutDashboard, UserCircle, UserPlus, Clapperboard, Video, Vote } from 'lucide-react';
+import { Menu, X, Film, LogOut, LayoutDashboard, UserCircle, UserPlus, Clapperboard, Video, Vote, MapPin } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { UserRole } from '../types';
 import { NotificationBell } from './NotificationBell';
@@ -19,6 +20,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
   const navLinks = [
     { name: 'Ana Sayfa', path: '/' },
     { name: 'Hakkında', path: '/about' },
+    { name: 'Şehir Rehberi', path: '/city-guide' }, // Added here
     { name: 'Akademi', path: '/academy' },
     { name: 'Galeri', path: '/gallery' },
     { name: 'Ödüller', path: '/finals' },
@@ -27,7 +29,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
   // Add Public Vote link if active
   if (systemSettings.features.publicVotingActive) {
-      navLinks.splice(3, 0, { name: 'Halk Oylaması', path: '/vote' });
+      navLinks.splice(5, 0, { name: 'Halk Oylaması', path: '/vote' });
   }
 
   const handleLogout = () => {
@@ -71,13 +73,13 @@ export const Navbar: React.FC<NavbarProps> = () => {
             </Link>
           </div>
           
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <div className="ml-10 flex items-baseline space-x-2">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
+                  className={`px-3 py-2 rounded-full text-xs font-bold transition-all duration-300 ${
                     isActive(link.path)
                       ? 'bg-white/10 text-amber-400 shadow-inner'
                       : 'text-slate-300 hover:text-white hover:bg-white/5'
@@ -125,7 +127,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
             </div>
           </div>
           
-          <div className="-mr-2 flex md:hidden">
+          <div className="-mr-2 flex lg:hidden">
             {currentUser && <div className="mr-2"><NotificationBell /></div>}
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -138,7 +140,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
       </div>
 
       {/* Mobile menu */}
-      <div className={`md:hidden bg-slate-900 border-b border-white/10 overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
+      <div className={`lg:hidden bg-slate-900 border-b border-white/10 overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
         <div className="px-4 pt-2 pb-6 space-y-2">
           {navLinks.map((link) => (
             <Link

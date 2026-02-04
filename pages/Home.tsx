@@ -1,7 +1,8 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool, Target, HelpCircle } from 'lucide-react';
+import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool, Target, HelpCircle, MapPin, Compass } from 'lucide-react';
 import { Timeline } from '../components/Timeline';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { useAppContext } from '../context/AppContext';
@@ -569,6 +570,23 @@ export const Home: React.FC = () => {
              </button>
           </div>
         </div>
+      </section>
+
+      {/* 5.5 NEW CITY GUIDE TEASER */}
+      <section className="bg-slate-950 py-16 relative overflow-hidden border-t border-b border-slate-800">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')] opacity-10"></div>
+          <div className="max-w-7xl mx-auto px-4 relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
+              <div className="text-center md:text-left">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-widest mb-4">
+                      <MapPin size={12} /> Konya Rehberi
+                  </div>
+                  <h3 className="text-3xl md:text-4xl font-black text-white mb-2 tracking-tight">Şehri Keşfet</h3>
+                  <p className="text-slate-400 font-light text-lg">Yarışma için Konya'ya geldiğinde nereleri gezmelisin? Konaklama nerede?</p>
+              </div>
+              <Link to="/city-guide" className="bg-white hover:bg-slate-200 text-black px-8 py-4 rounded-xl font-bold flex items-center gap-3 transition-all shadow-xl hover:-translate-y-1 whitespace-nowrap">
+                  <Compass size={20} /> Rehbere Git <ArrowRight size={16}/>
+              </Link>
+          </div>
       </section>
 
       {/* 6. Gala & Prizes CTA */}
