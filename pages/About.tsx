@@ -172,8 +172,25 @@ export const About: React.FC = () => {
           <p className="text-xl md:text-2xl text-slate-300 font-light max-w-3xl mx-auto leading-relaxed animate-fadeIn delay-200">
             İmam Hatip Lisesi gençliğinin vizöründen kadim değerlerimizi modern sinema diliyle yorumlayan prestijli bir kısa film yarışması.
           </p>
-          <div className="mt-8 text-slate-500 text-sm font-medium animate-fadeIn delay-300">
-              <span className="inline-block px-3 py-1 rounded bg-slate-800/50 border border-slate-700">Tüm süreç sitemizdeki kullanıcı paneli üzerinden yürütülür.</span>
+          
+          {/* Vision Document Download Button */}
+          <div className="mt-10 flex flex-col items-center gap-6 animate-fadeIn delay-300">
+              <button 
+                onClick={() => handleDownload('https://assets.reflectandshoot.com/Vizyon_Belgesi.pdf')}
+                className="group relative inline-flex items-center gap-4 px-8 py-4 bg-slate-900/50 hover:bg-slate-800 border border-amber-500/30 hover:border-amber-500 text-white rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(245,158,11,0.1)] hover:shadow-[0_0_30px_rgba(245,158,11,0.3)] backdrop-blur-md"
+              >
+                  <div className="absolute inset-0 rounded-full bg-amber-500/5 group-hover:bg-amber-500/10 transition-colors"></div>
+                  <FileText size={20} className="text-amber-500 relative z-10" />
+                  <div className="text-left relative z-10">
+                      <span className="block text-[9px] font-black text-amber-500/80 uppercase tracking-[0.15em] mb-0.5">Stratejik Plan</span>
+                      <span className="block text-sm font-bold text-slate-100 group-hover:text-white">2026 Vizyon Belgesi</span>
+                  </div>
+                  <Download size={18} className="text-slate-400 group-hover:text-white transition-colors relative z-10 ml-2" />
+              </button>
+
+              <span className="inline-block px-4 py-1.5 rounded-full bg-slate-800/40 border border-slate-700/50 text-slate-400 text-xs font-medium backdrop-blur-sm">
+                  Tüm süreç sitemizdeki kullanıcı paneli üzerinden yürütülür.
+              </span>
           </div>
         </div>
       </div>

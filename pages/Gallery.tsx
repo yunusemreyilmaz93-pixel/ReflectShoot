@@ -14,7 +14,8 @@ export const Gallery: React.FC = () => {
     { id: '3', src: "https://picsum.photos/800/500?random=103", alt: "Birinci Olan Takım", category: 'Gala 2025', year: '2025' },
     { id: '4', src: "https://picsum.photos/900/600?random=104", alt: "Jüri Üyeleri Değerlendirmede", category: 'Gala 2025', year: '2025' },
     { id: '5', src: "https://picsum.photos/600/600?random=105", alt: "Plaket Takdimi", category: 'Gala 2025', year: '2025' }, 
-    { id: '6', src: "https://picsum.photos/800/600?random=106", alt: "Sahne Arkası Heyecanı", category: 'Gala 2025', year: '2025' }
+    { id: '6', src: "https://picsum.photos/800/600?random=106", alt: "Sahne Arkası Heyecanı", category: 'Gala 2025', year: '2025' },
+    { id: '7', src: "https://assets.reflectandshoot.com/gallery/tas_bina.jpg", alt: "Tarihi Taş Bina", category: 'Mekan', year: '2025' }
   ];
 
   const images = cmsGallery.length > 0 ? cmsGallery : fallbackImages;
