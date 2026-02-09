@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 // @ts-ignore
 import { 
@@ -121,11 +122,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [systemSettings, setSystemSettings] = useState<SystemSettings>({
         dates: {
             applicationStart: '2026-01-20T09:00',
-            applicationEnd: '2026-02-13T23:59',
-            videoUploadStart: '2026-02-14T00:00',
-            videoUploadEnd: '2026-03-20T23:59',
+            applicationEnd: '2026-03-23T23:59',
+            videoUploadStart: '2026-01-20T09:00',
+            videoUploadEnd: '2026-03-23T23:59',
             academyStart: '2026-04-06T09:00',
             galaDate: '2026-05-22T19:00',
+            finalistRevealStart: '2026-04-03T12:00',
             publicVoteStart: '',
             publicVoteEnd: ''
         },

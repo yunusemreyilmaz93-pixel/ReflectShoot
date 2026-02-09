@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool, Target, HelpCircle, MapPin, Compass } from 'lucide-react';
@@ -9,10 +8,8 @@ import { useAppContext } from '../context/AppContext';
 
 // Competition Schedule Configuration
 const COMPETITION_PHASES = [
-  { label: 'Başvuruların Başlaması', date: '2026-01-20T09:00:00' },
-  { label: 'Son Başvuru Tarihi', date: '2026-02-13T23:59:59' },
-  { label: '1. Video Teslimi', date: '2026-03-20T23:59:59' },
-  { label: 'Finalistlerin Açıklanması', date: '2026-04-01T12:00:00' },
+  { label: 'Başvuru ve Eser Gönderimi', date: '2026-03-23T23:59:59' },
+  { label: 'Finalistlerin Açıklanması', date: '2026-04-03T12:00:00' },
   { label: 'Akademi & Workshoplar', date: '2026-04-06T09:00:00' },
   { label: 'Revize Video Teslimi', date: '2026-05-04T23:59:59' },
   { label: 'Sonuçların Açıklanması', date: '2026-05-11T10:00:00' },
@@ -327,7 +324,7 @@ export const Home: React.FC = () => {
         `}</style>
       </div>
 
-      {/* 2. Categories Section - Improved Visibility */}
+      {/* 2. Categories Section */}
       <section id="categories" className="py-24 bg-slate-50 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
@@ -391,7 +388,7 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* 3. Themes Section - Dark Cinematic (Matches About) */}
+      {/* 3. Themes Section */}
       <section className="py-24 bg-slate-950 relative overflow-visible">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(30,41,59,0.4)_0%,rgba(2,6,23,1)_100%)]"></div>
         
@@ -412,7 +409,7 @@ export const Home: React.FC = () => {
 
           <div className="space-y-12">
             
-            {/* Ayetler - Fixed Layout */}
+            {/* Ayetler */}
             <div className="relative bg-slate-900 p-8 md:p-12 rounded-[2rem] shadow-2xl border border-slate-800 border-t-4 border-t-amber-500/80 overflow-visible">
                <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cardboard-flat.png')] pointer-events-none"></div>
                
@@ -458,7 +455,7 @@ export const Home: React.FC = () => {
                </div>
             </div>
 
-            {/* Hadith & Sahabe - Cinematic Cards */}
+            {/* Hadith & Sahabe */}
             <div className="grid md:grid-cols-2 gap-8">
                 {/* Hadisler */}
                 <div className="bg-slate-900 p-10 rounded-[2rem] shadow-2xl border border-slate-800 hover:border-teal-500/30 transition-all duration-300 group hover:-translate-y-1">
@@ -500,7 +497,7 @@ export const Home: React.FC = () => {
       {/* 4. Timeline Section */}
       <Timeline />
 
-      {/* 5. Preparation Guide Section (Replaces Documents) */}
+      {/* 5. Preparation Guide Section */}
       <section className="py-24 bg-slate-50 border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">

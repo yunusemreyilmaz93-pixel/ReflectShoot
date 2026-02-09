@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { 
   Calendar, 
@@ -17,7 +18,6 @@ import {
   Trophy,
   Camera
 } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
 
 interface TimelineEvent {
   date: string;
@@ -26,6 +26,59 @@ interface TimelineEvent {
   icon: React.ElementType;
   color: string; // 'rose' | 'teal' | 'amber'
 }
+
+// Static Data to ensure correct schedule display
+const STATIC_EVENTS: TimelineEvent[] = [
+  {
+    date: '20 Ocak 2026',
+    title: 'Başvuru ve Eser Gönderimi Başlıyor',
+    description: 'Yarışma süreci resmen başlıyor. Sisteme kayıt ol, takımını kur ve filmini çekmeye başla. Hem başvuru hem de eser teslim ekranları bu tarihte açılır.',
+    icon: Clapperboard,
+    color: 'teal'
+  },
+  {
+    date: '23 Mart 2026',
+    title: 'Son Başvuru ve Teslim Tarihi',
+    description: 'Sisteme video yüklemek veya link göndermek için son gün. Bu tarihten sonra yapılan başvurular ve yüklemeler kabul edilmeyecektir.',
+    icon: Upload,
+    color: 'rose'
+  },
+  {
+    date: '3 Nisan 2026',
+    title: 'Finalistlerin Açıklanması',
+    description: 'Jüri ön değerlendirmesi sonucu finale kalan 20 takımın web sitesi üzerinden duyurulması.',
+    icon: Star,
+    color: 'amber'
+  },
+  {
+    date: '6-10 Nisan 2026',
+    title: 'Finalist Akademisi',
+    description: 'Finale kalan ekipler için sektör profesyonelleri ile online senaryo, kurgu ve yönetmenlik atölyeleri.',
+    icon: BookOpen,
+    color: 'teal'
+  },
+  {
+    date: '11 Nisan - 4 Mayıs 2026',
+    title: 'Revize Eser Gönderimi',
+    description: 'Finalist takımların, akademi eğitimleri ışığında filmlerini revize ederek son kurgularını sisteme yükleme süreci.',
+    icon: Edit3,
+    color: 'amber'
+  },
+  {
+    date: '11 Mayıs 2026',
+    title: 'Final Sonuçlarının Açıklanması',
+    description: 'Jüri değerlendirmesi sonucu dereceye giren eserlerin belirlenmesi.',
+    icon: CheckCircle2,
+    color: 'teal'
+  },
+  {
+    date: '22 Mayıs 2026',
+    title: 'Büyük Gala',
+    description: 'Konya\'da düzenlenecek görkemli törenle kazananların açıklanması ve ödüllerin takdimi.',
+    icon: Trophy,
+    color: 'rose'
+  }
+];
 
 const TimelineItem: React.FC<{ event: TimelineEvent; index: number }> = ({ event, index }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -79,7 +132,7 @@ const TimelineItem: React.FC<{ event: TimelineEvent; index: number }> = ({ event
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-16 -mt-16 group-hover:bg-white/10 transition-colors"></div>
         <div className="flex items-center justify-between mb-3 relative z-10">
            <span className={`font-black text-[10px] uppercase tracking-[0.2em] ${currentColors.text} flex items-center gap-2 bg-slate-950/50 px-2 py-1 rounded border border-white/5`}>
-              <Clapperboard size={10} /> {event.date}
+              <Calendar size={10} /> {event.date}
            </span>
         </div>
         <h3 className="mb-2 font-black text-white text-xl tracking-tight relative z-10">{event.title}</h3>
@@ -132,14 +185,8 @@ const MobileTimelineItem: React.FC<{ event: TimelineEvent; index: number }> = ({
 };
 
 export const Timeline: React.FC = () => {
-  const { cmsTimeline } = useAppContext();
-  const events = cmsTimeline.length > 0 ? cmsTimeline.map((item, index) => ({
-      date: item.date,
-      title: item.title,
-      description: item.description,
-      icon: [Film, Camera, Scissors, MonitorPlay, Award][index % 5],
-      color: ['rose', 'teal', 'amber'][index % 3]
-  })) : [];
+  // Using static events to force correct schedule display
+  const events = STATIC_EVENTS;
 
   return (
     <section className="bg-slate-950 py-24 overflow-hidden relative">
@@ -160,14 +207,14 @@ export const Timeline: React.FC = () => {
         <div className="hidden md:block relative wrap overflow-hidden p-10 h-full">
           <div className="absolute left-1/2 transform -translate-x-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-slate-800 to-transparent"></div>
           {events.map((event, index) => (
-            <TimelineItem key={index} event={event as any} index={index} />
+            <TimelineItem key={index} event={event} index={index} />
           ))}
         </div>
 
         <div className="md:hidden relative">
            <div className="absolute left-0 top-0 bottom-0 w-px bg-slate-800 ml-4"></div>
           {events.map((event, index) => (
-            <MobileTimelineItem key={index} event={event as any} index={index} />
+            <MobileTimelineItem key={index} event={event} index={index} />
           ))}
         </div>
       </div>

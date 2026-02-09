@@ -56,6 +56,22 @@ export const CityGuide: React.FC = () => {
           }
       },
       {
+          title: "Tarihi Bedesten Çarşısı",
+          subtitle: "Geçmişin Alışveriş Merkezi",
+          description: "Mevlana Müzesi'ne yürüme mesafesinde olan bu tarihi çarşı, Konya'nın kalbi gibidir. Yüzyıllardır ticaretin döndüğü bu sokaklarda kaybolabilir, antikacılardan yöresel ürünlere kadar her şeyi bulabilirsiniz. Kapu Camii ve Aziziye Camii'nin gölgesinde tarih kokan bir yürüyüş sizi bekliyor.",
+          tip: "Çarşı içindeki küçük esnaf lokantalarında Konya'ya özgü lezzetleri tadabilirsiniz.",
+          photoTip: "Aziziye Camii'nin barok minareleri ile Bedesten'in hareketli kalabalığını aynı karede yakalayın.",
+          tags: ["Alışveriş", "Tarih", "Kültür"],
+          image: "https://assets.reflectandshoot.com/city_guide/bedesten.jpg",
+          details: {
+              hours: "08:00 - 20:00 (Pazar günleri sakin olabilir)",
+              transport: "Mevlana Meydanı'ndan yürüyerek 5 dakika.",
+              nearby: "Kapu Camii, Aziziye Camii",
+              entryFee: "Ücretsiz",
+              mapUrl: "https://www.google.com/maps/search/?api=1&query=Konya+Bedesten+Çarşısı"
+          }
+      },
+      {
           title: "Sille Köyü",
           subtitle: "Tarihi Kahve Molası",
           description: "Binlerce yıllık tarihi dokusuyla Sille, şehrin gürültüsünden uzaklaşmak için harika bir kaçış noktası. Taş köprüleri, mağaraları ve restore edilmiş evleriyle tam bir açık hava müzesi.",
@@ -305,7 +321,7 @@ export const CityGuide: React.FC = () => {
               </div>
           </section>
 
-          {/* 4.5 TRANSFER INFO (Gala Day) - NEW SECTION */}
+          {/* 4.5 TRANSFER INFO (Gala Day) */}
           <section id="transfer" className="scroll-mt-32">
               <div className="relative rounded-[2.5rem] bg-gradient-to-r from-slate-900 to-slate-950 border border-amber-500/20 shadow-2xl overflow-hidden group">
                   {/* Decorative Elements */}
@@ -393,21 +409,7 @@ export const CityGuide: React.FC = () => {
                   </p>
               </div>
 
-              {/* MAP EMBED */}
-              <div className="mb-20 rounded-[2.5rem] overflow-hidden border-4 border-slate-800 shadow-2xl bg-slate-900 relative group">
-                   <div className="absolute top-4 right-4 z-10 bg-slate-900/90 backdrop-blur text-white text-xs px-4 py-2 rounded-xl border border-slate-700 font-bold shadow-lg flex items-center gap-2 pointer-events-none">
-                      <MapPin size={14} className="text-rose-500" /> İnteraktif Harita
-                   </div>
-                   <iframe 
-                      src="https://www.google.com/maps/d/u/0/embed?mid=1kyRW12627Ze-7E7YTlbL2yF7Rej4gSA&ehbc=2E312F" 
-                      width="100%" 
-                      height="480" 
-                      className="w-full h-[350px] md:h-[600px]"
-                      style={{ border: 0 }}
-                      allowFullScreen
-                      loading="lazy"
-                   ></iframe>
-              </div>
+              {/* MAP EMBED REMOVED as per request */}
 
               <div className="space-y-16 md:space-y-20">
                   {touristLocations.map((loc, idx) => (
@@ -457,7 +459,8 @@ export const CityGuide: React.FC = () => {
               </div>
           </section>
 
-          {/* 5.5 NEW Checklist Section */}
+          {/* ... Rest of the sections remain unchanged ... */}
+          {/* 5.5 Checklist, 6. Food, 7. Survival, 8. Souvenirs, 9. Accommodation */}
           <section id="tasks" className="scroll-mt-32">
               <div className="bg-gradient-to-r from-rose-900/20 to-slate-900 border border-rose-900/30 rounded-[2.5rem] p-8 md:p-10 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-[80px] -mr-20 -mt-20"></div>
@@ -503,7 +506,6 @@ export const CityGuide: React.FC = () => {
               </div>
           </section>
 
-          {/* 6. Food */}
           <section id="food" className="scroll-mt-32">
               <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 md:p-16 relative overflow-hidden">
                   <div className="relative z-10 grid md:grid-cols-2 gap-12">
@@ -558,7 +560,6 @@ export const CityGuide: React.FC = () => {
               </div>
           </section>
 
-          {/* 7. Survival Kit */}
           <section id="survival" className="scroll-mt-32">
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
@@ -584,7 +585,6 @@ export const CityGuide: React.FC = () => {
               </div>
           </section>
 
-          {/* 8. Souvenirs & Shopping */}
           <section id="souvenirs" className="scroll-mt-32 border-t border-slate-800 pt-16">
               <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
                   <div>
@@ -603,7 +603,6 @@ export const CityGuide: React.FC = () => {
               </div>
           </section>
 
-          {/* 9. Accommodation */}
           <section id="accommodation" className="scroll-mt-32">
               <div className="relative rounded-[3rem] overflow-hidden bg-slate-900 border-4 border-slate-800 shadow-2xl">
                   {/* Header Images - Split View */}

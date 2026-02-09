@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
     Search, Check, X, Eye, Award, FileText, Shield, Inbox, Download, 
@@ -1261,18 +1262,18 @@ export const Admin: React.FC = () => {
                                      {/* Registration Dates */}
                                      <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
                                          <h4 className="font-bold text-white mb-6 pb-2 border-b border-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
-                                             <Users size={18} className="text-blue-500"/> Başvuru Takvimi
+                                             <Users size={18} className="text-blue-500"/> Başvuru Süreci
                                          </h4>
                                          <div className="grid grid-cols-2 gap-4">
-                                             <DateInput label="Başlangıç" value={systemSettings.dates.applicationStart} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, applicationStart: val}})} />
-                                             <DateInput label="Bitiş" value={systemSettings.dates.applicationEnd} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, applicationEnd: val}})} />
+                                             <DateInput label="Başvuru Başlangıç" value={systemSettings.dates.applicationStart} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, applicationStart: val}})} />
+                                             <DateInput label="Başvuru Bitiş" value={systemSettings.dates.applicationEnd} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, applicationEnd: val}})} />
                                          </div>
                                      </div>
 
                                      {/* Video Upload Dates */}
                                      <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
                                          <h4 className="font-bold text-white mb-6 pb-2 border-b border-slate-700 flex items-center gap-2 text-sm uppercase tracking-wider">
-                                             <Upload size={18} className="text-purple-500"/> Video Yükleme Süreci
+                                             <Upload size={18} className="text-purple-500"/> Eser Yükleme (Eş Zamanlı)
                                          </h4>
                                          <div className="grid grid-cols-2 gap-4">
                                              <DateInput label="Yükleme Başlangıç" value={systemSettings.dates.videoUploadStart} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, videoUploadStart: val}})} />
@@ -1287,11 +1288,14 @@ export const Admin: React.FC = () => {
                                          </h4>
                                          <div className="space-y-4">
                                              <div className="grid grid-cols-2 gap-4">
+                                                 <DateInput label="Finalistleri Açıkla" value={systemSettings.dates.finalistRevealStart || ''} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, finalistRevealStart: val}})} />
+                                                 <DateInput label="Akademi Başlangıç" value={systemSettings.dates.academyStart} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, academyStart: val}})} />
+                                             </div>
+                                             <div className="grid grid-cols-2 gap-4">
                                                  <DateInput label="Oylama Başlangıç" value={systemSettings.dates.publicVoteStart || ''} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, publicVoteStart: val}})} />
                                                  <DateInput label="Oylama Bitiş" value={systemSettings.dates.publicVoteEnd || ''} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, publicVoteEnd: val}})} />
                                              </div>
-                                             <div className="grid grid-cols-2 gap-4">
-                                                 <DateInput label="Akademi Başlangıç" value={systemSettings.dates.academyStart} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, academyStart: val}})} />
+                                             <div className="grid grid-cols-1">
                                                  <DateInput label="Gala Tarihi" value={systemSettings.dates.galaDate} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, galaDate: val}})} />
                                              </div>
                                          </div>
