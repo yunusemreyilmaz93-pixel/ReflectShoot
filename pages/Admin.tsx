@@ -473,6 +473,7 @@ const AdminDashboard = ({ apps }: { apps: Application[] }) => {
 };
 
 const AdminTeams = ({ apps, onSelectApp, onToggleFinalist }: { apps: Application[], onSelectApp: (app: Application) => void, onToggleFinalist: (app: Application) => void }) => {
+    const { deleteApplication } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
     const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
@@ -518,6 +519,11 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist }: { apps: Application
             Phone: app.teacher.phone
         }));
         exportToCSV(data, 'takim_listesi.csv');
+    };
+
+    const handleDelete = async (appId: string) => {
+        if (!window.confirm("Bu takımı ve tüm verilerini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.")) return;
+        await deleteApplication(appId);
     };
 
     const renderStatus = (status: ApplicationStatus) => {
@@ -659,12 +665,22 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist }: { apps: Application
                                             </span>
                                         </td>
                                         <td className="p-4 text-right">
-                                            <button 
-                                                onClick={() => onSelectApp(app)}
-                                                className="p-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 transition-all"
-                                            >
-                                                <Eye size={16} />
-                                            </button>
+                                            <div className="flex justify-end gap-2">
+                                                <button 
+                                                    onClick={() => onSelectApp(app)}
+                                                    className="p-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 transition-all"
+                                                    title="İncele"
+                                                >
+                                                    <Eye size={16} />
+                                                </button>
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleDelete(app.id); }}
+                                                    className="p-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 hover:text-red-500 hover:border-red-500/50 transition-all"
+                                                    title="Sil"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -1016,7 +1032,7 @@ const AdminUsers = () => {
 };
 
 const AdminInbox = () => {
-    const { contactMessages, markContactMessageAsRead, replyToContactMessage } = useAppContext();
+    const { contactMessages, markContactMessageAsRead, replyToContactMessage, deleteContactMessage } = useAppContext();
     const [filter, setFilter] = useState<'ALL' | 'UNREAD'>('ALL');
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [replyText, setReplyText] = useState('');
@@ -1028,6 +1044,11 @@ const AdminInbox = () => {
         await replyToContactMessage(msgId, replyText);
         setReplyingTo(null);
         setReplyText('');
+    };
+
+    const handleDelete = async (msgId: string) => {
+        if (!window.confirm("Bu mesajı silmek istediğinize emin misiniz?")) return;
+        await deleteContactMessage(msgId);
     };
 
     return (
@@ -1068,6 +1089,9 @@ const AdminInbox = () => {
                                         <Mail size={12} /> E-posta At
                                     </a>
                                 )}
+                                <button onClick={() => handleDelete(msg.id)} className="text-xs bg-red-900/30 text-red-400 border border-red-900/50 px-3 py-1.5 rounded hover:bg-red-900/50 transition-colors flex items-center gap-1 font-bold">
+                                    <Trash2 size={12} /> Sil
+                                </button>
                             </div>
                         </div>
                         <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap mb-4">{msg.message}</p>

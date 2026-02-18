@@ -50,6 +50,7 @@ interface AppContextType {
     allApplications: Application[];
     createApplication: (data: any) => Promise<void>;
     updateApplication: (app: Application) => Promise<void>;
+    deleteApplication: (appId: string) => Promise<void>; // Added
     
     systemSettings: SystemSettings;
     updateSystemSettings: (s: SystemSettings) => Promise<void>;
@@ -87,10 +88,11 @@ interface AppContextType {
     sendContactMessage: (data: any) => Promise<void>;
     markContactMessageAsRead: (id: string) => Promise<void>;
     replyToContactMessage: (messageId: string, replyText: string) => Promise<void>;
+    deleteContactMessage: (id: string) => Promise<void>; // Added
     
     allUsers: UserProfile[];
     updateUserRole: (uid: string, role: UserRole) => Promise<void>;
-    deleteUser: (uid: string) => Promise<void>; // Added deleteUser
+    deleteUser: (uid: string) => Promise<void>;
     
     auditLogs: LogEntry[];
     logAction: (action: string, details: string, targetId?: string) => Promise<void>;
@@ -385,6 +387,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         showToast('Başvuru güncellendi.', 'success');
     };
 
+    const deleteApplication = async (appId: string) => {
+        await deleteDoc(doc(db, "applications", appId));
+        await logAction("DELETE_APP", "Başvuru ve takım silindi.", appId);
+        showToast('Takım silindi.', 'success');
+    };
+
     // --- SYSTEM & CMS ---
 
     const updateSystemSettings = async (s: SystemSettings) => {
@@ -454,6 +462,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const markContactMessageAsRead = async (id: string) => {
         await updateDoc(doc(db, "contact_messages", id), { status: 'READ' });
+    };
+
+    const deleteContactMessage = async (id: string) => {
+        await deleteDoc(doc(db, "contact_messages", id));
+        showToast("Mesaj silindi.", 'success');
     };
 
     const replyToContactMessage = async (messageId: string, replyText: string) => {
@@ -687,7 +700,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return (
         <AppContext.Provider value={{
             currentUser, loading, login, logout, registerTeacher, resetPassword, resendVerificationEmail,
-            currentApplication, allApplications, createApplication, updateApplication,
+            currentApplication, allApplications, createApplication, updateApplication, deleteApplication,
             systemSettings, updateSystemSettings,
             cmsGeneral, updateCMSGeneral, cmsLinks, updateCMSLinks, 
             cmsAcademy, addCMSAcademyItem, updateCMSAcademyItem, deleteCMSAcademyItem,
@@ -697,7 +710,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             cmsPrizes, updateCMSPrize,
             toasts, showToast, removeToast,
             notifications, markNotificationAsRead,
-            contactMessages, sendContactMessage, markContactMessageAsRead, replyToContactMessage,
+            contactMessages, sendContactMessage, markContactMessageAsRead, replyToContactMessage, deleteContactMessage,
             allUsers, updateUserRole, deleteUser,
             auditLogs, logAction,
             fetchJuryScores, fetchMyScore, submitScore, assignJury, bulkAssignJury,
