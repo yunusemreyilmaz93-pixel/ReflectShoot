@@ -90,6 +90,7 @@ interface AppContextType {
     
     allUsers: UserProfile[];
     updateUserRole: (uid: string, role: UserRole) => Promise<void>;
+    deleteUser: (uid: string) => Promise<void>; // Added deleteUser
     
     auditLogs: LogEntry[];
     logAction: (action: string, details: string, targetId?: string) => Promise<void>;
@@ -427,6 +428,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         await logAction("UPDATE_ROLE", `Kullanıcı rolü güncellendi: ${role}`, uid);
     };
 
+    const deleteUser = async (uid: string) => {
+        await deleteDoc(doc(db, "users", uid));
+        await logAction("DELETE_USER", "Kullanıcı silindi.", uid);
+        showToast("Kullanıcı silindi.", 'success');
+    };
+
     // --- LOGS & MESSAGES ---
 
     const logAction = async (action: string, details: string, targetId?: string) => {
@@ -691,7 +698,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             toasts, showToast, removeToast,
             notifications, markNotificationAsRead,
             contactMessages, sendContactMessage, markContactMessageAsRead, replyToContactMessage,
-            allUsers, updateUserRole,
+            allUsers, updateUserRole, deleteUser,
             auditLogs, logAction,
             fetchJuryScores, fetchMyScore, submitScore, assignJury, bulkAssignJury,
             sendMessage, submitPublicVote, sendAnnouncement,

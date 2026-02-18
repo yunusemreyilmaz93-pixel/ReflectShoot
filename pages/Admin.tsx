@@ -870,7 +870,7 @@ const AdminJuryAssign = ({ apps }: { apps: Application[] }) => {
 };
 
 const AdminUsers = () => {
-    const { allUsers, updateUserRole, showToast } = useAppContext();
+    const { allUsers, updateUserRole, deleteUser, showToast } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [processingId, setProcessingId] = useState<string | null>(null);
 
@@ -887,6 +887,19 @@ const AdminUsers = () => {
         } catch (error) {
             console.error(error);
             showToast('Rol güncellenemedi.', 'error');
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleDeleteUser = async (uid: string) => {
+        if (!window.confirm("Bu kullanıcıyı tamamen silmek istediğinize emin misiniz? Bu işlem geri alınamaz.")) return;
+        setProcessingId(uid);
+        try {
+            await deleteUser(uid);
+        } catch (error) {
+            console.error(error);
+            showToast('Kullanıcı silinemedi.', 'error');
         } finally {
             setProcessingId(null);
         }
@@ -982,11 +995,11 @@ const AdminUsers = () => {
                                                 )}
                                                 {user.role !== UserRole.ADMIN && (
                                                     <button 
-                                                        onClick={() => handleRoleChange(user.uid, UserRole.ADMIN)}
+                                                        onClick={() => handleDeleteUser(user.uid)}
                                                         disabled={processingId === user.uid}
-                                                        className="px-3 py-1.5 rounded-lg border border-rose-900/50 text-rose-500 text-[10px] font-bold hover:bg-rose-900/20 transition-all disabled:opacity-50"
+                                                        className="px-3 py-1.5 rounded-lg border border-red-900/50 text-red-500 text-[10px] font-bold hover:bg-red-900/20 transition-all disabled:opacity-50"
                                                     >
-                                                        Admin Yap
+                                                        Sil
                                                     </button>
                                                 )}
                                             </div>
