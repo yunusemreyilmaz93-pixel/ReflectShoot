@@ -199,8 +199,8 @@ export const CityGuide: React.FC = () => {
               KONYA
            </h1>
            <p className="text-xl md:text-2xl text-slate-200 max-w-2xl mx-auto font-light leading-relaxed drop-shadow-lg">
-              Tebrikler Finalist! <span className="text-amber-400 font-medium">Büyük Gala</span> için şehre hoş geldin. <br/>
-              İşte festival süresince şehri bir yerli gibi yaşaman için rehberin.
+              Konya bekliyor! <span className="text-amber-400 font-medium">Büyük Gala</span> için hazırız. <br/>
+              İşte gala süresince şehri tam anlamıyla yaşamak için bir rehber.
            </p>
 
            {/* Quick Nav */}
