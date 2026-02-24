@@ -170,7 +170,7 @@ export const About: React.FC = () => {
              </span>
            </h1>
           <p className="text-xl md:text-2xl text-slate-300 font-light max-w-3xl mx-auto leading-relaxed animate-fadeIn delay-200">
-            İmam Hatip Lisesi gençliğinin vizöründen kadim değerlerimizi modern sinema diliyle yorumlayan prestijli bir kısa film yarışması.
+            Gençliğin vizöründen kadim değerlerimizi modern sinema diliyle yorumlayan prestijli bir kısa film yarışması.
           </p>
           
           {/* Vision Document Download Button */}
