@@ -8,10 +8,10 @@ import { useAppContext } from '../context/AppContext';
 
 // Competition Schedule Configuration
 const COMPETITION_PHASES = [
-  { label: 'Başvuru ve Eser Gönderimi', date: '2026-03-23T23:59:59' },
-  { label: 'Finalistlerin Açıklanması', date: '2026-04-03T12:00:00' },
-  { label: 'Akademi & Workshoplar', date: '2026-04-06T09:00:00' },
-  { label: 'Revize Video Teslimi', date: '2026-05-04T23:59:59' },
+  { label: 'Başvuru ve Eser Gönderimi', date: '2026-04-10T23:59:59' },
+  { label: 'Finalistlerin Açıklanması', date: '2026-04-14T12:00:00' },
+  { label: 'Akademi & Workshoplar', date: '2026-04-20T09:00:00' },
+  { label: 'Revize Video Teslimi', date: '2026-05-08T23:59:59' },
   { label: 'Sonuçların Açıklanması', date: '2026-05-11T10:00:00' },
   { label: 'Büyük Final & Ödül Töreni', date: '2026-05-22T19:00:00' }
 ];
