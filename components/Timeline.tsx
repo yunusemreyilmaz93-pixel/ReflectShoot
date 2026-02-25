@@ -37,28 +37,28 @@ const STATIC_EVENTS: TimelineEvent[] = [
     color: 'teal'
   },
   {
-    date: '23 Mart 2026',
-    title: 'Son Başvuru ve Teslim Tarihi',
-    description: 'Sisteme video yüklemek veya link göndermek için son gün. Bu tarihten sonra yapılan başvurular ve yüklemeler kabul edilmeyecektir.',
+    date: '16 Şubat - 10 Nisan 2026',
+    title: 'Eser Gönderimi Tarihi',
+    description: 'Sisteme video yüklemek veya link göndermek için günler. Bu tarihten sonra yapılan başvurular ve yüklemeler kabul edilmeyecektir.',
     icon: Upload,
     color: 'rose'
   },
   {
-    date: '3 Nisan 2026',
+    date: '14 Nisan 2026',
     title: 'Finalistlerin Açıklanması',
     description: 'Jüri ön değerlendirmesi sonucu finale kalan 20 takımın web sitesi üzerinden duyurulması.',
     icon: Star,
     color: 'amber'
   },
   {
-    date: '6-10 Nisan 2026',
+    date: '20-21-22 Nisan 2026',
     title: 'Finalist Akademisi',
     description: 'Finale kalan ekipler için sektör profesyonelleri ile online senaryo, kurgu ve yönetmenlik atölyeleri.',
     icon: BookOpen,
     color: 'teal'
   },
   {
-    date: '11 Nisan - 4 Mayıs 2026',
+    date: '22 Nisan - 8 Mayıs 2026',
     title: 'Revize Eser Gönderimi',
     description: 'Finalist takımların, akademi eğitimleri ışığında filmlerini revize ederek son kurgularını sisteme yükleme süreci.',
     icon: Edit3,
