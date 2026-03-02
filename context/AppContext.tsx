@@ -51,6 +51,7 @@ interface AppContextType {
     allApplications: Application[];
     createApplication: (data: any) => Promise<void>;
     updateApplication: (app: Application) => Promise<void>;
+    updateApplicationStatus: (appId: string, newStatus: ApplicationStatus) => Promise<void>;
     deleteApplication: (appId: string) => Promise<void>; // Added
     
     systemSettings: SystemSettings;
@@ -252,13 +253,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             
             // Admin only data
             unsubs.push(onSnapshot(collection(db, "users"), (snap) => {
-                setAllUsers(snap.docs.map(d => ({id:d.id, ...d.data()} as UserProfile)));
+                setAllUsers(snap.docs.map(d => ({uid: d.id, ...d.data()} as any as UserProfile)));
             }));
             unsubs.push(onSnapshot(query(collection(db, "logs"), orderBy("timestamp", "desc"), limit(100)), (snap) => {
-                setAuditLogs(snap.docs.map(d => ({id:d.id, ...d.data()} as LogEntry)));
+                setAuditLogs(snap.docs.map(d => ({id: d.id, ...d.data()} as any as LogEntry)));
             }));
             unsubs.push(onSnapshot(query(collection(db, "contact_messages"), orderBy("createdAt", "desc")), (snap) => {
-                setContactMessages(snap.docs.map(d => ({id:d.id, ...d.data()} as ContactMessage)));
+                setContactMessages(snap.docs.map(d => ({id: d.id, ...d.data()} as any as ContactMessage)));
             }));
         } else if (currentUser.role === UserRole.JUDGE) {
             // Judge sees ONLY assigned applications
@@ -407,6 +408,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         showToast('Başvuru güncellendi.', 'success');
     };
 
+    const updateApplicationStatus = async (appId: string, newStatus: ApplicationStatus) => {
+        const app = allApplications.find(a => a.id === appId);
+        if (!app) return;
+        const oldStatus = app.status;
+        await updateDoc(doc(db, "applications", appId), { status: newStatus });
+        await logAction("UPDATE_STATUS", `Durum güncellendi: ${oldStatus} -> ${newStatus}`, appId, { before: oldStatus, after: newStatus });
+    };
+
     const deleteApplication = async (appId: string) => {
         await deleteDoc(doc(db, "applications", appId));
         await logAction("DELETE_APP", "Başvuru ve takım silindi.", appId);
@@ -464,10 +473,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // --- LOGS & MESSAGES ---
 
-    const logAction = async (action: string, details: string, targetId?: string) => {
+    const logAction = async (action: string, details: string, targetId?: string, metadata?: any) => {
         if (!currentUser) return;
         await addDoc(collection(db, "logs"), {
-            action, details, targetId, 
+            action, details, targetId, metadata,
             performedBy: currentUser.email, 
             timestamp: new Date().toISOString()
         });
@@ -720,7 +729,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return (
         <AppContext.Provider value={{
             currentUser, loading, login, logout, registerTeacher, createAdminAccount, resetPassword, resendVerificationEmail,
-            currentApplication, allApplications, createApplication, updateApplication, deleteApplication,
+            currentApplication, allApplications, createApplication, updateApplication, updateApplicationStatus, deleteApplication,
             systemSettings, updateSystemSettings,
             cmsGeneral, updateCMSGeneral, cmsLinks, updateCMSLinks, 
             cmsAcademy, addCMSAcademyItem, updateCMSAcademyItem, deleteCMSAcademyItem,

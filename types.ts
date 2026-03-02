@@ -167,6 +167,7 @@ export interface LogEntry {
     performedBy: string; // Email
     timestamp: string;
     targetId?: string;
+    metadata?: any;
 }
 
 // NEW: Toast Notification Type

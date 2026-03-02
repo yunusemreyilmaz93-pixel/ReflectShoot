@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import * as Sentry from "@sentry/react";
 import App from './App';
 
-const dsn = import.meta.env.VITE_SENTRY_DSN;
+const dsn = (import.meta as any).env.VITE_SENTRY_DSN;
 if (dsn) {
   Sentry.init({
     dsn,

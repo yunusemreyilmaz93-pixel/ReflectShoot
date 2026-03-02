@@ -255,7 +255,15 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }: Si
     );
 };
 
-const AnalyticsSection = ({ apps }: { apps: Application[] }) => {
+const AnalyticsSection = ({ apps, onFilterCategory }: { apps: Application[], onFilterCategory: (cat: string | null) => void }) => {
+    const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
+
+    const handleCategoryClick = (catId: string) => {
+        const newFilter = selectedCategoryFilter === catId ? null : catId;
+        setSelectedCategoryFilter(newFilter);
+        onFilterCategory(newFilter);
+    };
+
     const trendData = useMemo(() => {
         const groups: Record<string, number> = {};
         apps.forEach(app => {
@@ -267,8 +275,8 @@ const AnalyticsSection = ({ apps }: { apps: Application[] }) => {
     }, [apps]);
 
     const categoryData = [
-        { name: 'Canlı Çekim', value: apps.filter(a => a.team.category === Category.LIVE_ACTION).length, color: '#0d9488' }, 
-        { name: 'AI Animasyon', value: apps.filter(a => a.team.category === Category.AI_ANIMATION).length, color: '#9333ea' } 
+        { id: Category.LIVE_ACTION, name: 'Canlı Çekim', value: apps.filter(a => a.team.category === Category.LIVE_ACTION).length, color: '#0d9488' }, 
+        { id: Category.AI_ANIMATION, name: 'AI Animasyon', value: apps.filter(a => a.team.category === Category.AI_ANIMATION).length, color: '#9333ea' } 
     ];
 
     const cityData = useMemo(() => {
@@ -300,7 +308,29 @@ const AnalyticsSection = ({ apps }: { apps: Application[] }) => {
                 <h3 className="font-bold text-white flex items-center gap-2 text-sm mb-6">
                     <PieChart size={16} className="text-blue-500"/> Kategori Dağılımı
                 </h3>
-                <SimpleDonutChart data={categoryData} />
+                <div className="space-y-3">
+                    {categoryData.map((slice, i) => (
+                        <div 
+                            key={i} 
+                            onClick={() => handleCategoryClick(slice.id)}
+                            className={`flex justify-between items-center text-xs p-2 rounded-lg cursor-pointer transition-all ${selectedCategoryFilter === slice.id ? 'bg-slate-700 ring-1 ring-white/20' : 'hover:bg-slate-700/50'}`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: slice.color }}></span>
+                                <span className="text-slate-300">{slice.name}</span>
+                            </div>
+                            <span className="font-bold text-white">{slice.value} <span className="text-slate-500 font-normal">({((slice.value/apps.length || 1)*100).toFixed(0)}%)</span></span>
+                        </div>
+                    ))}
+                    {selectedCategoryFilter && (
+                        <button 
+                            onClick={() => { setSelectedCategoryFilter(null); onFilterCategory(null); }}
+                            className="w-full mt-2 py-1 text-[10px] text-rose-400 hover:text-rose-300 font-bold uppercase tracking-widest"
+                        >
+                            Filtreyi Temizle
+                        </button>
+                    )}
+                </div>
             </div>
             <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
                 <h3 className="font-bold text-white flex items-center gap-2 text-sm mb-6">
@@ -327,27 +357,30 @@ const AnalyticsSection = ({ apps }: { apps: Application[] }) => {
     );
 };
 
-const AdminDashboard = ({ apps }: { apps: Application[] }) => {
+const Skeleton = ({ className }: { className?: string }) => (
+    <div className={`animate-pulse bg-slate-700/50 rounded-lg ${className}`}></div>
+);
+
+const AdminDashboard = ({ apps, onFilterCategory }: { apps: Application[], onFilterCategory: (cat: string | null) => void }) => {
     // Calculations
     const totalApps = apps.length;
     const finalistCount = apps.filter(a => a.team.isFinalist).length;
     const videoCount = apps.filter(a => a.team.videoStatus === 'UPLOADED' || a.team.videoStatus === 'SUBMITTED_LINK').length;
     
+    const liveActionRankings = useMemo(() => apps
+        .filter(a => a.team.category === Category.LIVE_ACTION && a.finalScore !== undefined)
+        .sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0))
+        .slice(0, 10), [apps]);
+
+    const aiRankings = useMemo(() => apps
+        .filter(a => a.team.category === Category.AI_ANIMATION && a.finalScore !== undefined)
+        .sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0))
+        .slice(0, 10), [apps]);
+
     const gradedApps = apps.filter(a => a.finalScore !== undefined && a.finalScore > 0);
     const avgScore = gradedApps.length > 0 
         ? (gradedApps.reduce((acc, curr) => acc + (curr.finalScore || 0), 0) / gradedApps.length).toFixed(1) 
         : "0.0";
-
-    // Leaderboards
-    const liveActionRankings = apps
-        .filter(a => a.team.category === Category.LIVE_ACTION && a.finalScore !== undefined && a.finalScore > 0)
-        .sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0))
-        .slice(0, 10);
-
-    const aiRankings = apps
-        .filter(a => a.team.category === Category.AI_ANIMATION && a.finalScore !== undefined && a.finalScore > 0)
-        .sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0))
-        .slice(0, 10);
 
     return (
         <div className="space-y-6 animate-fadeIn">
@@ -399,7 +432,7 @@ const AdminDashboard = ({ apps }: { apps: Application[] }) => {
             </div>
 
             {/* Charts Section */}
-            <AnalyticsSection apps={apps} />
+            <AnalyticsSection apps={apps} onFilterCategory={onFilterCategory} />
 
             {/* Leaderboard */}
             <div className="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
@@ -472,12 +505,19 @@ const AdminDashboard = ({ apps }: { apps: Application[] }) => {
     );
 };
 
-const AdminTeams = ({ apps, onSelectApp, onToggleFinalist }: { apps: Application[], onSelectApp: (app: Application) => void, onToggleFinalist: (app: Application) => void }) => {
-    const { deleteApplication } = useAppContext();
+const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategoryFilter }: { apps: Application[], onSelectApp: (app: Application) => void, onToggleFinalist: (app: Application) => void, initialCategoryFilter?: string | null }) => {
+    const { deleteApplication, updateApplicationStatus, showToast } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
-    const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
+    const [categoryFilter, setCategoryFilter] = useState<string>(initialCategoryFilter || 'ALL');
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+
+    useEffect(() => {
+        if (initialCategoryFilter) {
+            setCategoryFilter(initialCategoryFilter);
+        }
+    }, [initialCategoryFilter]);
 
     // Filtering
     const filteredApps = apps.filter(app => {
@@ -488,6 +528,42 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist }: { apps: Application
         
         return matchesSearch && matchesStatus && matchesCategory;
     });
+
+    const handleBulkStatusUpdate = async (newStatus: ApplicationStatus) => {
+        if (selectedIds.size === 0) return;
+        if (!window.confirm(`Seçili ${selectedIds.size} takımı "${newStatus}" durumuna getirmek istediğinize emin misiniz?`)) return;
+
+        setIsBulkProcessing(true);
+        try {
+            const promises = Array.from(selectedIds).map(id => updateApplicationStatus(id, newStatus));
+            await Promise.all(promises);
+            showToast(`${selectedIds.size} takım güncellendi.`, 'success');
+            setSelectedIds(new Set());
+        } catch (error) {
+            console.error(error);
+            showToast('Toplu işlem sırasında hata oluştu.', 'error');
+        } finally {
+            setIsBulkProcessing(false);
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.size === 0) return;
+        if (!window.confirm(`Seçili ${selectedIds.size} takımı tamamen silmek istediğinize emin misiniz? Bu işlem geri alınamaz!`)) return;
+
+        setIsBulkProcessing(true);
+        try {
+            const promises = Array.from(selectedIds).map(id => deleteApplication(id));
+            await Promise.all(promises);
+            showToast(`${selectedIds.size} takım silindi.`, 'success');
+            setSelectedIds(new Set());
+        } catch (error) {
+            console.error(error);
+            showToast('Toplu silme sırasında hata oluştu.', 'error');
+        } finally {
+            setIsBulkProcessing(false);
+        }
+    };
 
     // Stats
     const stats = {
@@ -591,6 +667,52 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist }: { apps: Application
                 <span>Finalist: <strong className="text-amber-500">{stats.finalist}</strong></span>
                 <span>Video Yükleyen: <strong className="text-blue-500">{stats.videoUploaded}</strong></span>
             </div>
+
+            {/* Bulk Actions Bar */}
+            {selectedIds.size > 0 && (
+                <div className="bg-rose-600 p-4 rounded-xl shadow-lg flex items-center justify-between animate-fadeInUp mb-4">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-white/20 p-2 rounded-lg text-white">
+                            <CheckSquare size={20} />
+                        </div>
+                        <div>
+                            <div className="text-white font-bold text-sm">{selectedIds.size} Takım Seçildi</div>
+                            <div className="text-rose-100 text-[10px] uppercase tracking-widest font-bold">Toplu İşlem Menüsü</div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button 
+                            disabled={isBulkProcessing}
+                            onClick={() => handleBulkStatusUpdate(ApplicationStatus.APPROVED)}
+                            className="px-4 py-2 bg-white text-rose-600 rounded-lg text-xs font-bold hover:bg-rose-50 transition-colors disabled:opacity-50"
+                        >
+                            Hepsini Onayla
+                        </button>
+                        <button 
+                            disabled={isBulkProcessing}
+                            onClick={() => handleBulkStatusUpdate(ApplicationStatus.REJECTED)}
+                            className="px-4 py-2 bg-rose-800 text-white rounded-lg text-xs font-bold hover:bg-rose-900 transition-colors disabled:opacity-50"
+                        >
+                            Hepsini Reddet
+                        </button>
+                        <div className="w-px h-8 bg-white/20 mx-1"></div>
+                        <button 
+                            disabled={isBulkProcessing}
+                            onClick={handleBulkDelete}
+                            className="p-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50"
+                            title="Seçilenleri Sil"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                        <button 
+                            onClick={() => setSelectedIds(new Set())}
+                            className="p-2 text-white/60 hover:text-white transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Table */}
             <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
@@ -1208,6 +1330,12 @@ export const Admin: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appScores, setAppScores] = useState<ScoreDocument[]>([]);
   const [youtubeLinkInput, setYoutubeLinkInput] = useState('');
+  const [globalCategoryFilter, setGlobalCategoryFilter] = useState<string | null>(null);
+
+  const handleFilterCategory = (cat: string | null) => {
+      setGlobalCategoryFilter(cat);
+      setActiveTab('TEAMS');
+  };
 
   useEffect(() => {
       if (selectedApp) {
@@ -1289,10 +1417,10 @@ export const Admin: React.FC = () => {
           <div className="w-full h-[calc(100vh-140px)]">
             {loading ? <AdminSkeleton /> : (
                 <>
-                    {activeTab === 'DASHBOARD' && <AdminDashboard apps={allApplications} />}
+                    {activeTab === 'DASHBOARD' && <AdminDashboard apps={allApplications} onFilterCategory={handleFilterCategory} />}
                     {activeTab === 'ANNOUNCEMENTS' && <AdminAnnouncements />}
                     {activeTab === 'INBOX' && <AdminInbox />}
-                    {activeTab === 'TEAMS' && <AdminTeams apps={allApplications} onSelectApp={setSelectedApp} onToggleFinalist={toggleFinalist} />}
+                    {activeTab === 'TEAMS' && <AdminTeams apps={allApplications} onSelectApp={setSelectedApp} onToggleFinalist={toggleFinalist} initialCategoryFilter={globalCategoryFilter} />}
                     {activeTab === 'JURY_ASSIGN' && <AdminJuryAssign apps={allApplications} />}
                     {activeTab === 'USERS' && <AdminUsers />}
                     {activeTab === 'CONTENT' && <AdminCMS />}
@@ -1471,7 +1599,23 @@ export const Admin: React.FC = () => {
                                 <table className="w-full text-left min-w-[600px]">
                                     <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase"><tr><th className="p-4">Zaman</th><th className="p-4">İşlem</th><th className="p-4">Detay</th><th className="p-4">Yapan</th></tr></thead>
                                     <tbody className="divide-y divide-slate-700">
-                                        {auditLogs.map(log => (<tr key={log.id} className="hover:bg-slate-700/20"><td className="p-4 text-xs text-slate-500 font-mono whitespace-nowrap">{new Date(log.timestamp).toLocaleString('tr-TR')}</td><td className="p-4"><span className="bg-slate-900 text-white text-xs px-2 py-1 rounded border border-slate-700 font-bold whitespace-nowrap">{log.action}</span></td><td className="p-4 text-sm text-slate-300 min-w-[200px]">{log.details}</td><td className="p-4 text-xs text-slate-400 whitespace-nowrap">{log.performedBy}</td></tr>))}
+                                        {auditLogs.map(log => (
+                                            <tr key={log.id} className="hover:bg-slate-700/20">
+                                                <td className="p-4 text-xs text-slate-500 font-mono whitespace-nowrap">{new Date(log.timestamp).toLocaleString('tr-TR')}</td>
+                                                <td className="p-4">
+                                                    <span className="bg-slate-900 text-white text-xs px-2 py-1 rounded border border-slate-700 font-bold whitespace-nowrap">{log.action}</span>
+                                                </td>
+                                                <td className="p-4 text-sm text-slate-300 min-w-[200px]">
+                                                    {log.details}
+                                                    {log.metadata && (
+                                                        <div className="mt-1 text-[10px] text-slate-500 font-mono bg-slate-900/50 p-1 rounded">
+                                                            {JSON.stringify(log.metadata)}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="p-4 text-xs text-slate-400 whitespace-nowrap">{log.performedBy}</td>
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </table>
                             </div>
