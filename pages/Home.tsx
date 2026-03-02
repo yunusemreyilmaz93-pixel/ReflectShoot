@@ -9,18 +9,29 @@ import { useAppContext } from '../context/AppContext';
 // Competition Schedule Configuration
 const COMPETITION_PHASES = [
   { label: 'Başvuru ve Eser Gönderimi', date: '2026-04-10T23:59:59' },
-  { label: 'Finalistlerin Açıklanması', date: '2026-04-14T12:00:00' },
+  { label: 'Finalistlerin Açıklanması', date: '2026-04-17T12:00:00' },
   { label: 'Akademi & Workshoplar', date: '2026-04-20T09:00:00' },
-  { label: 'Revize Video Teslimi', date: '2026-05-08T23:59:59' },
-  { label: 'Sonuçların Açıklanması', date: '2026-05-11T10:00:00' },
-  { label: 'Büyük Final & Ödül Töreni', date: '2026-05-22T19:00:00' }
+  { label: 'Revize Video Teslimi', date: '2026-05-11T23:59:59' },
+  { label: 'Sonuçların Açıklanması', date: '2026-05-18T10:00:00' },
+  { label: 'Büyük Final & Ödül Töreni', date: '2026-05-29T19:00:00' }
 ];
 
 // Helper to find the next active phase
-const getNextPhase = () => {
+const getNextPhase = (cmsTimeline: any[]) => {
   const now = new Date();
-  const nextEvent = COMPETITION_PHASES.find(phase => new Date(phase.date) > now);
-  return nextEvent || COMPETITION_PHASES[COMPETITION_PHASES.length - 1];
+  
+  // Create a sorted list of phases from cmsTimeline that have a targetDate
+  const phases = cmsTimeline
+    .filter(item => item.targetDate)
+    .map(item => ({ label: item.title, date: item.targetDate }))
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  if (phases.length === 0) {
+    return COMPETITION_PHASES.find(phase => new Date(phase.date) > now) || COMPETITION_PHASES[COMPETITION_PHASES.length - 1];
+  }
+
+  const nextEvent = phases.find(phase => new Date(phase.date) > now);
+  return nextEvent || phases[phases.length - 1];
 };
 
 // Countdown Component
@@ -83,16 +94,17 @@ interface CategoryData {
 }
 
 export const Home: React.FC = () => {
-  const { cmsLinks } = useAppContext();
-  const [activePhase, setActivePhase] = useState(getNextPhase());
+  const { cmsLinks, cmsTimeline } = useAppContext();
+  const [activePhase, setActivePhase] = useState(getNextPhase(cmsTimeline));
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
 
   useEffect(() => {
+    setActivePhase(getNextPhase(cmsTimeline));
     const interval = setInterval(() => {
-      setActivePhase(getNextPhase());
+      setActivePhase(getNextPhase(cmsTimeline));
     }, 60000); 
     return () => clearInterval(interval);
-  }, []);
+  }, [cmsTimeline]);
 
   const renderVerseText = (text: string, isArabic: boolean) => {
     if (!text) return null;
@@ -288,8 +300,12 @@ export const Home: React.FC = () => {
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_5px_#f59e0b]"></span>
                           Sıradaki Aşama
                         </p>
-                        <p className="text-white font-bold text-2xl md:text-3xl tracking-tight leading-none">{activePhase.label}</p>
-                        <p className="text-slate-400 text-sm font-medium mt-1">{formatDate(activePhase.date)}</p>
+                        <p className="text-white font-bold text-2xl md:text-3xl tracking-tight leading-none">
+                          {activePhase.label === 'Başvuru ve Eser Gönderimi' ? 'Başvuru ve Eser Gönderimi Başladı' : activePhase.label}
+                        </p>
+                        <p className="text-slate-400 text-sm font-medium mt-1">
+                          {activePhase.label === 'Başvuru ve Eser Gönderimi' ? 'Son Gün 10 Nisan' : formatDate(activePhase.date)}
+                        </p>
                     </div>
                  </div>
                  

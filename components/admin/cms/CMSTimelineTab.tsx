@@ -7,7 +7,7 @@ import { CMSTimelineItem } from '../../../types';
 export const CMSTimelineTab: React.FC = () => {
     const { cmsTimeline, addCMSTimelineItem, updateCMSTimelineItem, deleteCMSTimelineItem } = useAppContext();
     const [isEditing, setIsEditing] = useState<string | null>(null);
-    const [timelineForm, setTimelineForm] = useState<Partial<CMSTimelineItem>>({ date: '', title: '', description: '', order: 0 });
+    const [timelineForm, setTimelineForm] = useState<Partial<CMSTimelineItem>>({ date: '', title: '', description: '', order: 0, targetDate: '', icon: 'Clapperboard', color: 'teal' });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -17,18 +17,18 @@ export const CMSTimelineTab: React.FC = () => {
         } else {
             await addCMSTimelineItem(timelineForm as CMSTimelineItem);
         }
-        setTimelineForm({ date: '', title: '', description: '', order: cmsTimeline.length + 1 });
+        setTimelineForm({ date: '', title: '', description: '', order: cmsTimeline.length + 1, targetDate: '', icon: 'Clapperboard', color: 'teal' });
     };
 
     const handleEdit = (item: CMSTimelineItem) => {
         setIsEditing(item.id);
-        setTimelineForm(item);
+        setTimelineForm({ ...item, icon: item.icon || 'Clapperboard', color: item.color || 'teal', targetDate: item.targetDate || '' });
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleCancel = () => {
         setIsEditing(null);
-        setTimelineForm({ date: '', title: '', description: '', order: cmsTimeline.length + 1 });
+        setTimelineForm({ date: '', title: '', description: '', order: cmsTimeline.length + 1, targetDate: '', icon: 'Clapperboard', color: 'teal' });
     };
 
     return (
@@ -55,6 +55,32 @@ export const CMSTimelineTab: React.FC = () => {
                     <div className="col-span-2">
                         <label className="label-text">Başlık</label>
                         <input required value={timelineForm.title} onChange={(e) => setTimelineForm({...timelineForm, title: e.target.value})} className="input-field" placeholder="Başvuruların Başlaması" />
+                    </div>
+                </div>
+                <div className="grid md:grid-cols-3 gap-5 mb-4">
+                    <div>
+                        <label className="label-text">Hedef Tarih (Geri Sayım İçin)</label>
+                        <input type="datetime-local" value={timelineForm.targetDate} onChange={(e) => setTimelineForm({...timelineForm, targetDate: e.target.value})} className="input-field [color-scheme:dark]" />
+                    </div>
+                    <div>
+                        <label className="label-text">İkon</label>
+                        <select value={timelineForm.icon} onChange={(e) => setTimelineForm({...timelineForm, icon: e.target.value})} className="input-field">
+                            <option value="Clapperboard">Clapperboard</option>
+                            <option value="Upload">Upload</option>
+                            <option value="Star">Star</option>
+                            <option value="BookOpen">BookOpen</option>
+                            <option value="Edit3">Edit3</option>
+                            <option value="CheckCircle2">CheckCircle2</option>
+                            <option value="Trophy">Trophy</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="label-text">Renk</label>
+                        <select value={timelineForm.color} onChange={(e) => setTimelineForm({...timelineForm, color: e.target.value})} className="input-field">
+                            <option value="teal">Teal</option>
+                            <option value="rose">Rose</option>
+                            <option value="amber">Amber</option>
+                        </select>
                     </div>
                 </div>
                 <div className="mb-4">

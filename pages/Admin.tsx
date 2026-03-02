@@ -888,12 +888,15 @@ const AdminJuryAssign = ({ apps }: { apps: Application[] }) => {
 const AdminUsers = () => {
     const { allUsers, updateUserRole, deleteUser, showToast } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
+    const [roleFilter, setRoleFilter] = useState<string>('ALL');
     const [processingId, setProcessingId] = useState<string | null>(null);
 
-    const filteredUsers = allUsers.filter(u => 
-        u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        u.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredUsers = allUsers.filter(u => {
+        const matchesSearch = u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                              u.email.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
+        return matchesSearch && matchesRole;
+    });
 
     const handleRoleChange = async (uid: string, newRole: UserRole) => {
         setProcessingId(uid);
@@ -940,14 +943,29 @@ const AdminUsers = () => {
                     Kullanıcı ve Rol Yönetimi
                 </div>
                 
-                <div className="relative w-full md:w-80">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                    <input 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="İsim veya E-posta ara..." 
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:border-rose-500 outline-none"
-                    />
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <select 
+                        value={roleFilter} 
+                        onChange={(e) => setRoleFilter(e.target.value)}
+                        className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-300 outline-none focus:border-rose-500"
+                    >
+                        <option value="ALL">Tüm Roller</option>
+                        <option value={UserRole.ADMIN}>Admin</option>
+                        <option value={UserRole.JUDGE}>Jüri</option>
+                        <option value={UserRole.TEACHER}>Öğretmen</option>
+                        <option value={UserRole.STUDENT}>Öğrenci</option>
+                        <option value={UserRole.PENDING_TEACHER}>Onay Bekleyen</option>
+                    </select>
+
+                    <div className="relative w-full md:w-80">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                        <input 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="İsim veya E-posta ara..." 
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:border-rose-500 outline-none"
+                        />
+                    </div>
                 </div>
             </div>
 

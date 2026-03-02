@@ -1,7 +1,7 @@
-/* 
-   CDN moduna geri dönüldü. 
-   Bu dosya şu an aktif değil ancak temel font ayarı için tutuluyor.
-*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
   font-family: 'Inter', sans-serif;
 }

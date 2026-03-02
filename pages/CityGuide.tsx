@@ -193,13 +193,13 @@ export const CityGuide: React.FC = () => {
 
         <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4 animate-fadeIn">
            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 text-xs font-bold tracking-[0.25em] uppercase mb-6 backdrop-blur-md">
-              <Compass size={14} /> Şehir Rehberi
+              <Compass size={14} /> Finalist Rehberi
            </div>
            <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-6 drop-shadow-2xl">
               KONYA
            </h1>
            <p className="text-xl md:text-2xl text-slate-200 max-w-2xl mx-auto font-light leading-relaxed drop-shadow-lg">
-              Konya bekliyor! <span className="text-amber-400 font-medium">Büyük Gala</span> için hazırız. <br/>
+              Konya Bekliyor! <span className="text-amber-400 font-medium">Büyük Gala</span> için hazırız. <br/>
               İşte gala süresince şehri tam anlamıyla yaşamak için bir rehber.
            </p>
 
@@ -256,7 +256,7 @@ export const CityGuide: React.FC = () => {
                       <div>
                           <h4 className="text-white font-bold text-sm mb-1">Bavul Tavsiyesi</h4>
                           <p className="text-xs text-slate-400 leading-relaxed">
-                              Gala töreni için şık kıyafetlerinizi (takım elbise/elbise) unutmayın. Ancak akşamları serin olabilir, şehir turu için yanınıza mutlaka bir <strong>hırka veya ince mont</strong> alın.
+                              Gala gecesi için şık kıyafetlerinizi (takım elbise/elbise) unutmayın. Ancak akşamları serin olabilir, şehir turu için yanınıza mutlaka bir <strong>hırka veya ince mont</strong> alın.
                           </p>
                       </div>
                   </div>
@@ -339,7 +339,7 @@ export const CityGuide: React.FC = () => {
                               Gala Günü <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-500 to-amber-200">Transfer Planı</span>
                           </h2>
                           <p className="text-slate-400 text-lg font-light leading-relaxed">
-                              Tüm finalist ekiplerimiz için pansiyondan gala merkezine özel transfer organize edilmiştir. 
+                              Tüm finalist ekiplerimiz için pansiyondan gala merkezine özel VIP transfer organize edilmiştir. 
                               Lütfen belirtilen saatte "Sete Hazır" (Ready on Set) olunuz.
                           </p>
                       </div>
@@ -633,7 +633,7 @@ export const CityGuide: React.FC = () => {
                               <Landmark size={24} className="text-slate-400"/> Konya Anadolu İmam Hatip Lisesi Pansiyonu
                           </h3>
                           <p className="text-slate-300 text-lg leading-relaxed font-light">
-                              Öğrencilerimizi ve danışman öğretmenlerimizi okulumuzun modern imkanlara sahip pansiyonunda ağırlamaktan mutluluk duyacağız.
+                              Değerli finalistlerimiz ve danışman öğretmenlerimiz, sizleri okulumuzun modern imkanlara sahip pansiyonunda ağırlamaktan mutluluk duyacağız.
                           </p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div className="flex items-center gap-3 p-3 bg-slate-950 rounded-xl border border-slate-800">

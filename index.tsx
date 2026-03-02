@@ -3,10 +3,12 @@ import ReactDOM from 'react-dom/client';
 import * as Sentry from "@sentry/react";
 import App from './App';
 
-Sentry.init({
-  // Fix: Safely access env to prevent "Cannot read properties of undefined" runtime error
-  dsn: (import.meta as any).env?.VITE_SENTRY_DSN,
-});
+const dsn = import.meta.env.VITE_SENTRY_DSN;
+if (dsn) {
+  Sentry.init({
+    dsn,
+  });
+}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

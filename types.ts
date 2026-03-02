@@ -288,6 +288,9 @@ export interface CMSTimelineItem {
     title: string;
     description: string;
     order: number;
+    targetDate?: string; // For countdown
+    icon?: string; // e.g. 'Clapperboard', 'Star'
+    color?: string; // 'teal', 'rose', 'amber'
 }
 
 // Deprecated in favor of CMSAcademyItem, but kept for type safety in existing (unused) components
