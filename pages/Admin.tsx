@@ -1613,7 +1613,14 @@ export const Admin: React.FC = () => {
                                                         </div>
                                                     )}
                                                 </td>
-                                                <td className="p-4 text-xs text-slate-400 whitespace-nowrap">{log.performedBy}</td>
+                                                <td className="p-4 text-xs text-slate-400 whitespace-nowrap">
+                                                    <div className="font-bold text-slate-200">{log.performedBy}</div>
+                                                    <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-1">
+                                                        <Globe size={10} className="text-slate-600" /> {log.ip || 'N/A'}
+                                                        <span className="opacity-30">|</span>
+                                                        <span className="truncate max-w-[120px]" title={log.userAgent}>{log.userAgent?.split(') ')[1] || log.userAgent?.split(' ')[0] || 'N/A'}</span>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>

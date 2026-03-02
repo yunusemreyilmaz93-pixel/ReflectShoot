@@ -186,6 +186,17 @@ export const JuryDashboard: React.FC = () => {
       }
   };
 
+  // Auto-save effect
+  useEffect(() => {
+    if (!selectedApp || !isDirty || isSubmitting) return;
+
+    const timer = setTimeout(() => {
+      handleScoreSubmit(true, false); // Save as draft automatically
+    }, 30000); // Auto-save after 30 seconds of inactivity
+
+    return () => clearTimeout(timer);
+  }, [criteria, notes, selectedApp, isDirty, isSubmitting]);
+
   const totalScore = criteria.story + criteria.technical + criteria.originality + criteria.themeFit;
   const embedUrl = selectedApp?.team.videoUrl ? getYouTubeEmbedUrl(selectedApp.team.videoUrl) : null;
 

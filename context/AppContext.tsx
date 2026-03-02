@@ -310,7 +310,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             city: data.city,
             role: data.email.endsWith('@k12.tr') ? UserRole.TEACHER : UserRole.PENDING_TEACHER,
             createdAt: new Date().toISOString(),
-            emailVerified: false
+            emailVerified: false,
+            lastActionAt: serverTimestamp()
         };
         
         await setDoc(doc(db, "users", user.uid), userProfile);
@@ -329,7 +330,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             city: "System",
             role: UserRole.ADMIN,
             createdAt: new Date().toISOString(),
-            emailVerified: true
+            emailVerified: true,
+            lastActionAt: serverTimestamp()
         };
         
         await setDoc(doc(db, "users", user.uid), userProfile);
@@ -396,7 +398,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         };
         
         const safeData = sanitizeData(app);
-        await setDoc(doc(db, "applications", app.id), safeData);
+        
+        // Use a batch to create app and update user's lastActionAt for rate limiting
+        const batch = writeBatch(db);
+        batch.set(doc(db, "applications", app.id), safeData);
+        batch.update(doc(db, "users", auth.currentUser.uid), { lastActionAt: serverTimestamp() });
+        
+        await batch.commit();
+        
         setCurrentApplication(app);
         showToast('Takım oluşturuldu.', 'success');
         await logAction("CREATE_APP", `Takım oluşturuldu: ${app.team.name}`);
@@ -417,9 +426,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const deleteApplication = async (appId: string) => {
-        await deleteDoc(doc(db, "applications", appId));
-        await logAction("DELETE_APP", "Başvuru ve takım silindi.", appId);
-        showToast('Takım silindi.', 'success');
+        const batch = writeBatch(db);
+        
+        // 1. Delete all messages in sub-collection
+        const messagesSnap = await getDocs(collection(db, "applications", appId, "messages"));
+        messagesSnap.forEach(d => batch.delete(d.ref));
+        
+        // 2. Delete all scores in sub-collection
+        const scoresSnap = await getDocs(collection(db, "applications", appId, "scores"));
+        scoresSnap.forEach(d => batch.delete(d.ref));
+        
+        // 3. Delete the main application document
+        batch.delete(doc(db, "applications", appId));
+        
+        await batch.commit();
+        
+        await logAction("DELETE_APP", "Başvuru ve tüm bağlı veriler (mesajlar, puanlar) silindi.", appId);
+        showToast('Takım ve tüm verileri silindi.', 'success');
     };
 
     // --- SYSTEM & CMS ---
@@ -473,11 +496,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // --- LOGS & MESSAGES ---
 
+    const [userIp, setUserIp] = useState<string>('unknown');
+
+    useEffect(() => {
+        // Fetch public IP for audit logs
+        fetch('https://api.ipify.org?format=json')
+            .then(res => res.json())
+            .then(data => setUserIp(data.ip))
+            .catch(() => console.log("IP could not be fetched for logs"));
+    }, []);
+
     const logAction = async (action: string, details: string, targetId?: string, metadata?: any) => {
         if (!currentUser) return;
         await addDoc(collection(db, "logs"), {
             action, details, targetId, metadata,
-            performedBy: currentUser.email, 
+            performedBy: currentUser.email,
+            performedByUid: currentUser.uid,
+            ip: userIp,
+            userAgent: navigator.userAgent,
             timestamp: new Date().toISOString()
         });
     };
@@ -551,7 +587,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const submitScore = async (appId: string, criteria: EvaluationCriteria, notes: string, isDraft: boolean = false, isRecused: boolean = false) => {
         if(!currentUser) return;
         
-        // Save the individual score document (always)
+        const batch = writeBatch(db);
+        
+        // Save the individual score document
         const total = isRecused ? 0 : (criteria.story + criteria.technical + criteria.originality + criteria.themeFit);
         const scoreDoc: ScoreDocument = {
             juryId: currentUser.uid,
@@ -562,20 +600,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             isRecused
         };
         
-        await setDoc(doc(db, "applications", appId, "scores", currentUser.uid), scoreDoc);
+        const scoreRef = doc(db, "applications", appId, "scores", currentUser.uid);
+        batch.set(scoreRef, scoreDoc);
+        
+        // Update user's lastActionAt for rate limiting
+        batch.update(doc(db, "users", currentUser.uid), { lastActionAt: serverTimestamp() });
         
         // Handle Global Aggregation & Status
         const appRef = doc(db, "applications", appId);
 
         if (isDraft) {
             // DRAFT: Do not update aggregate stats. 
-            // Ensure this user is REMOVED from 'gradedBy' so it appears as pending for others/admins if they were previously finalized.
-            await updateDoc(appRef, {
+            batch.update(appRef, {
                 gradedBy: arrayRemove(currentUser.uid)
             });
+            await batch.commit();
             showToast("Taslak olarak kaydedildi.", 'info');
         } else {
             // FINAL or RECUSED: Update aggregate stats.
+            await batch.commit(); // Commit the score first to fetch it correctly in aggregate
             
             // 1. Fetch all scores to recalculate averages
             const scores = await fetchJuryScores(appId);
@@ -588,11 +631,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 : 0;
             
             // 2. Update Application Doc
-            // We ADD the user to gradedBy so they see the green checkmark (done).
-            // Even if recused, they are "done" with this app.
             await updateDoc(appRef, {
                 finalScore: avg,
-                juryCount: validScores.length, // Count only valid scored entries
+                juryCount: validScores.length, 
                 gradedBy: arrayUnion(currentUser.uid),
                 status: ApplicationStatus.GRADED
             });

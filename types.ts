@@ -17,6 +17,7 @@ export interface UserProfile {
   phone?: string;
   createdAt: string;
   emailVerified: boolean; // From Firebase Auth
+  lastActionAt?: any; // For Rate Limiting (ServerTimestamp)
 }
 
 export enum Category {
@@ -165,6 +166,9 @@ export interface LogEntry {
     action: string;
     details: string;
     performedBy: string; // Email
+    performedByUid?: string; // UID
+    ip?: string;
+    userAgent?: string;
     timestamp: string;
     targetId?: string;
     metadata?: any;
