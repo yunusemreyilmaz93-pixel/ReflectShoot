@@ -262,7 +262,7 @@ export const Apply: React.FC = () => {
                 </div>
                 <div className="ml-3 text-sm">
                 <label htmlFor="kvkk" className="font-medium text-gray-700 cursor-pointer">
-                    <a href="#" className="text-rose-600 hover:text-rose-500 underline">Kişisel Verilerin Korunması Kanunu (KVKK)</a> ve <a href="#" className="text-rose-600 hover:text-rose-500 underline">Aydınlatma Metni</a>'ni okudum, onaylıyorum.
+                    <a href="https://assets.reflectandshoot.com/acik_riza_metni.pdf" target="_blank" rel="noreferrer" className="text-rose-600 hover:text-rose-500 underline">Kişisel Verilerin Korunması Kanunu (KVKK) Aydınlatma Metni</a>'ni okudum, onaylıyorum.
                 </label>
                 </div>
             </div>
