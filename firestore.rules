@@ -20,15 +20,17 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
     
-    // Check for specific role
+    // Check for specific role (Case-insensitive)
     function hasRole(role) {
-      return isSignedIn() && getUserData().role == role;
+      return isSignedIn() && 
+             (getUserData().role == role || getUserData().role == role.lower());
     }
 
     // Rate Limiting: Check if at least 10 seconds passed since last action
     function isNotRateLimited() {
       let userData = getUserData();
-      return !('lastActionAt' in userData) || 
+      return userData == null || 
+             !('lastActionAt' in userData) || 
              request.time > userData.lastActionAt + duration.value(10, 's');
     }
 
@@ -76,13 +78,15 @@ service cloud.firestore {
     match /applications/{appId} {
       // READ RULES:
       // - Admin: All
-      // - Teacher: Own application
+      // - Teacher: Own application + List (for duplicate name check)
       // - Judge: ONLY assigned applications (Blind Judging Restriction)
-      // - Public: Finalists (Only if needed, better to handle via public voting collection)
-      allow read: if hasRole('ADMIN') || 
+      // - Public: Finalists
+      allow get: if hasRole('ADMIN') || 
                      (hasRole('TEACHER') && resource.data.teacher.id == request.auth.uid) || 
                      (hasRole('JUDGE') && request.auth.uid in resource.data.assignedJuryIds) ||
                      resource.data.team.isFinalist == true;
+      
+      allow list: if hasRole('ADMIN') || hasRole('TEACHER') || resource.data.team.isFinalist == true;
       
       // CREATE: Teachers and Admins
       allow create: if (hasRole('TEACHER') || hasRole('ADMIN')) && isNotRateLimited();
