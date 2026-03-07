@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
     Clapperboard, Users, FileText, Video, MessageSquare, AlertCircle, 
     CheckCircle2, Clock, Upload, X, Save, Film, HelpCircle, LogOut, Ban, ShieldAlert,
@@ -282,6 +283,36 @@ export const Dashboard: React.FC = () => {
         return count;
     };
 
+    const getCategoryStyle = (category: string) => {
+        switch(category) {
+            case 'Senaryo & Tema': return { 
+                badge: 'bg-slate-950 text-amber-500 border-amber-500/50 shadow-lg shadow-amber-900/20', 
+                btn: 'text-amber-500 hover:text-amber-400', 
+                title: 'group-hover:text-amber-400'
+            };
+            case 'Teknik & Kurgu': return { 
+                badge: 'bg-slate-950 text-cyan-500 border-cyan-500/50 shadow-lg shadow-cyan-900/20', 
+                btn: 'text-cyan-500 hover:text-cyan-400', 
+                title: 'group-hover:text-cyan-400'
+            };
+            case 'Yapay Zeka': return { 
+                badge: 'bg-slate-950 text-purple-500 border-purple-500/50 shadow-lg shadow-purple-900/20', 
+                btn: 'text-purple-500 hover:text-purple-400', 
+                title: 'group-hover:text-purple-400'
+            };
+            case 'İlham & Rehber': return { 
+                badge: 'bg-slate-950 text-rose-500 border-rose-500/50 shadow-lg shadow-rose-900/20', 
+                btn: 'text-rose-500 hover:text-rose-400', 
+                title: 'group-hover:text-rose-400'
+            };
+            default: return { 
+                badge: 'bg-slate-950 text-slate-300 border-slate-600 shadow-lg', 
+                btn: 'text-blue-400 hover:text-blue-300', 
+                title: 'group-hover:text-emerald-400'
+            };
+        }
+    };
+
     // --- Actions ---
 
     const handleActionRedirect = (tab: string) => {
@@ -430,7 +461,9 @@ export const Dashboard: React.FC = () => {
             const r2Key = await uploadFileToR2(file, storagePath);
             const updatedStudents = currentApplication.team.students.map(s => {
                 if(s.id === studentId) {
-                    return type === 'PARENT' ? { ...s, hasParentalConsent: true, parentalConsentUrl: r2Key, docStatus: 'PENDING' } : { ...s, hasKvkkConsent: true, kvkkConsentUrl: r2Key, docStatus: 'PENDING' };
+                    return type === 'PARENT' 
+                        ? { ...s, hasParentalConsent: true, parentalConsentUrl: r2Key, docStatus: 'PENDING', rejectionReason: undefined } 
+                        : { ...s, hasKvkkConsent: true, kvkkConsentUrl: r2Key, docStatus: 'PENDING', rejectionReason: undefined };
                 }
                 return s;
             });
@@ -453,9 +486,9 @@ export const Dashboard: React.FC = () => {
         const updatedStudents = currentApplication.team.students.map(s => {
             if (s.id === studentId) {
                 if (type === 'PARENT') {
-                    return { ...s, hasParentalConsent: false, parentalConsentUrl: undefined, docStatus: undefined };
+                    return { ...s, hasParentalConsent: false, parentalConsentUrl: undefined, docStatus: undefined, rejectionReason: undefined };
                 } else {
-                    return { ...s, hasKvkkConsent: false, kvkkConsentUrl: undefined, docStatus: undefined };
+                    return { ...s, hasKvkkConsent: false, kvkkConsentUrl: undefined, docStatus: undefined, rejectionReason: undefined };
                 }
             }
             return s;
@@ -571,6 +604,42 @@ export const Dashboard: React.FC = () => {
                             )}
                         </div>
 
+                        {/* Verse Preview in Registration */}
+                        {teamForm.theme === Theme.AYET && teamForm.selectedVerse && verseDetails[teamForm.selectedVerse] && (
+                            <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 animate-fadeIn">
+                                <p className="text-right text-xl font-serif text-amber-400 leading-loose mb-4" dir="rtl">
+                                    {renderVerseText(verseDetails[teamForm.selectedVerse].arabic, true)}
+                                </p>
+                                <div className="w-full h-px bg-slate-800 mb-4"></div>
+                                <p className="text-sm text-slate-300 italic">
+                                    "{renderVerseText(verseDetails[teamForm.selectedVerse].turkish, false)}"
+                                </p>
+                            </div>
+                        )}
+
+                        {teamForm.theme === Theme.HADITH && (
+                            <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 animate-fadeIn flex flex-col items-center text-center gap-3">
+                                <Sparkles className="text-amber-500" size={24} />
+                                <p className="text-amber-400 font-serif text-lg" dir="rtl">إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ</p>
+                                <p className="text-sm text-slate-300 italic">"Ameller niyetlere göredir." (Buhârî, Bed’ü’l-vahy, 1)</p>
+                            </div>
+                        )}
+
+                        {teamForm.theme === Theme.SAHABE && (
+                            <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 animate-fadeIn flex flex-col items-center text-center gap-3">
+                                <Users className="text-teal-500" size={24} />
+                                <h5 className="text-white font-bold">Sahabe-i Kiram'ın İzinde</h5>
+                                <p className="text-xs text-slate-400 leading-relaxed">İslam'ın ilk sancaktarları, fedakarlık ve sadakat timsalleri. Hz. Mus'ab b. Umeyr'in daveti, Hz. Bilal'in sabrı ve Hz. Hatice'nin desteği gibi nice hikmetli hayatlar...</p>
+                            </div>
+                        )}
+
+                        <div className="flex items-center gap-3 p-4 bg-amber-900/10 border border-amber-500/20 rounded-xl">
+                            <AlertCircle className="text-amber-500 flex-shrink-0" size={20} />
+                            <p className="text-xs text-amber-200/80 font-medium">
+                                <strong className="text-amber-500">Önemli:</strong> Seçilen <span className="text-white">Kategori</span> ve <span className="text-white">Proje Teması</span> kayıt tamamlandıktan sonra <span className="underline decoration-amber-500/50">değiştirilemez</span>. Lütfen seçimlerinizi kontrol ediniz.
+                            </p>
+                        </div>
+
                         <div className="bg-slate-950/50 p-6 rounded-2xl border border-slate-800">
                             <h4 className="text-white font-bold mb-4 flex items-center gap-2"><Users size={18} className="text-teal-500"/> İlk 3 Öğrenci (Zorunlu)</h4>
                             <div className="grid gap-4">
@@ -645,6 +714,7 @@ export const Dashboard: React.FC = () => {
                     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                         {[
                             { id: 'STATUS', label: 'Genel Bakış', icon: AlertOctagon },
+                            { id: 'ACADEMY', label: 'Akademi', icon: BookOpen },
                             { id: 'DOCUMENTS', label: 'Belgeler & Kadro', icon: Users },
                             { id: 'VIDEO', label: 'Video Teslim', icon: Film },
                             { id: 'CHAT', label: 'Yönetimle İletişim', icon: MessageSquare }
@@ -688,76 +758,56 @@ export const Dashboard: React.FC = () => {
                             <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-xl relative overflow-hidden group">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="font-bold text-white flex items-center gap-3 text-lg"><Info size={22} className="text-teal-500"/> Proje Teması</h3>
-                                    {hasThemeChanges && (
-                                        <button 
-                                            onClick={handleSaveTheme}
-                                            disabled={isSavingTheme}
-                                            className="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-lg animate-pulse"
-                                        >
-                                            {isSavingTheme ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Değişiklikleri Kaydet
-                                        </button>
-                                    )}
                                 </div>
                                 
                                 <div className="space-y-6 relative z-10">
-                                    {/* Theme Selection Menu */}
-                                    <div className="flex flex-wrap gap-2 p-1 bg-slate-950 rounded-xl border border-slate-800">
-                                        {Object.values(Theme).map(t => (
-                                            <button
-                                                key={t}
-                                                disabled={currentApplication.team.videoStatus !== 'PENDING'}
-                                                onClick={() => setPendingTheme(t)}
-                                                className={`flex-1 px-4 py-2.5 rounded-lg text-xs font-bold transition-all ${
-                                                    pendingTheme === t 
-                                                    ? 'bg-slate-800 text-white shadow-inner border border-slate-700' 
-                                                    : 'text-slate-500 hover:text-slate-300'
-                                                }`}
-                                            >
-                                                {t}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    {pendingTheme === Theme.AYET && (
-                                        <div className="animate-fadeIn">
-                                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Ayet Seçimi</label>
-                                            <select 
-                                                disabled={currentApplication.team.videoStatus !== 'PENDING'}
-                                                value={pendingVerse}
-                                                onChange={(e) => setPendingVerse(e.target.value)}
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white outline-none focus:border-teal-500 transition-colors font-bold"
-                                            >
-                                                {versesList.map(v => <option key={v} value={v}>{v}</option>)}
-                                            </select>
+                                    {/* Theme Display (Read-Only) */}
+                                    <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                                        <span className="text-slate-500 font-medium">Seçilen Tema</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-white font-bold text-lg">{currentApplication.team.theme}</span>
+                                            <Lock size={14} className="text-slate-600" />
                                         </div>
-                                    )}
+                                    </div>
 
                                     {/* Display Area */}
                                     <div className="mt-6">
-                                        {pendingTheme === Theme.AYET && verseDetails[pendingVerse] ? (
+                                        {currentApplication.team.theme === Theme.AYET && currentApplication.team.selectedVerse && verseDetails[currentApplication.team.selectedVerse] ? (
                                             <div className="p-6 bg-slate-950/50 border border-slate-800 rounded-2xl space-y-4 shadow-inner relative group/verse">
                                                 <div className="absolute -top-3 left-4 px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-[10px] font-black text-amber-500 tracking-wider">
-                                                    {pendingVerse}
+                                                    {currentApplication.team.selectedVerse}
                                                 </div>
                                                 <p className="text-right text-2xl font-serif text-amber-400 leading-loose pt-2" dir="rtl">
-                                                    {renderVerseText(verseDetails[pendingVerse].arabic, true)}
+                                                    {renderVerseText(verseDetails[currentApplication.team.selectedVerse].arabic, true)}
                                                 </p>
                                                 <div className="w-full h-px bg-slate-800"></div>
                                                 <p className="text-sm text-slate-300 italic leading-relaxed">
-                                                    "{renderVerseText(verseDetails[pendingVerse].turkish, false)}"
+                                                    "{renderVerseText(verseDetails[currentApplication.team.selectedVerse].turkish, false)}"
                                                 </p>
                                             </div>
-                                        ) : (
-                                            <div className="p-10 bg-slate-950/50 border border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center gap-4">
+                                        ) : currentApplication.team.theme === Theme.HADITH ? (
+                                            <div className="p-8 bg-slate-950/50 border border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center gap-4">
                                                 <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500">
                                                     <Sparkles size={32} />
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-white font-bold mb-1">{pendingTheme}</h4>
-                                                    <p className="text-slate-500 text-xs max-w-[250px] mx-auto">Bu tema için içerik hazırlık aşamasındadır. Filminizi bu tema çerçevesinde kurgulayabilirsiniz.</p>
+                                                    <p className="text-amber-400 font-serif text-xl mb-2" dir="rtl">إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ</p>
+                                                    <p className="text-slate-300 text-sm italic">"Ameller niyetlere göredir." (Buhârî, Bed’ü’l-vahy, 1)</p>
+                                                    <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-widest">Hadis-i Şerif Teması</p>
                                                 </div>
                                             </div>
-                                        )}
+                                        ) : currentApplication.team.theme === Theme.SAHABE ? (
+                                            <div className="p-8 bg-slate-950/50 border border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center gap-4">
+                                                <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center text-teal-500">
+                                                    <Users size={32} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-white font-bold mb-2">Sahabe-i Kiram'ın İzinde</h4>
+                                                    <p className="text-slate-400 text-sm leading-relaxed max-w-[300px]">İslam'ın ilk sancaktarları, fedakarlık ve sadakat timsalleri. Hz. Mus'ab b. Umeyr'in daveti, Hz. Bilal'in sabrı ve Hz. Hatice'nin desteği gibi nice hikmetli hayatlar...</p>
+                                                    <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-widest">Sahabe Hikayeleri Teması</p>
+                                                </div>
+                                            </div>
+                                        ) : null}
                                     </div>
                                 </div>
                             </div>
@@ -812,7 +862,68 @@ export const Dashboard: React.FC = () => {
                     </div>
                 )}
 
-                {/* 2. DOCUMENTS TAB (Cast & Crew) */}
+                {/* 2. ACADEMY TAB */}
+                {activeTab === 'ACADEMY' && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-8"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-2xl font-black text-white">Akademi İçerikleri</h3>
+                                <p className="text-slate-400 text-sm">Yarışma sürecinde size rehberlik edecek temel eğitimler.</p>
+                            </div>
+                            <button 
+                                onClick={() => window.open('/academy', '_blank')}
+                                className="text-rose-500 hover:text-rose-400 text-sm font-bold flex items-center gap-2"
+                            >
+                                Tümünü Gör <ExternalLink size={16} />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {useAppContext().cmsAcademy.slice(0, 6).map((item: any) => {
+                                const styles = getCategoryStyle(item.category);
+                                return (
+                                    <div 
+                                        key={item.id}
+                                        onClick={() => item.pdfFile ? window.open(item.pdfFile, '_blank') : window.open(item.url, '_blank')}
+                                        className="group bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden cursor-pointer hover:border-slate-600 transition-all hover:-translate-y-1"
+                                    >
+                                        <div className="h-40 relative overflow-hidden">
+                                            <img 
+                                                src={item.coverImage || 'https://images.unsplash.com/photo-1478720568477-152d9b164e63?auto=format&fit=crop&q=80&w=800'} 
+                                                alt={item.title}
+                                                className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
+                                            <div className="absolute bottom-4 left-4">
+                                                <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${styles.badge}`}>
+                                                    {item.category}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="p-6">
+                                            <h4 className={`text-white font-bold mb-2 line-clamp-1 transition-colors ${styles.title}`}>{item.title}</h4>
+                                            <p className="text-slate-500 text-xs line-clamp-2 mb-4">{item.description}</p>
+                                            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
+                                                <span className="text-slate-600 flex items-center gap-1">
+                                                    <Clock size={12} /> 5 Dakika
+                                                </span>
+                                                <span className={`flex items-center gap-1 ${styles.btn}`}>
+                                                    İncele <ArrowRight size={12} />
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* 3. DOCUMENTS TAB (Cast & Crew) */}
                 {activeTab === 'DOCUMENTS' && (
                     <div className="space-y-12">
                         {/* Guide Section */}
@@ -869,8 +980,14 @@ export const Dashboard: React.FC = () => {
 
                         {/* Cast Grid */}
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {currentApplication.team.students.map((student) => (
-                                <div key={student.id} className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
+                            {currentApplication.team.students.map((student, idx) => (
+                                <motion.div 
+                                    key={student.id} 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: idx * 0.1 }}
+                                    className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative"
+                                >
                                     
                                     {/* Student Header */}
                                     <div className="p-6 pb-4 flex justify-between items-start">
@@ -887,24 +1004,40 @@ export const Dashboard: React.FC = () => {
                                             <div className="flex justify-between items-center mb-4">
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">VELİ İZİN BELGESİ</span>
                                                 {student.hasParentalConsent && (
-                                                    <div className="flex items-center gap-1 bg-green-900/20 text-green-500 text-[10px] font-bold px-2 py-1 rounded border border-green-900/50">
-                                                        <CheckSquare size={12}/> TESLİM EDİLDİ
+                                                    <div className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded border ${
+                                                        student.docStatus === 'APPROVED' ? 'bg-green-900/20 text-green-500 border-green-900/50' :
+                                                        student.docStatus === 'REJECTED' ? 'bg-red-900/20 text-red-500 border-red-900/50' :
+                                                        'bg-blue-900/20 text-blue-500 border-blue-900/50'
+                                                    }`}>
+                                                        {student.docStatus === 'APPROVED' ? <CheckSquare size={12}/> : student.docStatus === 'REJECTED' ? <AlertOctagon size={12}/> : <Clock size={12}/>}
+                                                        {student.docStatus === 'APPROVED' ? 'ONAYLANDI' : student.docStatus === 'REJECTED' ? 'REDDEDİLDİ' : 'İNCELEMEDE'}
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {student.hasParentalConsent ? (
+                                            {student.hasParentalConsent && student.docStatus !== 'REJECTED' ? (
                                                 <div className="text-center py-4">
-                                                    <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2 text-green-500">
-                                                        <CheckCircle2 size={24} />
+                                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 ${student.docStatus === 'APPROVED' ? 'bg-green-500/10 text-green-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                                                        {student.docStatus === 'APPROVED' ? <CheckCircle2 size={24} /> : <Clock size={24} />}
                                                     </div>
-                                                    <p className="text-xs text-green-400 font-bold">Belge Geçerli</p>
-                                                    <button onClick={() => handleDeleteDoc(student.id, 'PARENT')} className="mt-4 text-[10px] text-red-400 hover:text-red-300 flex items-center justify-center gap-1 w-full py-2 hover:bg-red-900/10 rounded transition-colors">
-                                                        <Trash2 size={12}/> Sil ve Yeniden Yükle
-                                                    </button>
+                                                    <p className={`text-xs font-bold ${student.docStatus === 'APPROVED' ? 'text-green-400' : 'text-blue-400'}`}>
+                                                        {student.docStatus === 'APPROVED' ? 'Belge Onaylandı' : 'İnceleme Bekliyor'}
+                                                    </p>
+                                                    {student.docStatus !== 'APPROVED' && (
+                                                        <button onClick={() => handleDeleteDoc(student.id, 'PARENT')} className="mt-4 text-[10px] text-red-400 hover:text-red-300 flex items-center justify-center gap-1 w-full py-2 hover:bg-red-900/10 rounded transition-colors">
+                                                            <Trash2 size={12}/> Sil ve Yeniden Yükle
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <div className="space-y-3">
+                                                    {student.docStatus === 'REJECTED' && student.rejectionReason && (
+                                                        <div className="bg-red-900/20 border border-red-900/50 p-3 rounded-xl mb-3">
+                                                            <p className="text-[10px] text-red-400 leading-tight">
+                                                                <strong className="uppercase">Red Nedeni:</strong> {student.rejectionReason}
+                                                            </p>
+                                                        </div>
+                                                    )}
                                                     {!student.parentalExpectedId ? (
                                                         <button onClick={() => handleGenerateCode(student.id, 'PARENT')} className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors border border-slate-700">
                                                             KODU OLUŞTUR
@@ -959,24 +1092,40 @@ export const Dashboard: React.FC = () => {
                                             <div className="flex justify-between items-center mb-4">
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">KVKK METNİ</span>
                                                 {student.hasKvkkConsent && (
-                                                    <div className="flex items-center gap-1 bg-green-900/20 text-green-500 text-[10px] font-bold px-2 py-1 rounded border border-green-900/50">
-                                                        <CheckSquare size={12}/> TESLİM EDİLDİ
+                                                    <div className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded border ${
+                                                        student.docStatus === 'APPROVED' ? 'bg-green-900/20 text-green-500 border-green-900/50' :
+                                                        student.docStatus === 'REJECTED' ? 'bg-red-900/20 text-red-500 border-red-900/50' :
+                                                        'bg-blue-900/20 text-blue-500 border-blue-900/50'
+                                                    }`}>
+                                                        {student.docStatus === 'APPROVED' ? <CheckSquare size={12}/> : student.docStatus === 'REJECTED' ? <AlertOctagon size={12}/> : <Clock size={12}/>}
+                                                        {student.docStatus === 'APPROVED' ? 'ONAYLANDI' : student.docStatus === 'REJECTED' ? 'REDDEDİLDİ' : 'İNCELEMEDE'}
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {student.hasKvkkConsent ? (
+                                            {student.hasKvkkConsent && student.docStatus !== 'REJECTED' ? (
                                                 <div className="text-center py-4">
-                                                    <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-2 text-green-500">
-                                                        <CheckCircle2 size={24} />
+                                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 ${student.docStatus === 'APPROVED' ? 'bg-green-500/10 text-green-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                                                        {student.docStatus === 'APPROVED' ? <CheckCircle2 size={24} /> : <Clock size={24} />}
                                                     </div>
-                                                    <p className="text-xs text-green-400 font-bold">Belge Geçerli</p>
-                                                    <button onClick={() => handleDeleteDoc(student.id, 'KVKK')} className="mt-4 text-[10px] text-red-400 hover:text-red-300 flex items-center justify-center gap-1 w-full py-2 hover:bg-red-900/10 rounded transition-colors">
-                                                        <Trash2 size={12}/> Sil ve Yeniden Yükle
-                                                    </button>
+                                                    <p className={`text-xs font-bold ${student.docStatus === 'APPROVED' ? 'text-green-400' : 'text-blue-400'}`}>
+                                                        {student.docStatus === 'APPROVED' ? 'Belge Onaylandı' : 'İnceleme Bekliyor'}
+                                                    </p>
+                                                    {student.docStatus !== 'APPROVED' && (
+                                                        <button onClick={() => handleDeleteDoc(student.id, 'KVKK')} className="mt-4 text-[10px] text-red-400 hover:text-red-300 flex items-center justify-center gap-1 w-full py-2 hover:bg-red-900/10 rounded transition-colors">
+                                                            <Trash2 size={12}/> Sil ve Yeniden Yükle
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <div className="space-y-3">
+                                                    {student.docStatus === 'REJECTED' && student.rejectionReason && (
+                                                        <div className="bg-red-900/20 border border-red-900/50 p-3 rounded-xl mb-3">
+                                                            <p className="text-[10px] text-red-400 leading-tight">
+                                                                <strong className="uppercase">Red Nedeni:</strong> {student.rejectionReason}
+                                                            </p>
+                                                        </div>
+                                                    )}
                                                     {!student.kvkkExpectedId ? (
                                                         <button onClick={() => handleGenerateCode(student.id, 'KVKK')} className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors border border-slate-700">
                                                             KODU OLUŞTUR
@@ -1026,7 +1175,7 @@ export const Dashboard: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
-                                </div>
+                                </motion.div>
                             ))}
 
                             {/* Add Student Card */}

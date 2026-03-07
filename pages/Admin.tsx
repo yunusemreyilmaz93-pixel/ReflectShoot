@@ -1331,6 +1331,8 @@ export const Admin: React.FC = () => {
   const [appScores, setAppScores] = useState<ScoreDocument[]>([]);
   const [youtubeLinkInput, setYoutubeLinkInput] = useState('');
   const [globalCategoryFilter, setGlobalCategoryFilter] = useState<string | null>(null);
+  const [rejectingDoc, setRejectingDoc] = useState<{ studentId: string, type: 'PARENT' | 'KVKK' } | null>(null);
+  const [rejectionReasonInput, setRejectionReasonInput] = useState('');
 
   const handleFilterCategory = (cat: string | null) => {
       setGlobalCategoryFilter(cat);
@@ -1380,6 +1382,51 @@ export const Admin: React.FC = () => {
       await logAction("VIDEO_PUBLISH", `${selectedApp.team.name} videosu YouTube linki olarak eklendi.`, selectedApp.id);
       setSelectedApp(updated);
       showToast('Video linki kaydedildi ve yayınlandı.', 'success');
+  };
+
+  const handleDocStatus = async (studentId: string, type: 'PARENT' | 'KVKK', status: 'APPROVED' | 'REJECTED', reason?: string) => {
+      if (!selectedApp) return;
+
+      const updatedStudents = selectedApp.team.students.map(s => {
+          if (s.id === studentId) {
+              return { 
+                  ...s, 
+                  docStatus: status, 
+                  rejectionReason: status === 'REJECTED' ? reason : undefined 
+              };
+          }
+          return s;
+      });
+
+      const updatedApp = {
+          ...selectedApp,
+          team: { ...selectedApp.team, students: updatedStudents }
+      };
+
+      try {
+          await updateApplication(updatedApp);
+          setSelectedApp(updatedApp);
+          setRejectingDoc(null);
+          setRejectionReasonInput('');
+          showToast(`Belge ${status === 'APPROVED' ? 'onaylandı' : 'reddedildi'}.`, 'success');
+          await logAction("DOC_REVIEW", `${selectedApp.team.name} - Öğrenci belgesi ${status === 'APPROVED' ? 'ONAYLANDI' : 'REDDEDİLDİ'}`, selectedApp.id);
+      } catch (error) {
+          showToast('İşlem başarısız.', 'error');
+      }
+  };
+
+  const handleViewDoc = async (key: string) => {
+      try {
+          const res = await fetch(`/api/view?key=${encodeURIComponent(key)}`);
+          const data = await res.json();
+          if (data.signedUrl) {
+              window.open(data.signedUrl, '_blank');
+          } else {
+              showToast('Belge linki alınamadı.', 'error');
+          }
+      } catch (error) {
+          showToast('Hata oluştu.', 'error');
+      }
   };
 
   const handleSettingsUpdate = async (e: React.FormEvent) => {
@@ -1657,6 +1704,121 @@ export const Admin: React.FC = () => {
                            <label className="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-2"><Youtube size={14} className="text-red-500"/> YouTube Linki Tanımla</label>
                            <div className="flex gap-2"><input value={youtubeLinkInput} onChange={(e) => setYoutubeLinkInput(e.target.value)} placeholder="https://youtu.be/..." className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-rose-500 outline-none" /><button onClick={saveYoutubeLink} className="bg-slate-800 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold transition-colors flex items-center gap-2"><Save size={16} /> Kaydet</button></div>
                            {selectedApp.team.videoUrl && (<div className="mt-4 rounded-lg overflow-hidden border border-slate-800"><iframe src={getYouTubeEmbedUrl(selectedApp.team.videoUrl) || ""} className="w-full aspect-video" allowFullScreen></iframe></div>)}
+                      </div>
+                  </div>
+                  <div className="mb-8 bg-slate-950 p-6 rounded-xl border border-slate-800">
+                      <h3 className="text-sm font-bold text-white uppercase mb-4 flex items-center gap-2"><Users size={16} className="text-rose-500"/> Öğrenci Belgeleri</h3>
+                      <div className="space-y-6">
+                          {selectedApp.team.students.map((student) => (
+                              <div key={student.id} className="border-b border-slate-800 pb-6 last:border-0 last:pb-0">
+                                  <div className="flex justify-between items-start mb-4">
+                                      <div>
+                                          <h4 className="font-bold text-white">{student.firstName} {student.lastName}</h4>
+                                          <p className="text-xs text-slate-500">{student.grade}. Sınıf</p>
+                                      </div>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                      {/* Parental Consent */}
+                                      <div className="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                                          <div className="flex justify-between items-center mb-2">
+                                              <span className="text-[10px] font-bold text-slate-400 uppercase">Veli İzin Belgesi</span>
+                                              {student.docStatus === 'APPROVED' && <CheckCircle2 size={14} className="text-green-500" />}
+                                              {student.docStatus === 'REJECTED' && <AlertOctagon size={14} className="text-red-500" />}
+                                          </div>
+                                          {student.parentalConsentUrl ? (
+                                              <div className="space-y-2">
+                                                  <button 
+                                                      onClick={() => handleViewDoc(student.parentalConsentUrl!)}
+                                                      className="w-full text-left px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded text-xs text-slate-300 flex items-center gap-2 transition-colors"
+                                                  >
+                                                      <FileText size={14} /> Belgeyi Görüntüle
+                                                  </button>
+                                                  <div className="flex gap-2">
+                                                      <button 
+                                                          onClick={() => handleDocStatus(student.id, 'PARENT', 'APPROVED')}
+                                                          className="flex-1 bg-green-900/20 hover:bg-green-900/40 text-green-400 py-1.5 rounded text-[10px] font-bold border border-green-900/50 transition-all"
+                                                      >
+                                                          Onayla
+                                                      </button>
+                                                      <button 
+                                                          onClick={() => setRejectingDoc({ studentId: student.id, type: 'PARENT' })}
+                                                          className="flex-1 bg-red-900/20 hover:bg-red-900/40 text-red-400 py-1.5 rounded text-[10px] font-bold border border-red-900/50 transition-all"
+                                                      >
+                                                          Reddet
+                                                      </button>
+                                                  </div>
+                                              </div>
+                                          ) : (
+                                              <span className="text-[10px] text-slate-600 italic">Yüklenmedi</span>
+                                          )}
+                                      </div>
+
+                                      {/* KVKK Consent */}
+                                      <div className="bg-slate-900 p-3 rounded-lg border border-slate-800">
+                                          <div className="flex justify-between items-center mb-2">
+                                              <span className="text-[10px] font-bold text-slate-400 uppercase">KVKK Belgesi</span>
+                                              {student.docStatus === 'APPROVED' && <CheckCircle2 size={14} className="text-green-500" />}
+                                              {student.docStatus === 'REJECTED' && <AlertOctagon size={14} className="text-red-500" />}
+                                          </div>
+                                          {student.kvkkConsentUrl ? (
+                                              <div className="space-y-2">
+                                                  <button 
+                                                      onClick={() => handleViewDoc(student.kvkkConsentUrl!)}
+                                                      className="w-full text-left px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded text-xs text-slate-300 flex items-center gap-2 transition-colors"
+                                                  >
+                                                      <FileText size={14} /> Belgeyi Görüntüle
+                                                  </button>
+                                                  <div className="flex gap-2">
+                                                      <button 
+                                                          onClick={() => handleDocStatus(student.id, 'KVKK', 'APPROVED')}
+                                                          className="flex-1 bg-green-900/20 hover:bg-green-900/40 text-green-400 py-1.5 rounded text-[10px] font-bold border border-green-900/50 transition-all"
+                                                      >
+                                                          Onayla
+                                                      </button>
+                                                      <button 
+                                                          onClick={() => setRejectingDoc({ studentId: student.id, type: 'KVKK' })}
+                                                          className="flex-1 bg-red-900/20 hover:bg-red-900/40 text-red-400 py-1.5 rounded text-[10px] font-bold border border-red-900/50 transition-all"
+                                                      >
+                                                          Reddet
+                                                      </button>
+                                                  </div>
+                                              </div>
+                                          ) : (
+                                              <span className="text-[10px] text-slate-600 italic">Yüklenmedi</span>
+                                          )}
+                                      </div>
+                                  </div>
+
+                                  {/* Rejection Reason Input */}
+                                  {rejectingDoc?.studentId === student.id && (
+                                      <div className="mt-4 p-4 bg-red-900/10 border border-red-900/30 rounded-xl animate-fadeIn">
+                                          <label className="text-[10px] font-bold text-red-400 uppercase mb-2 block">Red Nedeni ({rejectingDoc.type === 'PARENT' ? 'Veli İzin' : 'KVKK'})</label>
+                                          <textarea 
+                                              value={rejectionReasonInput}
+                                              onChange={(e) => setRejectionReasonInput(e.target.value)}
+                                              className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white text-xs focus:border-red-500 outline-none min-h-[80px]"
+                                              placeholder="Lütfen red nedenini açıklayın..."
+                                          />
+                                          <div className="flex justify-end gap-2 mt-3">
+                                              <button onClick={() => setRejectingDoc(null)} className="text-[10px] text-slate-400 hover:text-white px-3 py-2">İptal</button>
+                                              <button 
+                                                  onClick={() => handleDocStatus(student.id, rejectingDoc.type, 'REJECTED', rejectionReasonInput)}
+                                                  className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-[10px] font-bold"
+                                              >
+                                                  Reddet ve Bildir
+                                              </button>
+                                          </div>
+                                      </div>
+                                  )}
+
+                                  {student.docStatus === 'REJECTED' && student.rejectionReason && !rejectingDoc && (
+                                      <div className="mt-3 p-3 bg-red-900/5 border border-red-900/20 rounded-lg">
+                                          <p className="text-[10px] text-red-400 italic"><strong>Red Nedeni:</strong> {student.rejectionReason}</p>
+                                      </div>
+                                  )}
+                              </div>
+                          ))}
                       </div>
                   </div>
                   <div className="mb-8">

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { User, Mail, School, MapPin, Lock, ArrowRight, Info, ChevronDown } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { UserRole } from '../types';
@@ -87,7 +88,11 @@ export const Apply: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8"
+      >
         <Link to="/" className="inline-block mx-auto h-20 w-20 mb-4">
              <img src="https://assets.reflectandshoot.com/Reflect_Shoot_Logo.png" alt="Logo" className="w-full h-full object-contain" />
         </Link>
@@ -97,9 +102,14 @@ export const Apply: React.FC = () => {
         <p className="mt-2 text-sm text-gray-600">
           Reflect&Shoot Kısa Film Yarışması için takım kaydını oluştur.
         </p>
-      </div>
+      </motion.div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.1 }}
+        className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl"
+      >
         <div className="bg-white py-8 px-4 shadow-2xl rounded-2xl sm:px-10 border border-gray-100">
           
           <div className="mb-8 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg flex items-start gap-3">
@@ -285,7 +295,7 @@ export const Apply: React.FC = () => {
           </div>
 
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

@@ -1,16 +1,48 @@
 
+import { jsPDF } from 'jspdf';
+
 /**
  * Dosyayı Cloudflare R2'ye yükler (Private Bucket).
  * 
- * 1. Backend'den (Vercel API) güvenli yükleme linki (Presigned URL) alır.
- * 2. Dosyayı doğrudan R2'ye PUT eder.
- * 3. Dosyanın Key'ini döner.
+ * 1. Eğer dosya bir resimse ve PDF isteniyorsa otomatik olarak PDF'e dönüştürür.
+ * 2. Backend'den (Vercel API) güvenli yükleme linki (Presigned URL) alır.
+ * 3. Dosyayı doğrudan R2'ye PUT eder.
+ * 4. Dosyanın Key'ini döner.
  */
 export const uploadFileToR2 = async (file: File, customKey?: string): Promise<string> => {
     try {
-        // PDF dosyaları için tarayıcı tipi bazen eksik dönebilir, garantiye alıyoruz.
+        let fileToUpload: File | Blob = file;
         let contentType = file.type;
-        if (!contentType && file.name.toLowerCase().endsWith('.pdf')) {
+        let fileName = file.name;
+
+        // Otomatik PDF Dönüştürücü: Eğer resim yüklendiyse ve PDF olması gerekiyorsa (belgeler için)
+        // Not: customKey genelde 'parental' veya 'kvkk' içerir, bu belgelerin PDF olması istenir.
+        const isImage = file.type.startsWith('image/');
+        const shouldBePdf = customKey && (customKey.includes('parental') || customKey.includes('kvkk'));
+
+        if (isImage && shouldBePdf) {
+            console.log('Resim dosyası PDF\'e dönüştürülüyor...');
+            const pdf = new jsPDF();
+            const imgData = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target?.result as string);
+                reader.readAsDataURL(file);
+            });
+            
+            // Resmi PDF'e sığdır
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+            
+            const pdfBlob = pdf.output('blob');
+            fileToUpload = pdfBlob;
+            contentType = 'application/pdf';
+            fileName = fileName.replace(/\.[^/.]+$/, "") + ".pdf";
+        }
+
+        // PDF dosyaları için tarayıcı tipi bazen eksik dönebilir, garantiye alıyoruz.
+        if (!contentType && fileName.toLowerCase().endsWith('.pdf')) {
             contentType = 'application/pdf';
         }
         contentType = contentType || 'application/octet-stream';
@@ -20,7 +52,7 @@ export const uploadFileToR2 = async (file: File, customKey?: string): Promise<st
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                filename: file.name,
+                filename: fileName,
                 contentType: contentType,
                 customKey
             })
@@ -41,7 +73,7 @@ export const uploadFileToR2 = async (file: File, customKey?: string): Promise<st
         // Header'daki Content-Type, imzalanan tiple birebir aynı olmak ZORUNDADIR.
         const uploadResponse = await fetch(uploadUrl, {
             method: 'PUT',
-            body: file,
+            body: fileToUpload,
             headers: {
                 'Content-Type': contentType
             }

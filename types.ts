@@ -61,6 +61,7 @@ export interface Student {
   kvkkExpectedId?: string;     // The ID generated on the PDF
   
   docStatus?: 'PENDING' | 'APPROVED' | 'REJECTED'; // New for admin review
+  rejectionReason?: string; // NEW: Reason for rejection
 }
 
 export interface EvaluationCriteria {
