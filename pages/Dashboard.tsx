@@ -133,6 +133,14 @@ export const Dashboard: React.FC = () => {
     const [formErrors, setFormErrors] = useState<any>({});
     const [isCreating, setIsCreating] = useState(false);
 
+    // Edit Theme State
+    const [isEditingTheme, setIsEditingTheme] = useState(false);
+    const [editThemeForm, setEditThemeForm] = useState({
+        theme: Theme.AYET,
+        selectedVerse: versesList[0]
+    });
+    const [isSavingTheme, setIsSavingTheme] = useState(false);
+
     // Student Management State
     const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
     const [editingStudent, setEditingStudent] = useState<Partial<Student> | null>(null);
@@ -252,6 +260,36 @@ export const Dashboard: React.FC = () => {
         // Scroll to content
         const el = document.getElementById('dashboard-content');
         if(el) el.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const handleEditTheme = () => {
+        if (!currentApplication) return;
+        setEditThemeForm({
+            theme: currentApplication.team.theme,
+            selectedVerse: currentApplication.team.selectedVerse || versesList[0]
+        });
+        setIsEditingTheme(true);
+    };
+
+    const handleSaveTheme = async () => {
+        if (!currentApplication) return;
+        setIsSavingTheme(true);
+        try {
+            await updateApplication({
+                ...currentApplication,
+                team: {
+                    ...currentApplication.team,
+                    theme: editThemeForm.theme,
+                    selectedVerse: editThemeForm.theme === Theme.AYET ? editThemeForm.selectedVerse : undefined
+                }
+            });
+            showToast("Proje teması güncellendi.", "success");
+            setIsEditingTheme(false);
+        } catch (e) {
+            showToast("Güncelleme başarısız.", "error");
+        } finally {
+            setIsSavingTheme(false);
+        }
     };
 
     const handleOpenStudentModal = (student?: Student) => {
@@ -506,6 +544,34 @@ export const Dashboard: React.FC = () => {
                                 </select>
                             </div>
                         </div>
+
+                        <div className="grid md:grid-cols-2 gap-8">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Proje Teması</label>
+                                <select 
+                                    name="theme" 
+                                    value={teamForm.theme} 
+                                    onChange={(e) => setTeamForm({...teamForm, theme: e.target.value as Theme})} 
+                                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold transition-colors"
+                                >
+                                    {Object.values(Theme).map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                            </div>
+                            {teamForm.theme === Theme.AYET && (
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Seçilen Ayet</label>
+                                    <select 
+                                        name="selectedVerse" 
+                                        value={teamForm.selectedVerse} 
+                                        onChange={(e) => setTeamForm({...teamForm, selectedVerse: e.target.value})} 
+                                        className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold transition-colors"
+                                    >
+                                        {versesList.map(v => <option key={v} value={v}>{v}</option>)}
+                                    </select>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="bg-slate-950/50 p-6 rounded-2xl border border-slate-800">
                             <h4 className="text-white font-bold mb-4 flex items-center gap-2"><Users size={18} className="text-teal-500"/> İlk 3 Öğrenci (Zorunlu)</h4>
                             <div className="grid gap-4">
@@ -622,18 +688,79 @@ export const Dashboard: React.FC = () => {
                         <div className="space-y-8">
                             <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-xl relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity"><BookOpen size={100} /></div>
-                                <h3 className="font-bold text-white mb-6 flex items-center gap-3 text-lg"><Info size={22} className="text-teal-500"/> Proje Teması</h3>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="font-bold text-white flex items-center gap-3 text-lg"><Info size={22} className="text-teal-500"/> Proje Teması</h3>
+                                    {currentApplication.team.videoStatus === 'PENDING' && !isEditingTheme && (
+                                        <button 
+                                            onClick={handleEditTheme}
+                                            className="text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1 transition-colors"
+                                        >
+                                            <Edit size={14} /> Düzenle
+                                        </button>
+                                    )}
+                                </div>
+                                
                                 <div className="space-y-6 relative z-10">
-                                    <div className="flex justify-between border-b border-slate-800 pb-4">
-                                        <span className="text-slate-500 font-medium">Seçilen Tema</span>
-                                        <span className="text-white font-bold text-lg">{currentApplication.team.theme}</span>
-                                    </div>
-                                    {currentApplication.team.theme === Theme.AYET && currentApplication.team.selectedVerse && verseDetails[currentApplication.team.selectedVerse] && (
-                                        <div className="p-6 bg-slate-950 border border-slate-800 rounded-2xl space-y-4 shadow-inner">
-                                            <p className="text-right text-2xl font-serif text-amber-400 leading-loose" dir="rtl">{renderVerseText(verseDetails[currentApplication.team.selectedVerse].arabic, true)}</p>
-                                            <div className="w-full h-px bg-slate-800"></div>
-                                            <p className="text-sm text-slate-300 italic leading-relaxed">"{renderVerseText(verseDetails[currentApplication.team.selectedVerse].turkish, false)}"</p>
+                                    {isEditingTheme ? (
+                                        <div className="space-y-4 animate-fadeIn">
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tema Seçimi</label>
+                                                <select 
+                                                    value={editThemeForm.theme}
+                                                    onChange={(e) => setEditThemeForm({...editThemeForm, theme: e.target.value as Theme})}
+                                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white outline-none focus:border-rose-500 transition-colors"
+                                                >
+                                                    {Object.values(Theme).map(t => <option key={t} value={t}>{t}</option>)}
+                                                </select>
+                                            </div>
+                                            {editThemeForm.theme === Theme.AYET && (
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ayet Seçimi</label>
+                                                    <select 
+                                                        value={editThemeForm.selectedVerse}
+                                                        onChange={(e) => setEditThemeForm({...editThemeForm, selectedVerse: e.target.value})}
+                                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white outline-none focus:border-rose-500 transition-colors"
+                                                    >
+                                                        {versesList.map(v => <option key={v} value={v}>{v}</option>)}
+                                                    </select>
+                                                </div>
+                                            )}
+                                            <div className="flex gap-2 pt-2">
+                                                <button 
+                                                    onClick={handleSaveTheme}
+                                                    disabled={isSavingTheme}
+                                                    className="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    {isSavingTheme ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Kaydet
+                                                </button>
+                                                <button 
+                                                    onClick={() => setIsEditingTheme(false)}
+                                                    className="px-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all"
+                                                >
+                                                    İptal
+                                                </button>
+                                            </div>
                                         </div>
+                                    ) : (
+                                        <>
+                                            <div className="flex justify-between border-b border-slate-800 pb-4">
+                                                <span className="text-slate-500 font-medium">Seçilen Tema</span>
+                                                <span className="text-white font-bold text-lg">{currentApplication.team.theme}</span>
+                                            </div>
+                                            {currentApplication.team.theme === Theme.AYET && currentApplication.team.selectedVerse && verseDetails[currentApplication.team.selectedVerse] && (
+                                                <div className="p-6 bg-slate-950 border border-slate-800 rounded-2xl space-y-4 shadow-inner">
+                                                    <p className="text-right text-2xl font-serif text-amber-400 leading-loose" dir="rtl">{renderVerseText(verseDetails[currentApplication.team.selectedVerse].arabic, true)}</p>
+                                                    <div className="w-full h-px bg-slate-800"></div>
+                                                    <p className="text-sm text-slate-300 italic leading-relaxed">"{renderVerseText(verseDetails[currentApplication.team.selectedVerse].turkish, false)}"</p>
+                                                </div>
+                                            )}
+                                            {currentApplication.team.theme !== Theme.AYET && (
+                                                <div className="p-6 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center gap-3">
+                                                    <Sparkles className="text-amber-500" size={32} />
+                                                    <p className="text-slate-400 text-sm">Bu tema için içerik hazırlık aşamasındadır. Filminizi bu tema çerçevesinde kurgulayabilirsiniz.</p>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             </div>
