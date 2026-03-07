@@ -56,10 +56,20 @@ service cloud.firestore {
 
     // --- 2. USERS ---
     match /users/{userId} {
-      // JUDGE PERMISSIONS: Blind judging protection. Judges cannot read list of all users.
       // Only Admin can read all. Users can read own.
       allow read: if isOwner(userId) || hasRole('ADMIN');
-      allow write: if isOwner(userId) || hasRole('ADMIN');
+      
+      // CREATE: Allow user to create their own profile with restricted roles
+      allow create: if isOwner(userId) && 
+                      (request.resource.data.role == 'PENDING_TEACHER' || 
+                       request.resource.data.role == 'TEACHER' || 
+                       request.resource.data.role == 'STUDENT');
+      
+      // UPDATE: 
+      // - Admin: Full access
+      // - User: Can update own profile EXCEPT role
+      allow update: if hasRole('ADMIN') || 
+                       (isOwner(userId) && request.resource.data.role == resource.data.role);
     }
 
     // --- 3. APPLICATIONS ---
@@ -130,13 +140,16 @@ service cloud.firestore {
       allow create: if isSignedIn()
         // 1. Identity Verification: performedBy field must match the auth token email
         && request.resource.data.performedBy == request.auth.token.email
+        && request.resource.data.performedByUid == request.auth.uid
         // 2. Schema Validation: Only specific fields allowed
-        && request.resource.data.keys().hasOnly(['action', 'details', 'performedBy', 'timestamp', 'targetId'])
+        && request.resource.data.keys().hasOnly(['action', 'details', 'performedBy', 'performedByUid', 'timestamp', 'targetId', 'ip', 'userAgent', 'metadata'])
         // 3. Data Validation: Type and Length constraints
-        && request.resource.data.action is string && request.resource.data.action.size() > 0 && request.resource.data.action.size() <= 50
-        && request.resource.data.details is string && request.resource.data.details.size() > 0 && request.resource.data.details.size() <= 1000
+        && request.resource.data.action is string && request.resource.data.action.size() > 0 && request.resource.data.action.size() <= 100
+        && request.resource.data.details is string && request.resource.data.details.size() > 0 && request.resource.data.details.size() <= 2000
         && request.resource.data.timestamp is string
-        && (!('targetId' in request.resource.data) || request.resource.data.targetId is string);
+        && (!('targetId' in request.resource.data) || request.resource.data.targetId is string)
+        && (!('ip' in request.resource.data) || request.resource.data.ip is string)
+        && (!('userAgent' in request.resource.data) || request.resource.data.userAgent is string);
     }
   }
 }
