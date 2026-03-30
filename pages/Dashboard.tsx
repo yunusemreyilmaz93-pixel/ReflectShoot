@@ -170,7 +170,7 @@ const TeamSwitcher = ({
                     </div>
                     <div className="text-left">
                         <span className="block text-xs font-black uppercase tracking-wider text-slate-500 group-hover:text-rose-500">
-                            Yeni Slot
+                            Yeni Takım
                         </span>
                         <span className="block text-sm font-bold text-slate-400 group-hover:text-white">
                             Takım Ekle ({applications.length}/5)
