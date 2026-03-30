@@ -30,7 +30,8 @@ export const versesList: string[] = [
   "Yâsîn: 82",
   "Yûnus: 57",
   "Zâriyât: 50",
-  "Zâriyât: 55"
+  "Zâriyât: 55",
+  "Duha: 3"
 ];
 
 export const verseDetails: Record<string, VerseDetail> = {
@@ -154,5 +155,11 @@ export const verseDetails: Record<string, VerseDetail> = {
     "arabic": "وَذَكِّرْ فَاِنَّ الذِّكْرٰى تَنْفَعُ الْمُؤْمِنٖينَ",
     "turkish": "Sen yine de öğüt ver. Çünkü öğüt mü'minlere fayda verir.",
     "english": "But ˹continue to˺ remind. For certainly reminders benefit the believers."
+  },
+
+  "Duha: 3": {
+    "arabic": "مَا وَدَّعَكَ رَبُّكَ وَمَا قَلٰىۜ",
+    "turkish": "Rabbin seni terk etmedi, sana darılmadı da.",
+    "english": "Your Lord ˹O Prophet˺ has not abandoned you, nor has He become hateful ˹of you˺"
   }
 };
