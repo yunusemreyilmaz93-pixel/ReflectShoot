@@ -8,12 +8,12 @@ import { useAppContext } from '../context/AppContext';
 
 // Competition Schedule Configuration
 const COMPETITION_PHASES = [
-  { label: 'Başvuru ve Eser Gönderimi', date: '2026-04-10T23:59:59' },
-  { label: 'Finalistlerin Açıklanması', date: '2026-04-17T12:00:00' },
-  { label: 'Akademi & Workshoplar', date: '2026-04-20T09:00:00' },
-  { label: 'Revize Video Teslimi', date: '2026-05-11T23:59:59' },
-  { label: 'Sonuçların Açıklanması', date: '2026-05-18T10:00:00' },
-  { label: 'Büyük Final & Ödül Töreni', date: '2026-05-29T19:00:00' }
+  { label: 'Başvuru ve Eser Gönderimi', date: '2026-04-28T23:59:59' },
+  { label: 'Ön Sonuçların Açıklanması', date: '2026-05-01T12:00:00' },
+  { label: 'Online Eğitim & Workshoplar', date: '2026-05-04T09:00:00' },
+  { label: 'Final Revize Teslimi', date: '2026-05-12T23:59:59' },
+  { label: 'Nihai Sonuçların Açıklanması', date: '2026-05-14T12:00:00' },
+  { label: 'Büyük Final & Ödül Töreni', date: '2026-05-22T19:00:00' }
 ];
 
 // Helper to find the next active phase
@@ -304,7 +304,7 @@ export const Home: React.FC = () => {
                           {activePhase.label === 'Başvuru ve Eser Gönderimi' ? 'Başvuru ve Eser Gönderimi Başladı' : activePhase.label}
                         </p>
                         <p className="text-slate-400 text-sm font-medium mt-1">
-                          {activePhase.label === 'Başvuru ve Eser Gönderimi' ? 'Son Gün 10 Nisan' : formatDate(activePhase.date)}
+                          {activePhase.label === 'Başvuru ve Eser Gönderimi' ? 'Son Gün 28 Nisan' : formatDate(activePhase.date)}
                         </p>
                     </div>
                  </div>

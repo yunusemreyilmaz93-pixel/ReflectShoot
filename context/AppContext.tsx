@@ -48,6 +48,9 @@ interface AppContextType {
     resendVerificationEmail: () => Promise<void>;
     
     currentApplication: Application | null;
+    myApplications: Application[];
+    activeApplicationId: string | null;
+    setActiveApplicationId: (id: string | null) => void;
     allApplications: Application[];
     createApplication: (data: any) => Promise<void>;
     updateApplication: (app: Application) => Promise<void>;
@@ -122,17 +125,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     // Data States
     const [currentApplication, setCurrentApplication] = useState<Application | null>(null);
+    const [myApplications, setMyApplications] = useState<Application[]>([]);
+    const [activeApplicationId, setActiveApplicationId] = useState<string | null>(null);
     const [allApplications, setAllApplications] = useState<Application[]>([]);
     const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
     const [systemSettings, setSystemSettings] = useState<SystemSettings>({
         dates: {
             applicationStart: '2026-01-20T09:00',
-            applicationEnd: '2026-03-23T23:59',
+            applicationEnd: '2026-04-28T23:59',
             videoUploadStart: '2026-01-20T09:00',
-            videoUploadEnd: '2026-03-23T23:59',
-            academyStart: '2026-04-06T09:00',
+            videoUploadEnd: '2026-04-28T23:59',
+            academyStart: '2026-05-04T09:00',
             galaDate: '2026-05-22T19:00',
-            finalistRevealStart: '2026-04-03T12:00',
+            finalistRevealStart: '2026-05-01T12:00',
+            reviseUploadEnd: '2026-05-12T23:59',
             publicVoteStart: '',
             publicVoteEnd: ''
         },
@@ -151,7 +157,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         contactEmail: '', contactPhone: '', contactAddress: '', socialInstagram: '#', socialTwitter: '#', socialYoutube: '#', footerText: ''
     });
     const [cmsLinks, setCMSLinks] = useState<CMSLinks>({ 
-        specUrl: '', 
+        specUrl: 'https://assets.reflectandshoot.com/Reflect%20And%20Shoot%20Yar%C4%B1%C5%9Fma%20%C5%9Eartnamesi.pdf', 
         parentalUrl: 'https://assets.reflectandshoot.com/veli_izin_belgesi.pdf', 
         kvkkUrl: 'https://assets.reflectandshoot.com/acik_riza_metni.pdf', 
         posterUrl: '' 
@@ -273,10 +279,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (currentUser.role === UserRole.TEACHER || currentUser.role === UserRole.STUDENT) {
             const q = query(collection(db, "applications"), where("teacher.id", "==", currentUser.uid));
             unsubs.push(onSnapshot(q, (snap) => {
-                if (!snap.empty) {
-                    setCurrentApplication({id: snap.docs[0].id, ...snap.docs[0].data()} as Application);
+                const apps = snap.docs.map(d => ({id: d.id, ...d.data()} as Application));
+                setMyApplications(apps);
+                
+                // If no active ID or active ID is not in the new list, pick the first one
+                if (apps.length > 0) {
+                    if (!activeApplicationId || !apps.find(a => a.id === activeApplicationId)) {
+                        setActiveApplicationId(apps[0].id);
+                    }
                 } else {
-                    setCurrentApplication(null);
+                    setActiveApplicationId(null);
                 }
             }));
         }
@@ -284,6 +296,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return () => unsubs.forEach(u => u());
     }, [currentUser?.uid, currentUser?.role]);
 
+
+    // Update currentApplication whenever activeApplicationId or myApplications changes
+    useEffect(() => {
+        if (activeApplicationId) {
+            const active = myApplications.find(a => a.id === activeApplicationId);
+            setCurrentApplication(active || null);
+        } else {
+            setCurrentApplication(null);
+        }
+    }, [activeApplicationId, myApplications]);
 
     // --- ACTIONS ---
 
@@ -350,6 +372,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const createApplication = async (data: any) => {
         if(!auth.currentUser) return;
+
+        // 0. Limit Check (Max 5 teams)
+        if (myApplications.length >= 5) {
+            throw new Error("Bir öğretmen en fazla 5 takıma danışmanlık yapabilir.");
+        }
         
         // 1. Character Limit Check
         if (data.teamName.length < 3 || data.teamName.length > 40) {
@@ -406,7 +433,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         
         await batch.commit();
         
-        setCurrentApplication(app);
+        setActiveApplicationId(app.id);
         showToast('Takım oluşturuldu.', 'success');
         await logAction("CREATE_APP", `Takım oluşturuldu: ${app.team.name}`);
     };
@@ -770,7 +797,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return (
         <AppContext.Provider value={{
             currentUser, loading, login, logout, registerTeacher, createAdminAccount, resetPassword, resendVerificationEmail,
-            currentApplication, allApplications, createApplication, updateApplication, updateApplicationStatus, deleteApplication,
+            currentApplication, myApplications, activeApplicationId, setActiveApplicationId, allApplications, createApplication, updateApplication, updateApplicationStatus, deleteApplication,
             systemSettings, updateSystemSettings,
             cmsGeneral, updateCMSGeneral, cmsLinks, updateCMSLinks, 
             cmsAcademy, addCMSAcademyItem, updateCMSAcademyItem, deleteCMSAcademyItem,

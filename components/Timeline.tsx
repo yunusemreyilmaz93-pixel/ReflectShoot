@@ -52,48 +52,48 @@ const STATIC_EVENTS: TimelineEvent[] = [
   {
     date: '20 Ocak 2026',
     title: 'Başvuru ve Eser Gönderimi Başlıyor',
-    description: 'Yarışma süreci resmen başlıyor. Sisteme kayıt ol, takımını kur ve filmini çekmeye başla. Hem başvuru hem de eser teslim ekranları bu tarihte açılır.',
+    description: 'Yarışma süreci resmen başlıyor. Sisteme kayıt ol, takımını kur ve filmini çekmeye başla.',
     icon: Clapperboard,
     color: 'teal'
   },
   {
-    date: '23 Mart 2026',
-    title: 'Son Başvuru ve Teslim Tarihi',
-    description: 'Sisteme video yüklemek veya link göndermek için son gün. Bu tarihten sonra yapılan başvurular ve yüklemeler kabul edilmeyecektir.',
+    date: '28 Nisan 2026',
+    title: 'Başvuru ve Eser Teslim (Son Gün)',
+    description: 'Sisteme video yüklemek veya link göndermek için son gün. Bu tarihten sonra yapılan başvurular kabul edilmeyecektir.',
     icon: Upload,
     color: 'rose'
   },
   {
-    date: '3 Nisan 2026',
-    title: 'Finalistlerin Açıklanması',
-    description: 'Jüri ön değerlendirmesi sonucu finale kalan 20 takımın web sitesi üzerinden duyurulması.',
+    date: '1 Mayıs 2026',
+    title: 'Ön Sonuçlar',
+    description: 'Jüri ön değerlendirmesi sonucu finale kalan takımların web sitesi üzerinden duyurulması.',
     icon: Star,
     color: 'amber'
   },
   {
-    date: '6-10 Nisan 2026',
-    title: 'Finalist Akademisi',
+    date: '4-5-6 Mayıs 2026',
+    title: 'Online Eğitim/Workshop',
     description: 'Finale kalan ekipler için sektör profesyonelleri ile online senaryo, kurgu ve yönetmenlik atölyeleri.',
     icon: BookOpen,
     color: 'teal'
   },
   {
-    date: '11 Nisan - 4 Mayıs 2026',
-    title: 'Revize Eser Gönderimi',
+    date: '12 Mayıs 2026',
+    title: 'Final Revize Teslim',
     description: 'Finalist takımların, akademi eğitimleri ışığında filmlerini revize ederek son kurgularını sisteme yükleme süreci.',
     icon: Edit3,
     color: 'amber'
   },
   {
-    date: '11 Mayıs 2026',
-    title: 'Final Sonuçlarının Açıklanması',
+    date: '14 Mayıs 2026',
+    title: 'Nihai Sonuçlar',
     description: 'Jüri değerlendirmesi sonucu dereceye giren eserlerin belirlenmesi.',
     icon: CheckCircle2,
     color: 'teal'
   },
   {
     date: '22 Mayıs 2026',
-    title: 'Büyük Gala',
+    title: 'Büyük Gala & Ödül Töreni',
     description: 'Konya\'da düzenlenecek görkemli törenle kazananların açıklanması ve ödüllerin takdimi.',
     icon: Trophy,
     color: 'rose'

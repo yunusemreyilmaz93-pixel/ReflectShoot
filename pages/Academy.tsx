@@ -91,7 +91,7 @@ export const Academy: React.FC = () => {
   // -- Finalist Masterclass Data --
   const masterclassSchedule = [
       {
-          date: '6 Nisan',
+          date: '4 Mayıs',
           type: 'ORTAK',
           title: 'Sinematik Anlatı & Kurgu Mantığı',
           desc: 'Kurgu masasında hikâyenin duygusal yeniden inşası: Ritim, zamanlama ve izleyiciyle kurulan o görünmez bağın matematiği.',
@@ -100,7 +100,7 @@ export const Academy: React.FC = () => {
           shadow: 'shadow-blue-500/20'
       },
       {
-          date: '8 Nisan',
+          date: '5 Mayıs',
           type: 'CANLI ÇEKİM',
           title: 'Color Grading & Ses Miksajı',
           desc: 'DaVinci Resolve ile sinematik atmosferin inşası ve festival standartlarında "Final Look" için ses-görüntü tasarımı.',
@@ -109,7 +109,7 @@ export const Academy: React.FC = () => {
           shadow: 'shadow-emerald-500/20'
       },
       {
-          date: '8 Nisan',
+          date: '6 Mayıs',
           type: 'YAPAY ZEKA',
           title: 'AI Tutarlılık & Motion Brush',
           desc: 'Hikâye evreninde görsel bütünlük: Karakter tutarlılığını koruma ve yapay zeka ile sahneler arası akışkanlık sanatı.',
@@ -118,7 +118,7 @@ export const Academy: React.FC = () => {
           shadow: 'shadow-purple-500/20'
       },
       {
-          date: '10 Nisan',
+          date: '6 Mayıs',
           type: 'ORTAK',
           title: 'Final Export & Dağıtım',
           desc: 'Filminizin ekran yolculuğunu profesyonelce planlamak: DCP hazırlığı, teknik teslimat standartları ve festival stratejileri.',
