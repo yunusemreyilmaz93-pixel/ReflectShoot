@@ -1,159 +1,134 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // --- HELPER FUNCTIONS ---
-    
-    // Check if user is authenticated
     function isSignedIn() {
       return request.auth != null;
     }
-    
-    // Check if user is the owner of the resource (based on uid)
+
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-    
-    // Fetch user data to check roles
+
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
-    
-    // Check for specific role (Case-insensitive)
+
     function hasRole(role) {
-      return isSignedIn() && 
+      return isSignedIn() &&
              (getUserData().role == role || getUserData().role == role.lower());
     }
 
-    // Rate Limiting: Check if at least 10 seconds passed since last action
     function isNotRateLimited() {
       let userData = getUserData();
-      return userData == null || 
-             !('lastActionAt' in userData) || 
+      return userData == null ||
+             !('lastActionAt' in userData) ||
              request.time > userData.lastActionAt + duration.value(10, 's');
     }
 
-    // --- 1. SYSTEM SETTINGS & CMS (Public Read) ---
-    // Changed from /settings to /system to match AppContext.tsx
+    // --- 1. SYSTEM & CMS ---
     match /system/{document=**} {
       allow read: if true;
       allow write: if hasRole('ADMIN');
     }
-    
+
     match /cms/{document=**} {
       allow read: if true;
       allow write: if hasRole('ADMIN');
     }
 
-    match /cms_prizes/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    // Fixed typo: cms_faqs -> cms_faq
-    match /cms_faq/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_gallery/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_academy/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_prizes/{doc}   { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_faq/{doc}      { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_gallery/{doc}  { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /cms_academy/{doc}  { allow read: if true; allow write: if hasRole('ADMIN'); }
     match /cms_timeline/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    
-    // Allow public read for new dynamic academy contents
     match /academycontent/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
 
     // --- 2. USERS ---
     match /users/{userId} {
-      // Only Admin can read all. Users can read own.
-      allow read: if isOwner(userId) || hasRole('ADMIN');
-      
-      // CREATE: Allow user to create their own profile with restricted roles
-      allow create: if isOwner(userId) && 
-                      (request.resource.data.role == 'PENDING_TEACHER' || 
-                       request.resource.data.role == 'TEACHER' || 
-                       request.resource.data.role == 'STUDENT');
-      
-      // UPDATE: 
-      // - Admin: Full access
-      // - User: Can update own profile EXCEPT role
-      allow update: if hasRole('ADMIN') || 
+      allow read:   if isOwner(userId) || hasRole('ADMIN');
+      allow create: if isOwner(userId) &&
+                       (request.resource.data.role == 'PENDING_TEACHER' ||
+                        request.resource.data.role == 'TEACHER' ||
+                        request.resource.data.role == 'STUDENT');
+      allow update: if hasRole('ADMIN') ||
                        (isOwner(userId) && request.resource.data.role == resource.data.role);
+      allow delete: if hasRole('ADMIN'); // ← eklendi
     }
 
     // --- 3. APPLICATIONS ---
     match /applications/{appId} {
-      // READ RULES:
-      // - Admin: All
-      // - Teacher: Own application + List (for duplicate name check)
-      // - Judge: ONLY assigned applications (Blind Judging Restriction)
-      // - Public: Finalists
-      allow get: if hasRole('ADMIN') || 
-                     (hasRole('TEACHER') && resource.data.teacher.id == request.auth.uid) || 
-                     (hasRole('JUDGE') && request.auth.uid in resource.data.assignedJuryIds) ||
-                     resource.data.team.isFinalist == true;
-      
+      allow get: if hasRole('ADMIN') ||
+                    (hasRole('TEACHER') && resource.data.teacher.id == request.auth.uid) ||
+                    (hasRole('JUDGE') && request.auth.uid in resource.data.assignedJuryIds) ||
+                    resource.data.team.isFinalist == true;
+
       allow list: if hasRole('ADMIN') || hasRole('TEACHER') || resource.data.team.isFinalist == true;
-      
-      // CREATE: Teachers and Admins
+
       allow create: if (hasRole('TEACHER') || hasRole('ADMIN')) && isNotRateLimited();
-      
-      // UPDATE RULES:
-      // - Admin: Full access
-      // - Teacher: Own application
-      // - Judge: CAN ONLY UPDATE 'gradedBy' array. NO STATUS CHANGE allowed.
-      allow update: if hasRole('ADMIN') || 
-                       ((hasRole('TEACHER') && resource.data.teacher.id == request.auth.uid) && isNotRateLimited()) || 
-                       (hasRole('JUDGE') && 
+
+      allow update: if hasRole('ADMIN') ||
+                       ((hasRole('TEACHER') && resource.data.teacher.id == request.auth.uid) && isNotRateLimited()) ||
+                       (hasRole('JUDGE') &&
                           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gradedBy']) &&
                           request.resource.data.gradedBy.size() == resource.data.gradedBy.size() + 1 &&
                           request.resource.data.gradedBy[request.resource.data.gradedBy.size() - 1] == request.auth.uid
                        );
 
-      // Scores Subcollection
+      allow delete: if hasRole('ADMIN'); // ← eklendi
+
       match /scores/{juryId} {
-        // JUDGE PERMISSIONS: Can ONLY read/write their OWN score. Cannot see others.
-        allow read: if hasRole('ADMIN') || (hasRole('JUDGE') && isOwner(juryId));
+        allow read:  if hasRole('ADMIN') || (hasRole('JUDGE') && isOwner(juryId));
         allow write: if hasRole('JUDGE') && isOwner(juryId) && isNotRateLimited();
+        allow delete: if hasRole('ADMIN'); // ← eklendi
       }
 
-      // Messages Subcollection (Chat)
       match /messages/{msgId} {
-        allow read: if hasRole('ADMIN') || (hasRole('TEACHER') && get(/databases/$(database)/documents/applications/$(appId)).data.teacher.id == request.auth.uid);
+        allow read: if hasRole('ADMIN') ||
+                       (hasRole('TEACHER') && get(/databases/$(database)/documents/applications/$(appId)).data.teacher.id == request.auth.uid);
         allow create: if hasRole('ADMIN') || hasRole('TEACHER');
+        allow delete: if hasRole('ADMIN'); // ← eklendi
       }
     }
 
     // --- 4. NOTIFICATIONS ---
     match /notifications/{notificationId} {
-      allow read: if isOwner(resource.data.userId);
-      allow create: if isSignedIn(); 
-      allow update: if isOwner(resource.data.userId); 
+      allow read:   if isOwner(resource.data.userId);
+      allow create: if isSignedIn();
+      allow update: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId) || hasRole('ADMIN'); // ← eklendi
     }
 
     // --- 5. PUBLIC VOTES ---
-    // Changed from /votes to /public_votes to match AppContext.tsx
     match /public_votes/{voteId} {
-      allow read: if true; 
-      allow create: if true; 
+      allow read:   if true;
+      allow create: if true;
+      allow delete: if hasRole('ADMIN'); // ← eklendi
     }
 
     // --- 6. CONTACT MESSAGES ---
     match /contact_messages/{msgId} {
-      allow read: if hasRole('ADMIN');
-      allow create: if true; 
+      allow read:   if hasRole('ADMIN');
+      allow create: if true;
       allow update: if hasRole('ADMIN');
+      allow delete: if hasRole('ADMIN'); // ← eklendi
     }
 
     // --- 7. AUDIT LOGS ---
     match /logs/{logId} {
-      allow read: if hasRole('ADMIN');
+      allow read:   if hasRole('ADMIN');
       allow create: if isSignedIn()
-        // 1. Identity Verification: performedBy field must match the auth token email
         && request.resource.data.performedBy == request.auth.token.email
         && request.resource.data.performedByUid == request.auth.uid
-        // 2. Schema Validation: Only specific fields allowed
         && request.resource.data.keys().hasOnly(['action', 'details', 'performedBy', 'performedByUid', 'timestamp', 'targetId', 'ip', 'userAgent', 'metadata'])
-        // 3. Data Validation: Type and Length constraints
         && request.resource.data.action is string && request.resource.data.action.size() > 0 && request.resource.data.action.size() <= 100
         && request.resource.data.details is string && request.resource.data.details.size() > 0 && request.resource.data.details.size() <= 2000
         && request.resource.data.timestamp is string
         && (!('targetId' in request.resource.data) || request.resource.data.targetId is string)
         && (!('ip' in request.resource.data) || request.resource.data.ip is string)
         && (!('userAgent' in request.resource.data) || request.resource.data.userAgent is string);
+      // Logs intentionally have no delete — audit trail must be immutable
     }
   }
 }
