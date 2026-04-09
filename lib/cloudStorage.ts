@@ -71,18 +71,39 @@ export const uploadFileToR2 = async (file: File, customKey?: string): Promise<st
 
         // 2. Upload directly to R2 using the Signed URL
         // Header'daki Content-Type, imzalanan tiple birebir aynı olmak ZORUNDADIR.
-        const uploadResponse = await fetch(uploadUrl, {
-            method: 'PUT',
-            body: fileToUpload,
-            headers: {
-                'Content-Type': contentType
-            }
-        });
+        let uploadResponse: Response | null = null;
+        let retries = 2;
+        let lastError: any = null;
 
-        if (!uploadResponse.ok) {
-            const errorText = await uploadResponse.text();
-            console.error('R2 Upload Detail:', errorText);
-            throw new Error(`Dosya R2'ye yüklenemedi. Durum: ${uploadResponse.status}`);
+        while (retries >= 0) {
+            try {
+                console.log(`R2 Uploading... (Attempts left: ${retries})`);
+                uploadResponse = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    body: fileToUpload,
+                    mode: 'cors',
+                    credentials: 'omit',
+                    headers: {
+                        'Content-Type': contentType
+                    }
+                });
+                
+                if (uploadResponse.ok) break;
+                
+                const errorText = await uploadResponse.text();
+                console.error(`R2 Upload Attempt Failed (${uploadResponse.status}):`, errorText);
+                lastError = new Error(`Dosya R2'ye yüklenemedi. Durum: ${uploadResponse.status}`);
+            } catch (err: any) {
+                console.error(`R2 Fetch Error (Attempt ${2 - retries}):`, err);
+                lastError = err;
+            }
+            
+            retries--;
+            if (retries >= 0) await new Promise(r => setTimeout(r, 1000)); // Wait 1s before retry
+        }
+
+        if (!uploadResponse || !uploadResponse.ok) {
+            throw lastError || new Error('Bilinmeyen bir hata nedeniyle yükleme başarısız oldu.');
         }
 
         return fileKey; 
@@ -115,16 +136,31 @@ export const uploadPublicLogo = async (file: File, teamId: string): Promise<stri
 
         const { uploadUrl, key } = await apiResponse.json();
 
-        const uploadResponse = await fetch(uploadUrl, {
-            method: 'PUT',
-            body: file,
-            headers: {
-                'Content-Type': contentType
-            }
-        });
+        let uploadResponse: Response | null = null;
+        let retries = 2;
+        let lastError: any = null;
 
-        if (!uploadResponse.ok) {
-            throw new Error('Logo sunucuya yüklenemedi.');
+        while (retries >= 0) {
+            try {
+                uploadResponse = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    body: file,
+                    mode: 'cors',
+                    credentials: 'omit',
+                    headers: {
+                        'Content-Type': contentType
+                    }
+                });
+                if (uploadResponse.ok) break;
+            } catch (err: any) {
+                lastError = err;
+            }
+            retries--;
+            if (retries >= 0) await new Promise(r => setTimeout(r, 1000));
+        }
+
+        if (!uploadResponse || !uploadResponse.ok) {
+            throw lastError || new Error('Logo sunucuya yüklenemedi.');
         }
 
         return key;

@@ -95,7 +95,7 @@ export default async function handler(req, res) {
     const command = new PutObjectCommand({
       Bucket: R2_PRIVATE_BUCKET_NAME,
       Key: key,
-      // ContentType: contentType || "application/pdf", // <-- intentionally removed
+      ContentType: contentType || "application/pdf",
     });
 
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
