@@ -92,6 +92,7 @@ export interface Team {
   category: Category;
   theme: Theme;
   selectedVerse?: string; // If theme is AYET
+  selectedTopic?: string; // If theme is HADITH or SAHABE
   students: Student[];
   
   // Submission Files

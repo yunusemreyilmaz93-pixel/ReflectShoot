@@ -4,9 +4,9 @@ import {
     Search, Check, X, Eye, Award, FileText, Shield, Inbox, Download, 
     Users, Film, School, Mail, AlertTriangle, Send, Clapperboard, Video, 
     Cpu, Activity, PieChart, BarChart3, Clock, UserCheck, Star, Plus, Lock, 
-    Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog, MessageSquare, ExternalLink, Link as LinkIcon, Save, Youtube, PenTool, LayoutTemplate, HelpCircle, Bell, Image as ImageIcon, Megaphone, BookOpen, Calendar, Trophy, CheckCircle2, AlertOctagon, Info, ToggleRight, ToggleLeft, Power, Globe, Upload, LayoutGrid, Filter, TrendingUp, Wand2, Square, CheckSquare, MailOpen, Database, Construction, ChevronDown, Copy
+    Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog, MessageSquare, ExternalLink, Link as LinkIcon, Save, Youtube, PenTool, LayoutTemplate, HelpCircle, Bell, Image as ImageIcon, Megaphone, BookOpen, Calendar, Trophy, CheckCircle2, AlertOctagon, Info, ToggleRight, ToggleLeft, Power, Globe, Upload, LayoutGrid, Filter, TrendingUp, Wand2, Square, CheckSquare, MailOpen, Database, Construction, ChevronDown, Copy, AlertCircle
 } from 'lucide-react';
-import { ApplicationStatus, Category, Application, UserRole, LogEntry, SystemSettings, ScoreDocument, CMSGeneral, CMSFaqItem, FAQCategory, NotificationTarget, CMSGalleryItem, CMSAcademyItem, CMSTimelineItem, CMSPrize, CMSLinks, ContactMessage } from '../types';
+import { ApplicationStatus, Category, Theme, Application, UserRole, LogEntry, SystemSettings, ScoreDocument, CMSGeneral, CMSFaqItem, FAQCategory, NotificationTarget, CMSGalleryItem, CMSAcademyItem, CMSTimelineItem, CMSPrize, CMSLinks, ContactMessage } from '../types';
 import { useAppContext } from '../context/AppContext';
 import { ChatArea } from '../components/ChatArea';
 import { getYouTubeEmbedUrl } from '../lib/videoUtils';
@@ -382,8 +382,48 @@ const AdminDashboard = ({ apps, onFilterCategory }: { apps: Application[], onFil
         ? (gradedApps.reduce((acc, curr) => acc + (curr.finalScore || 0), 0) / gradedApps.length).toFixed(1) 
         : "0.0";
 
+    const { updateApplication, showToast } = useAppContext();
+    const mevechoTeam = apps.find(a => a.team.name.toLowerCase().includes('mevecho'));
+
+    const fixMevecho = async () => {
+        if (!mevechoTeam) {
+            showToast("Mevecho takımı bulunamadı.", "info");
+            return;
+        }
+        try {
+            await updateApplication({
+                ...mevechoTeam,
+                team: {
+                    ...mevechoTeam.team,
+                    theme: Theme.AYET,
+                    selectedVerse: 'Asr 1-3'
+                }
+            });
+            showToast("Mevecho takımı düzeltildi.", "success");
+        } catch (e) {
+            showToast("Düzeltme başarısız.", "error");
+        }
+    };
+
     return (
         <div className="space-y-6 animate-fadeIn">
+            {mevechoTeam && mevechoTeam.team.selectedVerse !== 'Asr 1-3' && (
+                <div className="bg-amber-900/20 border border-amber-500/30 p-4 rounded-xl flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <AlertCircle className="text-amber-500" size={24} />
+                        <div>
+                            <p className="text-sm font-bold text-white">Mevecho Takımı Tema Düzeltmesi</p>
+                            <p className="text-xs text-slate-400">Bu takımın teması "Asr 1-3" olarak güncellenmelidir.</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={fixMevecho}
+                        className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors"
+                    >
+                        Şimdi Düzelt
+                    </button>
+                </div>
+            )}
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Total Apps */}
@@ -724,7 +764,8 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategoryFilter
                                     <input type="checkbox" onChange={toggleAll} checked={selectedIds.size === filteredApps.length && filteredApps.length > 0} className="rounded border-slate-700 bg-slate-800" />
                                 </th>
                                 <th className="p-4">Takım</th>
-                                <th className="p-4">Kategori</th>
+                                <th className="p-4">Danışman</th>
+                                <th className="p-4">Kategori & Tema</th>
                                 <th className="p-4">Video</th>
                                 <th className="p-4">Durum</th>
                                 <th className="p-4 text-center">Puan</th>
@@ -771,7 +812,22 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategoryFilter
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className="text-xs text-slate-300 font-medium">{app.team.category}</span>
+                                            <div className="text-sm text-white font-medium">{app.teacher.fullName}</div>
+                                            <div className="text-xs text-slate-500">{app.teacher.email}</div>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="text-xs text-slate-300 font-medium">{app.team.category}</div>
+                                            <div className="text-xs text-slate-500">{app.team.theme}</div>
+                                            {app.team.theme === Theme.AYET && app.team.selectedVerse && (
+                                                <div className="text-[10px] text-rose-400 mt-1 truncate max-w-[150px]" title={app.team.selectedVerse}>
+                                                    {app.team.selectedVerse}
+                                                </div>
+                                            )}
+                                            {(app.team.theme === Theme.HADITH || app.team.theme === Theme.SAHABE) && app.team.selectedTopic && (
+                                                <div className="text-[10px] text-amber-400 mt-1 truncate max-w-[150px]" title={app.team.selectedTopic}>
+                                                    {app.team.selectedTopic}
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="p-4">
                                             <span className={`text-xs font-bold ${app.team.videoStatus === 'UPLOADED' ? 'text-green-500' : app.team.videoStatus === 'SUBMITTED_LINK' ? 'text-blue-500' : 'text-slate-600'}`}>

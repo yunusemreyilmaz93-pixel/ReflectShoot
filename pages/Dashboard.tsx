@@ -198,6 +198,7 @@ export const Dashboard: React.FC = () => {
         category: Category.LIVE_ACTION,
         theme: Theme.AYET,
         selectedVerse: versesList[0],
+        selectedTopic: '',
         students: [
             { firstName: '', lastName: '', grade: '' },
             { firstName: '', lastName: '', grade: '' },
@@ -215,6 +216,7 @@ export const Dashboard: React.FC = () => {
                 category: Category.LIVE_ACTION,
                 theme: Theme.AYET,
                 selectedVerse: versesList[0],
+                selectedTopic: '',
                 students: [
                     { firstName: '', lastName: '', grade: '' },
                     { firstName: '', lastName: '', grade: '' },
@@ -228,12 +230,14 @@ export const Dashboard: React.FC = () => {
     // Theme Selection State (Integrated)
     const [pendingTheme, setPendingTheme] = useState<Theme>(currentApplication?.team.theme || Theme.AYET);
     const [pendingVerse, setPendingVerse] = useState<string>(currentApplication?.team.selectedVerse || versesList[0]);
+    const [pendingTopic, setPendingTopic] = useState<string>(currentApplication?.team.selectedTopic || '');
     const [isSavingTheme, setIsSavingTheme] = useState(false);
 
     useEffect(() => {
         if (currentApplication) {
             setPendingTheme(currentApplication.team.theme);
             setPendingVerse(currentApplication.team.selectedVerse || versesList[0]);
+            setPendingTopic(currentApplication.team.selectedTopic || '');
         }
     }, [currentApplication?.id]);
 
@@ -246,7 +250,8 @@ export const Dashboard: React.FC = () => {
                 team: {
                     ...currentApplication.team,
                     theme: pendingTheme,
-                    selectedVerse: pendingTheme === Theme.AYET ? pendingVerse : undefined
+                    selectedVerse: pendingTheme === Theme.AYET ? pendingVerse : undefined,
+                    selectedTopic: (pendingTheme === Theme.HADITH || pendingTheme === Theme.SAHABE) ? pendingTopic : undefined
                 }
             });
             showToast("Proje teması güncellendi.", "success");
@@ -419,6 +424,11 @@ export const Dashboard: React.FC = () => {
 
     const handleSaveStudent = async () => {
         if (!currentApplication || !editingStudent) return;
+        if (currentApplication.team.videoStatus === 'UPLOADED' || currentApplication.team.videoStatus === 'SUBMITTED_LINK') {
+            showToast("Video yüklendikten sonra öğrenci değişikliği yapılamaz.", "error");
+            return;
+        }
+
         if (!editingStudent.firstName || !editingStudent.lastName || !editingStudent.grade) {
             showToast("Lütfen tüm alanları doldurunuz.", "error");
             return;
@@ -456,6 +466,10 @@ export const Dashboard: React.FC = () => {
 
     const handleDeleteStudent = async (studentId: string) => {
         if (!currentApplication) return;
+        if (currentApplication.team.videoStatus === 'UPLOADED' || currentApplication.team.videoStatus === 'SUBMITTED_LINK') {
+            showToast("Video yüklendikten sonra öğrenci değişikliği yapılamaz.", "error");
+            return;
+        }
         if (currentApplication.team.students.length <= 3) {
             showToast("Takım en az 3 kişiden oluşmalıdır.", "error");
             return;
@@ -720,6 +734,20 @@ export const Dashboard: React.FC = () => {
                                     </select>
                                 </div>
                             )}
+                            {(teamForm.theme === Theme.HADITH || teamForm.theme === Theme.SAHABE) && (
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                                        {teamForm.theme === Theme.HADITH ? 'Seçilen Hadis' : 'Seçilen Sahabe'}
+                                    </label>
+                                    <input 
+                                        type="text"
+                                        placeholder={teamForm.theme === Theme.HADITH ? "Örn: Ameller niyetlere göredir" : "Örn: Hz. Mus'ab b. Umeyr"}
+                                        value={teamForm.selectedTopic} 
+                                        onChange={(e) => setTeamForm({...teamForm, selectedTopic: e.target.value})} 
+                                        className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold transition-colors"
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {/* Verse Preview in Registration */}
@@ -955,26 +983,19 @@ export const Dashboard: React.FC = () => {
                                                     "{renderVerseText(verseDetails[currentApplication.team.selectedVerse].turkish, false)}"
                                                 </p>
                                             </div>
-                                        ) : currentApplication.team.theme === Theme.HADITH ? (
+                                        ) : (currentApplication.team.theme === Theme.HADITH || currentApplication.team.theme === Theme.SAHABE) ? (
                                             <div className="p-8 bg-slate-950/50 border border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center gap-4">
-                                                <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500">
-                                                    <Sparkles size={32} />
+                                                <div className={`w-16 h-16 ${currentApplication.team.theme === Theme.HADITH ? 'bg-amber-500/10 text-amber-500' : 'bg-teal-500/10 text-teal-500'} rounded-full flex items-center justify-center`}>
+                                                    {currentApplication.team.theme === Theme.HADITH ? <Sparkles size={32} /> : <Users size={32} />}
                                                 </div>
                                                 <div>
-                                                    <p className="text-amber-400 font-serif text-xl mb-2" dir="rtl">إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ</p>
-                                                    <p className="text-slate-300 text-sm italic">"Ameller niyetlere göredir." (Buhârî, Bed’ü’l-vahy, 1)</p>
-                                                    <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-widest">Hadis-i Şerif Teması</p>
-                                                </div>
-                                            </div>
-                                        ) : currentApplication.team.theme === Theme.SAHABE ? (
-                                            <div className="p-8 bg-slate-950/50 border border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center gap-4">
-                                                <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center text-teal-500">
-                                                    <Users size={32} />
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-white font-bold mb-2">Sahabe-i Kiram'ın İzinde</h4>
-                                                    <p className="text-slate-400 text-sm leading-relaxed max-w-[300px]">İslam'ın ilk sancaktarları, fedakarlık ve sadakat timsalleri. Hz. Mus'ab b. Umeyr'in daveti, Hz. Bilal'in sabrı ve Hz. Hatice'nin desteği gibi nice hikmetli hayatlar...</p>
-                                                    <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-widest">Sahabe Hikayeleri Teması</p>
+                                                    <h4 className="text-white font-bold mb-2">{currentApplication.team.selectedTopic || (currentApplication.team.theme === Theme.HADITH ? 'Hadis-i Şerif' : 'Sahabe Hikayesi')}</h4>
+                                                    <p className="text-slate-400 text-sm leading-relaxed max-w-[300px]">
+                                                        {currentApplication.team.theme === Theme.HADITH 
+                                                            ? 'Seçilen hadis-i şerif üzerine kurgulanan sinematik eser.' 
+                                                            : 'Seçilen sahabe efendimizin hayatından bir kesit sunan sinematik eser.'}
+                                                    </p>
+                                                    <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-widest">{currentApplication.team.theme}</p>
                                                 </div>
                                             </div>
                                         ) : null}
@@ -1164,6 +1185,22 @@ export const Dashboard: React.FC = () => {
                                         <div>
                                             <h4 className="font-black text-white text-xl leading-tight">{student.firstName} {student.lastName}</h4>
                                             <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">{student.grade}</span>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={() => handleOpenStudentModal(student)}
+                                                className="p-2 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                                                title="Düzenle"
+                                            >
+                                                <Edit size={16} />
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDeleteStudent(student.id)}
+                                                className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-900/20 rounded-lg transition-colors"
+                                                title="Sil"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
                                     </div>
 

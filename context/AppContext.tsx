@@ -398,6 +398,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             category: data.category,
             theme: data.theme,
             selectedVerse: data.selectedVerse, 
+            selectedTopic: data.selectedTopic,
             students: data.students.map((s: any) => ({
                 id: Math.random().toString(36).substring(7),
                 ...s,
