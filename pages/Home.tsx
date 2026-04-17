@@ -8,11 +8,11 @@ import { useAppContext } from '../context/AppContext';
 
 // Competition Schedule Configuration
 const COMPETITION_PHASES = [
-  { label: 'Başvuru ve Eser Gönderimi', date: '2026-04-28T23:59:59' },
-  { label: 'Ön Sonuçların Açıklanması', date: '2026-05-01T12:00:00' },
-  { label: 'Online Eğitim & Workshoplar', date: '2026-05-04T09:00:00' },
-  { label: 'Final Revize Teslimi', date: '2026-05-12T23:59:59' },
-  { label: 'Nihai Sonuçların Açıklanması', date: '2026-05-14T12:00:00' },
+  { label: 'Başvuru ve Eser Gönderimi', date: '2026-05-04T23:59:59' },
+  { label: 'Ön Sonuçların Açıklanması', date: '2026-05-07T12:00:00' },
+  { label: 'Online Eğitim & Workshoplar', date: '2026-05-10T09:00:00' },
+  { label: 'Final Revize Teslimi', date: '2026-05-16T23:59:59' },
+  { label: 'Nihai Sonuçların Açıklanması', date: '2026-05-17T12:00:00' },
   { label: 'Büyük Final & Ödül Töreni', date: '2026-05-22T19:00:00' }
 ];
 
@@ -304,7 +304,7 @@ export const Home: React.FC = () => {
                           {activePhase.label === 'Başvuru ve Eser Gönderimi' ? 'Başvuru ve Eser Gönderimi Başladı' : activePhase.label}
                         </p>
                         <p className="text-slate-400 text-sm font-medium mt-1">
-                          {activePhase.label === 'Başvuru ve Eser Gönderimi' ? 'Son Gün 28 Nisan' : formatDate(activePhase.date)}
+                          {activePhase.label === 'Başvuru ve Eser Gönderimi' ? 'Son Gün 4 Mayıs' : formatDate(activePhase.date)}
                         </p>
                     </div>
                  </div>

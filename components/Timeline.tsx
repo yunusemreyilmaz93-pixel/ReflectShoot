@@ -57,35 +57,35 @@ const STATIC_EVENTS: TimelineEvent[] = [
     color: 'teal'
   },
   {
-    date: '28 Nisan 2026',
+    date: '4 Mayıs 2026',
     title: 'Başvuru ve Eser Teslim (Son Gün)',
     description: 'Sisteme video yüklemek veya link göndermek için son gün. Bu tarihten sonra yapılan başvurular kabul edilmeyecektir.',
     icon: Upload,
     color: 'rose'
   },
   {
-    date: '1 Mayıs 2026',
+    date: '7 Mayıs 2026',
     title: 'Ön Sonuçlar',
     description: 'Jüri ön değerlendirmesi sonucu finale kalan takımların web sitesi üzerinden duyurulması.',
     icon: Star,
     color: 'amber'
   },
   {
-    date: '4-5-6 Mayıs 2026',
+    date: '10-11-12 Mayıs 2026',
     title: 'Online Eğitim/Workshop',
     description: 'Finale kalan ekipler için sektör profesyonelleri ile online senaryo, kurgu ve yönetmenlik atölyeleri.',
     icon: BookOpen,
     color: 'teal'
   },
   {
-    date: '12 Mayıs 2026',
+    date: '16 Mayıs 2026',
     title: 'Final Revize Teslim',
     description: 'Finalist takımların, akademi eğitimleri ışığında filmlerini revize ederek son kurgularını sisteme yükleme süreci.',
     icon: Edit3,
     color: 'amber'
   },
   {
-    date: '14 Mayıs 2026',
+    date: '17 Mayıs 2026',
     title: 'Nihai Sonuçlar',
     description: 'Jüri değerlendirmesi sonucu dereceye giren eserlerin belirlenmesi.',
     icon: CheckCircle2,
