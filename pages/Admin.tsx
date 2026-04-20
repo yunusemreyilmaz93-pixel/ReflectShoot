@@ -287,7 +287,6 @@ const AnalyticsSection = ({ apps, onFilterCategory }: { apps: Application[], onF
         });
         return Object.entries(counts)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
             .map(([name, value]) => ({ name, value }));
     }, [apps]);
 
@@ -332,13 +331,13 @@ const AnalyticsSection = ({ apps, onFilterCategory }: { apps: Application[], onF
                     )}
                 </div>
             </div>
-            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col h-[320px]">
                 <h3 className="font-bold text-white flex items-center gap-2 text-sm mb-6">
                     <MapPin size={16} className="text-amber-500"/> Şehir Bazlı Katılım
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                     {cityData.length > 0 ? cityData.map((city, i) => (
-                        <div key={i}>
+                        <div key={i} className="mb-4 last:mb-0">
                             <div className="flex justify-between text-xs mb-1">
                                 <span className="text-slate-300 font-bold">{city.name}</span>
                                 <span className="text-slate-500">{city.value} Takım</span>
