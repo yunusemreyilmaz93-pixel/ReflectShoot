@@ -11,6 +11,7 @@ import { useAppContext } from '../context/AppContext';
 import { ChatArea } from '../components/ChatArea';
 import { getYouTubeEmbedUrl } from '../lib/videoUtils';
 import { AdminCMS } from '../components/admin/AdminCMS';
+import { TurkeyMap } from '../components/TurkeyMap';
 import { writeBatch, doc, collection } from 'firebase/firestore'; // Import needed for direct batch writing
 import { db } from '../lib/firebase'; // Import db
 
@@ -549,6 +550,7 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategoryFilter
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
     const [categoryFilter, setCategoryFilter] = useState<string>(initialCategoryFilter || 'ALL');
+    const [viewMode, setViewMode] = useState<'LIST' | 'MAP'>('LIST');
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
@@ -610,6 +612,15 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategoryFilter
         finalist: filteredApps.filter(a => a.team.isFinalist).length,
         videoUploaded: filteredApps.filter(a => a.team.videoStatus === 'UPLOADED' || a.team.videoStatus === 'SUBMITTED_LINK').length
     };
+
+    const cityStats = useMemo(() => {
+        const counts: Record<string, number> = {};
+        filteredApps.forEach(app => {
+            const city = app.teacher.city;
+            if(city) counts[city] = (counts[city] || 0) + 1;
+        });
+        return counts;
+    }, [filteredApps]);
 
     const toggleSelection = (id: string) => {
         const newSet = new Set(selectedIds);
@@ -687,11 +698,19 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategoryFilter
 
                     <div className="h-8 w-px bg-slate-700 mx-1"></div>
 
-                    <button className="p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-400 hover:text-white hover:border-slate-500 transition-colors">
+                    <button 
+                        onClick={() => setViewMode('LIST')}
+                        className={`p-2.5 bg-slate-900 border rounded-lg transition-colors ${viewMode === 'LIST' ? 'text-amber-500 border-amber-500/50 bg-amber-500/5' : 'text-slate-400 border-slate-700 hover:text-white hover:border-slate-500'}`}
+                        title="Liste Görünümü"
+                    >
                         <List size={18} />
                     </button>
-                    <button className="p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-400 hover:text-white hover:border-slate-500 transition-colors">
-                        <LayoutGrid size={18} />
+                    <button 
+                        onClick={() => setViewMode('MAP')}
+                        className={`p-2.5 bg-slate-900 border rounded-lg transition-colors ${viewMode === 'MAP' ? 'text-amber-500 border-amber-500/50 bg-amber-500/5' : 'text-slate-400 border-slate-700 hover:text-white hover:border-slate-500'}`}
+                        title="Harita Görünümü"
+                    >
+                        <Globe size={18} />
                     </button>
 
                     <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-bold transition-colors border border-slate-600">
@@ -753,10 +772,48 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategoryFilter
                 </div>
             )}
 
-            {/* Table */}
-            <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+            {/* Content Area */}
+            {viewMode === 'MAP' ? (
+                <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 animate-fadeIn">
+                    <div className="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 className="text-white font-bold text-lg">Başvuru Yoğunluk Haritası</h3>
+                            <p className="text-xs text-slate-500">Uygulanan filtrelere göre şehir bazlı başvuru dağılımı.</p>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-[10px] text-slate-500 uppercase font-black block">Toplam Şehir</span>
+                            <span className="text-2xl font-black text-amber-500">
+                                {Object.keys(cityStats).length}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div className="h-[500px]">
+                        <TurkeyMap 
+                            data={cityStats} 
+                            onCityClick={(city) => {
+                                setSearchTerm(city);
+                                setViewMode('LIST');
+                            }}
+                        />
+                    </div>
+                    
+                    <div className="mt-6 flex flex-wrap gap-2">
+                        {Object.entries(cityStats)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 5)
+                        .map(([city, count]) => (
+                            <div key={city} className="px-3 py-1 bg-slate-900 border border-slate-700 rounded-full text-[10px] font-bold text-slate-400">
+                                <span className="text-amber-500 mr-2">{count}</span> {city}
+                            </div>
+                        ))}
+                        <span className="text-[10px] text-slate-600 mt-1 ml-2">...ve diğer şehirler</span>
+                    </div>
+                </div>
+            ) : (
+                <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-slate-700 bg-slate-900/50 text-xs font-bold text-slate-500 uppercase tracking-wider">
                                 <th className="p-4 w-12 text-center">
@@ -866,6 +923,7 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategoryFilter
                     </table>
                 </div>
             </div>
+            )}
         </div>
     );
 };

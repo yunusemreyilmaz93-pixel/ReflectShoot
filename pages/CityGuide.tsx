@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { Camera, Train, Utensils, Bed, Compass, Landmark, Bus, Info, CloudSun, ShoppingBag, Thermometer, Shirt, Map, Clock, Navigation, Wifi, BatteryCharging, Phone, X, AlertCircle, Footprints, History, Coffee, Moon, ExternalLink, Aperture, CheckSquare, Share2, Ticket, ArrowRight, MapPin } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { Camera, Train, Utensils, Bed, Compass, Landmark, Bus, Info, CloudSun, ShoppingBag, Thermometer, Shirt, Map, Clock, Navigation, Wifi, BatteryCharging, Phone, X, AlertCircle, Footprints, History, Coffee, Moon, ExternalLink, Aperture, CheckSquare, Share2, Ticket, ArrowRight, MapPin, Trophy, Cpu, Users as UsersIcon } from 'lucide-react';
 
 interface LocationDetail {
     hours: string;
@@ -23,6 +24,7 @@ interface TouristLocation {
 
 export const CityGuide: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<TouristLocation | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [checkedTasks, setCheckedTasks] = useState<number[]>([]);
   
   const scrollTo = (id: string) => {
@@ -210,6 +212,7 @@ export const CityGuide: React.FC = () => {
                   { id: 'story', label: 'Şehrin Ruhu', icon: History },
                   { id: 'itineraries', label: 'Hazır Rotalar', icon: Footprints },
                   { id: 'transfer', label: 'Gala Transfer', icon: Bus },
+                  { id: 'tas-bina', label: 'Gala Merkezi', icon: Trophy },
                   { id: 'locations', label: 'Gezilecek Yerler', icon: Map },
                   { id: 'tasks', label: 'Gezgin Checklist', icon: CheckSquare },
                   { id: 'survival', label: 'Pratik Bilgiler', icon: Info },
@@ -339,8 +342,8 @@ export const CityGuide: React.FC = () => {
                               Gala Günü <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-500 to-amber-200">Transfer Planı</span>
                           </h2>
                           <p className="text-slate-400 text-lg font-light leading-relaxed">
-                              Tüm finalist ekiplerimiz için pansiyondan gala merkezine özel VIP transfer organize edilmiştir. 
-                              Lütfen belirtilen saatte "Sete Hazır" (Ready on Set) olunuz.
+                              İl dışından gelecek olan finalist ekiplerimiz için pansiyondan gala merkezine transfer organize edilecektir. 
+                              Lütfen belirtilen saatte "Sete Hazır" olunuz.
                           </p>
                       </div>
 
@@ -354,7 +357,7 @@ export const CityGuide: React.FC = () => {
                               {/* Row 1 */}
                               <div className="flex flex-col md:flex-row justify-between items-center border-b border-slate-800 pb-6 gap-4 text-center md:text-left">
                                   <div>
-                                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">CALL TIME (KALKIŞ)</span>
+                                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">KALKIŞ</span>
                                       <span className="text-3xl font-black text-white flex items-center justify-center md:justify-start gap-2">
                                           09:30 <Clock className="text-amber-500" size={20}/>
                                       </span>
@@ -394,6 +397,122 @@ export const CityGuide: React.FC = () => {
                           </div>
                       </div>
 
+                  </div>
+              </div>
+          </section>
+
+          {/* 4.7 TAŞ BİNA Section (Gala Venue) */}
+          <section id="tas-bina" className="scroll-mt-32">
+              <div className="flex flex-col lg:flex-row gap-12 items-center">
+                  <div className="flex-1 space-y-8 order-2 lg:order-1">
+                      <div className="inline-flex items-center gap-2 text-amber-500 font-bold uppercase tracking-widest text-xs">
+                          <Trophy size={14}/> Ödül Töreni Alanı
+                      </div>
+                      <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
+                          Tarihin Dijitalle <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-amber-200">Buluşma Noktası</span>
+                      </h2>
+                      <p className="text-lg text-slate-300 leading-relaxed font-light">
+                          1917 yılında Mimar Muzaffer tarafından Darülmuallimat olarak temelleri atılan bu görkemli yapı, bugün Konya'nın hafızasını dijital dünyayla birleştiriyor. 
+                          Kız Öğretmen Okulu ve Rektörlük binası olarak şehre hizmet eden Taş Bina, şimdi büyük finalimize ev sahipliği yapıyor.
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {[
+                              { label: 'Dijital Deneyim Merkezi', icon: Cpu },
+                              { label: 'Kültür Sanat Alanları', icon: Aperture },
+                              { label: 'Konferans Salonu', icon: UsersIcon },
+                              { label: 'Kitap & Hediyelik Ofisi', icon: ShoppingBag }
+                          ].map((item, idx) => (
+                              <div key={idx} className="flex items-center gap-3 p-4 bg-slate-900/50 rounded-2xl border border-slate-800 backdrop-blur-sm shadow-inner group">
+                                  <div className="p-2 bg-slate-950 rounded-lg text-amber-500 group-hover:scale-110 transition-transform">
+                                      <item.icon size={18} />
+                                  </div>
+                                  <span className="text-sm text-slate-300 font-medium">{item.label}</span>
+                              </div>
+                          ))}
+                      </div>
+
+                      <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-3xl space-y-4">
+                          <h4 className="text-white font-bold text-sm flex items-center gap-2 uppercase tracking-wider">
+                              <Info size={16} className="text-blue-500"/> Dijital Keşif Yolculuğu
+                          </h4>
+                          <p className="text-xs text-slate-400 leading-relaxed">
+                              Binanın ana girişinden itibaren koridorun sağında ve solunda 7 oda yer alır. İlk oda satış ofisiyken, diğer 6 oda dijital tanıtım merkezidir: 
+                              <strong> Tarih Odası, Go Konya, Kültürel Mozaik, Yaşayan Kültür, Tarihe Açılan Kapılar</strong> ve <strong>Benim Şehrim</strong>. Her oda Konya'nın farklı bir yönünü anlatır.
+                          </p>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-6 pt-6 border-t border-slate-800/50">
+                          <div className="flex items-center gap-3 text-slate-500 text-xs font-medium">
+                              <div className="p-2 bg-rose-500/10 rounded-full text-rose-500"><MapPin size={14}/></div>
+                              Şemsitebrizi, Ankara Cd. No:6
+                          </div>
+                          <div className="flex items-center gap-3 text-slate-500 text-xs font-medium">
+                              <div className="p-2 bg-blue-500/10 rounded-full text-blue-500"><Phone size={14}/></div>
+                              (0332) 221 14 05
+                          </div>
+                      </div>
+                  </div>
+
+                  <div className="flex-1 relative w-full order-1 lg:order-2">
+                      <div className="absolute inset-0 bg-amber-500 blur-[120px] opacity-10 rounded-full"></div>
+                      <div className="grid grid-cols-2 gap-4 relative">
+                          <div className="space-y-4 pt-12">
+                              <div 
+                                className="relative h-64 md:h-72 rounded-[2rem] overflow-hidden border border-slate-700 shadow-2xl group cursor-zoom-in"
+                                onClick={() => setSelectedImage("https://assets.reflectandshoot.com/city_guide/tas_bina_2.jpg")}
+                              >
+                                  <img 
+                                    src="https://assets.reflectandshoot.com/city_guide/tas_bina_2.jpg" 
+                                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                                    alt="Taş Bina Dış Cephe"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent"></div>
+                                  <div className="absolute bottom-4 left-4">
+                                      <p className="text-white font-bold text-xs">Orijinal Cephe</p>
+                                  </div>
+                              </div>
+                              <div 
+                                className="relative h-48 md:h-56 rounded-[2rem] overflow-hidden border border-slate-700 shadow-2xl group cursor-zoom-in"
+                                onClick={() => setSelectedImage("https://assets.reflectandshoot.com/city_guide/tas_bina_1.jpg")}
+                              >
+                                  <img 
+                                    src="https://assets.reflectandshoot.com/city_guide/tas_bina_1.jpg" 
+                                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                                    alt="Taş Bina Detay"
+                                  />
+                                  <div className="absolute inset-0 bg-amber-500/10 group-hover:bg-transparent transition-colors"></div>
+                              </div>
+                          </div>
+                          <div className="space-y-4">
+                              <div className="relative h-48 md:h-56 rounded-[2rem] overflow-hidden border border-slate-700 shadow-2xl group bg-slate-900">
+                                  <img 
+                                    src="https://assets.reflectandshoot.com/city_guide/tas_bina_1.jpg" 
+                                    className="w-full h-full object-cover opacity-30 grayscale cursor-zoom-in" 
+                                    alt="Taş Bina Arka Plan"
+                                    onClick={() => setSelectedImage("https://assets.reflectandshoot.com/city_guide/tas_bina_1.jpg")}
+                                  />
+                                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center pointer-events-none">
+                                      <span className="text-[10px] text-amber-500 font-black uppercase tracking-[0.4em] mb-2">Kuruluş</span>
+                                      <span className="text-2xl font-black text-white">1917</span>
+                                  </div>
+                              </div>
+                              <div 
+                                className="relative h-64 md:h-72 rounded-[2rem] overflow-hidden border border-slate-700 shadow-2xl group cursor-zoom-in"
+                                onClick={() => setSelectedImage("https://assets.reflectandshoot.com/city_guide/tas_bina_2.jpg")}
+                              >
+                                  <img 
+                                    src="https://assets.reflectandshoot.com/city_guide/tas_bina_2.jpg" 
+                                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                                    alt="Taş Bina Gece"
+                                  />
+                                  <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-slate-950 to-transparent">
+                                      <p className="text-amber-500 font-black text-[10px] uppercase tracking-widest mb-1">Kültür Havzası</p>
+                                      <p className="text-white font-bold text-sm leading-tight">Gala & Ödül Heyecanı Burada Yaşanacak</p>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
                   </div>
               </div>
           </section>
@@ -758,6 +877,42 @@ export const CityGuide: React.FC = () => {
               </div>
           </div>
       )}
+
+      {/* IMAGE POPUP MODAL */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 md:p-12"
+            onClick={() => setSelectedImage(null)}
+          >
+            <motion.button 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-10"
+              onClick={(e) => { e.stopPropagation(); setSelectedImage(null); }}
+            >
+              <X size={24} />
+            </motion.button>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-full max-h-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={selectedImage} 
+                className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl border border-white/10" 
+                alt="Enlarged" 
+                referrerPolicy="no-referrer"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
