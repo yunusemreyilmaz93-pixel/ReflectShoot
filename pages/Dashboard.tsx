@@ -63,7 +63,7 @@ const ProductionStatusRing = ({ progress }: { progress: number }) => {
 };
 
 // 2. Next Action Card (Smart Assistant)
-const NextActionCard = ({ app, onAction }: { app: any, onAction: (tab: string, subAction?: any) => void }) => {
+const NextActionCard = ({ app, isDeadlinePassed, onAction }: { app: any, isDeadlinePassed?: boolean, onAction: (tab: string, subAction?: any) => void }) => {
     let action = { text: "Tüm aşamalar tamamlandı! Arkanıza yaslanın.", btn: "Durumu Kontrol Et", tab: "STATUS", type: "success" };
     
     // Logic Chain
@@ -72,7 +72,13 @@ const NextActionCard = ({ app, onAction }: { app: any, onAction: (tab: string, s
     const missingParent = app.team.students.find((s: Student) => !s.hasParentalConsent);
     const missingKvkk = app.team.students.find((s: Student) => !s.hasKvkkConsent);
 
-    if (app.team.students.length < 3) {
+    if (isDeadlinePassed) {
+        if (app.team.videoStatus === 'SUBMITTED_LINK' || app.team.videoStatus === 'UPLOADED') {
+            action = { text: "Video teslim aşaması sona erdi. Jüri değerlendirmesi sürmektedir.", btn: "Durumu Gör", tab: "STATUS", type: "success" };
+        } else {
+            action = { text: "Film yükleme süresi sona ermiştir. İşlemi tamamlayamadınız.", btn: "İncele", tab: "STATUS", type: "urgent" };
+        }
+    } else if (app.team.students.length < 3) {
         action = { text: "Takım en az 3 kişiden oluşmalıdır.", btn: "Öğrenci Ekle", tab: "DOCUMENTS", type: "urgent" };
     } else if (missingParent) {
         action = { text: `${missingParent.firstName} isimli öğrencinin Veli İzin Belgesi eksik.`, btn: "Belgeyi Yükle", tab: "DOCUMENTS", type: "warning" };
@@ -282,6 +288,7 @@ export const Dashboard: React.FC = () => {
     });
     const [videoLink, setVideoLink] = useState('');
     const [showVideoSuccessModal, setShowVideoSuccessModal] = useState(false);
+    const [showDeadlineModal, setShowDeadlineModal] = useState(false);
 
     // Edit & Upload State
     const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
@@ -330,6 +337,17 @@ export const Dashboard: React.FC = () => {
             setLastReadMessageId(latestMessageId);
         }
     }, [activeTab, latestMessageId]);
+
+    // Show Deadline Passed Modal once
+    useEffect(() => {
+        if (IS_DEADLINE_PASSED && currentApplication?.team.videoStatus === 'SUBMITTED_LINK') {
+            const hasSeen = localStorage.getItem(`seen_deadline_passed_${currentApplication.id}`);
+            if (!hasSeen) {
+                setShowDeadlineModal(true);
+                localStorage.setItem(`seen_deadline_passed_${currentApplication.id}`, 'true');
+            }
+        }
+    }, [IS_DEADLINE_PASSED, currentApplication?.id, currentApplication?.team.videoStatus]);
 
     // Progress Calculation
     const calculateProgress = () => {
@@ -871,7 +889,7 @@ export const Dashboard: React.FC = () => {
 
                     {/* Dynamic CTA */}
                     <div className="mb-8">
-                        <NextActionCard app={currentApplication} onAction={handleActionRedirect} />
+                        <NextActionCard app={currentApplication} isDeadlinePassed={IS_DEADLINE_PASSED} onAction={handleActionRedirect} />
                     </div>
 
                     {/* Navigation Tabs */}
@@ -1593,6 +1611,43 @@ export const Dashboard: React.FC = () => {
                                 className="bg-white text-slate-900 hover:bg-slate-200 px-10 py-4 rounded-xl font-black text-lg shadow-xl hover:-translate-y-1 transition-all"
                             >
                                 Harika!
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showDeadlineModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-fadeIn">
+                    <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full shadow-2xl relative overflow-hidden text-center p-10">
+                        {/* Confetti / Celebration Decoration */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none"></div>
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-[80px] -mr-20 -mt-20"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-[80px] -ml-20 -mb-20"></div>
+
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(20,184,166,0.4)] mb-8 animate-bounce">
+                                <Clapperboard size={48} className="text-white" />
+                            </div>
+                            
+                            <h2 className="text-3xl md:text-3xl font-black text-white mb-4 tracking-tight">
+                                Film Gönderim Süreci Sona Erdi!
+                            </h2>
+                            <h3 className="text-xl font-bold text-green-400 mb-6">
+                                Jüri Değerlendirmesi Başladı
+                            </h3>
+                            
+                            <p className="text-slate-300 text-lg leading-relaxed mb-8">
+                                Tebrikler! Filminizi başarıyla teslim ettiniz ve değerlendirme sürecine katılmaya hak kazandınız. Jüri heyetimiz projelerinizi dikkatle inceliyor.
+                                <br/><br/>
+                                Sonuçlar, görkemli gala gecesinde açıklanacaktır. Hazırlıklarınızı yapmayı unutmayın!
+                            </p>
+
+                            <button 
+                                onClick={() => setShowDeadlineModal(false)}
+                                className="bg-white text-slate-900 hover:bg-slate-200 px-10 py-4 rounded-xl font-black text-lg shadow-xl hover:-translate-y-1 transition-all"
+                            >
+                                Anladım
                             </button>
                         </div>
                     </div>
