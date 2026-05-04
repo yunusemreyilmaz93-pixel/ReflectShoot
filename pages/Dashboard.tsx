@@ -184,6 +184,8 @@ const TeamSwitcher = ({
 
 export const Dashboard: React.FC = () => {
     const { currentUser, currentApplication, myApplications, activeApplicationId, setActiveApplicationId, createApplication, updateApplication, showToast, systemSettings } = useAppContext();
+    const IS_DEADLINE_PASSED = new Date() > new Date('2026-05-04T20:59:59Z');
+
     const [activeTab, setActiveTab] = useState('STATUS');
     const [showCreateForm, setShowCreateForm] = useState(false);
     
@@ -608,6 +610,10 @@ export const Dashboard: React.FC = () => {
 
     const confirmVideoSubmission = async () => {
         if (!currentApplication) return;
+        if (IS_DEADLINE_PASSED) {
+            showToast("Video teslim süresi sona ermiştir.", "error");
+            return;
+        }
         if (!videoLink.trim()) {
             showToast("Lütfen YouTube video linkini giriniz.", "error");
             return;
@@ -1468,8 +1474,8 @@ export const Dashboard: React.FC = () => {
                                         ].map(item => (
                                             <div 
                                                 key={item.id} 
-                                                onClick={() => setVideoChecklist(prev => ({...prev, [item.id]: !prev[item.id as keyof typeof videoChecklist]}))}
-                                                className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer border transition-all ${videoChecklist[item.id as keyof typeof videoChecklist] ? 'bg-green-900/20 border-green-500/50' : 'bg-slate-950 border-slate-800 hover:border-slate-600'}`}
+                                                onClick={() => !IS_DEADLINE_PASSED && setVideoChecklist(prev => ({...prev, [item.id]: !prev[item.id as keyof typeof videoChecklist]}))}
+                                                className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer border transition-all ${videoChecklist[item.id as keyof typeof videoChecklist] ? 'bg-green-900/20 border-green-500/50' : 'bg-slate-950 border-slate-800 hover:border-slate-600'} ${IS_DEADLINE_PASSED ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             >
                                                 <div className={`w-6 h-6 rounded flex items-center justify-center border transition-colors ${videoChecklist[item.id as keyof typeof videoChecklist] ? 'bg-green-500 border-green-500' : 'border-slate-600'}`}>
                                                     {videoChecklist[item.id as keyof typeof videoChecklist] && <CheckSquare size={16} className="text-white" />}
@@ -1479,12 +1485,18 @@ export const Dashboard: React.FC = () => {
                                         ))}
                                     </div>
 
+                                    {IS_DEADLINE_PASSED && (
+                                        <div className="mt-6 p-4 bg-red-900/40 border border-red-500/50 rounded-xl text-red-200 text-sm font-bold flex items-center gap-2">
+                                            <AlertCircle size={20} className="text-red-500" /> Video teslim süresi 4 Mayıs 2026 23:59 itibarıyla sona ermiştir.
+                                        </div>
+                                    )}
+
                                     <button 
                                         onClick={confirmVideoSubmission} 
-                                        disabled={!allVideoChecksPassed}
-                                        className={`w-full mt-8 py-5 rounded-xl font-black text-lg uppercase tracking-wider shadow-xl transition-all ${allVideoChecksPassed ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/30 hover:-translate-y-1' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
+                                        disabled={!allVideoChecksPassed || IS_DEADLINE_PASSED}
+                                        className={`w-full mt-8 py-5 rounded-xl font-black text-lg uppercase tracking-wider shadow-xl transition-all ${allVideoChecksPassed && !IS_DEADLINE_PASSED ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/30 hover:-translate-y-1' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
                                     >
-                                        {currentApplication.team.videoStatus === 'SUBMITTED_LINK' ? 'Linki Güncelle' : allVideoChecksPassed ? 'Teslimi Onayla ve Bitir' : 'Listeyi Tamamlayın'}
+                                        {IS_DEADLINE_PASSED ? 'Süre Doldu' : currentApplication.team.videoStatus === 'SUBMITTED_LINK' ? 'Linki Güncelle' : allVideoChecksPassed ? 'Teslimi Onayla ve Bitir' : 'Listeyi Tamamlayın'}
                                     </button>
                                     
                                     {currentApplication.team.videoStatus === 'SUBMITTED_LINK' && (

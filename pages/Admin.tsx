@@ -969,22 +969,33 @@ const AdminJuryAssign = ({ apps }: { apps: Application[] }) => {
             showToast('Sistemde kayıtlı jüri bulunamadı. Lütfen önce jüri ekleyin.', 'error');
             return;
         }
+
+        const validApps = apps.filter(a => a.team.videoStatus === 'UPLOADED' || a.team.videoStatus === 'SUBMITTED_LINK');
         
-        if (!window.confirm('Tüm takımlara otomatik jüri ataması yapılacaktır. Her takıma rastgele 3 jüri atanır. Onaylıyor musunuz?')) return;
+        if (validApps.length === 0) {
+            showToast('Videosunu teslim etmiş hiçbir takım bulunamadı.', 'error');
+            return;
+        }
+        
+        if (!window.confirm(`Sadece videosunu teslim etmiş olan (${validApps.length}) takıma otomatik dağıtım yapılacaktır. Adil dağılım algoritması ile her filme 4 jüri atanacaktır. Onaylıyor musunuz?`)) return;
 
         setIsAutoAssigning(true);
         try {
-            const assignments = apps.map(app => {
-                // Simple random assignment logic: 3 juries per team
-                // If juries count < 3, assign all.
-                const needed = Math.min(3, juries.length);
-                const shuffled = [...juries].sort(() => 0.5 - Math.random());
-                const selectedIds = shuffled.slice(0, needed).map(j => j.uid);
+            const shuffledJuries = [...juries].sort(() => 0.5 - Math.random());
+            let juryIndex = 0;
+            const needed = Math.min(4, shuffledJuries.length);
+
+            const assignments = validApps.map(app => {
+                const selectedIds: string[] = [];
+                for (let i = 0; i < needed; i++) {
+                    selectedIds.push(shuffledJuries[juryIndex].uid);
+                    juryIndex = (juryIndex + 1) % shuffledJuries.length;
+                }
                 return { appId: app.id, juryIds: selectedIds };
             });
 
             await bulkAssignJury(assignments);
-            showToast('Otomatik dağıtım tamamlandı.', 'success');
+            showToast('Otomatik dağıtım tamamlandı. Adaletli dağılım yapıldı.', 'success');
         } catch (error) {
             console.error(error);
             showToast('Otomatik atama sırasında hata oluştu.', 'error');
