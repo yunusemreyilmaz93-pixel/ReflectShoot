@@ -64,7 +64,7 @@ service cloud.firestore {
                     (hasRole('JUDGE') && request.auth.uid in resource.data.assignedJuryIds) ||
                     resource.data.team.isFinalist == true;
 
-      allow list: if hasRole('ADMIN') || hasRole('TEACHER') || resource.data.team.isFinalist == true;
+      allow list: if hasRole('ADMIN') || hasRole('TEACHER') || (hasRole('JUDGE') && request.auth.uid in resource.data.assignedJuryIds) || resource.data.team.isFinalist == true;
 
       allow create: if (hasRole('TEACHER') || hasRole('ADMIN')) && isNotRateLimited();
 
@@ -90,6 +90,11 @@ service cloud.firestore {
         allow create: if hasRole('ADMIN') || hasRole('TEACHER');
         allow delete: if hasRole('ADMIN'); // ← eklendi
       }
+    }
+
+    // --- 3.5 COLLECTION GROUPS ---
+    match /{path=**}/scores/{scoreDocId} {
+      allow read: if hasRole('ADMIN') || (hasRole('JUDGE') && (resource.data.juryId == request.auth.uid || scoreDocId == request.auth.uid));
     }
 
     // --- 4. NOTIFICATIONS ---

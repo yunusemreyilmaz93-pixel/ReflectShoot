@@ -1448,7 +1448,7 @@ const AdminAnnouncements = () => {
 };
 
 export const Admin: React.FC = () => {
-  const { allApplications, updateApplication, logAction, systemSettings, updateSystemSettings, auditLogs, logout, fetchJuryScores, loading, showToast, downloadFullBackup, seedAcademyContent } = useAppContext();
+  const { currentUser, allApplications, updateApplication, logAction, systemSettings, updateSystemSettings, auditLogs, logout, fetchJuryScores, loading, showToast, downloadFullBackup, seedAcademyContent } = useAppContext();
   const [activeTab, setActiveTab] = useState('DASHBOARD');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -1457,6 +1457,45 @@ export const Admin: React.FC = () => {
   const [globalCategoryFilter, setGlobalCategoryFilter] = useState<string | null>(null);
   const [rejectingDoc, setRejectingDoc] = useState<{ studentId: string, type: 'PARENT' | 'KVKK' } | null>(null);
   const [rejectionReasonInput, setRejectionReasonInput] = useState('');
+
+  // Script to fix Zeynep Akın's name and verse
+  useEffect(() => {
+    const fixZeynep = async () => {
+      try {
+        if (currentUser?.role !== 'ADMIN') return;
+        const hasRun = localStorage.getItem('fixed_zeynep_akin');
+        if (hasRun) return;
+
+        const { query, where, getDocs, collection, updateDoc } = await import('firebase/firestore');
+        const { db } = await import('../lib/firebase');
+
+        // Fix user
+        const usersRef = collection(db, 'users');
+        const uq = query(usersRef, where('fullName', '==', 'Zeynep Akı'));
+        const usnap = await getDocs(uq);
+        usnap.forEach(async (d) => {
+            await updateDoc(d.ref, { fullName: 'Zeynep Akın' });
+        });
+
+        // Fix application
+        const appsRef = collection(db, 'applications');
+        const aq = query(appsRef, where('teacher.fullName', '==', 'Zeynep Akı'));
+        const asnap = await getDocs(aq);
+        asnap.forEach(async (d) => {
+            await updateDoc(d.ref, { 
+                'teacher.fullName': 'Zeynep Akın',
+                'team.selectedVerse': "Ra'd: 28" 
+            });
+        });
+
+        localStorage.setItem('fixed_zeynep_akin', 'true');
+        console.log('Fixed Zeynep Akın data.');
+      } catch (e) {
+          console.error(e);
+      }
+    };
+    fixZeynep();
+  }, [currentUser]);
 
   const handleFilterCategory = (cat: string | null) => {
       setGlobalCategoryFilter(cat);
