@@ -1512,39 +1512,26 @@ export const Admin: React.FC = () => {
     const fixAaalTeam = async () => {
       try {
         if (currentUser?.role !== 'ADMIN') return;
-        const hasRun = localStorage.getItem('fixed_aaal_team_verse');
+        const hasRun = localStorage.getItem('fixed_aaal_team_verse_v2');
         if (hasRun) return;
 
-        const { query, where, getDocs, collection, updateDoc } = await import('firebase/firestore');
+        const { getDocs, collection, updateDoc } = await import('firebase/firestore');
         const { db } = await import('../lib/firebase');
 
         const appsRef = collection(db, 'applications');
-        const aq = query(appsRef, where('team.name', '==', 'AAAL\'İN YILDIZLARI')); // Try uppercase
-        const asnap = await getDocs(aq);
+        const asnap = await getDocs(appsRef);
         asnap.forEach(async (d) => {
-            await updateDoc(d.ref, { 
-                'team.selectedVerse': "Ra'd: 28" 
-            });
-        });
-        
-        const aq2 = query(appsRef, where('team.name', '==', 'aaal\'in yıldızları')); // Try exact match with lowercase
-        const asnap2 = await getDocs(aq2);
-        asnap2.forEach(async (d) => {
-            await updateDoc(d.ref, { 
-                'team.selectedVerse': "Ra'd: 28" 
-            });
+            const name = d.data().team?.name?.toLowerCase() || '';
+            if (name.includes('aaal')) {
+               await updateDoc(d.ref, { 
+                   'team.selectedVerse': "Ra'd: 28" 
+               });
+               console.log("Updated team:", d.data().team?.name);
+            }
         });
 
-        const aq3 = query(appsRef, where('team.name', '==', 'Aaal\'in yıldızları')); // Try Pascal case
-        const asnap3 = await getDocs(aq3);
-        asnap3.forEach(async (d) => {
-            await updateDoc(d.ref, { 
-                'team.selectedVerse': "Ra'd: 28" 
-            });
-        });
-
-        localStorage.setItem('fixed_aaal_team_verse', 'true');
-        console.log('Fixed aaal team verse.');
+        localStorage.setItem('fixed_aaal_team_verse_v2', 'true');
+        console.log('Fixed aaal team verse v2.');
       } catch (e) {
           console.error(e);
       }
