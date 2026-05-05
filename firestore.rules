@@ -71,15 +71,13 @@ service cloud.firestore {
       allow update: if hasRole('ADMIN') ||
                        ((hasRole('TEACHER') && resource.data.teacher.id == request.auth.uid) && isNotRateLimited()) ||
                        (hasRole('JUDGE') &&
-                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gradedBy']) &&
-                          request.resource.data.gradedBy.size() == resource.data.gradedBy.size() + 1 &&
-                          request.resource.data.gradedBy[request.resource.data.gradedBy.size() - 1] == request.auth.uid
+                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gradedBy', 'finalScore', 'juryCount', 'status'])
                        );
 
       allow delete: if hasRole('ADMIN'); // ← eklendi
 
       match /scores/{juryId} {
-        allow read:  if hasRole('ADMIN') || (hasRole('JUDGE') && isOwner(juryId));
+        allow read:  if hasRole('ADMIN') || hasRole('JUDGE');
         allow write: if hasRole('JUDGE') && isOwner(juryId) && isNotRateLimited();
         allow delete: if hasRole('ADMIN'); // ← eklendi
       }
@@ -94,7 +92,7 @@ service cloud.firestore {
 
     // --- 3.5 COLLECTION GROUPS ---
     match /{path=**}/scores/{scoreDocId} {
-      allow read: if hasRole('ADMIN') || (hasRole('JUDGE') && (resource.data.juryId == request.auth.uid || scoreDocId == request.auth.uid));
+      allow read: if hasRole('ADMIN') || hasRole('JUDGE');
     }
 
     // --- 4. NOTIFICATIONS ---

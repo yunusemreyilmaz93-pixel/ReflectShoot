@@ -536,14 +536,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const logAction = async (action: string, details: string, targetId?: string, metadata?: any) => {
         if (!currentUser) return;
-        await addDoc(collection(db, "logs"), {
-            action, details, targetId, metadata,
-            performedBy: currentUser.email,
-            performedByUid: currentUser.uid,
-            ip: userIp,
-            userAgent: navigator.userAgent,
-            timestamp: new Date().toISOString()
-        });
+        try {
+            const payload: any = {
+                action, details,
+                performedBy: currentUser.email,
+                performedByUid: currentUser.uid,
+                ip: userIp || '',
+                userAgent: navigator.userAgent || '',
+                timestamp: new Date().toISOString()
+            };
+            if (targetId !== undefined) payload.targetId = targetId;
+            if (metadata !== undefined) payload.metadata = metadata;
+            
+            await addDoc(collection(db, "logs"), payload);
+        } catch (err) {
+            console.error("Failed to log action:", err);
+            // Do not throw, as logging shouldn't break the main flow
+        }
     };
 
     const sendContactMessage = async (data: any) => {
