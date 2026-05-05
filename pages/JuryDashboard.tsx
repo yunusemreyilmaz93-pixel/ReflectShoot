@@ -446,25 +446,20 @@ export const JuryDashboard: React.FC = () => {
                            </div>
 
                            {[
-                               { id: 'story', label: 'Senaryo & Hikaye', max: 25, desc: 'Olay örgüsü, karakter derinliği, mesajın netliği.' },
-                               { id: 'technical', label: 'Teknik Kalite', max: 25, desc: 'Görüntü yönetimi, ışık, ses kalitesi, kamera açıları.' },
-                               { id: 'originality', label: 'Özgünlük & Yaratıcılık', max: 25, desc: 'Sanatsal bakış açısı, yenilikçi anlatım.' },
-                               { id: 'themeFit', label: 'Tema Uyumu', max: 25, desc: 'Seçilen ayet/hadis ile filmin ilişkisi.' }
+                               { id: 'story', label: 'Senaryo & Anlatı Derinliği', max: 25, desc: 'Hikâye başı–ortası–sonu olan anlamlı bir bütünlük sunuyor mu? İzleyiciyi düşünmeye sevk eden bir anlatı derinliği var mı? Olaylar veya sahneler arasında mantıklı bir akış bulunuyor mu? Anlatım, seçilen ayet/hadis/sahabe hikâyesini yüzeysel değil, yorumlayarak ele alıyor mu?' },
+                               { id: 'themeFit', label: 'Tema & Kaynaklara Uygunluk', max: 25, desc: 'Seçilen ayet, hadis veya sahabe hikâyesi doğru bağlamda kullanılmış mı? Kaynak, anlamı çarpıtılmadan ve saygılı bir üslupla ele alınmış mı? Film, kaynağın verdiği ana mesajla uyumlu bir sonuç üretiyor mu? Metin, slogana indirgenmeden anlamlandırılmış mı?' },
+                               { id: 'originality', label: 'Düşünsel & Manevi Mesaj', max: 25, desc: 'Film izleyicide tefekkür duygusu uyandırıyor mu? Mesaj, doğrudan dayatılmadan, izleyicinin kendi çıkarım yapmasına alan tanıyor mu? Film, insan–hayat–ahlak ilişkisine dair bir soru veya farkındalık oluşturuyor mu? Manevi mesaj, duygusal sömürüye kaçmadan aktarılmış mı?' },
+                               { id: 'technical', label: 'Teknik Kalite & Sinematografi', max: 25, desc: 'Görüntü netliği, kadraj ve ışık kullanımı nasıl? Ses kalitesi ve anlaşılabilirlik yeterli mi? Kurgu ve sahne geçişlerinin akıcılığı sağlanmış mı? Yapay zekâ kullanılmışsa; üretimin tutarlılığı ve bütünlüğü var mı?' }
                            ].map((c) => (
-                               <div key={c.id} className="group/slider">
-                                   <div className="flex justify-between mb-2 items-end">
-                                       <div>
-                                           <label className="text-sm font-bold text-slate-200 block flex items-center gap-2">
-                                               {c.label}
-                                               <div className="group relative">
-                                                   <Info size={12} className="text-slate-600 cursor-help" />
-                                                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-slate-300 text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-700">
-                                                       {c.desc}
-                                                   </div>
-                                               </div>
-                                           </label>
-                                       </div>
-                                       <span className="text-lg font-black text-rose-500 w-8 text-right">{criteria[c.id as keyof EvaluationCriteria]}</span>
+                               <div key={c.id} className="group/slider mb-6">
+                                   <div className="flex justify-between items-end mb-1">
+                                       <label className="text-base font-bold text-slate-200 block">
+                                           {c.label}
+                                       </label>
+                                       <span className="text-xl font-black text-rose-500 w-10 text-right">{criteria[c.id as keyof EvaluationCriteria]}</span>
+                                   </div>
+                                   <div className="text-slate-400 text-[11px] mb-4 leading-relaxed pr-2 whitespace-pre-line">
+                                       · {c.desc.replace(/\? /g, "?\n· ")}
                                    </div>
                                    <input 
                                      type="range" 

@@ -1458,43 +1458,54 @@ export const Admin: React.FC = () => {
   const [rejectingDoc, setRejectingDoc] = useState<{ studentId: string, type: 'PARENT' | 'KVKK' } | null>(null);
   const [rejectionReasonInput, setRejectionReasonInput] = useState('');
 
-  // Script to fix Zeynep Akın's name and verse
   useEffect(() => {
-    const fixZeynep = async () => {
+    const fixClearVisionAndAssignJuries = async () => {
       try {
         if (currentUser?.role !== 'ADMIN') return;
-        const hasRun = localStorage.getItem('fixed_zeynep_akin');
+        const hasRun = localStorage.getItem('fixed_clear_vision_juries');
         if (hasRun) return;
 
         const { query, where, getDocs, collection, updateDoc } = await import('firebase/firestore');
         const { db } = await import('../lib/firebase');
 
-        // Fix user
+        // Get all juries
         const usersRef = collection(db, 'users');
-        const uq = query(usersRef, where('fullName', '==', 'Zeynep Akı'));
-        const usnap = await getDocs(uq);
-        usnap.forEach(async (d) => {
-            await updateDoc(d.ref, { fullName: 'Zeynep Akın' });
-        });
+        const juryQuery = query(usersRef, where('role', '==', 'JUDGE'));
+        const jurySnap = await getDocs(juryQuery);
+        const juryIds = jurySnap.docs.map(d => d.id);
 
-        // Fix application
-        const appsRef = collection(db, 'applications');
-        const aq = query(appsRef, where('teacher.fullName', '==', 'Zeynep Akı'));
-        const asnap = await getDocs(aq);
-        asnap.forEach(async (d) => {
-            await updateDoc(d.ref, { 
-                'teacher.fullName': 'Zeynep Akın',
-                'team.selectedVerse': "Ra'd: 28" 
+        if (juryIds.length > 0) {
+            const appsRef = collection(db, 'applications');
+            const get4Random = (arr: string[]) => [...arr].sort(() => 0.5 - Math.random()).slice(0, 4);
+
+            // Fix Clear Vision
+            const aqClear = query(appsRef, where('team.name', '==', 'Clear Vision'));
+            const snapClear = await getDocs(aqClear);
+            snapClear.forEach(async (d) => {
+                await updateDoc(d.ref, { 
+                    'team.videoUrl': 'https://youtu.be/M1vBuyesBXU?si=IbgktLIBqZIRCf7I',
+                    'team.videoStatus': 'SUBMITTED_LINK',
+                    'assignedJuryIds': get4Random(juryIds)
+                });
             });
-        });
 
-        localStorage.setItem('fixed_zeynep_akin', 'true');
-        console.log('Fixed Zeynep Akın data.');
+            // Assign Meva
+            const aqMeva = query(appsRef, where('team.name', '==', 'meva'));
+            const snapMeva = await getDocs(aqMeva);
+            snapMeva.forEach(async (d) => {
+                await updateDoc(d.ref, { 
+                    'assignedJuryIds': get4Random(juryIds)
+                });
+            });
+        }
+
+        localStorage.setItem('fixed_clear_vision_juries', 'true');
+        console.log('Fixed Clear vision and assigned juries.');
       } catch (e) {
           console.error(e);
       }
     };
-    fixZeynep();
+    fixClearVisionAndAssignJuries();
   }, [currentUser]);
 
   const handleFilterCategory = (cat: string | null) => {
