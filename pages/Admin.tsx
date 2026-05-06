@@ -12,6 +12,7 @@ import { ChatArea } from '../components/ChatArea';
 import { getYouTubeEmbedUrl } from '../lib/videoUtils';
 import { AdminCMS } from '../components/admin/AdminCMS';
 import { TurkeyMap } from '../components/TurkeyMap';
+import { AdminJuryStatus } from '../components/admin/AdminJuryStatus';
 import { writeBatch, doc, collection } from 'firebase/firestore'; // Import needed for direct batch writing
 import { db } from '../lib/firebase'; // Import db
 
@@ -186,6 +187,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }: Si
         { id: 'ANNOUNCEMENTS', icon: Megaphone, label: 'Duyurular' },
         { id: 'TEAMS', icon: Clapperboard, label: 'Takım Yönetimi' },
         { id: 'JURY_ASSIGN', icon: UserCheck, label: 'Jüri Atama' },
+        { id: 'JURY_STATUS', icon: Activity, label: 'Jüri İlerlemeleri' },
         { id: 'USERS', icon: Users, label: 'Kullanıcılar & Jüri' },
         { id: 'CONTENT', icon: LayoutTemplate, label: 'İçerik Yönetimi (CMS)' },
         { id: 'SETTINGS', icon: Settings, label: 'Sistem Ayarları' },
@@ -1658,6 +1660,7 @@ export const Admin: React.FC = () => {
                       {activeTab === 'INBOX' && 'Gelen Kutusu'}
                       {activeTab === 'TEAMS' && 'Takım Yönetimi'}
                       {activeTab === 'JURY_ASSIGN' && 'Jüri Atama'}
+                      {activeTab === 'JURY_STATUS' && 'Jüri İlerlemeleri'}
                       {activeTab === 'USERS' && 'Kullanıcılar & Jüri'}
                       {activeTab === 'CONTENT' && 'İçerik Yönetimi (CMS)'}
                       {activeTab === 'SETTINGS' && 'Sistem Ayarları'}
@@ -1674,6 +1677,7 @@ export const Admin: React.FC = () => {
                     {activeTab === 'INBOX' && <AdminInbox />}
                     {activeTab === 'TEAMS' && <AdminTeams apps={allApplications} onSelectApp={setSelectedApp} onToggleFinalist={toggleFinalist} initialCategoryFilter={globalCategoryFilter} />}
                     {activeTab === 'JURY_ASSIGN' && <AdminJuryAssign apps={allApplications} />}
+                    {activeTab === 'JURY_STATUS' && <AdminJuryStatus apps={allApplications} />}
                     {activeTab === 'USERS' && <AdminUsers />}
                     {activeTab === 'CONTENT' && <AdminCMS />}
                     {activeTab === 'SETTINGS' && (
