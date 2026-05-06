@@ -646,28 +646,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Handle Global Aggregation & Status
         const appRef = doc(db, "applications", appId);
 
+        // Commit the score first to fetch it correctly in aggregate
+        await batch.commit(); 
+        
+        // 1. Fetch all scores to recalculate averages
+        const scores = await fetchJuryScores(appId);
+        
+        // Filter out drafts and recusals for the math
+        const validScores = scores.filter(s => !s.isDraft && !s.isRecused);
+        
+        // Format to 2 decimal places to avoid long floating point strings, or just keep as number but rounded
+        const avg = validScores.length > 0 
+            ? Math.round((validScores.reduce((acc, s) => acc + s.total, 0) / validScores.length) * 10) / 10 
+            : 0;
+        
         if (isDraft) {
-            // DRAFT: Do not update aggregate stats. 
-            batch.update(appRef, {
+            // Update Application Doc but remove from gradedBy
+            await updateDoc(appRef, {
+                finalScore: avg,
+                juryCount: validScores.length,
                 gradedBy: arrayRemove(currentUser.uid)
             });
-            await batch.commit();
             showToast("Taslak olarak kaydedildi.", 'info');
         } else {
-            // FINAL or RECUSED: Update aggregate stats.
-            await batch.commit(); // Commit the score first to fetch it correctly in aggregate
-            
-            // 1. Fetch all scores to recalculate averages
-            const scores = await fetchJuryScores(appId);
-            
-            // Filter out drafts and recusals for the math
-            const validScores = scores.filter(s => !s.isDraft && !s.isRecused);
-            
-            const avg = validScores.length > 0 
-                ? validScores.reduce((acc, s) => acc + s.total, 0) / validScores.length 
-                : 0;
-            
-            // 2. Update Application Doc
+            // Update Application Doc and add to gradedBy
             await updateDoc(appRef, {
                 finalScore: avg,
                 juryCount: validScores.length, 

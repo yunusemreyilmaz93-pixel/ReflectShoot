@@ -1541,6 +1541,44 @@ export const Admin: React.FC = () => {
     fixAaalTeam();
   }, [currentUser]);
 
+  useEffect(() => {
+    const fixAllAverages = async () => {
+      try {
+        if (currentUser?.role !== 'ADMIN') return;
+        const hasRun = localStorage.getItem('fixed_all_averages_v1');
+        if (hasRun) return;
+
+        const { query, collection, getDocs, updateDoc } = await import('firebase/firestore');
+        const { db } = await import('../lib/firebase');
+
+        const appsRef = collection(db, 'applications');
+        const asnap = await getDocs(appsRef);
+        
+        for (const doc of asnap.docs) {
+            const appId = doc.id;
+            const scoresSnap = await getDocs(collection(db, "applications", appId, "scores"));
+            const scores = scoresSnap.docs.map(s => s.data() as any);
+            
+            const validScores = scores.filter(s => !s.isDraft && !s.isRecused);
+            const avg = validScores.length > 0 
+                ? Math.round((validScores.reduce((acc, s) => acc + s.total, 0) / validScores.length) * 10) / 10 
+                : 0;
+            
+            await updateDoc(doc.ref, {
+                finalScore: avg,
+                juryCount: validScores.length
+            });
+        }
+
+        localStorage.setItem('fixed_all_averages_v1', 'true');
+        console.log('Fixed all averages.');
+      } catch (e) {
+          console.error(e);
+      }
+    };
+    fixAllAverages();
+  }, [currentUser]);
+
   const handleFilterCategory = (cat: string | null) => {
       setGlobalCategoryFilter(cat);
       setActiveTab('TEAMS');
@@ -2033,16 +2071,30 @@ export const Admin: React.FC = () => {
                   <div className="mb-8">
                       <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 flex items-center gap-2"><Star size={16}/> Jüri Puanları</h3>
                       {appScores.length > 0 ? (
-                          <div className="space-y-3">
-                              {appScores.map((score, i) => (
-                                  <div key={i} className="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                                      <div className="flex justify-between items-center mb-2"><span className="font-bold text-white text-sm">{score.juryName}</span><span className="text-lg font-black text-amber-500">{score.total}</span></div>
-                                      <div className="grid grid-cols-4 gap-2 text-[10px] text-slate-500 mb-2"><div>Hikaye: {score.criteria.story}</div><div>Teknik: {score.criteria.technical}</div><div>Özgünlük: {score.criteria.originality}</div><div>Tema: {score.criteria.themeFit}</div></div>
-                                      {score.notes && (<p className="text-xs text-slate-400 italic border-t border-slate-800 pt-2 mt-2">"{score.notes}"</p>)}
-                                  </div>
-                              ))}
-                              <div className="flex justify-between items-center bg-slate-800 p-4 rounded-xl"><span className="font-bold text-white">Ortalama Puan</span><span className="text-2xl font-black text-green-500">{selectedApp.finalScore}</span></div>
-                          </div>
+        <div className="space-y-3">
+            {appScores.map((score, i) => (
+                <div key={i} className={`p-4 rounded-xl border ${score.isRecused ? 'bg-slate-900 border-slate-700/50 opacity-60' : score.isDraft ? 'bg-amber-950/20 border-amber-900/30' : 'bg-slate-950 border-slate-800'}`}>
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="font-bold text-white text-sm flex gap-2 items-center">
+                            {score.juryName}
+                            {score.isDraft && <span className="text-[10px] bg-amber-500/20 text-amber-500 px-2 py-0.5 rounded uppercase font-bold">Taslak</span>}
+                            {score.isRecused && <span className="text-[10px] bg-slate-700 text-slate-400 px-2 py-0.5 rounded uppercase font-bold">Çekimser</span>}
+                        </span>
+                        <span className={`text-xl font-black ${score.isRecused ? 'text-slate-500' : 'text-amber-500'}`}>{score.isRecused ? '-' : score.total}</span>
+                    </div>
+                    {!score.isRecused && (
+                        <div className="grid grid-cols-4 gap-2 text-[10px] text-slate-500 mb-2">
+                            <div>Hikaye: {score.criteria.story}</div>
+                            <div>Teknik: {score.criteria.technical}</div>
+                            <div>Özgünlük: {score.criteria.originality}</div>
+                            <div>Tema: {score.criteria.themeFit}</div>
+                        </div>
+                    )}
+                    {score.notes && (<p className="text-xs text-slate-400 italic border-t border-slate-800 pt-2 mt-2">"{score.notes}"</p>)}
+                </div>
+            ))}
+            <div className="flex justify-between items-center bg-slate-800 p-4 rounded-xl"><span className="font-bold text-slate-400">Ortalama Puan</span><span className="text-2xl font-black text-emerald-500">{selectedApp.finalScore}</span></div>
+        </div>
                       ) : (<div className="text-slate-500 text-sm italic">Henüz puanlama yapılmamış.</div>)}
                   </div>
                   <div className="mt-auto pt-6 border-t border-slate-800 pb-10 md:pb-0">
