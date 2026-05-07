@@ -6,7 +6,7 @@ import {
     CheckCircle2, Clock, Upload, X, Save, Film, HelpCircle, LogOut, Ban, ShieldAlert,
     Download, Lock, ExternalLink, RefreshCw, FileCheck, BookOpen, Eye, Calendar, Bell, Copy, Info, Loader2, File,
     Plus, Trash2, Edit, AlertOctagon, CheckSquare, Camera, PenTool, Printer, ShieldCheck,
-    Sparkles, ArrowRight, UploadCloud, Megaphone, Star, PartyPopper, User, RefreshCcw, Youtube
+    Sparkles, ArrowRight, UploadCloud, Megaphone, Star, PartyPopper, User, RefreshCcw, Youtube, Trophy
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Category, Theme, ApplicationStatus, Student, UserRole } from '../types';
@@ -72,9 +72,17 @@ const NextActionCard = ({ app, isDeadlinePassed, onAction }: { app: any, isDeadl
     const missingParent = app.team.students.find((s: Student) => !s.hasParentalConsent);
     const missingKvkk = app.team.students.find((s: Student) => !s.hasKvkkConsent);
 
-    if (isDeadlinePassed) {
+    const isWinner = app.team.isWinner;
+
+    if (isWinner === true) {
+        action = { text: "Tebrikler! Takımınız ödül kazandı. Katılım formunu doldurun.", btn: "Katılım Formuna Git", tab: "AWARD_WIN", type: "success" };
+    } else if (isWinner === false) {
+        action = { text: "Yarışmamıza katılımınız için teşekkür ederiz. Emekleriniz için minnettarız.", btn: "Katılım Sertifikasını 22 Mayıs'tan itibaren buradan alabilirsiniz.", tab: "STATUS", type: "success" };
+    } else if (app.status === ApplicationStatus.FINAL_SUBMITTED || app.status === ApplicationStatus.JURY_EVALUATION) {
+        action = { text: "Ödül Töreni değerlendirme süreci tamamlandı. Katılımlarınızdan dolayı teşekkür ederiz.", btn: "Detayları Gör", tab: "STATUS", type: "info" };
+    } else if (isDeadlinePassed) {
         if (app.team.videoStatus === 'SUBMITTED_LINK' || app.team.videoStatus === 'UPLOADED') {
-            action = { text: "Video teslim aşaması sona erdi. Jüri değerlendirmesi sürmektedir.", btn: "Durumu Gör", tab: "STATUS", type: "success" };
+            action = { text: "Video teslim aşaması sona erdi. Jüri değerlendirmesi sürüyor.", btn: "Durumu Gör", tab: "STATUS", type: "success" };
         } else {
             action = { text: "Film yükleme süresi sona ermiştir. İşlemi tamamlayamadınız.", btn: "İncele", tab: "STATUS", type: "urgent" };
         }
@@ -289,6 +297,48 @@ export const Dashboard: React.FC = () => {
     const [videoLink, setVideoLink] = useState('');
     const [showVideoSuccessModal, setShowVideoSuccessModal] = useState(false);
     const [showDeadlineModal, setShowDeadlineModal] = useState(false);
+    
+    // Winner Celebration Modal
+    const [showWinnerModal, setShowWinnerModal] = useState(false);
+    const winningMyApplications = myApplications.filter(a => a.team.isWinner);
+
+    // Thanks Modal (For non-winning)
+    const [showThanksModal, setShowThanksModal] = useState(false);
+    const losingMyApplications = myApplications.filter(a => a.team.isWinner === false);
+
+    useEffect(() => {
+        // Show winner modal only if there are winning applications and hasn't been seen
+        if (winningMyApplications.length > 0) {
+            const hasSeen = localStorage.getItem(`seen_winner_modal_${currentUser?.uid}`);
+            if (!hasSeen) {
+                setShowWinnerModal(true);
+            }
+        }
+    }, [winningMyApplications.length, currentUser?.uid]);
+
+    useEffect(() => {
+        // Show thanks modal only if there are non-winning applications, no winning ones, and hasn't been seen
+        if (losingMyApplications.length > 0 && winningMyApplications.length === 0) {
+            const hasSeen = localStorage.getItem(`seen_thanks_modal_${currentUser?.uid}`);
+            if (!hasSeen) {
+                setShowThanksModal(true);
+            }
+        }
+    }, [losingMyApplications.length, winningMyApplications.length, currentUser?.uid]);
+
+    const handleCloseWinnerModal = () => {
+        setShowWinnerModal(false);
+        if (currentUser) {
+            localStorage.setItem(`seen_winner_modal_${currentUser.uid}`, 'true');
+        }
+    };
+
+    const handleCloseThanksModal = () => {
+        setShowThanksModal(false);
+        if (currentUser) {
+            localStorage.setItem(`seen_thanks_modal_${currentUser.uid}`, 'true');
+        }
+    };
 
     // Edit & Upload State
     const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
@@ -431,6 +481,10 @@ export const Dashboard: React.FC = () => {
     // --- Actions ---
 
     const handleActionRedirect = (tab: string) => {
+        if (tab === 'AWARD_WIN' && currentApplication) {
+            window.location.href = `#/award-participation/team/${currentApplication.team.id}`;
+            return;
+        }
         setActiveTab(tab);
         // Scroll to content
         const el = document.getElementById('dashboard-content');
@@ -1440,7 +1494,7 @@ export const Dashboard: React.FC = () => {
                                     { icon: Youtube, title: '1. YouTube\'a Yükle', desc: 'Hazırladığınız filmi kendi kanalınıza yükleyin.' },
                                     { icon: Lock, title: '2. Liste Dışı Yap', desc: 'Gizlilik ayarını "Liste Dışı" (Unlisted) olarak seçin.' },
                                     { icon: Copy, title: '3. Linki Kopyala', desc: 'Videonun izleme bağlantısını (URL) kopyalayın.' },
-                                    { icon: CheckCircle2, title: '4. Panale Yapıştır', desc: 'Linki aşağıya yapıştırıp onaylayın.' }
+                                    { icon: CheckCircle2, title: '4. Panele Yapıştır', desc: 'Linki aşağıya yapıştırıp onaylayın.' }
                                 ].map((step, i) => (
                                     <div key={i} className="flex flex-col items-center text-center group/item hover:-translate-y-1 transition-transform duration-300">
                                         <div className="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center mb-6 border-2 border-slate-700 group-hover/item:border-rose-500 group-hover/item:bg-slate-900 transition-all shadow-xl">
@@ -1574,6 +1628,108 @@ export const Dashboard: React.FC = () => {
                                 className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 px-8 py-3 rounded-xl font-black text-sm shadow-lg shadow-amber-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95"
                             >
                                 Onaylıyorum ve Yükle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Winner Celebration Modal */}
+            {showWinnerModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-fadeIn">
+                    <div className="bg-slate-900 border border-amber-500/50 rounded-[2.5rem] max-w-2xl w-full shadow-[0_0_100px_rgba(245,158,11,0.2)] relative overflow-hidden text-center p-8 md:p-12">
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30 pointer-events-none"></div>
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/20 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-rose-500/20 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none"></div>
+
+                        <button onClick={handleCloseWinnerModal} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors z-20">
+                            <X size={32} />
+                        </button>
+
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="w-28 h-28 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(245,158,11,0.4)] mb-8">
+                                <Trophy size={48} className="text-white" />
+                            </div>
+                            
+                            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-4 leading-tight">
+                                TEBRİKLER!
+                            </h2>
+                            <p className="text-lg md:text-xl text-slate-300 font-medium mb-8 leading-relaxed">
+                                Danışmanlığını yürüttüğünüz aşağıdaki {winningMyApplications.length > 1 ? 'takımlarınız' : 'takımınız'} jüri değerlendirmesinde başarı göstererek <strong className="text-amber-500">Ödül Almaya</strong> hak kazanmıştır.
+                            </p>
+
+                            <div className="w-full bg-slate-950/50 border border-slate-800 rounded-3xl p-6 mb-8 text-left space-y-4">
+                                {winningMyApplications.map(app => (
+                                    <div key={app.id} className="bg-slate-900 border border-amber-500/30 p-4 rounded-xl flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-bold text-white text-lg">{app.team.name}</h4>
+                                            <p className="text-sm text-slate-400">{app.team.awardCategory}</p>
+                                        </div>
+                                        <button 
+                                            onClick={() => {
+                                                handleCloseWinnerModal();
+                                                setTimeout(() => window.location.href = `#/award-participation/team/${app.team.id}`, 300);
+                                            }}
+                                            className="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-4 text-sm rounded-lg transition-transform hover:-translate-y-1 shadow-lg"
+                                        >
+                                            Formu Doldur <ArrowRight size={16} className="inline ml-1"/>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <p className="text-sm text-slate-400 mb-8 max-w-lg mx-auto">
+                                Ödül Töreni ve Gala Programı hazırlıkları için katılım durumunuzu bildiren formu en geç <strong className="text-white">11 Mayıs 2026 Pzt. Saat 13:00'e</strong> kadar doldurmanız gerekmektedir.
+                            </p>
+
+                            <button onClick={handleCloseWinnerModal} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 px-10 rounded-2xl transition-colors">
+                                Anladım, Panele Dön
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Thanks Modal for Non-Winning Participants */}
+            {showThanksModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-fadeIn">
+                    <div className="bg-slate-900 border border-slate-700 rounded-[2.5rem] max-w-2xl w-full shadow-2xl relative overflow-hidden text-center p-8 md:p-12">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none"></div>
+
+                        <button onClick={handleCloseThanksModal} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors z-20">
+                            <X size={32} />
+                        </button>
+
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                                <Sparkles size={40} className="text-blue-400" />
+                            </div>
+                            
+                            <h2 className="text-3xl font-black text-white tracking-tight mb-4 leading-tight">
+                                Katılımınız İçin Teşekkürler!
+                            </h2>
+                            <p className="text-lg md:text-xl text-slate-300 font-medium mb-6 leading-relaxed">
+                                Danışmanlığını yürüttüğünüz takımlar ödül töreni için davet alamasa da, gösterdikleri çaba ve sürece katkıları bizim için çok değerli.
+                            </p>
+
+                            <div className="w-full bg-slate-950/50 border border-slate-800 rounded-3xl p-6 mb-8 text-left space-y-4">
+                                {losingMyApplications.map(app => (
+                                    <div key={app.id} className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-bold text-white text-lg">{app.team.name}</h4>
+                                            <p className="text-sm text-slate-400">Harika bir iş çıkardılar!</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <p className="text-sm text-slate-400 mb-8 max-w-lg mx-auto">
+                                Öğrencilerinize ve size emeklerinizden dolayı sonsuz teşekkürler. Hazırlanan teşekkür e-sertifikalarını ilerleyen günlerde panelinizden görüntüleyebileceksiniz.
+                            </p>
+
+                            <button onClick={handleCloseThanksModal} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-10 rounded-2xl transition-colors">
+                                Anladım, Panele Dön
                             </button>
                         </div>
                     </div>

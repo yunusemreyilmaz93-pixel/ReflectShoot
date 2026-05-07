@@ -13,6 +13,7 @@ import { getYouTubeEmbedUrl } from '../lib/videoUtils';
 import { AdminCMS } from '../components/admin/AdminCMS';
 import { TurkeyMap } from '../components/TurkeyMap';
 import { AdminJuryStatus } from '../components/admin/AdminJuryStatus';
+import { AdminAwards } from '../components/admin/AdminAwards';
 import { writeBatch, doc, collection } from 'firebase/firestore'; // Import needed for direct batch writing
 import { db } from '../lib/firebase'; // Import db
 
@@ -186,6 +187,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }: Si
         { id: 'INBOX', icon: Mail, label: 'Gelen Kutusu' },
         { id: 'ANNOUNCEMENTS', icon: Megaphone, label: 'Duyurular' },
         { id: 'TEAMS', icon: Clapperboard, label: 'Takım Yönetimi' },
+        { id: 'AWARDS', icon: Trophy, label: 'Tören Katılımları' },
         { id: 'JURY_ASSIGN', icon: UserCheck, label: 'Jüri Atama' },
         { id: 'JURY_STATUS', icon: Activity, label: 'Jüri İlerlemeleri' },
         { id: 'USERS', icon: Users, label: 'Kullanıcılar & Jüri' },
@@ -1697,6 +1699,7 @@ export const Admin: React.FC = () => {
                       {activeTab === 'ANNOUNCEMENTS' && 'Duyuru Merkezi'}
                       {activeTab === 'INBOX' && 'Gelen Kutusu'}
                       {activeTab === 'TEAMS' && 'Takım Yönetimi'}
+                      {activeTab === 'AWARDS' && 'Ödül Töreni Katılım Takibi'}
                       {activeTab === 'JURY_ASSIGN' && 'Jüri Atama'}
                       {activeTab === 'JURY_STATUS' && 'Jüri İlerlemeleri'}
                       {activeTab === 'USERS' && 'Kullanıcılar & Jüri'}
@@ -1704,6 +1707,42 @@ export const Admin: React.FC = () => {
                       {activeTab === 'SETTINGS' && 'Sistem Ayarları'}
                       {activeTab === 'LOGS' && 'Denetim Kayıtları'}
                   </h2>
+                  <button 
+                     onClick={async () => {
+                        const { updateDoc, doc } = await import('firebase/firestore');
+                        const WINNERS = [
+                            { name: "Diriliş Perileri", category: "Canlı Çekim" },
+                            { name: "sinemektep", category: "Canlı Çekim" },
+                            { name: "MSR Justice Without Doubt", category: "Canlı Çekim" },
+                            { name: "Sosyal Kızlar42", category: "Canlı Çekim" },
+                            { name: "Homines Longinqui", category: "Canlı Çekim" },
+                            { name: "Mitra", category: "Yapay Zeka Animasyon" },
+                            { name: "Technokasyon", category: "Yapay Zeka Animasyon" },
+                            { name: "THREEE", category: "Yapay Zeka Animasyon" },
+                            { name: "PURE INSIGHT", category: "Yapay Zeka Animasyon" },
+                            { name: "Clear Vision", category: "Yapay Zeka Animasyon" }
+                        ];
+                        let count = 0;
+                        const normalize = (s: string) => s.toLocaleLowerCase('tr-TR').trim().replace(/\s+/g, '');
+                        try {
+                            for (const app of allApplications) {
+                                const isWinner = WINNERS.find(w => normalize(w.name) === normalize(app.team.name));
+                                await updateDoc(doc(db, "applications", app.id), {
+                                    "team.isWinner": !!isWinner,
+                                    "team.awardCategory": isWinner ? isWinner.category : null,
+                                    "team.participationFormStatus": "not_started"
+                                });
+                                count++;
+                            }
+                            alert("Başarılı! " + count + " takım güncellendi.");
+                        } catch(e) {
+                            alert("Hata: " + e);
+                        }
+                     }} 
+                     className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-1 text-xs font-bold rounded-lg ml-4"
+                  >
+                     TEST: Ödül Data Güncelle
+                  </button>
               </div>
           </header>
 
@@ -1714,6 +1753,7 @@ export const Admin: React.FC = () => {
                     {activeTab === 'ANNOUNCEMENTS' && <AdminAnnouncements />}
                     {activeTab === 'INBOX' && <AdminInbox />}
                     {activeTab === 'TEAMS' && <AdminTeams apps={allApplications} onSelectApp={setSelectedApp} onToggleFinalist={toggleFinalist} initialCategoryFilter={globalCategoryFilter} />}
+                    {activeTab === 'AWARDS' && <AdminAwards apps={allApplications} />}
                     {activeTab === 'JURY_ASSIGN' && <AdminJuryAssign apps={allApplications} />}
                     {activeTab === 'JURY_STATUS' && <AdminJuryStatus apps={allApplications} />}
                     {activeTab === 'USERS' && <AdminUsers />}

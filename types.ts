@@ -113,6 +113,13 @@ export interface Team {
   
   // Public Voting
   publicVotes?: number;
+
+  // Additional Awards & Participation
+  isWinner?: boolean;
+  awardCategory?: string;
+  awardTitle?: string;
+  participationFormStatus?: 'not_started' | 'draft' | 'submitted';
+  participationSubmittedAt?: string;
 }
 
 export interface TeacherProfile {
@@ -122,6 +129,46 @@ export interface TeacherProfile {
   city: string;
   email: string;
   phone: string;
+}
+
+export interface AwardParticipation {
+  id?: string;
+  teamId: string;
+  applicationId: string;
+  teamName: string;
+  category: string;
+  awardCategory?: string;
+  schoolName: string;
+  schoolCity: string;
+  schoolDistrict: string;
+  advisorUserId: string;
+  advisorName: string;
+  advisorEmail: string;
+  advisorPhone: string;
+  advisorBranch: string;
+  advisorParticipationStatus: 'Attending' | 'Not_Attending' | 'Not_Sure';
+  students: {
+    fullName: string;
+    grade: string;
+    phone: string;
+    parentName: string;
+    parentPhone: string;
+    specialCondition: string;
+    specialConditionDescription?: string;
+  }[];
+  transportationType: string;
+  transportationOtherDesc?: string;
+  arrivalDate: string;
+  arrivalTime: string;
+  departureDate: string;
+  departureTime: string;
+  accommodationRequired: 'Yes' | 'No' | 'Not_Sure';
+  accommodationPersonCount: number;
+  additionalNotes: string;
+  parentConsentAccepted: boolean;
+  status: 'submitted';
+  submittedAt: string;
+  updatedAt?: string;
 }
 
 export interface Application {

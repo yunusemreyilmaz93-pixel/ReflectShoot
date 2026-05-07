@@ -22,7 +22,7 @@ export const Academy: React.FC = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('Tümü');
   
-  const isFinalist = currentApplication?.team.isFinalist;
+  const isFinalist = false; // "Bu yıl akademi olmayacak" kuralı geregi kapalı tutuluyor.
 
   // Filter out finalist content for general view
   const publicAcademyItems = cmsAcademy.filter(item => !item.isFinalistContent);
@@ -283,128 +283,13 @@ export const Academy: React.FC = () => {
                   <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight mb-6">
                       Finalist <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-500 to-amber-200">Akademisi</span>
                   </h2>
-                  <p className="text-slate-400 font-light text-lg max-w-2xl mx-auto leading-relaxed">
-                      Sektör profesyonelleri ile buluşma noktası. Finale kalan 20 takım için özel olarak kurgulanmış canlı atölyeler.
+                  <p className="text-slate-500 font-medium text-lg max-w-2xl mx-auto flex flex-col items-center gap-4 mt-8 bg-slate-900/50 p-12 rounded-3xl border border-slate-800">
+                      <Lock size={48} className="text-slate-600" />
+                      <span>Bu yıl akademi programı düzenlenmeyecektir.</span>
                   </p>
               </div>
 
-              {/* Masterclass Schedule Grid - Premium Update */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
-                  {masterclassSchedule.map((item, idx) => (
-                      <div key={idx} className={`group relative flex flex-col bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:${item.shadow}`}>
-                          
-                          {/* Top Gradient Line */}
-                          <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${item.color}`}></div>
 
-                          {/* Inner Glow (Hover) */}
-                          <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none`}></div>
-
-                          <div className="p-8 flex flex-col h-full relative z-10">
-                              
-                              {/* Header */}
-                              <div className="flex justify-between items-start mb-6">
-                                  {/* Date & Category */}
-                                  <div className="flex items-center gap-4">
-                                      <div className="flex flex-col items-center justify-center bg-slate-800 rounded-2xl p-3 min-w-[4.5rem] border border-slate-700 group-hover:border-slate-600 transition-colors">
-                                          <span className="text-2xl font-black text-white leading-none mb-1">{item.date.split(' ')[0]}</span>
-                                          <span className={`text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r ${item.color} bg-clip-text text-transparent`}>{item.date.split(' ')[1].toUpperCase()}</span>
-                                      </div>
-                                      <div>
-                                          <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-950 border border-slate-800 ${
-                                              item.type === 'ORTAK' ? 'text-slate-400' : 'text-white'
-                                          }`}>
-                                              {item.type}
-                                          </span>
-                                      </div>
-                                  </div>
-
-                                  {/* Colorful Icon Box */}
-                                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br ${item.color} shadow-lg shadow-black/30 group-hover:scale-110 transition-transform duration-300`}>
-                                      <item.icon size={32} className="text-white drop-shadow-md" strokeWidth={1.5} />
-                                  </div>
-                              </div>
-
-                              {/* Title & Desc */}
-                              <div className="mb-6">
-                                  <h3 className="text-2xl md:text-3xl font-black text-white mb-3 leading-tight tracking-tight">
-                                      {item.title}
-                                  </h3>
-                                  <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                                      {item.desc}
-                                  </p>
-                              </div>
-
-                              {/* Footer */}
-                              <div className="mt-auto pt-6 border-t border-slate-800/50 flex items-center justify-between">
-                                  <div className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                                      <Clock size={16} className={`bg-gradient-to-r ${item.color} bg-clip-text text-transparent`}/> 20:00
-                                  </div>
-                                  
-                                  {/* Button */}
-                                  {isFinalist ? (
-                                      <button className={`flex items-center gap-2 px-5 py-2 rounded-full bg-slate-950 border border-slate-800 text-white text-xs font-bold uppercase tracking-wider hover:bg-white hover:text-black transition-all group/btn`}>
-                                          Katıl <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${item.color} group-hover/btn:scale-125 transition-transform`}></div>
-                                      </button>
-                                  ) : (
-                                      <span className="text-slate-600 text-xs flex items-center gap-1"><Lock size={12}/> Kilitli</span>
-                                  )}
-                              </div>
-                          </div>
-                      </div>
-                  ))}
-              </div>
-
-              {/* Exclusive Revision Kit - Premium Box Design */}
-              <div className="relative max-w-5xl mx-auto">
-                  <div className={`absolute inset-0 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 blur-2xl rounded-full transform -rotate-1 ${!isFinalist ? 'opacity-5' : 'opacity-20'}`}></div>
-                  
-                  <div className={`relative bg-gradient-to-br from-slate-900 to-slate-950 border rounded-[2.5rem] p-10 md:p-14 overflow-hidden shadow-2xl group ${!isFinalist ? 'border-slate-800' : 'border-slate-700'}`}>
-                      {/* Decorative Elements */}
-                      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-                      <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500/0 via-amber-500/50 to-amber-500/0"></div>
-
-                      <div className="flex flex-col md:flex-row items-center gap-12 relative z-10">
-                          
-                          {/* Left: Content */}
-                          <div className="flex-1 text-center md:text-left">
-                              <div className="inline-flex items-center gap-2 text-amber-500 font-bold text-xs uppercase tracking-widest mb-4">
-                                  <Star size={14} className="fill-amber-500" /> Özel Erişim
-                              </div>
-                              <h3 className="text-3xl md:text-4xl font-black text-white mb-4 leading-tight">
-                                  Revize Hazırlık Kiti
-                              </h3>
-                              <p className="text-slate-400 text-lg font-light leading-relaxed mb-8">
-                                  Final tesliminden önce projenizi teknik ve sanatsal açıdan kusursuz hale getirmek için hazırlanan, sadece finalistlerin erişebildiği özel kontrol listesi ve teknik dökümanlar.
-                              </p>
-                              
-                              <button disabled={!isFinalist} className={`inline-flex items-center gap-3 px-8 py-4 rounded-xl font-bold transition-all shadow-lg transform ${!isFinalist ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' : 'bg-white text-slate-950 hover:bg-amber-400 hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] hover:-translate-y-1'}`}>
-                                  {!isFinalist ? <Lock size={20} /> : <Download size={20} />} 
-                                  {!isFinalist ? 'Erişim Kısıtlı' : 'Kiti İndir (PDF)'}
-                              </button>
-                          </div>
-
-                          {/* Right: Visual Checklist */}
-                          <div className="flex-1 w-full bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 backdrop-blur-md">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                  {[
-                                      'Renk Düzenleme (Color Grading)', 'Ses Temizliği & Final Miksaj', 
-                                      'Altyazı & Jenerik Standartları', 'AI Tutarlılık & Glitch Temizliği',
-                                      'Telif & Lisans Uyumluluğu', 'Dosya İsimlendirme & Format',
-                                      'Final Export Ayarları (Bitrate)', 'DCP Hazırlık Öncesi Kontrol'
-                                  ].map((item, idx) => (
-                                      <div key={idx} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors group/item">
-                                          <div className="w-5 h-5 rounded-full border-2 border-slate-600 flex items-center justify-center group-hover/item:border-amber-500 group-hover/item:bg-amber-500/20 transition-colors">
-                                              <div className="w-2 h-2 rounded-full bg-transparent group-hover/item:bg-amber-500 transition-colors"></div>
-                                          </div>
-                                          <span className="text-xs font-bold text-slate-400 group-hover/item:text-slate-200 transition-colors">{item}</span>
-                                      </div>
-                                  ))}
-                              </div>
-                          </div>
-
-                      </div>
-                  </div>
-              </div>
 
           </div>
       </section>

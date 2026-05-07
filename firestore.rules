@@ -12,12 +12,18 @@ service cloud.firestore {
     }
 
     function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return isSignedIn() 
+             ? (exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+                ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+                : null)
+             : null;
     }
 
     function hasRole(role) {
+      let userData = getUserData();
       return isSignedIn() &&
-             (getUserData().role == role || getUserData().role == role.lower());
+             userData != null &&
+             (userData.role == role || userData.role == role.lower());
     }
 
     function isNotRateLimited() {
@@ -44,6 +50,10 @@ service cloud.firestore {
     match /cms_academy/{doc}  { allow read: if true; allow write: if hasRole('ADMIN'); }
     match /cms_timeline/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
     match /academycontent/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
+    match /award_participations/{docId} { 
+      allow read: if isSignedIn(); 
+      allow write: if isSignedIn(); 
+    }
 
     // --- 2. USERS ---
     match /users/{userId} {
@@ -59,17 +69,20 @@ service cloud.firestore {
 
     // --- 3. APPLICATIONS ---
     match /applications/{appId} {
-      allow get: if hasRole('ADMIN') ||
-                    (hasRole('TEACHER') && resource.data.teacher.id == request.auth.uid) ||
+      allow get: if hasRole('ADMIN') || hasRole('REPORTER') ||
+                    ((hasRole('TEACHER') || hasRole('STUDENT')) && resource.data.teacher.id == request.auth.uid) ||
                     (hasRole('JUDGE') && request.auth.uid in resource.data.assignedJuryIds) ||
                     resource.data.team.isFinalist == true;
 
-      allow list: if hasRole('ADMIN') || hasRole('TEACHER') || (hasRole('JUDGE') && request.auth.uid in resource.data.assignedJuryIds) || resource.data.team.isFinalist == true;
+      allow list: if hasRole('ADMIN') || hasRole('REPORTER') ||
+                     ((hasRole('TEACHER') || hasRole('STUDENT')) && resource.data.teacher.id == request.auth.uid) || 
+                     (hasRole('JUDGE') && request.auth.uid in resource.data.assignedJuryIds) || 
+                     resource.data.team.isFinalist == true;
 
-      allow create: if (hasRole('TEACHER') || hasRole('ADMIN')) && isNotRateLimited();
+      allow create: if (hasRole('TEACHER') || hasRole('STUDENT') || hasRole('ADMIN')) && isNotRateLimited();
 
       allow update: if hasRole('ADMIN') ||
-                       ((hasRole('TEACHER') && resource.data.teacher.id == request.auth.uid) && isNotRateLimited()) ||
+                       (((hasRole('TEACHER') || hasRole('STUDENT')) && resource.data.teacher.id == request.auth.uid) && isNotRateLimited()) ||
                        (hasRole('JUDGE') &&
                           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gradedBy', 'finalScore', 'juryCount', 'status'])
                        );
@@ -84,8 +97,8 @@ service cloud.firestore {
 
       match /messages/{msgId} {
         allow read: if hasRole('ADMIN') ||
-                       (hasRole('TEACHER') && get(/databases/$(database)/documents/applications/$(appId)).data.teacher.id == request.auth.uid);
-        allow create: if hasRole('ADMIN') || hasRole('TEACHER');
+                       ((hasRole('TEACHER') || hasRole('STUDENT')) && get(/databases/$(database)/documents/applications/$(appId)).data.teacher.id == request.auth.uid);
+        allow create: if hasRole('ADMIN') || hasRole('TEACHER') || hasRole('STUDENT');
         allow delete: if hasRole('ADMIN'); // ← eklendi
       }
     }

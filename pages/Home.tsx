@@ -5,14 +5,13 @@ import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDay
 import { Timeline } from '../components/Timeline';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { useAppContext } from '../context/AppContext';
+import { motion, AnimatePresence } from 'motion/react';
 
 // Competition Schedule Configuration
 const COMPETITION_PHASES = [
   { label: 'Başvuru ve Eser Gönderimi', date: '2026-05-04T23:59:59' },
   { label: 'Ön Sonuçların Açıklanması', date: '2026-05-07T12:00:00' },
-  { label: 'Online Eğitim & Workshoplar', date: '2026-05-10T09:00:00' },
-  { label: 'Final Revize Teslimi', date: '2026-05-16T23:59:59' },
-  { label: 'Nihai Sonuçların Açıklanması', date: '2026-05-17T12:00:00' },
+  { label: 'Ödül Alan Takımların Açıklanması', date: '2026-05-08T12:00:00' },
   { label: 'Büyük Final & Ödül Töreni', date: '2026-05-22T19:00:00' }
 ];
 
@@ -21,8 +20,14 @@ const getNextPhase = (cmsTimeline: any[]) => {
   const now = new Date();
   
   // Create a sorted list of phases from cmsTimeline that have a targetDate
+  // and are not part of the cancelled phases
   const phases = cmsTimeline
-    .filter(item => item.targetDate)
+    .filter(item => item.targetDate && 
+      !item.title.toLowerCase().includes('akademi') && 
+      !item.title.toLowerCase().includes('eğitim') && 
+      !item.title.toLowerCase().includes('revize') &&
+      !item.title.toLowerCase().includes('nihai')
+    )
     .map(item => ({ label: item.title, date: item.targetDate }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -97,6 +102,21 @@ export const Home: React.FC = () => {
   const { cmsLinks, cmsTimeline } = useAppContext();
   const [activePhase, setActivePhase] = useState(getNextPhase(cmsTimeline));
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
+  const [showEvaluationPopup, setShowEvaluationPopup] = useState(false);
+
+  useEffect(() => {
+    const hasSeenPopup = localStorage.getItem('hide_results_popup');
+    if (!hasSeenPopup) {
+      // Delay it slightly for better impact
+      const timer = setTimeout(() => setShowEvaluationPopup(true), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const closePopup = () => {
+    setShowEvaluationPopup(false);
+    localStorage.setItem('hide_results_popup', 'true');
+  };
 
   useEffect(() => {
     setActivePhase(getNextPhase(cmsTimeline));
@@ -195,6 +215,61 @@ export const Home: React.FC = () => {
   return (
     <div className="bg-slate-950 min-h-screen relative overflow-x-hidden font-sans">
       
+      <AnimatePresence>
+        {showEvaluationPopup && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closePopup}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative w-full max-w-lg bg-slate-900 border border-amber-500/30 rounded-[2rem] shadow-[0_0_50px_rgba(245,158,11,0.2)] p-8 overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+              
+              <button 
+                onClick={closePopup}
+                className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
+                aria-label="Kapat"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="flex flex-col items-center text-center gap-6">
+                <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center border border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.1)]">
+                  <Trophy className="text-amber-500" size={40} />
+                </div>
+                
+                <div className="space-y-4">
+                  <h3 className="text-2xl font-black text-white tracking-tight">Sonuçlar Açıklandı!</h3>
+                  <p className="text-slate-300 leading-relaxed font-light">
+                    Danışman öğretmenlerimiz, takımlarına ait sonuçları ve ödül durumlarını <span className="text-amber-400 font-bold">Öğretmen Paneli</span> üzerinden görüntüleyebilir.
+                  </p>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    Ödül alan takım(lar)ınız ve diğer başvuru sonuçları için lütfen panelinize giriş yapın.
+                  </p>
+                </div>
+
+                <Link
+                  to="/dashboard"
+                  onClick={closePopup}
+                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black transition-all duration-300 shadow-[0_10px_30px_rgba(245,158,11,0.25)] hover:-translate-y-0.5"
+                >
+                  Panele Git
+                  <ArrowRight size={20} />
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Global Cinematic Grain */}
       <div className="fixed inset-0 pointer-events-none z-[100] mix-blend-overlay opacity-5" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }}></div>
 
