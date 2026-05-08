@@ -17,18 +17,7 @@ import { AdminAwards } from '../components/admin/AdminAwards';
 import { writeBatch, doc, collection } from 'firebase/firestore'; // Import needed for direct batch writing
 import { db } from '../lib/firebase'; // Import db
 
-// Helper for CSV Export
-const exportToCSV = (data: any[], filename: string) => {
-    const csvContent = "data:text/csv;charset=utf-8," 
-        + data.map(e => Object.values(e).join(",")).join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-};
+// Removed CSV Export function since we use xlsx and jspdf now
 
 const SimpleTrendChart = ({ data, color = "#f43f5e" }: { data: number[], color?: string }) => {
     if (data.length < 2) return <div className="h-32 flex items-center justify-center text-slate-600 text-xs">Yeterli veri yok</div>;
@@ -638,17 +627,78 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategoryFilter
         else setSelectedIds(new Set(filteredApps.map(a => a.id)));
     };
 
-    const handleExport = () => {
+    const handleExportExcel = async () => {
+        const XLSX = await import('xlsx');
         const data = filteredApps.map(app => ({
-            Team: app.team.name,
-            School: app.teacher.school,
-            Category: app.team.category,
-            Status: app.status,
-            Score: app.finalScore || 0,
-            Email: app.teacher.email,
-            Phone: app.teacher.phone
+            "Takım": app.team.name,
+            "Okul": app.teacher.school,
+            "Kategori": app.team.category,
+            "Durum": app.status,
+            "Puan": app.finalScore || 0,
+            "E-Posta": app.teacher.email,
+            "Telefon": app.teacher.phone
         }));
-        exportToCSV(data, 'takim_listesi.csv');
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Takımlar");
+        XLSX.writeFile(workbook, `takim_listesi_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
+    const handleExportPDF = async () => {
+        const { default: jsPDF } = await import('jspdf');
+        const { default: autoTable } = await import('jspdf-autotable');
+
+        const doc = new jsPDF('landscape');
+        
+        try {
+            const fetchFont = async (url: string) => {
+                const response = await fetch(url);
+                const buffer = await response.arrayBuffer();
+                let binary = '';
+                const bytes = new Uint8Array(buffer);
+                for (let i = 0; i < bytes.byteLength; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                return window.btoa(binary);
+            };
+
+            const [regFont, boldFont] = await Promise.all([
+                fetchFont("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Regular.ttf"),
+                fetchFont("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Medium.ttf")
+            ]);
+
+            doc.addFileToVFS('Roboto-Regular.ttf', regFont);
+            doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+            
+            doc.addFileToVFS('Roboto-Medium.ttf', boldFont);
+            doc.addFont('Roboto-Medium.ttf', 'Roboto', 'bold');
+            
+            doc.setFont('Roboto', 'bold');
+        } catch (e) {
+            console.warn("Font yüklenemedi", e);
+        }
+
+        doc.text("Takım Listesi Raporu", 14, 15);
+
+        const data = filteredApps.map(app => [
+            app.team.name,
+            app.teacher.school.substring(0, 30),
+            app.team.category,
+            app.status,
+            (app.finalScore || 0).toString(),
+            app.teacher.email,
+            app.teacher.phone
+        ]);
+
+        autoTable(doc, {
+            head: [['Takım', 'Okul', 'Kategori', 'Durum', 'Puan', 'E-Posta', 'Telefon']],
+            body: data,
+            startY: 20,
+            styles: { font: 'Roboto', fontSize: 8 },
+            headStyles: { font: 'Roboto', fontStyle: 'bold' }
+        });
+
+        doc.save(`takim_listesi_${new Date().toISOString().split('T')[0]}.pdf`);
     };
 
     const handleDelete = async (appId: string) => {
@@ -717,8 +767,11 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategoryFilter
                         <Globe size={18} />
                     </button>
 
-                    <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-bold transition-colors border border-slate-600">
-                        <FileText size={16}/> Excel
+                    <button onClick={handleExportPDF} className="flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-bold transition-colors border border-slate-600">
+                        <Download size={16}/> PDF Olarak İndir
+                    </button>
+                    <button onClick={handleExportExcel} className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold transition-colors border border-emerald-600">
+                        <Download size={16}/> Excel Olarak İndir
                     </button>
                 </div>
             </div>
