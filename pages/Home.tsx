@@ -12,7 +12,7 @@ const COMPETITION_PHASES = [
   { label: 'Başvuru ve Eser Gönderimi', date: '2026-05-04T23:59:59' },
   { label: 'Ön Sonuçların Açıklanması', date: '2026-05-07T12:00:00' },
   { label: 'Ödül Alan Takımların Açıklanması', date: '2026-05-08T12:00:00' },
-  { label: 'Büyük Final & Ödül Töreni', date: '2026-05-22T19:00:00' }
+  { label: 'Büyük Final & Ödül Töreni', date: '2026-05-22T10:30:00' }
 ];
 
 // Helper to find the next active phase
