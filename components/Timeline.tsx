@@ -79,7 +79,7 @@ const STATIC_EVENTS: TimelineEvent[] = [
   },
   {
     date: '22 Mayıs 2026',
-    title: 'Büyük Gala & Ödül Töreni',
+    title: 'Büyük Ödül Töreni',
     description: 'Konya\'da düzenlenecek görkemli törenle kazananların açıklanması ve ödüllerin takdimi.',
     icon: Trophy,
     color: 'rose'
@@ -216,7 +216,7 @@ export const Timeline: React.FC = () => {
              Yolculuğun <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500">Aşamaları</span>
           </h2>
           <p className="text-lg text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
-            Senaryodan galaya uzanan bu sinematik süreçte hiçbir sahneyi kaçırma.
+            Senaryodan ödül törenine uzanan bu sinematik süreçte hiçbir sahneyi kaçırma.
           </p>
         </div>
         

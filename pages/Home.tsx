@@ -254,12 +254,12 @@ export const Home: React.FC = () => {
                     Büyük Gün <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-amber-300">Yaklaşıyor!</span>
                   </h3>
                   <p className="text-slate-300 leading-relaxed font-light text-lg">
-                    Ödüller Sahiplerini Buluyor... Muhteşem Gala Gecesi ve Ödül Töreni için geri sayım başladı.
+                    Ödüller Sahiplerini Buluyor... Muhteşem Ödül Töreni için geri sayım başladı.
                   </p>
                   
                   <div className="bg-slate-950/50 border border-white/5 rounded-2xl py-4 pb-0 mt-4 mb-2">
-                     <CountdownTimer targetDate="2026-05-22T19:00:00" />
-                     <p className="mt-4 text-xs font-medium text-slate-500 tracking-widest uppercase border-t border-white/5 py-3">22 Mayıs 2026 • 19:00</p>
+                     <CountdownTimer targetDate="2026-05-22T10:30:00" />
+                     <p className="mt-4 text-xs font-medium text-slate-500 tracking-widest uppercase border-t border-white/5 py-3">22 Mayıs 2026 • 10:30</p>
                   </div>
                 </div>
 
@@ -279,7 +279,7 @@ export const Home: React.FC = () => {
                   onClick={closePopup}
                   className="text-slate-400 hover:text-white text-sm font-medium transition-colors underline decoration-slate-600 underline-offset-4"
                 >
-                  Gala detaylarını incele
+                  Tören detaylarını incele
                 </Link>
               </div>
             </motion.div>
@@ -694,9 +694,9 @@ export const Home: React.FC = () => {
           </div>
       </section>
 
-      {/* 6. Gala & Prizes CTA */}
+      {/* 6. Ceremony & Prizes CTA */}
       <section className="relative py-32 overflow-hidden bg-black text-white">
-        {/* ... existing gala section ... */}
+        {/* ... existing ceremony section ... */}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-slate-900/50 to-slate-950"></div>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-rose-600/10 blur-[150px] pointer-events-none mix-blend-screen"></div>
         
@@ -710,7 +710,7 @@ export const Home: React.FC = () => {
           </div>
           
           <h2 className="text-5xl md:text-7xl font-black mb-8 tracking-tight">
-             Büyük <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500">Gala Gecesi</span>
+             Büyük <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500">Ödül Töreni</span>
           </h2>
           <p className="text-2xl text-rose-100/80 mb-12 max-w-3xl mx-auto font-light leading-relaxed">
              Toplam <span className="text-white font-bold border-b border-white/30">200.000₺</span>'yi aşan ödül havuzu, teknoloji çekleri ve Altın Kamera heykelciği sahiplerini bekliyor.

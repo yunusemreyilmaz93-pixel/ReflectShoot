@@ -44,7 +44,7 @@ export const CityGuide: React.FC = () => {
       {
           title: "Mevlana Müzesi & Meydanı",
           subtitle: "Manevi Huzur Durağı",
-          description: "Konya'ya gelip de uğramadan dönülmez. Gala heyecanını yatıştırmak, biraz nefes almak ve manevi atmosferi hissetmek için ilk durağınız burası olmalı. Kubbe-i Hadra'nın (Yeşil Kubbe) altında huzur bulacaksınız.",
+          description: "Konya'ya gelip de uğramadan dönülmez. Ödül heyecanını yatıştırmak, biraz nefes almak ve manevi atmosferi hissetmek için ilk durağınız burası olmalı. Kubbe-i Hadra'nın (Yeşil Kubbe) altında huzur bulacaksınız.",
           tip: "Müze çıkışında gül bahçesinde ekibinizle çay içip yorgunluk atmayı unutmayın.",
           photoTip: "Kubbe-i Hadra'yı arkanıza alıp, meydandaki havuzun yansımasını kullanarak sanatsal bir kare yakalayın.",
           tags: ["Ziyaret", "Huzur", "Simge"],
@@ -124,7 +124,7 @@ export const CityGuide: React.FC = () => {
       {
           title: "Japon Parkı & Ecdad Parkı",
           subtitle: "Şehir İçinde Nefes",
-          description: "Japon mimarisiyle tasarlanmış göletler ve sakura ağaçları arasında sakin bir yürüyüş... Veya Ecdad Parkı'nda Selçuklu mimarisinin izlerini sürmek. Gala öncesi kafanızı boşaltmak için ideal yeşil alanlar.",
+          description: "Japon mimarisiyle tasarlanmış göletler ve sakura ağaçları arasında sakin bir yürüyüş... Veya Ecdad Parkı'nda Selçuklu mimarisinin izlerini sürmek. Ödül töreni öncesi kafanızı boşaltmak için ideal yeşil alanlar.",
           tip: "Japon Parkı'ndaki gölet kenarında gün batımını izlemek tüm yorgunluğunuzu alır.",
           photoTip: "Japon Parkı'ndaki pagoda (kule) ve gölet yansımasını kullanarak Uzak Doğu havasında bir kare çekin.",
           tags: ["Park", "Yürüyüş", "Sakinlik"],
@@ -158,7 +158,7 @@ export const CityGuide: React.FC = () => {
           title: "Akşam Yürüyüşü",
           icon: Moon,
           color: "text-blue-500",
-          desc: "Gala yemeğinden sonra şehri yaşayın.",
+          desc: "Kapanış yemeğinden sonra şehri yaşayın.",
           steps: ["Zafer Meydanı", "Alaaddin Tepesi", "Kültür Park", "Mevlana Meydanı (Gece Işıkları)"]
       }
   ];
@@ -201,8 +201,8 @@ export const CityGuide: React.FC = () => {
               KONYA
            </h1>
            <p className="text-xl md:text-2xl text-slate-200 max-w-2xl mx-auto font-light leading-relaxed drop-shadow-lg">
-              Konya Bekliyor! <span className="text-amber-400 font-medium">Büyük Gala</span> için hazırız. <br/>
-              İşte gala süresince şehri tam anlamıyla yaşamak için bir rehber.
+              Konya Bekliyor! <span className="text-amber-400 font-medium">Büyük Ödül Töreni</span> için hazırız. <br/>
+              İşte tören süresince şehri tam anlamıyla yaşamak için bir rehber.
            </p>
 
            {/* Quick Nav */}
@@ -211,8 +211,8 @@ export const CityGuide: React.FC = () => {
                   { id: 'weather', label: 'Bavul & Hava', icon: CloudSun },
                   { id: 'story', label: 'Şehrin Ruhu', icon: History },
                   { id: 'itineraries', label: 'Hazır Rotalar', icon: Footprints },
-                  { id: 'transfer', label: 'Gala Transfer', icon: Bus },
-                  { id: 'tas-bina', label: 'Gala Merkezi', icon: Trophy },
+                  { id: 'transfer', label: 'Tören Transfer', icon: Bus },
+                  { id: 'tas-bina', label: 'Tören Merkezi', icon: Trophy },
                   { id: 'locations', label: 'Gezilecek Yerler', icon: Map },
                   { id: 'tasks', label: 'Gezgin Checklist', icon: CheckSquare },
                   { id: 'survival', label: 'Pratik Bilgiler', icon: Info },
@@ -237,7 +237,7 @@ export const CityGuide: React.FC = () => {
                   <h3 className="text-2xl font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-3">
                       <Thermometer className="text-amber-500"/> Mayıs'ta Konya
                   </h3>
-                  <p className="text-slate-400 text-sm">Gala zamanı (Mayıs sonu) Konya baharın en güzel zamanlarını yaşar.</p>
+                  <p className="text-slate-400 text-sm">Ödül töreni zamanı (Mayıs sonu) Konya baharın en güzel zamanlarını yaşar.</p>
               </div>
               
               <div className="flex gap-8 items-center border-x border-slate-800 px-8 w-full md:w-auto justify-center md:justify-start">
@@ -259,7 +259,7 @@ export const CityGuide: React.FC = () => {
                       <div>
                           <h4 className="text-white font-bold text-sm mb-1">Bavul Tavsiyesi</h4>
                           <p className="text-xs text-slate-400 leading-relaxed">
-                              Gala gecesi için şık kıyafetlerinizi (takım elbise/elbise) unutmayın. Ancak akşamları serin olabilir, şehir turu için yanınıza mutlaka bir <strong>hırka veya ince mont</strong> alın.
+                              Ödül töreni için şık kıyafetlerinizi (takım elbise/elbise) unutmayın. Ancak akşamları serin olabilir, şehir turu için yanınıza mutlaka bir <strong>hırka veya ince mont</strong> alın.
                           </p>
                       </div>
                   </div>
@@ -324,7 +324,7 @@ export const CityGuide: React.FC = () => {
               </div>
           </section>
 
-          {/* 4.5 TRANSFER INFO (Gala Day) */}
+          {/* 4.5 TRANSFER INFO (Tören Day) */}
           <section id="transfer" className="scroll-mt-32">
               <div className="relative rounded-[2.5rem] bg-gradient-to-r from-slate-900 to-slate-950 border border-amber-500/20 shadow-2xl overflow-hidden group">
                   {/* Decorative Elements */}
@@ -339,10 +339,10 @@ export const CityGuide: React.FC = () => {
                               <Ticket size={16} /> Resmi Transfer Programı
                           </div>
                           <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
-                              Gala Günü <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-500 to-amber-200">Transfer Planı</span>
+                              Ödül Töreni Günü <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-500 to-amber-200">Transfer Planı</span>
                           </h2>
                           <p className="text-slate-400 text-lg font-light leading-relaxed">
-                              İl dışından gelecek olan finalist ekiplerimiz için pansiyondan gala merkezine transfer organize edilecektir. 
+                              İl dışından gelecek olan finalist ekiplerimiz için pansiyondan tören merkezine transfer organize edilecektir.
                               Lütfen belirtilen saatte "Sete Hazır" olunuz.
                           </p>
                       </div>
@@ -401,7 +401,7 @@ export const CityGuide: React.FC = () => {
               </div>
           </section>
 
-          {/* 4.7 TAŞ BİNA Section (Gala Venue) */}
+          {/* 4.7 TAŞ BİNA Section (Tören Venue) */}
           <section id="tas-bina" className="scroll-mt-32">
               <div className="flex flex-col lg:flex-row gap-12 items-center">
                   <div className="flex-1 space-y-8 order-2 lg:order-1">
@@ -508,7 +508,7 @@ export const CityGuide: React.FC = () => {
                                   />
                                   <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-slate-950 to-transparent">
                                       <p className="text-amber-500 font-black text-[10px] uppercase tracking-widest mb-1">Kültür Havzası</p>
-                                      <p className="text-white font-bold text-sm leading-tight">Gala & Ödül Heyecanı Burada Yaşanacak</p>
+                                      <p className="text-white font-bold text-sm leading-tight">Ödül Heyecanı Burada Yaşanacak</p>
                                   </div>
                               </div>
                           </div>
@@ -524,7 +524,7 @@ export const CityGuide: React.FC = () => {
                       <Map className="text-rose-500" /> Gezi Rotaları
                   </h2>
                   <p className="text-slate-400 mt-4 text-lg font-light max-w-2xl mx-auto">
-                      Gala öncesi veya sonrası keşfedebileceğiniz en popüler noktalar. Detaylar için kartlara tıklayın.
+                      Ödül töreni öncesi veya sonrası keşfedebileceğiniz en popüler noktalar. Detaylar için kartlara tıklayın.
                   </p>
               </div>
 

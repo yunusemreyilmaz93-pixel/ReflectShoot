@@ -1866,7 +1866,7 @@ export const Admin: React.FC = () => {
                                                  <DateInput label="Oylama Bitiş" value={systemSettings.dates.publicVoteEnd || ''} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, publicVoteEnd: val}})} />
                                              </div>
                                              <div className="grid grid-cols-1">
-                                                 <DateInput label="Gala Tarihi" value={systemSettings.dates.galaDate} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, galaDate: val}})} />
+                                                 <DateInput label="Ödül Töreni Tarihi" value={systemSettings.dates.galaDate} onChange={(val) => updateSystemSettings({...systemSettings, dates: {...systemSettings.dates, galaDate: val}})} />
                                              </div>
                                          </div>
                                      </div>
@@ -1970,7 +1970,7 @@ export const Admin: React.FC = () => {
                                                  />
                                                  <div className="bg-rose-900/20 p-3 rounded-lg border border-rose-900/50 text-xs text-rose-300 mt-3 flex gap-2">
                                                      <AlertTriangle size={16} className="flex-shrink-0"/>
-                                                     <strong>Dikkat:</strong> Bu seçenek açıldığında, kazananlar ana sayfada herkese açık olarak listelenir. Genellikle Gala gecesi sonrası açılmalıdır.
+                                                     <strong>Dikkat:</strong> Bu seçenek açıldığında, kazananlar ana sayfada herkese açık olarak listelenir. Genellikle Ödül Töreni sonrası açılmalıdır.
                                                  </div>
                                              </div>
                                          </div>

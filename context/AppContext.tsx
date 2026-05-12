@@ -136,7 +136,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             videoUploadStart: '2026-01-20T09:00',
             videoUploadEnd: '2026-05-04T23:59',
             academyStart: '2026-05-10T09:00',
-            galaDate: '2026-05-22T19:00',
+            galaDate: '2026-05-22T10:30',
             finalistRevealStart: '2026-05-07T12:00',
             reviseUploadEnd: '2026-05-17T23:59',
             publicVoteStart: '',

@@ -206,7 +206,7 @@ const validate = (formData: Partial<AwardParticipation>): ValidationErrors => {
   if (!formData.advisorPhone?.trim()) errors.advisorPhone = 'Telefon zorunludur.';
   if (!formData.advisorEmail?.trim()) errors.advisorEmail = 'E-posta zorunludur.';
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.advisorEmail)) errors.advisorEmail = 'Geçerli bir e-posta giriniz.';
-  if (!formData.advisorParticipationStatus || formData.advisorParticipationStatus === '') errors.advisorParticipationStatus = 'Katılım durumunuzu belirtiniz.';
+  if (!formData.advisorParticipationStatus || (formData.advisorParticipationStatus as any) === '') errors.advisorParticipationStatus = 'Katılım durumunuzu belirtiniz.';
   if (!formData.transportationType) errors.transportationType = 'Ulaşım şekli seçiniz.';
   if (!formData.parentConsentAccepted) errors.parentConsentAccepted = 'Onay kutusunu işaretleyiniz.';
 
@@ -284,7 +284,7 @@ export const AwardParticipationForm = () => {
             awardCategory: currentApp.team.awardCategory || '',
             schoolName: currentApp.teacher.school,
             schoolCity: currentApp.teacher.city,
-            schoolDistrict: currentApp.teacher.district || '',
+            schoolDistrict: '',
             advisorUserId: currentApp.teacher.id,
             advisorName: currentApp.teacher.fullName,
             advisorEmail: currentApp.teacher.email,
@@ -292,7 +292,7 @@ export const AwardParticipationForm = () => {
             advisorBranch: '',
             advisorParticipationStatus: 'Not_Sure',
             students: currentApp.team.students.map((s) => ({
-              fullName: s.fullName,
+              fullName: s.firstName + ' ' + s.lastName,
               grade: s.grade,
               phone: '',
               parentName: '',
@@ -453,7 +453,7 @@ export const AwardParticipationForm = () => {
           </div>
           <h2 className="text-3xl font-black text-white mb-4">Form Başarıyla Gönderildi</h2>
           <p className="text-slate-300 mb-8">
-            Reflect&Shoot Ödül Töreni ve Gala Programı için gerekli bilgiler tarafımıza ulaşmıştır.
+            Reflect&Shoot Ödül Töreni ve Programı için gerekli bilgiler tarafımıza ulaşmıştır.
           </p>
           <div className="bg-slate-800 p-5 rounded-2xl border border-slate-700 mb-8 text-left">
             <h3 className="text-amber-500 font-bold mb-2 flex items-center gap-2">
@@ -492,7 +492,7 @@ export const AwardParticipationForm = () => {
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold px-4 py-1.5 rounded-full mb-4 uppercase tracking-widest">
-            <ShieldCheck size={12} /> Ödül Töreni &amp; Gala
+            <ShieldCheck size={12} /> Ödül Töreni
           </div>
           <h1 className="text-3xl md:text-4xl font-black text-white mb-3">
             Reflect&amp;Shoot Katılım Formu
@@ -525,7 +525,7 @@ export const AwardParticipationForm = () => {
           {/* Info strip */}
           <div className="bg-slate-800/50 border-b border-slate-800 px-6 py-5 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div className="space-y-1.5">
-              <p className="text-amber-500 font-black text-base">Ödül Töreni ve Gala Programı</p>
+              <p className="text-amber-500 font-black text-base">Ödül Töreni Programı</p>
               <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-300">
                 <span className="flex items-center gap-1.5">
                   <Clock size={13} className="text-slate-500" /> 22 Mayıs 2026 Cuma — 10:30
@@ -837,7 +837,7 @@ export const AwardParticipationForm = () => {
                 <Info className="text-amber-500 flex-shrink-0 mt-0.5" size={18} />
                 <div className="space-y-1.5 text-sm">
                   <p className="text-slate-300">
-                    Öğrencilerin gala ve ödül törenine katılımına ilişkin veli izin belgeleri danışman öğretmen tarafından kendi okuluna teslim edilmeli ve okul süreci kapsamında muhafaza edilmelidir.
+                    Öğrencilerin ödül törenine katılımına ilişkin veli izin belgeleri danışman öğretmen tarafından kendi okuluna teslim edilmeli ve okul süreci kapsamında muhafaza edilmelidir.
                   </p>
                   <p className="text-amber-400 font-bold">
                     Bu belgelerin Reflect&amp;Shoot ekibine gönderilmesine gerek yoktur.

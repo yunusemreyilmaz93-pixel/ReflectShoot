@@ -78,7 +78,7 @@ const NextActionCard = ({ app, isDeadlinePassed, onAction }: { app: any, isDeadl
         action = { text: "Tebrikler! Takımınız ödül kazandı. Katılım formunu doldurun.", btn: "Katılım Formuna Git", tab: "AWARD_WIN", type: "success" };
     } else if (isWinner === false) {
         action = { text: "Yarışmamıza katılımınız için teşekkür ederiz. Emekleriniz için minnettarız.", btn: "Katılım Sertifikasını 22 Mayıs'tan itibaren buradan alabilirsiniz.", tab: "STATUS", type: "success" };
-    } else if (app.status === ApplicationStatus.FINAL_SUBMITTED || app.status === ApplicationStatus.JURY_EVALUATION) {
+    } else if (app.status === ApplicationStatus.FINAL_SUBMITTED || app.status === ApplicationStatus.UNDER_REVIEW) {
         action = { text: "Ödül Töreni değerlendirme süreci tamamlandı. Katılımlarınızdan dolayı teşekkür ederiz.", btn: "Detayları Gör", tab: "STATUS", type: "info" };
     } else if (isDeadlinePassed) {
         if (app.team.videoStatus === 'SUBMITTED_LINK' || app.team.videoStatus === 'UPLOADED') {
@@ -1116,7 +1116,7 @@ export const Dashboard: React.FC = () => {
                                     { label: 'Belgeler Tamamlandı', done: currentApplication.team.students.every(s => s.hasParentalConsent && s.hasKvkkConsent) },
                                     { label: 'Video Teslim Edildi', done: currentApplication.team.videoStatus !== 'PENDING' },
                                     { label: 'Ön Eleme Sonucu', done: currentApplication.team.isPreliminaryStageComplete },
-                                    { label: 'Gala Gecesi', done: false }
+                                    { label: 'Ödül Töreni', done: false }
                                 ].map((step, i) => (
                                     <div key={i} className="relative flex items-center gap-6 group">
                                         <div className={`w-6 h-6 rounded-full border-4 relative z-10 flex-shrink-0 transition-all duration-500 ${step.done ? 'bg-green-500 border-slate-900 shadow-[0_0_15px_rgba(34,197,94,0.5)]' : 'bg-slate-800 border-slate-900'}`}></div>
@@ -1679,7 +1679,7 @@ export const Dashboard: React.FC = () => {
                             </div>
 
                             <p className="text-sm text-slate-400 mb-8 max-w-lg mx-auto">
-                                Ödül Töreni ve Gala Programı hazırlıkları için katılım durumunuzu bildiren formu en geç <strong className="text-white">11 Mayıs 2026 Pzt. Saat 13:00'e</strong> kadar doldurmanız gerekmektedir.
+                                Ödül Töreni hazırlıkları için katılım durumunuzu bildiren formu en geç <strong className="text-white">11 Mayıs 2026 Pzt. Saat 13:00'e</strong> kadar doldurmanız gerekmektedir.
                             </p>
 
                             <button onClick={handleCloseWinnerModal} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 px-10 rounded-2xl transition-colors">
@@ -1759,7 +1759,7 @@ export const Dashboard: React.FC = () => {
                             
                             <p className="text-slate-300 text-lg leading-relaxed mb-8">
                                 Yarışma başvurunuz başarıyla tamamlandı.<br/>
-                                Büyük bir emeğin ürününü teslim ettiğiniz için teşekkür ederiz. Artık arkanıza yaslanıp gala gününü bekleyebilirsiniz.
+                                Büyük bir emeğin ürününü teslim ettiğiniz için teşekkür ederiz. Artık arkanıza yaslanıp ödül törenini bekleyebilirsiniz.
                             </p>
 
                             <button 
@@ -1796,7 +1796,7 @@ export const Dashboard: React.FC = () => {
                             <p className="text-slate-300 text-lg leading-relaxed mb-8">
                                 Tebrikler! Filminizi başarıyla teslim ettiniz ve değerlendirme sürecine katılmaya hak kazandınız. Jüri heyetimiz projelerinizi dikkatle inceliyor.
                                 <br/><br/>
-                                Sonuçlar, görkemli gala gecesinde açıklanacaktır. Hazırlıklarınızı yapmayı unutmayın!
+                                Sonuçlar, ödül töreninde açıklanacaktır. Hazırlıklarınızı yapmayı unutmayın!
                             </p>
 
                             <button 

@@ -38,7 +38,7 @@ async function markWinners() {
 
   const snap = await getDocs(collection(db, "applications"));
   
-  const allApps = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const allApps = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
 
   for (const appDoc of allApps) {
     const normalize = (s: string) => s.toLocaleLowerCase('tr-TR').trim().replace(/\s+/g, '');

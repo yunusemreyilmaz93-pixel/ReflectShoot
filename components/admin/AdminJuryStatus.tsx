@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Application, UserProfile, ScoreDocument } from '../../types';
+import { Application, UserProfile, ScoreDocument, ApplicationStatus } from '../../types';
 import { useAppContext } from '../../context/AppContext';
 import { collectionGroup, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
@@ -72,7 +72,7 @@ export const AdminJuryStatus = ({ apps }: Props) => {
     }, [juries, apps, allScores, searchTerm]);
 
     const appStats = useMemo(() => {
-        const activeApps = apps.filter(a => a.status !== 'DRAFT');
+        const activeApps = apps.filter(a => a.status !== ApplicationStatus.DRAFT);
         return activeApps.map(app => {
             const assignedCount = app.assignedJuryIds?.length || 0;
             const myScores = allScores.filter(s => (s as any).appId === app.id);
@@ -254,8 +254,8 @@ export const AdminJuryStatus = ({ apps }: Props) => {
                                         <td className="p-4">
                                             <div className="font-bold text-white">{stat.app.team.name}</div>
                                             <div className="text-xs text-slate-500 line-clamp-1 flex gap-2">
-                                                {stat.app.status === 'GRADED' && <CheckCircle size={14} className="text-emerald-500 inline"/>}
-                                                {stat.app.status === 'UNDER_REVIEW' && <Clock size={14} className="text-amber-500 inline"/>}
+                                                {stat.app.status === ApplicationStatus.GRADED && <CheckCircle size={14} className="text-emerald-500 inline"/>}
+                                                {stat.app.status === ApplicationStatus.UNDER_REVIEW && <Clock size={14} className="text-amber-500 inline"/>}
                                                 {stat.app.team.videoUrl ? 'Video Eklendi' : 'Video Bekleniyor'}
                                             </div>
                                         </td>
