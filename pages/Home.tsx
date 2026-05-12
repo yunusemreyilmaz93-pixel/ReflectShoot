@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool, Target, HelpCircle, MapPin, Compass } from 'lucide-react';
+import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool, Target, HelpCircle, MapPin, Compass, Instagram, Sparkles, PartyPopper } from 'lucide-react';
 import { Timeline } from '../components/Timeline';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { useAppContext } from '../context/AppContext';
@@ -102,20 +102,20 @@ export const Home: React.FC = () => {
   const { cmsLinks, cmsTimeline } = useAppContext();
   const [activePhase, setActivePhase] = useState(getNextPhase(cmsTimeline));
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
-  const [showEvaluationPopup, setShowEvaluationPopup] = useState(false);
+  const [showCountdownPopup, setShowCountdownPopup] = useState(false);
 
   useEffect(() => {
-    const hasSeenPopup = localStorage.getItem('hide_results_popup');
+    const hasSeenPopup = localStorage.getItem('hide_countdown_popup_gala');
     if (!hasSeenPopup) {
       // Delay it slightly for better impact
-      const timer = setTimeout(() => setShowEvaluationPopup(true), 1500);
+      const timer = setTimeout(() => setShowCountdownPopup(true), 1500);
       return () => clearTimeout(timer);
     }
   }, []);
 
   const closePopup = () => {
-    setShowEvaluationPopup(false);
-    localStorage.setItem('hide_results_popup', 'true');
+    setShowCountdownPopup(false);
+    localStorage.setItem('hide_countdown_popup_gala', 'true');
   };
 
   useEffect(() => {
@@ -216,7 +216,7 @@ export const Home: React.FC = () => {
     <div className="bg-slate-950 min-h-screen relative overflow-x-hidden font-sans">
       
       <AnimatePresence>
-        {showEvaluationPopup && (
+        {showCountdownPopup && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }}
@@ -231,38 +231,55 @@ export const Home: React.FC = () => {
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
               className="relative w-full max-w-lg bg-slate-900 border border-amber-500/30 rounded-[2rem] shadow-[0_0_50px_rgba(245,158,11,0.2)] p-8 overflow-hidden"
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+              <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600" />
               
               <button 
                 onClick={closePopup}
-                className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
+                className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors z-10"
                 aria-label="Kapat"
               >
                 <X size={24} />
               </button>
 
-              <div className="flex flex-col items-center text-center gap-6">
-                <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center border border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.1)]">
-                  <Trophy className="text-amber-500" size={40} />
+              <div className="relative z-10 flex flex-col items-center text-center gap-6">
+                <div className="relative w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center border border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.1)] mb-2 mt-2">
+                  <div className="absolute -inset-2 bg-amber-500/20 blur-xl rounded-full animate-pulse"></div>
+                  <PartyPopper className="text-amber-500 relative z-10" size={40} />
+                  <Sparkles className="absolute -top-2 -right-2 text-amber-300 animate-bounce" size={20} />
                 </div>
                 
-                <div className="space-y-4">
-                  <h3 className="text-2xl font-black text-white tracking-tight">Sonuçlar Açıklandı!</h3>
-                  <p className="text-slate-300 leading-relaxed font-light">
-                    Danışman öğretmenlerimiz, takımlarına ait sonuçları ve ödül durumlarını <span className="text-amber-400 font-bold">Öğretmen Paneli</span> üzerinden görüntüleyebilir.
+                <div className="space-y-4 w-full">
+                  <h3 className="text-3xl font-black text-white tracking-tight">
+                    Büyük Gün <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-amber-300">Yaklaşıyor!</span>
+                  </h3>
+                  <p className="text-slate-300 leading-relaxed font-light text-lg">
+                    Ödüller Sahiplerini Buluyor... Muhteşem Gala Gecesi ve Ödül Töreni için geri sayım başladı.
                   </p>
-                  <p className="text-slate-400 text-sm leading-relaxed">
-                    Ödül alan takım(lar)ınız ve diğer başvuru sonuçları için lütfen panelinize giriş yapın.
-                  </p>
+                  
+                  <div className="bg-slate-950/50 border border-white/5 rounded-2xl py-4 pb-0 mt-4 mb-2">
+                     <CountdownTimer targetDate="2026-05-22T19:00:00" />
+                     <p className="mt-4 text-xs font-medium text-slate-500 tracking-widest uppercase border-t border-white/5 py-3">22 Mayıs 2026 • 19:00</p>
+                  </div>
                 </div>
 
-                <Link
-                  to="/dashboard"
+                <a
+                  href="https://www.instagram.com/konyaaihl1951/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={closePopup}
-                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black transition-all duration-300 shadow-[0_10px_30px_rgba(245,158,11,0.25)] hover:-translate-y-0.5"
+                  className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold transition-all duration-300 shadow-lg hover:shadow-pink-500/25 hover:-translate-y-0.5 mt-2"
                 >
-                  Panele Git
-                  <ArrowRight size={20} />
+                  <Instagram size={20} />
+                  Instagram'da Takip Et
+                </a>
+
+                <Link
+                  to="/finals"
+                  onClick={closePopup}
+                  className="text-slate-400 hover:text-white text-sm font-medium transition-colors underline decoration-slate-600 underline-offset-4"
+                >
+                  Gala detaylarını incele
                 </Link>
               </div>
             </motion.div>
