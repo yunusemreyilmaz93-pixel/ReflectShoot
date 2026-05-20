@@ -14,6 +14,278 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
 
     const [selectedAppView, setSelectedAppView] = useState<string | null>(null);
     const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
+    const [showOfficialRankings, setShowOfficialRankings] = useState(true);
+
+    const exportRankingsPDF = () => {
+        const content = `
+      <!DOCTYPE html>
+      <html lang="tr">
+      <head>
+        <meta charset="UTF-8">
+        <title>Reflect & Shoot - Resmi Ödül Sıralama Listesi</title>
+        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+        <style>
+           @page { size: A4 portrait; margin: 10mm; }
+           body {
+             font-family: 'Inter', sans-serif;
+             color: #0f172a;
+             background-color: #ffffff;
+             margin: 0;
+             padding: 0;
+             -webkit-print-color-adjust: exact;
+             print-color-adjust: exact;
+           }
+           .page {
+             page-break-after: always;
+             border: 3px double #d4af37;
+             padding: 40px;
+             border-radius: 8px;
+             box-sizing: border-box;
+             min-height: 275mm;
+             display: flex;
+             flex-direction: column;
+             justify-content: flex-start;
+             margin-bottom: 20px;
+           }
+           .page:last-child {
+             page-break-after: avoid;
+             margin-bottom: 0;
+           }
+           .logo-table {
+             width: 100%;
+             border-collapse: collapse;
+             margin-bottom: 25px;
+           }
+           .header-logo {
+             height: 65px;
+             object-fit: contain;
+           }
+           .header-section {
+             text-align: center;
+             border-bottom: 2px solid #e2e8f0;
+             padding-bottom: 15px;
+             margin-bottom: 30px;
+           }
+           .main-title {
+             font-family: 'Cinzel', serif;
+             font-size: 22pt;
+             color: #0f172a;
+             margin: 5px 0;
+             letter-spacing: 1.5px;
+             font-weight: 800;
+           }
+           .sub-title {
+             font-family: 'Cinzel', serif;
+             font-size: 13pt;
+             color: #b45309;
+             margin: 0 0 10px 0;
+             letter-spacing: 4px;
+             font-weight: 600;
+             text-transform: uppercase;
+           }
+           .doc-date {
+             font-size: 10pt;
+             color: #64748b;
+             font-weight: 500;
+           }
+           .category-title {
+             font-family: 'Cinzel', serif;
+             font-size: 14pt;
+             color: #1e293b;
+             border-bottom: 2px solid #b45309;
+             padding-bottom: 6px;
+             margin-top: 20px;
+             margin-bottom: 20px;
+             text-transform: uppercase;
+             font-weight: bold;
+           }
+           .data-table {
+             width: 100%;
+             border-collapse: collapse;
+             margin-top: 10px;
+           }
+           .data-table th {
+             background-color: #f8fafc;
+             border-bottom: 2px solid #cbd5e1;
+             color: #334155;
+             font-weight: 700;
+             font-size: 10pt;
+             text-align: left;
+             padding: 12px;
+           }
+           .data-table td {
+             font-size: 10pt;
+             padding: 14px 12px;
+             border-bottom: 1px solid #f1f5f9;
+           }
+           .rank-cell {
+             width: 25%;
+           }
+           .team-cell {
+             font-weight: 700;
+             width: 35%;
+             color: #0f172a;
+           }
+           .school-cell {
+             color: #475569;
+             width: 40%;
+           }
+           .badge-rank {
+             display: inline-block;
+             padding: 4px 12px;
+             border-radius: 99px;
+             font-size: 9.5pt;
+             font-weight: 800;
+             text-align: center;
+           }
+           .badge-rank.gold {
+             background: #fef3c7;
+             color: #92400e;
+             border: 1px solid #fde68a;
+           }
+           .badge-rank.special {
+             background: #f0fdf4;
+             color: #166534;
+             border: 1px solid #bbf7d0;
+           }
+           .badge-rank.mention {
+             background: #eff6ff;
+             color: #1e40af;
+             border: 1px solid #bfdbfe;
+           }
+        </style>
+      </head>
+      <body>
+        <!-- PAGE 1: CANLI ÇEKİM -->
+        <div class="page">
+          <table class="logo-table">
+            <tr>
+              <td style="text-align:left; border:none; padding:0;">
+                <img class="header-logo" src="https://assets.reflectandshoot.com/Reflect_Shoot_Logo.png" alt="Reflect & Shoot">
+              </td>
+              <td style="text-align:right; border:none; padding:0;">
+                <img class="header-logo" src="https://assets.reflectandshoot.com/20113118_yeni_logo_konyaihl.png" alt="Konya Anadolu İHL">
+              </td>
+            </tr>
+          </table>
+
+          <div class="header-section">
+            <div class="main-title">REFLECT & SHOOT YARIŞMASI</div>
+            <div class="sub-title">Resmi Ödül Sıralama Listesi</div>
+            <div class="doc-date">Tarih: 22 Mayıs 2026</div>
+          </div>
+
+          <div class="category-title">🏆 CANLI ÇEKİM ÖDÜL SIRALAMASI</div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Derece / Ödül</th>
+                <th>Takım Adı</th>
+                <th>Okul Adı</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="rank-cell"><span class="badge-rank gold">1. Derece</span></td>
+                <td class="team-cell">Sosyal Kızlar42</td>
+                <td class="school-cell">Konya Türk Telekom Sosyal Bilimler Lisesi</td>
+              </tr>
+              <tr>
+                <td class="rank-cell"><span class="badge-rank gold">2. Derece</span></td>
+                <td class="team-cell">Diriliş Perileri</td>
+                <td class="school-cell">Güngören İTO Kız Anadolu İmam Hatip Lisesi</td>
+              </tr>
+              <tr>
+                <td class="rank-cell"><span class="badge-rank gold">3. Derece</span></td>
+                <td class="team-cell">sinemektep</td>
+                <td class="school-cell">Güngören İTO Kız Anadolu İmam Hatip Lisesi</td>
+              </tr>
+              <tr>
+                <td class="rank-cell"><span class="badge-rank special">Jüri Özel</span></td>
+                <td class="team-cell">Homines Longinqui</td>
+                <td class="school-cell">Uluslararası Mevlana Anadolu İmam Hatip Lisesi</td>
+              </tr>
+              <tr>
+                <td class="rank-cell"><span class="badge-rank mention">Mansiyon</span></td>
+                <td class="team-cell">Justice Without Doubt</td>
+                <td class="school-cell">Mahmut Sami Ramazanoğlu Anadolu İmam Hatip Lisesi</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGE 2: YAPAY ZEKÂ -->
+        <div class="page">
+          <table class="logo-table">
+            <tr>
+              <td style="text-align:left; border:none; padding:0;">
+                <img class="header-logo" src="https://assets.reflectandshoot.com/Reflect_Shoot_Logo.png" alt="Reflect & Shoot">
+              </td>
+              <td style="text-align:right; border:none; padding:0;">
+                <img class="header-logo" src="https://assets.reflectandshoot.com/20113118_yeni_logo_konyaihl.png" alt="Konya Anadolu İHL">
+              </td>
+            </tr>
+          </table>
+
+          <div class="header-section">
+            <div class="main-title">REFLECT & SHOOT YARIŞMASI</div>
+            <div class="sub-title">Resmi Ödül Sıralama Listesi</div>
+            <div class="doc-date">Tarih: 22 Mayıs 2026</div>
+          </div>
+
+          <div class="category-title">🤖 YAPAY ZEKÂ ÖDÜL SIRALAMASI</div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Derece / Ödül</th>
+                <th>Takım Adı</th>
+                <th>Okul Adı</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="rank-cell"><span class="badge-rank gold">1. Derece</span></td>
+                <td class="team-cell">mitra</td>
+                <td class="school-cell">15 Temmuz Şehitleri Anadolu İmam Hatip Lisesi</td>
+              </tr>
+              <tr>
+                <td class="rank-cell"><span class="badge-rank gold">2. Derece</span></td>
+                <td class="team-cell">Technokasyon</td>
+                <td class="school-cell">Kadıköy Anadolu İmam Hatip Lisesi</td>
+              </tr>
+              <tr>
+                <td class="rank-cell"><span class="badge-rank gold">3. Derece</span></td>
+                <td class="team-cell">Threee</td>
+                <td class="school-cell">Maltepe Kız Anadolu İmam Hatip Lisesi</td>
+              </tr>
+              <tr>
+                <td class="rank-cell"><span class="badge-rank special">Jüri Özel</span></td>
+                <td class="team-cell">PURE INSIGHT</td>
+                <td class="school-cell">Selçuklu Fen Lisesi</td>
+              </tr>
+              <tr>
+                <td class="rank-cell"><span class="badge-rank mention">Mansiyon</span></td>
+                <td class="team-cell">Clear Vision</td>
+                <td class="school-cell">Konya Anadolu İmam Hatip Lisesi</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+          }
+        </script>
+      </body>
+      </html>
+    `;
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(content);
+            printWindow.document.close();
+        }
+    };
 
     const winningApps = apps.filter(a => a.team.isWinner);
 
@@ -211,6 +483,143 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
 
     return (
         <div className="space-y-6 animate-fadeIn pb-12">
+            {/* 🏆 Kesinleşen Resmi Ödül/Derece Sıralamaları */}
+            <div className="bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 border border-amber-500/30 rounded-3xl overflow-hidden shadow-[0_0_30px_rgba(245,158,11,0.05)]">
+                <div className="p-6 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-950/40">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+                            <Trophy className="text-amber-500 animate-pulse" size={22} />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-white flex items-center gap-2">
+                                Kesinleşen Ödül ve Derece Sıralamaları
+                            </h3>
+                            <p className="text-xs text-slate-400 mt-0.5">Tören ve plaket hazırlığında ödül eşleştirmelerini koordine edin</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-2.5 w-full sm:w-auto">
+                        <button
+                            onClick={exportRankingsPDF}
+                            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-black transition-all shadow-md shadow-amber-500/10 active:scale-95 cursor-pointer"
+                        >
+                            <Download size={14} className="stroke-[3]" /> Derece Listesi PDF İndir
+                        </button>
+                        <button
+                            onClick={() => setShowOfficialRankings(!showOfficialRankings)}
+                            className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-colors border border-slate-700"
+                        >
+                            {showOfficialRankings ? 'Gizle' : 'Göster'}
+                        </button>
+                    </div>
+                </div>
+
+                {showOfficialRankings && (
+                    <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8 divide-y lg:divide-y-0 lg:divide-x divide-slate-800">
+                        {/* Canlı Çekim Ödül Sıralaması */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 pb-2 border-b border-slate-800/60">
+                                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
+                                <h4 className="text-sm font-black text-slate-200 tracking-wider uppercase">Canlı Çekim Ödül Sıralaması</h4>
+                            </div>
+                            <div className="space-y-3">
+                                {[
+                                    { rank: '1.', name: 'Sosyal Kızlar42', school: 'Konya Türk Telekom Sosyal Bilimler Lisesi', type: 'gold', badge: '1. Derece' },
+                                    { rank: '2.', name: 'Diriliş Perileri', school: 'Güngören İTO Kız Anadolu İmam Hatip Lisesi', type: 'silver', badge: '2. Derece' },
+                                    { rank: '3.', name: 'sinemektep', school: 'Güngören İTO Kız Anadolu İmam Hatip Lisesi', type: 'bronze', badge: '3. Derece' },
+                                    { rank: 'Jüri Özel', name: 'Homines Longinqui', school: 'Uluslararası Mevlana Anadolu İmam Hatip Lisesi', type: 'special', badge: 'Jüri Özel Ödülü' },
+                                    { rank: 'Mansiyon', name: 'Justice Without Doubt', school: 'Mahmut Sami Ramazanoğlu Anadolu İmam Hatip Lisesi', type: 'mention', badge: 'Mansiyon Ödülü' }
+                                ].map((item, index) => (
+                                    <div 
+                                        key={index} 
+                                        className={`flex items-start gap-4 p-3 rounded-2xl border transition-all ${
+                                            item.type === 'gold' ? 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/30' :
+                                            item.type === 'silver' ? 'bg-slate-400/5 border-slate-400/20 hover:border-slate-400/30' :
+                                            item.type === 'bronze' ? 'bg-orange-500/5 border-orange-500/20 hover:border-orange-500/30' :
+                                            'bg-slate-800/40 border-slate-800 hover:border-slate-700'
+                                        }`}
+                                    >
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm flex-shrink-0 border ${
+                                            item.type === 'gold' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)]' :
+                                            item.type === 'silver' ? 'bg-slate-400/10 text-slate-300 border-slate-400/10' :
+                                            item.type === 'bronze' ? 'bg-orange-500/10 text-orange-400 border-orange-500/10' :
+                                            'bg-slate-900 text-slate-400 border-slate-800'
+                                        }`}>
+                                            {item.type === 'gold' ? '🥇' : item.type === 'silver' ? '🥈' : item.type === 'bronze' ? '🥉' : '🎬'}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="font-extrabold text-white text-sm">{item.name}</span>
+                                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
+                                                    item.type === 'gold' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                    item.type === 'silver' ? 'bg-slate-400/10 text-slate-300 border-slate-400/20' :
+                                                    item.type === 'bronze' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
+                                                    item.type === 'special' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                    'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                                }`}>
+                                                    {item.badge}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-slate-400 mt-1 line-clamp-1">{item.school}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Yapay Zekâ Ödül Sıralaması */}
+                        <div className="space-y-4 pt-6 lg:pt-0 lg:pl-8">
+                            <div className="flex items-center gap-2 pb-2 border-b border-slate-800/60">
+                                <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]"></span>
+                                <h4 className="text-sm font-black text-slate-200 tracking-wider uppercase">Yapay Zekâ Ödül Sıralaması</h4>
+                            </div>
+                            <div className="space-y-3">
+                                {[
+                                    { rank: '1.', name: 'mitra', school: '15 Temmuz Şehitleri Anadolu İmam Hatip Lisesi', type: 'gold', badge: '1. Derece' },
+                                    { rank: '2.', name: 'Technokasyon', school: 'Kadıköy Anadolu İmam Hatip Lisesi', type: 'silver', badge: '2. Derece' },
+                                    { rank: '3.', name: 'Threee', school: 'Maltepe Kız Anadolu İmam Hatip Lisesi', type: 'bronze', badge: '3. Derece' },
+                                    { rank: 'Jüri Özel', name: 'PURE INSIGHT', school: 'Selçuklu Fen Lisesi', type: 'special', badge: 'Jüri Özel Ödülü' },
+                                    { rank: 'Mansiyon', name: 'Clear Vision', school: 'Konya Anadolu İmam Hatip Lisesi', type: 'mention', badge: 'Mansiyon Ödülü' }
+                                ].map((item, index) => (
+                                    <div 
+                                        key={index} 
+                                        className={`flex items-start gap-4 p-3 rounded-2xl border transition-all ${
+                                            item.type === 'gold' ? 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/30' :
+                                            item.type === 'silver' ? 'bg-slate-400/5 border-slate-400/20 hover:border-slate-400/30' :
+                                            item.type === 'bronze' ? 'bg-orange-500/5 border-orange-500/20 hover:border-orange-500/30' :
+                                            'bg-slate-800/40 border-slate-800 hover:border-slate-700'
+                                        }`}
+                                    >
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm flex-shrink-0 border ${
+                                            item.type === 'gold' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)]' :
+                                            item.type === 'silver' ? 'bg-slate-400/10 text-slate-300 border-slate-400/10' :
+                                            item.type === 'bronze' ? 'bg-orange-500/10 text-orange-400 border-orange-500/10' :
+                                            'bg-slate-900 text-slate-400 border-slate-800'
+                                        }`}>
+                                            {item.type === 'gold' ? '🥇' : item.type === 'silver' ? '🥈' : item.type === 'bronze' ? '🥉' : '🤖'}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="font-extrabold text-white text-sm">{item.name}</span>
+                                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
+                                                    item.type === 'gold' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                    item.type === 'silver' ? 'bg-slate-400/10 text-slate-300 border-slate-400/20' :
+                                                    item.type === 'bronze' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
+                                                    item.type === 'special' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                    'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                                }`}>
+                                                    {item.badge}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-slate-400 mt-1 line-clamp-1">{item.school}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
                 <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
                     <div className="flex gap-4 items-center">
