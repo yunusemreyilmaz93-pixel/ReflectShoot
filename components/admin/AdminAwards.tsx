@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Download, Filter, Eye, Trophy, Calendar, CheckSquare, XSquare, HelpCircle, EyeOff, Clock } from 'lucide-react';
+import { Search, Download, Filter, Eye, Trophy, Calendar, CheckSquare, XSquare, HelpCircle, EyeOff, Clock, Play, Video, ExternalLink, Youtube, Link as LinkIcon } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { Application, AwardParticipation } from '../../types';
+import { getYouTubeEmbedUrl } from '../../lib/videoUtils';
 
 export const AdminAwards = ({ apps }: { apps: Application[] }) => {
     const [participations, setParticipations] = useState<Record<string, AwardParticipation>>({});
@@ -12,6 +13,7 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
     const [filterAccom, setFilterAccom] = useState<string>('all'); // all, yes, no
 
     const [selectedAppView, setSelectedAppView] = useState<string | null>(null);
+    const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
 
     const winningApps = apps.filter(a => a.team.isWinner);
 
@@ -274,6 +276,7 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                                 <tr className="bg-slate-950 border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400">
                                     <th className="p-4 font-bold">Takım & Okul</th>
                                     <th className="p-4 font-bold">Ödül</th>
+                                    <th className="p-4 font-bold">Film / Eser</th>
                                     <th className="p-4 font-bold">Danışman</th>
                                     <th className="p-4 font-bold">Form Durumu</th>
                                     <th className="p-4 font-bold">Öğr. / Konak.</th>
@@ -295,6 +298,33 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/20 text-xs font-bold whitespace-nowrap">
                                                     <Trophy size={12} /> {app.team.awardCategory}
                                                 </span>
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="flex flex-col gap-1.5">
+                                                    {app.team.videoUrl ? (
+                                                        <button
+                                                            onClick={() => setPreviewVideoUrl(app.team.videoUrl || null)}
+                                                            className="inline-flex items-center gap-1 bg-red-500/10 hover:bg-red-500/20 text-rose-400 border border-red-500/20 text-[11px] px-2 py-1 rounded font-bold transition-all w-fit cursor-pointer"
+                                                            title="YouTube Üzerinden İzle"
+                                                        >
+                                                            <Play size={10} className="fill-rose-400" /> İzle (YouTube)
+                                                        </button>
+                                                    ) : null}
+                                                    {app.team.submissionDownloadUrl ? (
+                                                        <a
+                                                            href={app.team.submissionDownloadUrl}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="inline-flex items-center gap-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 text-[11px] px-2 py-1 rounded font-bold transition-all w-fit"
+                                                            title="Dosyayı Dış Bağlantıda Aç"
+                                                        >
+                                                            <ExternalLink size={10} /> Ham Dosya
+                                                        </a>
+                                                    ) : null}
+                                                    {!app.team.videoUrl && !app.team.submissionDownloadUrl && (
+                                                        <span className="text-xs text-slate-600 italic">Yüklenmedi</span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="p-4">
                                                 <div className="text-sm text-slate-300">{p?.advisorName || app.teacher.fullName}</div>
@@ -382,6 +412,46 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                                             </div>
                                         </div>
 
+                                        {(app.team.videoUrl || app.team.submissionDownloadUrl) && (
+                                            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-800 space-y-4">
+                                                <h4 className="font-bold text-rose-500 mb-2 flex items-center gap-2">
+                                                    <Video size={16} /> Gönderilen Film / Eser
+                                                </h4>
+                                                {app.team.videoUrl && (
+                                                    <div>
+                                                        <span className="text-slate-500 text-xs font-bold block mb-2 uppercase">Tanımlanan YouTube Yayını</span>
+                                                        <div className="rounded-xl overflow-hidden border border-slate-700 aspect-video">
+                                                            <iframe
+                                                                src={getYouTubeEmbedUrl(app.team.videoUrl) || ""}
+                                                                className="w-full h-full"
+                                                                allowFullScreen
+                                                            ></iframe>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {app.team.submissionDownloadUrl && (
+                                                    <div className="pt-2 border-t border-slate-705/50">
+                                                        <span className="text-slate-500 text-xs font-bold block mb-1.5 uppercase">Öğretmen Gönderim Linki</span>
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                readOnly
+                                                                value={app.team.submissionDownloadUrl}
+                                                                className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-400 font-mono outline-none"
+                                                            />
+                                                            <a
+                                                                href={app.team.submissionDownloadUrl}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"
+                                                            >
+                                                                <ExternalLink size={14} /> Bağlantıyı Aç
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
                                         <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-800">
                                             <h4 className="font-bold text-amber-500 mb-2">Öğrenciler ({(p?.students || app.team.students).length} kişi)</h4>
                                             <div className="space-y-3">
@@ -417,6 +487,33 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                                     </>
                                 );
                             })()}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* YouTube Video Preview Modal */}
+            {previewVideoUrl && (
+                <div className="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-fadeIn">
+                    <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-3xl w-full flex flex-col shadow-2xl overflow-hidden animate-scaleIn">
+                        <div className="p-4 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
+                            <h4 className="font-bold text-white text-sm flex items-center gap-2">
+                                <Video className="text-rose-500 animate-pulse" size={16} /> Film Ön İzleme
+                            </h4>
+                            <button 
+                                onClick={() => setPreviewVideoUrl(null)} 
+                                className="text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded-lg transition-colors"
+                            >
+                                <XSquare size={20} />
+                            </button>
+                        </div>
+                        <div className="aspect-video w-full bg-black">
+                            <iframe
+                                src={getYouTubeEmbedUrl(previewVideoUrl) || ""}
+                                className="w-full h-full"
+                                allowFullScreen
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            ></iframe>
                         </div>
                     </div>
                 </div>
