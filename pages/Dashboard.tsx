@@ -1174,9 +1174,18 @@ export const Dashboard: React.FC = () => {
                                             E-Belge
                                         </span>
                                     </div>
-                                    <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                                    <p className="text-xs text-slate-400 mb-4 leading-relaxed">
                                         Reflect & Shoot Kısa Film Yarışması kapsamında danışman öğretmen ve öğrenci katılım belgelerinizi aşağıdaki bağlantılardan indirebilirsiniz.
                                     </p>
+
+                                    {/* Bilgi Paneli */}
+                                    <div className="bg-amber-950/20 border border-amber-500/30 text-amber-400 p-3.5 rounded-xl text-xs mb-6 flex items-start gap-2.5">
+                                        <Clock size={16} className="shrink-0 mt-0.5" />
+                                        <div>
+                                            <span className="font-bold block mb-0.5">Sertifikalar Hazırlanıyor</span>
+                                            <span>Sertifikaların hazırlanma süreci devam etmektedir. İsme özel düzenlenen özel belgeler dışındaki genel katılım/teşekkür belgeleri şu an indirmeye kapalıdır ve tamamlandığında aktif olacaktır.</span>
+                                        </div>
+                                    </div>
 
                                     <div className="space-y-4">
                                         {/* Danışman Öğretmen Belgesi */}
@@ -1185,46 +1194,64 @@ export const Dashboard: React.FC = () => {
                                                 <span className="text-[9px] uppercase font-black text-slate-500 tracking-wider block">Danışman Öğretmen</span>
                                                 <span className="text-sm font-bold text-white">{currentApplication?.teacher?.fullName || currentUser?.fullName}</span>
                                             </div>
-                                            <button 
-                                                onClick={() => {
-                                                    const customUrl = getTeacherCertificateUrl();
-                                                    if (customUrl) {
-                                                        window.open(customUrl, '_blank');
-                                                    } else {
-                                                        printCertificate(currentApplication?.teacher?.fullName || currentUser?.fullName || '', 'APPRECIATION');
-                                                    }
-                                                }}
-                                                className="bg-amber-600 hover:bg-amber-500 text-slate-950 hover:-translate-y-1 transition-all py-2 px-4 rounded-xl text-xs font-black shadow-lg shadow-amber-950/20 flex items-center gap-1.5"
-                                            >
-                                                <Printer size={13}/> İndir (PDF)
-                                            </button>
+                                            {getTeacherCertificateUrl() ? (
+                                                <button 
+                                                    onClick={() => {
+                                                        const customUrl = getTeacherCertificateUrl();
+                                                        if (customUrl) {
+                                                            window.open(customUrl, '_blank');
+                                                        }
+                                                    }}
+                                                    className="bg-amber-600 hover:bg-amber-500 text-slate-950 hover:-translate-y-1 transition-all py-2 px-4 rounded-xl text-xs font-black shadow-lg shadow-amber-950/20 flex items-center gap-1.5 cursor-pointer"
+                                                >
+                                                    <Printer size={13}/> İndir (PDF)
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => {
+                                                        showToast("Danışman öğretmen katılım belgesinin hazırlanma süreci devam etmektedir. Lütfen daha sonra tekrar deneyiniz.", "info");
+                                                    }}
+                                                    className="bg-slate-800/40 text-slate-500 border border-slate-800 py-2 px-4 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-help"
+                                                >
+                                                    <Lock size={12}/> Hazırlanıyor
+                                                </button>
+                                            )}
                                         </div>
 
                                         <div className="w-full h-px bg-slate-800/60 my-4"></div>
                                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Öğrenci Kadrosu</span>
                                         
                                         <div className="grid gap-2 max-h-[220px] overflow-y-auto pr-1 scrollbar-hide">
-                                            {currentApplication.team.students.map((student) => (
-                                                <div key={student.id} className="p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl flex items-center justify-between hover:border-slate-700 transition-colors">
-                                                    <div>
-                                                        <span className="text-xs font-bold text-slate-200">{student.firstName} {student.lastName}</span>
-                                                        <span className="text-[9px] font-bold text-slate-600 uppercase block">{student.grade} - Öğrenci</span>
+                                            {currentApplication.team.students.map((student) => {
+                                                const studentUrl = getStudentCertificateUrl(student);
+                                                return (
+                                                    <div key={student.id} className="p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl flex items-center justify-between hover:border-slate-700 transition-colors">
+                                                        <div>
+                                                            <span className="text-xs font-bold text-slate-200">{student.firstName} {student.lastName}</span>
+                                                            <span className="text-[9px] font-bold text-slate-600 uppercase block">{student.grade} - Öğrenci</span>
+                                                        </div>
+                                                        {studentUrl ? (
+                                                            <button 
+                                                                onClick={() => {
+                                                                    window.open(studentUrl, '_blank');
+                                                                }}
+                                                                className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all py-1.5 px-3 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                                                            >
+                                                                <Printer size={11}/> Belge
+                                                            </button>
+                                                        ) : (
+                                                            <button 
+                                                                onClick={() => {
+                                                                    showToast(`${student.firstName} ${student.lastName} isimli öğrencinin katılım belgesinin hazırlanma süreci devam etmektedir. Lütfen daha sonra tekrar deneyiniz.`, "info");
+                                                                }}
+                                                                className="text-slate-600 bg-slate-900/30 border border-slate-950/50 py-1.5 px-3 rounded-lg text-[11px] font-medium flex items-center gap-1 cursor-help"
+                                                            >
+                                                                <Lock size={10}/> Hazırlanıyor
+                                                            </button>
+                                                        )}
                                                     </div>
-                                                    <button 
-                                                        onClick={() => {
-                                                            const customUrl = getStudentCertificateUrl(student);
-                                                            if (customUrl) {
-                                                                window.open(customUrl, '_blank');
-                                                            } else {
-                                                                printCertificate(`${student.firstName} ${student.lastName}`, 'ATTENDANCE');
-                                                            }
-                                                        }}
-                                                        className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all py-1.5 px-3 rounded-lg text-[11px] font-bold flex items-center gap-1"
-                                                    >
-                                                        <Printer size={11}/> Belge
-                                                    </button>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>
