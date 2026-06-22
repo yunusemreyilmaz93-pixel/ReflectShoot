@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool, Target, HelpCircle, MapPin, Compass, Instagram, Sparkles, PartyPopper } from 'lucide-react';
+import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool, Target, HelpCircle, MapPin, Compass, Instagram, Sparkles, PartyPopper, Lock } from 'lucide-react';
 import { Timeline } from '../components/Timeline';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { useAppContext } from '../context/AppContext';
@@ -104,18 +104,8 @@ export const Home: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
   const [showCountdownPopup, setShowCountdownPopup] = useState(false);
 
-  useEffect(() => {
-    const hasSeenPopup = localStorage.getItem('hide_countdown_popup_gala');
-    if (!hasSeenPopup) {
-      // Delay it slightly for better impact
-      const timer = setTimeout(() => setShowCountdownPopup(true), 1500);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
   const closePopup = () => {
     setShowCountdownPopup(false);
-    localStorage.setItem('hide_countdown_popup_gala', 'true');
   };
 
   useEffect(() => {
@@ -306,7 +296,7 @@ export const Home: React.FC = () => {
               <div className="relative">
                  <span className="text-amber-500 font-bold tracking-[0.4em] text-sm md:text-base uppercase flex items-center gap-4 drop-shadow-md">
                     <span className="w-12 md:w-20 h-px bg-gradient-to-l from-amber-500 to-transparent opacity-50"></span>
-                    2025 YILINDA
+                    2025-2026 SEZONUNDA
                     <span className="w-12 md:w-20 h-px bg-gradient-to-r from-amber-500 to-transparent opacity-50"></span>
                  </span>
               </div>
@@ -314,9 +304,9 @@ export const Home: React.FC = () => {
               {/* Huge Cards Row */}
               <div className="flex flex-wrap justify-center gap-6 my-2">
                   {[
-                    { icon: Clapperboard, val: "27", label: "Takım" },
-                    { icon: School, val: "10+", label: "Okul" },
-                    { icon: Users, val: "150+", label: "Öğrenci" }
+                    { icon: Clapperboard, val: "58", label: "Takım" },
+                    { icon: MapPin, val: "5", label: "Coğrafi Bölge" },
+                    { icon: Users, val: "350+", label: "Öğrenci" }
                   ].map((stat, i) => (
                     <div key={i} className="flex flex-col items-center justify-center px-8 py-5 md:px-10 md:py-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-amber-500/50 hover:bg-white/10 hover:scale-105 transition-all duration-300 group min-w-[140px] md:min-w-[180px]">
                         <div className="text-amber-500 group-hover:scale-110 transition-transform mb-2">
@@ -373,40 +363,12 @@ export const Home: React.FC = () => {
              </Link>
              
              <button 
-               onClick={() => handleDownload(cmsLinks.specUrl)}
-               className="px-10 py-5 border border-white/20 text-slate-300 hover:text-white hover:border-white/50 rounded-full font-bold transition-all duration-300 hover:bg-white/5 flex items-center justify-center gap-2 w-full sm:w-auto"
+               disabled
+               className="px-10 py-5 border border-white/10 text-slate-500 rounded-full font-bold flex items-center justify-center gap-2 w-full sm:w-auto cursor-not-allowed bg-white/5"
+               title="Yeni sezonda güncellenecektir."
              >
-                <Download size={20}/> Şartnameyi İndir
+                <Lock size={20}/> Şartname Güncelleniyor
              </button>
-          </div>
-
-          {/* Premium Countdown Card */}
-          <div className="mt-auto animate-fadeInUp delay-200 w-full max-w-4xl relative z-20">
-              <div className="flex flex-col md:flex-row items-center justify-between bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/10 p-8 gap-8 shadow-2xl">
-                 <div className="text-left flex items-center gap-6 w-full md:w-auto">
-                    <div className="p-5 bg-amber-500/10 rounded-2xl text-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.1)] hidden sm:block border border-amber-500/20">
-                        <CalendarDays size={36} />
-                    </div>
-                    <div>
-                        <p className="text-amber-500 text-[10px] font-bold uppercase tracking-[0.25em] mb-2 flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_5px_#f59e0b]"></span>
-                          Sıradaki Aşama
-                        </p>
-                        <p className="text-white font-bold text-2xl md:text-3xl tracking-tight leading-none">
-                          {activePhase.label === 'Başvuru ve Eser Gönderimi' ? 'Başvuru ve Eser Gönderimi Başladı' : activePhase.label}
-                        </p>
-                        <p className="text-slate-400 text-sm font-medium mt-1">
-                          {activePhase.label === 'Başvuru ve Eser Gönderimi' ? 'Son Gün 4 Mayıs' : formatDate(activePhase.date)}
-                        </p>
-                    </div>
-                 </div>
-                 
-                 <div className="w-full h-px md:w-px md:h-24 bg-gradient-to-r md:bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
-                 
-                 <div className="flex-shrink-0">
-                    <CountdownTimer targetDate={activePhase.date} />
-                 </div>
-              </div>
           </div>
         </div>
 
@@ -431,6 +393,84 @@ export const Home: React.FC = () => {
           .delay-200 { animation-delay: 0.2s; }
         `}</style>
       </div>
+
+      {/* Season Completion & Next Season Prep Announcements */}
+      <section className="py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-y border-white/5 relative z-10 overflow-hidden">
+        {/* Background ambient lighting */}
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-rose-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-stretch">
+            
+            {/* 1. 2025-2026 Sezonu Tamamlandı */}
+            <div className="relative bg-slate-950 hover:bg-slate-950/80 p-8 md:p-12 rounded-[2.5rem] border border-slate-800/80 hover:border-amber-500/30 transition-all duration-300 flex flex-col justify-between group overflow-hidden shadow-2xl">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[40px] pointer-events-none"></div>
+              
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-black uppercase tracking-widest">
+                  <Trophy size={14} className="animate-pulse" /> 2025-2026 SEZONU
+                </div>
+                
+                <h3 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
+                  2025-2026 Sezonu <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.2)]">Tamamlandı!</span>
+                </h3>
+                
+                <p className="text-slate-300 text-base md:text-lg leading-relaxed font-light">
+                  Reflect&Shoot Kısa Film Yarışması’nın 2025-2026 sezonu ödül töreniyle tamamlandı. Yarışmaya katılan filmler hafta boyunca Gala Salonu’nda izleyiciyle buluşacak. 2026-2027 sezonu için hazırlıklarımız ise şimdiden başladı.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 mt-8 pt-6 border-t border-white/5">
+                <Link 
+                  to="/sinema" 
+                  className="flex-1 inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 px-6 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-amber-500/20 hover:-translate-y-0.5 text-xs uppercase tracking-wider"
+                >
+                  <Clapperboard size={16} /> Gala Salonu’na Git
+                </Link>
+                <Link 
+                  to="/finals" 
+                  className="flex-1 inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-850 hover:text-white border border-slate-800 text-slate-300 font-extrabold py-4 px-6 rounded-2xl transition-all duration-300 hover:-translate-y-0.5 text-xs uppercase tracking-wider"
+                >
+                  <Trophy size={16} /> Ödül Alanları Gör
+                </Link>
+              </div>
+            </div>
+
+            {/* 2. 2026-2027 Sezonu İçin Hazırlıklar Başladı */}
+            <div className="relative bg-slate-950 hover:bg-slate-950/80 p-8 md:p-12 rounded-[2.5rem] border border-slate-800/80 hover:border-rose-500/30 transition-all duration-300 flex flex-col justify-between group overflow-hidden shadow-2xl">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-[40px] pointer-events-none"></div>
+              
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-black uppercase tracking-widest">
+                  <CalendarDays size={14} /> Gelecek Sezon
+                </div>
+                
+                <h3 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
+                  2026-2027 Sezonu İçin <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-rose-400 to-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.2)]">Hazırlıklar Başladı</span>
+                </h3>
+                
+                <p className="text-slate-300 text-base md:text-lg leading-relaxed font-light">
+                  Reflect&Shoot, 2026-2027 eğitim öğretim yılında daha kapsamlı ve daha güçlü bir içerik yapısıyla yeniden başlayacaktır. Yeni sezon başvuru takvimi, şartname, kategori bilgileri ve danışman öğretmen bilgilendirmeleri resmî web sitemiz üzerinden duyurulacaktır.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5 bg-slate-900/50 border border-slate-800 p-4 rounded-2xl mt-8 pt-4 pb-4">
+                <div className="p-2.5 bg-rose-500/10 rounded-xl text-rose-400 font-extrabold border border-rose-500/20">
+                  <Sparkles size={18} className="animate-spin" style={{ animationDuration: '6s' }} />
+                </div>
+                <div>
+                  <h4 className="text-white text-xs font-black uppercase tracking-wider">Takipte Kalın</h4>
+                  <p className="text-slate-400 text-xs">Yenilikler ve duyurular çok yakında paylaşılacaktır.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
 
       {/* 2. Categories Section */}
       <section id="categories" className="py-24 bg-slate-50 relative">

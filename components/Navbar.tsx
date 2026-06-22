@@ -24,6 +24,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
     { name: 'Akademi', path: '/academy' },
     { name: 'Galeri', path: '/gallery' },
     { name: 'Ödüller', path: '/finals' },
+    { name: 'Gala Salonu', path: '/sinema' },
     { name: 'SSS', path: '/faq' },
   ];
 

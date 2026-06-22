@@ -583,28 +583,27 @@ export const About: React.FC = () => {
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
                     {[
-                        { name: "Yarışma Şartnamesi", size: "PDF", link: cmsLinks.specUrl, signer: "Okumak İçin" },
-                        { name: "Veli İzin Belgesi", size: "PDF", link: cmsLinks.parentalUrl, signer: "Veli İmzalar" },
-                        { name: "KVKK Aydınlatma Metni", size: "PDF", link: cmsLinks.kvkkUrl, signer: "Veli/Öğrenci İmzalar" },
-                        { name: "Afiş ve Görseller", size: "ZIP", link: cmsLinks.posterUrl, signer: "Tanıtım İçin" }
+                        { name: "Yarışma Şartnamesi", size: "PDF", signer: "Okumak İçin", desc: "Yeni sezon için güncellenecektir." },
+                        { name: "Veli İzin Belgesi", size: "PDF", signer: "Veli İmzalar", desc: "Yeni Sezonda Güncellenecektir." },
+                        { name: "KVKK Aydınlatma Metni", size: "PDF", signer: "Veli/Öğrenci İmzalar", desc: "Yeni Sezonda Güncellenecektir." },
+                        { name: "Afiş ve Görseller", size: "ZIP", signer: "Tanıtım İçin", desc: "Yeni Sezonda Güncellenecektir." }
                     ].map((doc, i) => (
-                        <button key={i} onClick={() => handleDownload(doc.link)} className="bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700 hover:border-rose-500/50 hover:bg-slate-800/80 transition-all flex items-center justify-between group text-left">
+                        <div key={i} className="bg-slate-800/50 p-6 rounded-2xl shadow-inner border border-slate-700/50 flex items-center justify-between opacity-75 cursor-not-allowed group">
                             <div className="flex items-center gap-4">
-                                <div className="bg-slate-900 p-4 rounded-xl group-hover:bg-rose-900/20 group-hover:text-rose-500 transition-colors text-slate-500 border border-slate-700">
-                                    <FileText size={24} />
+                                <div className="bg-slate-900 p-4 rounded-xl text-slate-500 border border-slate-700">
+                                    <Lock size={24} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-white text-base group-hover:text-rose-400 transition-colors">{doc.name}</h4>
-                                    <div className="flex gap-2 mt-1">
-                                        <span className="text-xs text-slate-500 font-medium bg-slate-900 px-2 py-0.5 rounded">{doc.size}</span>
-                                        <span className="text-xs text-slate-400 font-medium px-1 py-0.5">{doc.signer}</span>
-                                    </div>
+                                    <h4 className="font-bold text-slate-400 text-base">{doc.name}</h4>
+                                    <p className="text-xs text-amber-500/80 font-medium mt-1 leading-tight">
+                                        {doc.desc}
+                                    </p>
                                 </div>
                             </div>
-                            <div className="w-10 h-10 rounded-full border border-slate-700 flex items-center justify-center group-hover:bg-rose-600 group-hover:border-rose-600 group-hover:text-white transition-all text-slate-500">
-                                <Download size={20} />
+                            <div className="text-slate-500">
+                                <FileText size={20} />
                             </div>
-                        </button>
+                        </div>
                     ))}
                     
                     {/* Locked Certificate */}

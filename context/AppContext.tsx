@@ -51,6 +51,8 @@ interface AppContextType {
     myApplications: Application[];
     activeApplicationId: string | null;
     setActiveApplicationId: (id: string | null) => void;
+    simulatedApplicationId: string | null;
+    setSimulatedApplicationId: (id: string | null) => void;
     allApplications: Application[];
     createApplication: (data: any) => Promise<void>;
     updateApplication: (app: Application) => Promise<void>;
@@ -127,6 +129,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [currentApplication, setCurrentApplication] = useState<Application | null>(null);
     const [myApplications, setMyApplications] = useState<Application[]>([]);
     const [activeApplicationId, setActiveApplicationId] = useState<string | null>(null);
+    const [simulatedApplicationId, setSimulatedApplicationId] = useState<string | null>(null);
     const [allApplications, setAllApplications] = useState<Application[]>([]);
     const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
     const [systemSettings, setSystemSettings] = useState<SystemSettings>({
@@ -307,6 +310,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     }, [activeApplicationId, myApplications]);
 
+    // Admin Simulation Effect: Populate myApplications and activeApplicationId when simulatedApplicationId is set
+    useEffect(() => {
+        if (currentUser?.role === UserRole.ADMIN && simulatedApplicationId) {
+            const simulatedApp = allApplications.find(a => a.id === simulatedApplicationId);
+            if (simulatedApp) {
+                const teacherId = simulatedApp.teacher.id;
+                const teacherApps = allApplications.filter(a => a.teacher.id === teacherId);
+                setMyApplications(teacherApps);
+                
+                // Set activeApplicationId to simulated ID only if we just entered simulation or if the active ID is not one of the teacher's apps.
+                setActiveApplicationId(prevActiveId => {
+                    const isAlreadyTeacherApp = teacherApps.some(a => a.id === prevActiveId);
+                    if (prevActiveId && isAlreadyTeacherApp) {
+                        return prevActiveId;
+                    }
+                    return simulatedApplicationId;
+                });
+            }
+        } else if (currentUser?.role === UserRole.ADMIN && !simulatedApplicationId) {
+            // Reset simulation data when cleared
+            setMyApplications([]);
+            setActiveApplicationId(null);
+        }
+    }, [currentUser, simulatedApplicationId, allApplications]);
+
     // --- ACTIONS ---
 
     const login = async (email: string, pass: string) => {
@@ -317,6 +345,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         await signOut(auth);
         setCurrentUser(null);
         setAllApplications([]); // Clear sensitive data
+        setSimulatedApplicationId(null); // Clear simulation state
     };
 
     const registerTeacher = async (data: any) => {
@@ -809,7 +838,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return (
         <AppContext.Provider value={{
             currentUser, loading, login, logout, registerTeacher, createAdminAccount, resetPassword, resendVerificationEmail,
-            currentApplication, myApplications, activeApplicationId, setActiveApplicationId, allApplications, createApplication, updateApplication, updateApplicationStatus, deleteApplication,
+            currentApplication, myApplications, activeApplicationId, setActiveApplicationId, simulatedApplicationId, setSimulatedApplicationId, allApplications, createApplication, updateApplication, updateApplicationStatus, deleteApplication,
             systemSettings, updateSystemSettings,
             cmsGeneral, updateCMSGeneral, cmsLinks, updateCMSLinks, 
             cmsAcademy, addCMSAcademyItem, updateCMSAcademyItem, deleteCMSAcademyItem,

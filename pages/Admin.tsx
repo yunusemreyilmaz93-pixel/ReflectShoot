@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
     Search, Check, X, Eye, Award, FileText, Shield, Inbox, Download, 
     Users, Film, School, Mail, AlertTriangle, Send, Clapperboard, Video, 
@@ -14,6 +15,7 @@ import { AdminCMS } from '../components/admin/AdminCMS';
 import { TurkeyMap } from '../components/TurkeyMap';
 import { AdminJuryStatus } from '../components/admin/AdminJuryStatus';
 import { AdminAwards } from '../components/admin/AdminAwards';
+import { AcademicJuryScorePanel } from '../components/AcademicJuryScorePanel';
 import { writeBatch, doc, collection } from 'firebase/firestore'; // Import needed for direct batch writing
 import { db } from '../lib/firebase'; // Import db
 
@@ -177,6 +179,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }: Si
         { id: 'ANNOUNCEMENTS', icon: Megaphone, label: 'Duyurular' },
         { id: 'TEAMS', icon: Clapperboard, label: 'Takım Yönetimi' },
         { id: 'AWARDS', icon: Trophy, label: 'Tören Katılımları' },
+        { id: 'ACADEMIC_RESULTS', icon: Award, label: 'Akademik Jüri Sonuçları' },
         { id: 'JURY_ASSIGN', icon: UserCheck, label: 'Jüri Atama' },
         { id: 'JURY_STATUS', icon: Activity, label: 'Jüri İlerlemeleri' },
         { id: 'USERS', icon: Users, label: 'Kullanıcılar & Jüri' },
@@ -539,7 +542,8 @@ const AdminDashboard = ({ apps, onFilterCategory }: { apps: Application[], onFil
 };
 
 const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategoryFilter }: { apps: Application[], onSelectApp: (app: Application) => void, onToggleFinalist: (app: Application) => void, initialCategoryFilter?: string | null }) => {
-    const { deleteApplication, updateApplicationStatus, showToast } = useAppContext();
+    const { deleteApplication, updateApplicationStatus, showToast, setSimulatedApplicationId } = useAppContext();
+    const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
     const [categoryFilter, setCategoryFilter] = useState<string>(initialCategoryFilter || 'ALL');
@@ -957,6 +961,17 @@ const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategoryFilter
                                         </td>
                                         <td className="p-4 text-right">
                                             <div className="flex justify-end gap-2">
+                                                <button 
+                                                    onClick={(e) => { 
+                                                        e.stopPropagation(); 
+                                                        setSimulatedApplicationId(app.id); 
+                                                        navigate('/dashboard'); 
+                                                    }}
+                                                    className="p-2 rounded-lg bg-teal-950/40 border border-teal-800/60 text-teal-400 hover:text-white hover:bg-teal-500/20 hover:border-teal-500 transition-all"
+                                                    title="Öğretmen Gözünden Gör (Ekranını Önizle)"
+                                                >
+                                                    <LayoutDashboard size={16} />
+                                                </button>
                                                 <button 
                                                     onClick={() => onSelectApp(app)}
                                                     className="p-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 transition-all"
@@ -1505,7 +1520,7 @@ const AdminAnnouncements = () => {
 };
 
 export const Admin: React.FC = () => {
-  const { currentUser, allApplications, updateApplication, logAction, systemSettings, updateSystemSettings, auditLogs, logout, fetchJuryScores, loading, showToast, downloadFullBackup, seedAcademyContent } = useAppContext();
+  const { currentUser, allApplications, updateApplication, logAction, systemSettings, updateSystemSettings, auditLogs, logout, fetchJuryScores, loading, showToast, downloadFullBackup, seedAcademyContent, setSimulatedApplicationId } = useAppContext();
   const [activeTab, setActiveTab] = useState('DASHBOARD');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -1514,6 +1529,11 @@ export const Admin: React.FC = () => {
   const [globalCategoryFilter, setGlobalCategoryFilter] = useState<string | null>(null);
   const [rejectingDoc, setRejectingDoc] = useState<{ studentId: string, type: 'PARENT' | 'KVKK' } | null>(null);
   const [rejectionReasonInput, setRejectionReasonInput] = useState('');
+
+  useEffect(() => {
+    // Clear simulation on entering the admin panel
+    setSimulatedApplicationId(null);
+  }, []);
 
   useEffect(() => {
     const fixClearVisionAndAssignJuries = async () => {
@@ -1753,6 +1773,7 @@ export const Admin: React.FC = () => {
                       {activeTab === 'INBOX' && 'Gelen Kutusu'}
                       {activeTab === 'TEAMS' && 'Takım Yönetimi'}
                       {activeTab === 'AWARDS' && 'Ödül Töreni Katılım Takibi'}
+                      {activeTab === 'ACADEMIC_RESULTS' && 'Akademik Bağımsız Jüri Sonuç Raporları'}
                       {activeTab === 'JURY_ASSIGN' && 'Jüri Atama'}
                       {activeTab === 'JURY_STATUS' && 'Jüri İlerlemeleri'}
                       {activeTab === 'USERS' && 'Kullanıcılar & Jüri'}
@@ -1807,6 +1828,7 @@ export const Admin: React.FC = () => {
                     {activeTab === 'INBOX' && <AdminInbox />}
                     {activeTab === 'TEAMS' && <AdminTeams apps={allApplications} onSelectApp={setSelectedApp} onToggleFinalist={toggleFinalist} initialCategoryFilter={globalCategoryFilter} />}
                     {activeTab === 'AWARDS' && <AdminAwards apps={allApplications} />}
+                    {activeTab === 'ACADEMIC_RESULTS' && <AdminAcademicResults apps={allApplications} />}
                     {activeTab === 'JURY_ASSIGN' && <AdminJuryAssign apps={allApplications} />}
                     {activeTab === 'JURY_STATUS' && <AdminJuryStatus apps={allApplications} />}
                     {activeTab === 'USERS' && <AdminUsers />}
@@ -2199,6 +2221,130 @@ export const Admin: React.FC = () => {
                   </div>
               </div>
           </div>
+      )}
+    </div>
+  );
+};
+
+interface AdminAcademicResultsProps {
+  apps: Application[];
+}
+
+const AdminAcademicResults = ({ apps }: AdminAcademicResultsProps) => {
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Get only finalist / winner teams that exist in our academic jury list
+  const filteredTeams = useMemo(() => {
+    // Official finalists from academicJuryScores list
+    const academicFinalistNames = [
+      "Diriliş Perileri", "sinemektep", "MSR Justice Without Doubt", "Sosyal Kızlar42", "Homines Longinqui",
+      "mitra", "Technokasyon", "Threee", "PURE INSIGHT", "Clear Vision"
+    ];
+
+    const normalize = (s: string) => s.toLocaleLowerCase('tr-TR').trim().replace(/\s+/g, '');
+    
+    // We can filter our active applications that match, or construct nice virtual profiles
+    return apps.filter(app => {
+      const match = academicFinalistNames.some(name => normalize(name) === normalize(app.team.name));
+      const matchesCategory = selectedCategory === 'all' || 
+                             (selectedCategory === 'canli' && app.team.category === Category.LIVE_ACTION) ||
+                             (selectedCategory === 'yz' && app.team.category === Category.AI_ANIMATION);
+      const matchesSearch = app.team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (app.teacher?.school || '').toLowerCase().includes(searchQuery.toLowerCase());
+      return match && matchesCategory && matchesSearch;
+    });
+  }, [apps, selectedCategory, searchQuery]);
+
+  return (
+    <div className="space-y-6 h-full overflow-y-auto pb-24 px-4 sm:px-6 lg:px-8">
+      {/* Top Controls */}
+      <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800/85 flex flex-col md:flex-row justify-between gap-4 items-center">
+        <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-800 w-full md:w-auto">
+          <button 
+            type="button"
+            onClick={() => setSelectedCategory('all')} 
+            className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${selectedCategory === 'all' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'}`}
+          >
+            TÜMÜ
+          </button>
+          <button 
+            type="button"
+            onClick={() => setSelectedCategory('canli')} 
+            className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${selectedCategory === 'canli' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'}`}
+          >
+            CANLI ÇEKİM
+          </button>
+          <button 
+            type="button"
+            onClick={() => setSelectedCategory('yz')} 
+            className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${selectedCategory === 'yz' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
+          >
+            YAPAY ZEKA
+          </button>
+        </div>
+
+        <div className="flex gap-4 w-full md:w-auto">
+          <div className="relative flex-1 md:w-72">
+            <Search className="absolute left-4 top-3.5 text-slate-500" size={16} />
+            <input 
+              type="text" 
+              placeholder="Takım veya okul adı ile ara..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-slate-950/80 border border-slate-800 rounded-2xl pl-11 pr-4 py-3 text-xs text-white w-full focus:outline-none focus:border-slate-700 transition-colors"
+            />
+          </div>
+        </div>
+      </div>
+
+      {filteredTeams.length === 0 ? (
+        <div className="bg-slate-900/40 p-12 rounded-3xl border border-dashed border-slate-850 text-center text-slate-500 italic">
+          Aranan kriterlere uygun finalist/derece sahibi takım bulunamadı.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          {filteredTeams.map((app) => (
+            <div key={app.id} className="bg-slate-900 p-8 rounded-[2.2rem] border border-slate-800/80 relative overflow-hidden group hover:border-slate-700/60 transition-colors">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[40px] pointer-events-none"></div>
+              
+              {/* Header */}
+              <div className="flex justify-between items-start mb-6 border-b border-slate-800/80 pb-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${app.team.category === Category.LIVE_ACTION ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}`}>
+                      {app.team.category}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{app.teacher?.school}</span>
+                  </div>
+                  <h3 className="text-lg font-black text-white">{app.team.name}</h3>
+                </div>
+                <div className="px-3.5 py-1.5 bg-amber-500/10 text-amber-400 text-xs font-black rounded-xl border border-amber-500/20 whitespace-nowrap">
+                  {app.team.category === Category.LIVE_ACTION ? (
+                    app.team.name.toLowerCase().includes("perileri") ? "Birincilik Ödülü" :
+                    app.team.name.toLowerCase().includes("sinemektep") ? "İkincilik Ödülü" :
+                    app.team.name.toLowerCase().includes("doubt") ? "Üçüncülük Ödülü" :
+                    app.team.name.toLowerCase().includes("kızlar") ? "Jüri Özel Ödülü" :
+                    "Mansiyon Ödülü"
+                                  ) : (
+                    app.team.name.toLowerCase().includes("mitra") ? "Birincilik Ödülü" :
+                    app.team.name.toLowerCase().includes("technokasyon") ? "İkincilik Ödülü" :
+                    app.team.name.toLowerCase().includes("three") ? "Üçüncülük Ödülü" :
+                    app.team.name.toLowerCase().includes("insight") ? "Jüri Özel Ödülü" :
+                    "Mansiyon Ödülü"
+                  )}
+                </div>
+              </div>
+
+              {/* Score Component with stateful breakdowns */}
+              <AcademicJuryScorePanel 
+                teamName={app.team.name} 
+                category={app.team.category} 
+                hideMetaData={true} 
+              />
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

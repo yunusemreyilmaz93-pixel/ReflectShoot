@@ -9,13 +9,17 @@ import {
     Sparkles, ArrowRight, UploadCloud, Megaphone, Star, PartyPopper, User, RefreshCcw, Youtube, Trophy
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 import { Category, Theme, ApplicationStatus, Student, UserRole } from '../types';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { ChatArea } from '../components/ChatArea';
+import { AcademicJuryScorePanel } from '../components/AcademicJuryScorePanel';
+import { getJuryFeedback } from '../data/juryFeedback';
 import { uploadFileToR2, uploadPublicLogo } from '../lib/cloudStorage';
-import { CertificateGenerator } from '../components/CertificateGenerator';
+import { CertificateGenerator, printCertificate } from '../components/CertificateGenerator';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { getTeacherCertificateUrl_2026, getStudentCertificateUrl_2026 } from '../data/certificates_2026';
 
 // Placeholder Template URLs
 const TEMPLATE_PARENT_URL = "https://assets.reflectandshoot.com/veli_izin_belgesi.pdf";
@@ -197,7 +201,19 @@ const TeamSwitcher = ({
 };
 
 export const Dashboard: React.FC = () => {
-    const { currentUser, currentApplication, myApplications, activeApplicationId, setActiveApplicationId, createApplication, updateApplication, showToast, systemSettings } = useAppContext();
+    const { currentUser, currentApplication, myApplications, activeApplicationId, setActiveApplicationId, createApplication, updateApplication, showToast, systemSettings, simulatedApplicationId, setSimulatedApplicationId } = useAppContext();
+    const navigate = useNavigate();
+
+    const getTeacherCertificateUrl = () => {
+        const teacherName = currentApplication?.teacher?.fullName || currentUser?.fullName || "";
+        return getTeacherCertificateUrl_2026(teacherName);
+    };
+
+    const getStudentCertificateUrl = (student: { firstName: string, lastName: string }) => {
+        const teamName = currentApplication?.team?.name || "";
+        return getStudentCertificateUrl_2026(student, teamName);
+    };
+
     const IS_DEADLINE_PASSED = new Date() > new Date('2026-05-04T20:59:59Z');
 
     const [activeTab, setActiveTab] = useState('STATUS');
@@ -895,6 +911,38 @@ export const Dashboard: React.FC = () => {
     
     return (
         <div className="bg-slate-950 min-h-screen text-slate-200 font-sans pb-24 relative overflow-x-hidden">
+            {currentUser?.role === UserRole.ADMIN && simulatedApplicationId && (
+                <div className="bg-gradient-to-r from-amber-600 to-rose-700 text-white py-3.5 px-4 sticky top-0 z-[100] shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3 animate-slideIn">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-xl animate-pulse">
+                            🛡️
+                        </div>
+                        <div>
+                            <div className="font-extrabold text-sm flex items-center gap-2">
+                                ÖĞRETMEN EKRANI SİMÜLASYONU 
+                                <span className="bg-slate-900/40 text-[10px] uppercase font-black px-2 py-0.5 rounded-full border border-white/20">
+                                    YÖNETİCİ ÖNİZLEMESİ
+                                </span>
+                            </div>
+                            <p className="text-xs text-white/90">
+                                <strong className="text-amber-200">{currentApplication?.teacher?.fullName}</strong> ({currentApplication?.teacher?.school}) öğretmenimizin ekranını ve tüm yetkilerini inceliyorsunuz.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button 
+                            onClick={() => {
+                                setSimulatedApplicationId(null);
+                                navigate('/admin');
+                            }}
+                            className="bg-slate-950/80 hover:bg-slate-950 hover:scale-105 active:scale-95 border border-white/10 text-white font-black text-xs px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                            <ShieldAlert size={14} className="text-amber-400" />
+                            Admin Paneline Geri Dön
+                        </button>
+                    </div>
+                </div>
+            )}
             {/* Background Texture */}
             <div className="fixed inset-0 pointer-events-none z-[0] opacity-[0.03] mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
 
@@ -991,6 +1039,39 @@ export const Dashboard: React.FC = () => {
                     <div className="grid lg:grid-cols-2 gap-8">
                         {/* Left Column */}
                         <div className="space-y-8">
+                            {/* Academic Jury Score Card for Winner Teams */}
+                            {currentApplication.team.isWinner && (
+                                <div className="bg-slate-900 p-8 rounded-[2rem] border border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.05)] relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[40px] pointer-events-none"></div>
+                                    <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
+                                        <h3 className="font-bold text-white flex items-center gap-3 text-lg">
+                                            <Trophy size={22} className="text-amber-500"/> Seçici Kurul Değerlendirme Raporu
+                                        </h3>
+                                        <span className="px-3 py-1 bg-amber-500/10 text-amber-500 text-[10px] font-black rounded-full uppercase tracking-wider">
+                                            AKADEMİK SKOR YAPISI
+                                        </span>
+                                    </div>
+                                    <AcademicJuryScorePanel 
+                                        teamName={currentApplication.team.name} 
+                                        category={currentApplication.team.category} 
+                                        hideMetaData={false} 
+                                    />
+                                    {/* Evaluation Report / Feedback Text Area */}
+                                    <div className="mt-6 border-t border-slate-800 pt-6">
+                                        <span className="text-[12.5px] font-black uppercase text-slate-400 tracking-wider">Seçici Kurul Görüşü</span>
+                                        <p className="text-[13px] text-slate-200 leading-relaxed font-semibold mt-1.5 bg-slate-950/40 p-5 border border-slate-850 rounded-2xl text-justify leading-relaxed select-text">
+                                            {getJuryFeedback(
+                                                currentApplication.team.name, 
+                                                currentApplication.team.category, 
+                                                [], 
+                                                null, 
+                                                currentApplication.team.awardCategory || ''
+                                            )}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Multi-Team Overview Card */}
                             {myApplications.length > 1 && (
                                 <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-[2rem] border border-slate-800/50 shadow-xl">
@@ -1077,6 +1158,74 @@ export const Dashboard: React.FC = () => {
                                                 </div>
                                             </div>
                                         ) : null}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Dijital Sertifikalar */}
+                            <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-xl relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-[40px] pointer-events-none"></div>
+                                <div className="relative z-10">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h3 className="font-bold text-white flex items-center gap-3 text-lg">
+                                            <Trophy size={22} className="text-amber-500"/> Dijital Sertifikalar
+                                        </h3>
+                                        <span className="px-3 py-1 bg-amber-500/10 text-amber-500 text-[10px] font-black rounded-full uppercase tracking-wider">
+                                            E-Belge
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                                        Reflect & Shoot Kısa Film Yarışması kapsamında danışman öğretmen ve öğrenci katılım belgelerinizi aşağıdaki bağlantılardan indirebilirsiniz.
+                                    </p>
+
+                                    <div className="space-y-4">
+                                        {/* Danışman Öğretmen Belgesi */}
+                                        <div className="p-4 bg-slate-950/60 rounded-2xl border border-slate-800 flex items-center justify-between">
+                                            <div>
+                                                <span className="text-[9px] uppercase font-black text-slate-500 tracking-wider block">Danışman Öğretmen</span>
+                                                <span className="text-sm font-bold text-white">{currentApplication?.teacher?.fullName || currentUser?.fullName}</span>
+                                            </div>
+                                            <button 
+                                                onClick={() => {
+                                                    const customUrl = getTeacherCertificateUrl();
+                                                    if (customUrl) {
+                                                        window.open(customUrl, '_blank');
+                                                    } else {
+                                                        printCertificate(currentApplication?.teacher?.fullName || currentUser?.fullName || '', 'APPRECIATION');
+                                                    }
+                                                }}
+                                                className="bg-amber-600 hover:bg-amber-500 text-slate-950 hover:-translate-y-1 transition-all py-2 px-4 rounded-xl text-xs font-black shadow-lg shadow-amber-950/20 flex items-center gap-1.5"
+                                            >
+                                                <Printer size={13}/> İndir (PDF)
+                                            </button>
+                                        </div>
+
+                                        <div className="w-full h-px bg-slate-800/60 my-4"></div>
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Öğrenci Kadrosu</span>
+                                        
+                                        <div className="grid gap-2 max-h-[220px] overflow-y-auto pr-1 scrollbar-hide">
+                                            {currentApplication.team.students.map((student) => (
+                                                <div key={student.id} className="p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl flex items-center justify-between hover:border-slate-700 transition-colors">
+                                                    <div>
+                                                        <span className="text-xs font-bold text-slate-200">{student.firstName} {student.lastName}</span>
+                                                        <span className="text-[9px] font-bold text-slate-600 uppercase block">{student.grade} - Öğrenci</span>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => {
+                                                            const customUrl = getStudentCertificateUrl(student);
+                                                            if (customUrl) {
+                                                                window.open(customUrl, '_blank');
+                                                            } else {
+                                                                printCertificate(`${student.firstName} ${student.lastName}`, 'ATTENDANCE');
+                                                            }
+                                                        }}
+                                                        className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all py-1.5 px-3 rounded-lg text-[11px] font-bold flex items-center gap-1"
+                                                    >
+                                                        <Printer size={11}/> Belge
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -15,6 +15,58 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
     const [selectedAppView, setSelectedAppView] = useState<string | null>(null);
     const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
     const [showOfficialRankings, setShowOfficialRankings] = useState(true);
+    const [showWinnerStudentsList, setShowWinnerStudentsList] = useState(false);
+
+    const getWinnerStudentsText = () => {
+        const normalize = (s: string) => (s || '').toLocaleLowerCase('tr-TR').trim().replace(/\s+/g, '');
+        const winnerNamesNormalized = [
+            "dirilişperileri",
+            "sinemektep",
+            "msrjusticewithoutdoubt",
+            "justicewithoutdoubt",
+            "sosyalkızlar42",
+            "homineslonginqui",
+            "mitra",
+            "technokasyon",
+            "threee",
+            "pureinsight",
+            "clearvision"
+        ];
+        
+        const winnerApps = apps.filter(app => {
+            const normName = normalize(app.team?.name);
+            return winnerNamesNormalized.includes(normName);
+        });
+
+        if (winnerApps.length === 0) {
+            return "Veritabanında ödül alan takım bilgisi bulunamadı veya henüz yüklenmedi.";
+        }
+
+        let output = "";
+        winnerApps.forEach((app, index) => {
+            const p = participations[app.id];
+            const students = p?.students || app.team?.students || [];
+            
+            output += `${index + 1}) Takım: ${app.team?.name}\n`;
+            output += `Kategori: ${app.team?.category || '-'}\n`;
+            output += `Ödül: ${app.team?.awardCategory || '-'}\n`;
+            output += `Okul: ${app.teacher?.school || '-'}\n`;
+            output += `Öğretmen / Danışman: ${p?.advisorName || app.teacher?.fullName || '-'}\n`;
+            output += `Öğrenciler:\n`;
+            
+            if (students.length > 0) {
+                students.forEach((s: any, i: number) => {
+                    const name = s.fullName || `${s.firstName || ''} ${s.lastName || ''}`.trim();
+                    output += `   - ${name} (${s.grade || '-'})\n`;
+                });
+            } else {
+                output += `   - Öğrenci kaydı bulunamadı.\n`;
+            }
+            output += `\n=========================================\n\n`;
+        });
+        
+        return output;
+    };
 
     const exportRankingsPDF = () => {
         const content = `
@@ -497,7 +549,13 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                             <p className="text-xs text-slate-400 mt-0.5">Tören ve plaket hazırlığında ödül eşleştirmelerini koordine edin</p>
                         </div>
                     </div>
-                    <div className="flex gap-2.5 w-full sm:w-auto">
+                    <div className="flex flex-wrap gap-2.5 w-full sm:w-auto">
+                        <button
+                            onClick={() => setShowWinnerStudentsList(!showWinnerStudentsList)}
+                            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-750 text-amber-500 hover:text-amber-400 px-4 py-2.5 rounded-xl text-xs font-black transition-all border border-slate-700 cursor-pointer"
+                        >
+                            Öğrenci Listesi Göster / Kopyala
+                        </button>
                         <button
                             onClick={exportRankingsPDF}
                             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-black transition-all shadow-md shadow-amber-500/10 active:scale-95 cursor-pointer"
@@ -512,6 +570,30 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                         </button>
                     </div>
                 </div>
+
+                {showWinnerStudentsList && (
+                    <div className="p-6 border-b border-slate-800 bg-slate-950/40">
+                        <div className="flex justify-between items-center mb-4">
+                            <div>
+                                <h4 className="text-sm font-black text-amber-400 tracking-wider uppercase">🏆 Ödül Alan Takımlar & Öğrenci Listeleri</h4>
+                                <p className="text-[11px] text-slate-500 mt-0.5">Aşağıdaki listeyi kopyalayarak sertifikalar, davetiyeler veya diğer dökümanlar için doğrudan kullanabilirsiniz.</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    const text = getWinnerStudentsText();
+                                    navigator.clipboard.writeText(text);
+                                    alert("Başarıyla panoya kopyalandı!");
+                                }}
+                                className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs px-3.5 py-2 rounded-xl font-bold border border-amber-500/20 transition-all cursor-pointer"
+                            >
+                                Tümünü Kopyala
+                            </button>
+                        </div>
+                        <pre className="bg-slate-950/90 border border-slate-800 rounded-2xl p-4 text-xs font-mono text-slate-300 whitespace-pre-wrap max-h-96 overflow-y-auto custom-scrollbar select-all">
+                            {getWinnerStudentsText()}
+                        </pre>
+                    </div>
+                )}
 
                 {showOfficialRankings && (
                     <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8 divide-y lg:divide-y-0 lg:divide-x divide-slate-800">

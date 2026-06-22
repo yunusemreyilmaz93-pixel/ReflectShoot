@@ -13,6 +13,7 @@ import { Academy } from './pages/Academy';
 import { AcademyDetail } from './pages/AcademyDetail';
 import { Finals } from './pages/Finals';
 import { Gallery } from './pages/Gallery';
+import { CinemaShowcase } from './pages/CinemaShowcase';
 import { Admin } from './pages/Admin';
 import { FAQ } from './pages/FAQ';
 import { JuryDashboard } from './pages/JuryDashboard'; 
@@ -172,10 +173,11 @@ const AppRoutes: React.FC = () => {
           <Route path="/academy/:id" element={<AcademyDetail />} />
           <Route path="/finals" element={<Finals />} />
           <Route path="/gallery" element={<Gallery />} />
+          <Route path="/sinema" element={<CinemaShowcase />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/city-guide" element={<CityGuide />} /> {/* New Route */}
           <Route path="/award-participation/team/:teamId" element={
-            <ProtectedRoute allowedRoles={[UserRole.TEACHER]}>
+            <ProtectedRoute allowedRoles={[UserRole.TEACHER, UserRole.ADMIN]}>
                <AwardParticipationForm />
             </ProtectedRoute>
           } />
@@ -185,7 +187,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/vote" element={<PublicVote />} />
 
           <Route path="/dashboard" element={
-            <ProtectedRoute allowedRoles={[UserRole.TEACHER, UserRole.STUDENT]}>
+            <ProtectedRoute allowedRoles={[UserRole.TEACHER, UserRole.STUDENT, UserRole.ADMIN]}>
               <Dashboard />
             </ProtectedRoute>
           } />

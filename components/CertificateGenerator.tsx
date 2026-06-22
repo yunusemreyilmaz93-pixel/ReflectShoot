@@ -1,393 +1,403 @@
-
 import React from 'react';
-import { Award, Sparkles } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
+import { Award, Sparkles, Printer, User, Users, ShieldCheck } from 'lucide-react';
 
-export const CertificateGenerator: React.FC = () => {
-  const { currentApplication, currentUser } = useAppContext();
+interface CertificateData {
+  recipientName: string;
+  type: 'ATTENDANCE' | 'APPRECIATION'; // ATTENDANCE for students, APPRECIATION for teachers
+}
 
-  const printCertificate = () => {
-    if (!currentApplication || !currentUser) return;
+// Inline SVGs for Signatures and Ornaments to keep compilation self-contained and pristine
+const LOGO_SVG = `
+<svg width="220" height="70" viewBox="0 0 220 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Film Roll Curve -->
+  <path d="M25 50 C15 35 15 20 35 15 C55 10 50 35 40 45 C30 55 10 45 15 25" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" fill="none" />
+  <!-- Small film strip holes -->
+  <circle cx="21" cy="40" r="1.5" fill="#f59e0b" />
+  <circle cx="17" cy="30" r="1.5" fill="#f59e0b" />
+  <circle cx="20" cy="20" r="1.5" fill="#f59e0b" />
+  <circle cx="28" cy="15" r="1.5" fill="#f59e0b" />
+  <circle cx="38" cy="18" r="1.5" fill="#f59e0b" />
+  <circle cx="43" cy="28" r="1.5" fill="#f59e0b" />
+  <circle cx="38" cy="38" r="1.5" fill="#f59e0b" />
+  <circle cx="28" cy="45" r="1.5" fill="#f59e0b" />
 
-    // Dates and Names
-    const date = "22 Mayıs 2026";
-    const directorName = "Süleyman EŞİT";
-    
-    const content = `
-      <!DOCTYPE html>
-      <html lang="tr">
-      <head>
-        <meta charset="UTF-8">
-        <title>Reflect&Shoot - Katılım Belgesi</title>
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-        <style>
-           @page { size: A4 landscape; margin: 0; }
+  <!-- Logo Text -->
+  <text x="65" y="32" font-family="'Cinzel', serif, sans-serif" font-size="14" font-weight="900" fill="#0b2545" letter-spacing="2">REFLECT</text>
+  <text x="65" y="48" font-family="'Cinzel', serif, sans-serif" font-size="14" font-weight="900" fill="#f59e0b" letter-spacing="2">&amp; SHOOT</text>
+  <text x="65" y="60" font-family="'Inter', sans-serif" font-size="6.5" font-weight="700" fill="#64748b" letter-spacing="4">OKU . ANLA . ANLAT</text>
+</svg>
+`;
 
-           body { 
-             margin: 0; 
-             padding: 0; 
-             width: 297mm; 
-             height: 210mm; 
-             font-family: 'Inter', sans-serif;
-             background-color: #ffffff;
+const CORNER_SVG = `
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M10 10 L10 100 A10 10 0 0 0 20 110 L110 110" stroke="#d4af37" stroke-width="1.5" fill="none" stroke-opacity="0.8"/>
+  <path d="M22 22 L22 80 A8 8 0 0 0 30 88 L88 88" stroke="#d4af37" stroke-width="0.75" fill="none" stroke-opacity="0.5"/>
+  <!-- Elegant Baroque Flourish Pattern -->
+  <path d="M10 10 C35 12, 45 25, 30 40 C15 55, 12 30, 25 25 C35 22, 50 45, 25 60 C10 70, 15 90, 40 85 C65 80, 55 50, 45 45" stroke="#d4af37" stroke-width="1" fill="none" stroke-linecap="round" stroke-opacity="0.9"/>
+  <path d="M10 10 C12 35, 25 45, 40 30 C55 15, 30 12, 25 25 C22 35, 45 50, 60 25 C70 10, 90 15, 85 40 C80 65, 50 55, 45 45" stroke="#d4af37" stroke-width="1" fill="none" stroke-linecap="round" stroke-opacity="0.9"/>
+  <!-- Corner Star -->
+  <polygon points="15,15 17,22 24,24 17,26 15,33 13,26 6,24 13,22" fill="#d4af37" fill-opacity="0.9"/>
+</svg>
+`;
+
+const SIGNATIVE_SELMA = `
+<svg width="150" height="70" viewBox="0 0 150 70" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 20 50 Q 35 15, 40 25 T 50 55 Q 60 62, 75 35 T 90 50 Q 100 20, 115 40 T 130 52 Q 138 30, 145 35" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+</svg>
+`;
+
+const SIGNATIVE_YUNUS = `
+<svg width="150" height="70" viewBox="0 0 150 70" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 15 45 Q 35 12, 45 18 T 55 42 Q 65 18, 75 28 T 85 48 L 135 25 M 70 45 L 140 45" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+</svg>
+`;
+
+const SIGNATIVE_SAMI = `
+<svg width="150" height="70" viewBox="0 0 150 70" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 25 55 Q 40 10, 48 16 T 58 48 Q 68 12, 78 22 T 88 50 L 128 50 M 55 52 Q 95 48, 135 52" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+</svg>
+`;
+
+const SIGNATIVE_SULEYMAN = `
+<svg width="150" height="70" viewBox="0 0 150 70" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 20 48 Q 32 8, 38 12 T 48 44 Q 58 15, 68 25 T 78 46 L 115 44 M 40 45 Q 75 42, 110 45" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+</svg>
+`;
+
+export const printCertificate = (recipientName: string, type: 'ATTENDANCE' | 'APPRECIATION') => {
+  const isAttendance = type === 'ATTENDANCE';
+  const titleText = isAttendance ? "CERTIFICATE OF ATTENDANCE" : "CERTIFICATE OF APPRECIATION";
+
+  const content = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Reflect & Shoot Certificate - ${recipientName}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+      <style>
+         @page { 
+           size: A4 landscape; 
+           margin: 0; 
+         }
+         
+         @media print {
+           body {
              -webkit-print-color-adjust: exact;
              print-color-adjust: exact;
            }
+         }
 
-           /* Tam A4 sayfa – lacivert kenarlıklı zemin */
-           .page {
-             width: 297mm; 
-             height: 210mm;
-             background: #020617;
-             display: flex;
-             align-items: center;
-             justify-content: center;
-           }
+         body { 
+           margin: 0; 
+           padding: 0; 
+           width: 297mm; 
+           height: 210mm; 
+           font-family: 'Montserrat', sans-serif;
+           background-color: #ffffff;
+           box-sizing: border-box;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+         }
 
-           .cert-frame {
-             width: 277mm;
-             height: 190mm;
-             position: relative;
-             padding: 40px 60px;
-             box-sizing: border-box;
-             background: radial-gradient(circle at top left, #fdfcf9 0, #f5f3ea 45%, #f2efe4 100%);
-             border: 10px solid #020617;
-             border-radius: 16px;
-             display: flex;
-             flex-direction: column;
-             align-items: center;
-             justify-content: space-between;
-             box-shadow:
-               inset 0 0 0 2px #e2e8f0,
-               inset 0 0 0 5px rgba(212,175,55,0.65);
-             overflow: hidden;
-           }
+         /* Beautiful outer canvas frame */
+         .certificate-canvas {
+           width: 297mm;
+           height: 210mm;
+           background: #ffffff;
+           padding: 12mm;
+           box-sizing: border-box;
+           position: relative;
+           overflow: hidden;
+         }
 
-           .cert-frame::before {
-             content: "";
-             position: absolute;
-             inset: 18px;
-             border-radius: 10px;
-             background-image:
-               linear-gradient(135deg, rgba(148,163,184,0.08) 0, transparent 55%),
-               linear-gradient(315deg, rgba(148,163,184,0.08) 0, transparent 55%);
-             opacity: 0.9;
-             pointer-events: none;
-             z-index: 0;
-           }
+         /* Inner borders */
+         .outer-navy-border {
+           width: 100%;
+           height: 100%;
+           border: 6px solid #071e3d;
+           box-sizing: border-box;
+           position: relative;
+           padding: 4px;
+         }
 
-           .corner {
-             position: absolute;
-             width: 64px;
-             height: 64px;
-             border: 2px solid rgba(212,175,55,0.9);
-             z-index: 12;
-           }
-           .tl { top: 22px; left: 22px; border-right: none; border-bottom: none; border-radius: 10px 0 0 0; }
-           .tr { top: 22px; right: 22px; border-left: none; border-bottom: none; border-radius: 0 10px 0 0; }
-           .bl { bottom: 22px; left: 22px; border-right: none; border-top: none; border-radius: 0 0 0 10px; }
-           .br { bottom: 22px; right: 22px; border-left: none; border-top: none; border-radius: 0 0 10px 0; }
+         .inner-gold-border {
+           width: 100%;
+           height: 100%;
+           border: 2px solid #d4af37;
+           box-sizing: border-box;
+           position: relative;
+           background: radial-gradient(circle at center, #fdfbf7 0%, #f7f4e9 80%, #f3efdf 100%);
+           display: flex;
+           flex-direction: column;
+           align-items: center;
+           justify-content: space-between;
+           padding: 12mm 16mm;
+         }
 
-           .watermark {
-             position: absolute;
-             top: 50%;
-             left: 50%;
-             transform: translate(-50%, -50%) rotate(-18deg);
-             font-family: 'Cinzel', serif;
-             font-size: 88pt;
-             letter-spacing: 0.18em;
-             color: rgba(15,23,42,0.04);
-             white-space: nowrap;
-             z-index: 1;
-             pointer-events: none;
-             text-transform: uppercase;
-           }
+         /* Corner Ornaments positioning mapping */
+         .corner-ornament {
+           position: absolute;
+           width: 24mm;
+           height: 24mm;
+           z-index: 10;
+         }
 
-           .header {
-             text-align: center;
-             z-index: 20;
-             margin-top: 4px;
-           }
+         .corner-tl { top: 0; left: 0; }
+         .corner-tr { top: 0; right: 0; transform: rotate(90deg); }
+         .corner-bl { bottom: 0; left: 0; transform: rotate(-90deg); }
+         .corner-br { bottom: 0; right: 0; transform: rotate(180deg); }
 
-           .brand-tag {
-             font-family: 'Inter', sans-serif;
-             font-size: 9pt;
-             letter-spacing: 4px;
-             text-transform: uppercase;
-             color: #64748b;
-             margin-bottom: 8px;
-             font-weight: 600;
-           }
+         /* Logo and Brand row */
+         .logo-wrapper {
+           z-index: 20;
+           display: flex;
+           justify-content: center;
+           margin-bottom: 2mm;
+         }
 
-           .brand-tag span {
-             font-weight: 700;
-             color: #0f172a;
-           }
+         /* Certificate Headers */
+         .header-section {
+           text-align: center;
+           z-index: 20;
+           width: 100%;
+         }
 
-           h1 {
-             font-family: 'Cinzel', serif;
-             font-size: 38pt;
-             color: #0f172a;
-             margin: 0;
-             letter-spacing: 3px;
-             font-weight: 800;
-             text-transform: uppercase;
-             background: linear-gradient(90deg, #1f2937, #020617);
-             -webkit-background-clip: text;
-             -webkit-text-fill-color: transparent;
-           }
+         .certificate-title {
+           font-family: 'Cinzel', serif;
+           font-size: 25pt;
+           color: #071e3d;
+           margin: 0 0 3mm 0;
+           letter-spacing: 4px;
+           font-weight: 900;
+           text-transform: uppercase;
+           text-shadow: 0.5px 0.5px 1px rgba(0,0,0,0.1);
+         }
 
-           h2 {
-             font-family: 'Cinzel', serif;
-             font-size: 14pt;
-             color: #b45309;
-             margin: 10px auto 0 auto;
-             font-weight: 600;
-             text-transform: uppercase;
-             letter-spacing: 6px;
-             padding: 8px 28px;
-             display: inline-block;
-             border-top: 1px solid rgba(148,163,184,0.6);
-             border-bottom: 1px solid rgba(148,163,184,0.6);
-             background: radial-gradient(circle at top, rgba(248,250,252,0.9) 0, rgba(248,250,252,0.2) 70%, transparent 100%);
-             border-radius: 999px;
-           }
+         .proudly-presented {
+           font-family: 'Cinzel', serif;
+           font-size: 10pt;
+           color: #53647b;
+           margin: 0;
+           letter-spacing: 5px;
+           font-weight: 700;
+           text-transform: uppercase;
+         }
 
-           .content {
-             text-align: center;
-             z-index: 20;
-             flex-grow: 1;
-             display: flex;
-             flex-direction: column;
-             justify-content: center;
-             padding-top: 8px;
-           }
+         /* Name Holder Unit */
+         .name-display-unit {
+           width: 80%;
+           text-align: center;
+           z-index: 20;
+           margin: 4mm auto;
+           position: relative;
+         }
 
-           .presented-to {
-             font-size: 11pt;
-             color: #64748b;
-             margin-bottom: 10px;
-             font-style: italic;
-           }
+         .recipient-name {
+           font-family: 'Cinzel', serif;
+           font-size: 24pt;
+           font-weight: 700;
+           color: #0d2c54;
+           padding-bottom: 2mm;
+           margin: 0 auto;
+           text-transform: uppercase;
+           letter-spacing: 1.5px;
+           display: inline-block;
+         }
 
-           .recipient-name {
-             font-family: 'Cinzel', serif;
-             font-size: 28pt;
-             font-weight: 700;
-             color: #111827;
-             margin: 0 0 4px 0;
-             text-transform: uppercase;
-             letter-spacing: 2px;
-           }
+         .name-separator {
+           width: 100%;
+           height: 1px;
+           background: linear-gradient(90deg, transparent 0%, #d4af37 20%, #d4af37 80%, transparent 100%);
+           margin: 1mm auto 0 auto;
+         }
 
-           .recipient-role {
-             font-size: 11pt;
-             color: #6b7280;
-             text-transform: none;
-             letter-spacing: 0.8px;
-             margin-bottom: 20px;
-           }
+         /* Description Unit */
+         .description-paragraph {
+           font-family: 'Montserrat', sans-serif;
+           font-size: 10.5pt;
+           line-height: 1.7;
+           color: #374151;
+           max-width: 80%;
+           text-align: center;
+           margin: 0 auto 5mm auto;
+           z-index: 20;
+           font-weight: 500;
+         }
 
-           .description {
-             font-size: 12.5pt;
-             line-height: 1.8;
-             color: #374151;
-             max-width: 780px;
-             margin: 0 auto;
-           }
+         .description-paragraph strong {
+           font-weight: 700;
+           color: #071e3d;
+         }
 
-           .description span.highlight {
-             font-weight: 600;
-             color: #b91c1c;
-             text-transform: none;
-           }
+         /* Beautiful 2x2 Signatures Array */
+         .signatures-grid-canvas {
+           width: 100%;
+           display: grid;
+           grid-template-columns: 1fr 1fr;
+           row-gap: 3mm;
+           column-gap: 40mm;
+           z-index: 20;
+           box-sizing: border-box;
+           padding: 0 10mm;
+         }
 
-           .description .emphasis {
-             font-weight: 500;
-           }
+         .signature-block {
+           display: flex;
+           flex-direction: column;
+           align-items: center;
+           justify-content: flex-end;
+           position: relative;
+           height: 22mm;
+         }
 
-           .footer {
-             width: 100%;
-             display: flex;
-             justify-content: space-between;
-             align-items: flex-end;
-             z-index: 20;
-             margin-bottom: 10px;
-             padding: 0 10px;
-           }
+         .handwritten-sig-wrap {
+           height: 12mm;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           margin-bottom: 0.5mm;
+         }
 
-           .date-box {
-              text-align: left;
-              font-family: 'Cinzel', serif;
-              color: #6b7280;
-              font-size: 10.5pt;
-              line-height: 1.6;
-           }
+         .short-sign-line {
+           width: 180px;
+           height: 1px;
+           background: #94a3b8;
+           margin-bottom: 1.5mm;
+         }
 
-           .date-box .city {
-             letter-spacing: 2px;
-             text-transform: uppercase;
-             font-size: 9.5pt;
-             color: #4b5563;
-           }
+         .signer-fullname {
+           font-size: 8.5pt;
+           font-weight: 700;
+           color: #0f172a;
+           margin: 0;
+           text-transform: uppercase;
+           letter-spacing: 0.8px;
+         }
 
-           .signature-box {
-             text-align: center;
-             min-width: 240px;
-           }
+         .signer-role-label {
+           font-size: 7.2pt;
+           color: #64748b;
+           margin: 0.5mm 0 0 0;
+           font-weight: 600;
+           letter-spacing: 0.4px;
+         }
 
-           .sign-line {
-             width: 230px;
-             height: 1px;
-             background: linear-gradient(90deg, transparent 0, #020617 18%, #020617 82%, transparent 100%);
-             margin: 0 auto 6px auto;
-           }
-
-           .sign-name {
-             font-weight: 700;
-             font-size: 11.5pt;
-             color: #111827;
-             text-transform: uppercase;
-             letter-spacing: 1px;
-           }
-
-           .sign-title {
-             font-size: 9pt;
-             color: #b45309;
-             text-transform: uppercase;
-             letter-spacing: 1.6px;
-             font-weight: 600;
-           }
-
-           .seal {
-             position: absolute;
-             bottom: 62px;
-             left: 50%;
-             transform: translateX(-50%);
-             width: 115px;
-             height: 115px;
-             border-radius: 50%;
-             background:
-               radial-gradient(circle at 30% 30%, #fef9c3 0, #facc15 30%, #b45309 70%, #7c2d12 100%);
-             box-shadow:
-               0 10px 25px rgba(124,45,18,0.6),
-               inset 0 0 0 6px rgba(248,250,252,0.9),
-               inset 0 0 0 10px rgba(0,0,0,0.15);
-             display: flex;
-             align-items: center;
-             justify-content: center;
-             z-index: 10;
-             opacity: 0.95;
-           }
-
-           .seal-inner {
-             width: 82px;
-             height: 82px;
-             border-radius: 50%;
-             border: 2px solid rgba(15,23,42,0.28);
-             display: flex;
-             flex-direction: column;
-             align-items: center;
-             justify-content: center;
-             text-align: center;
-             font-family: 'Cinzel', serif;
-             font-size: 8.5pt;
-             color: #111827;
-             text-transform: uppercase;
-             letter-spacing: 1.1px;
-           }
-
-           .seal-inner .seal-main {
-             font-size: 7.2pt;
-             margin-bottom: 2px;
-           }
-
-           .seal-inner .seal-sub {
-             font-size: 6.2pt;
-           }
-
-        </style>
-      </head>
-      <body>
-        <div class="page">
-          <div class="cert-frame">
-            <div class="corner tl"></div>
-            <div class="corner tr"></div>
-            <div class="corner bl"></div>
-            <div class="corner br"></div>
+         /* Decorative watermarked background */
+         .center-watermark-icon {
+           position: absolute;
+           top: 54%;
+           left: 50%;
+           transform: translate(-50%, -50%);
+           width: 80mm;
+           height: 80mm;
+           opacity: 0.025;
+           pointer-events: none;
+           z-index: 1;
+         }
+      </style>
+    </head>
+    <body>
+      <div class="certificate-canvas">
+        <div class="outer-navy-border">
+          <div class="inner-gold-border">
             
-            <div class="watermark">Reflect & Shoot</div>
+            <!-- Ornaments in Four Corners -->
+            <div class="corner-ornament corner-tl">${CORNER_SVG}</div>
+            <div class="corner-ornament corner-tr">${CORNER_SVG}</div>
+            <div class="corner-ornament corner-bl">${CORNER_SVG}</div>
+            <div class="corner-ornament corner-br">${CORNER_SVG}</div>
 
-            <div class="header">
-               <div class="brand-tag">
-                 <span>Konya Anadolu İmam Hatip Lisesi</span>
-               </div>
+            <!-- Background Watermark Pattern -->
+            <svg class="center-watermark-icon" viewBox="0 0 100 100" fill="none" stroke="#000000" stroke-width="0.5">
+              <path d="M50 5 C25 5, 5 25, 5 50 C5 75, 25 95, 50 95 C75 95, 95 75, 95 50 C95 25, 75 5, 50 5 Z M50 15 L50 85 M15 50 L85 50" />
+            </svg>
 
-               <h1>KATILIM BELGESİ</h1>
-               <h2>Reflect & Shoot Kısa Film Yarışması</h2>
+            <!-- Brand Logo Header Block -->
+            <div class="logo-wrapper">
+              ${LOGO_SVG}
             </div>
-            
-            <div class="content">
-               <div class="presented-to">Bu belge,</div>
-               <div class="recipient-name">${currentUser.fullName}</div>
-               <div class="recipient-role">isimli danışman öğretmene,</div>
-               <div class="description">
-                 Reflect&Shoot Kısa Film Yarışması kapsamında
-                 <span class="highlight"> "${currentApplication.team.name}" </span>
-                 takımına danışmanlık yaparak,<br>
-                 gençlerin sinema sanatıyla kendilerini ifade etmelerine sağladığı katkı<br>
-                 ve gösterdiği <span class="emphasis">üstün gayret</span> nedeniyle takdim edilmiştir.
-               </div>
+
+            <!-- Structural Headers -->
+            <div class="header-section">
+              <h1 class="certificate-title">${titleText}</h1>
+              <p class="proudly-presented">This certificate is proudly presented to</p>
             </div>
-            
-            <div class="seal">
-              <div class="seal-inner">
-                <div class="seal-main">Reflect & Shoot</div>
-                <div class="seal-sub">Kısa Film Yarışması</div>
+
+            <!-- Recipient Name Placed exactly on the empty space/line -->
+            <div class="name-display-unit">
+              <div class="recipient-name">${recipientName}</div>
+              <div class="name-separator"></div>
+            </div>
+
+            <!-- Descriptive Body Paragraph -->
+            <p class="description-paragraph">
+              For participating in <strong>Reflect&amp;Shoot</strong> short film competition held by <br/><strong>Konya Anadolu İmam Hatip High School</strong>.
+            </p>
+
+            <!-- Grid of 4 Signatures Exactly mimicking the layouts -->
+            <div class="signatures-grid-canvas">
+              
+              <!-- Selma Ozulku -->
+              <div class="signature-block">
+                <div class="handwritten-sig-wrap">${SIGNATIVE_SELMA}</div>
+                <div class="short-sign-line"></div>
+                <div class="signer-fullname">Selma ÖZÜLKÜ</div>
+                <div class="signer-role-label">Coordinator</div>
               </div>
+
+              <!-- Yunus Emre Yilmaz -->
+              <div class="signature-block">
+                <div class="handwritten-sig-wrap">${SIGNATIVE_YUNUS}</div>
+                <div class="short-sign-line"></div>
+                <div class="signer-fullname">Yunus Emre YILMAZ</div>
+                <div class="signer-role-label">Coordinator</div>
+              </div>
+
+              <!-- Sami Bayrakci -->
+              <div class="signature-block">
+                <div class="handwritten-sig-wrap">${SIGNATIVE_SAMI}</div>
+                <div class="short-sign-line"></div>
+                <div class="signer-fullname">Sami BAYRAKÇI</div>
+                <div class="signer-role-label">TİMAV Principal</div>
+              </div>
+
+              <!-- Suleyman Esit -->
+              <div class="signature-block">
+                <div class="handwritten-sig-wrap">${SIGNATIVE_SULEYMAN}</div>
+                <div class="short-sign-line"></div>
+                <div class="signer-fullname">Süleyman EŞİT</div>
+                <div class="signer-role-label">School Principal</div>
+              </div>
+
             </div>
 
-            <div class="footer">
-               <div class="date-box">
-                  ${date}<br>
-                  <span class="city">KONYA</span>
-               </div>
-               
-               <div class="signature-box">
-                  <div class="sign-line"></div>
-                  <div class="sign-name">${directorName}</div>
-                  <div class="sign-title">Okul Müdürü</div>
-               </div>
-            </div>
           </div>
         </div>
-        <script>
-           window.print();
-        </script>
-      </body>
-      </html>
-    `;
-
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(content);
-      printWindow.document.close();
-    }
-  };
-
-  return (
-    <button 
-      onClick={printCertificate}
-      className="group relative flex items-center gap-4 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-900 px-6 py-3 rounded-xl font-black shadow-lg shadow-amber-500/20 transition-all transform hover:-translate-y-1"
-    >
-      <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm border border-white/20">
-          <Award size={20} className="text-slate-900"/>
       </div>
-      <div className="text-left leading-tight">
-          <div className="text-[9px] font-bold uppercase tracking-wider opacity-80">Hazır</div>
-          <div className="text-sm font-black">Belgeyi İndir</div>
-      </div>
-      <Sparkles className="absolute top-2 right-2 text-white/60 animate-pulse" size={14}/>
-    </button>
-  );
+      <script>
+        // Automatic delay to make sure print triggers nicely across different rendering timelines
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+          }, 400);
+        };
+      </script>
+    </body>
+    </html>
+  `;
+
+  const printWindow = window.open('', '_blank');
+  if (printWindow) {
+    printWindow.document.write(content);
+    printWindow.document.close();
+  } else {
+    alert("Popup engelleyiciyi devre dışı bırakıp tekrar deneyiniz.");
+  }
+};
+
+// React Component Wrapper to keep existing components running smoothly
+export const CertificateGenerator: React.FC = () => {
+  return null;
 };
