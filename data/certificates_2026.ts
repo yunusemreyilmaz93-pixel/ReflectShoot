@@ -18,6 +18,9 @@ export const getTeacherCertificateUrl_2026 = (teacherNameInput: string): string 
     if (teacherName.includes("salih") && (teacherName.includes("birköse") || teacherName.includes("birkose"))) {
         return "https://assets.reflectandshoot.com/certificates/mkail_angels/salih_birkose_danisman.pdf";
     }
+    if (teacherName.includes("elif") && (teacherName.includes("koç") || teacherName.includes("koc") || teacherName.includes("zeycan"))) {
+        return "https://assets.reflectandshoot.com/certificates/ummeti_muhammed/elif_zeycan_koc.pdf";
+    }
     return null;
 };
 
@@ -30,6 +33,29 @@ export const getStudentCertificateUrl_2026 = (student: StudentInfo, teamNameInpu
     const f = (student.firstName || "").toLowerCase().trim();
     const l = (student.lastName || "").toLowerCase().trim();
     const full = `${f} ${l}`;
+
+    if (teamName.includes("ümmet") || teamName.includes("ummet") || teamName.includes("muhammed")) {
+        if (full.includes("ahmet") || full.includes("sarı") || full.includes("sari")) {
+            if (!full.includes("metehan")) {
+                return "https://assets.reflectandshoot.com/certificates/ummeti_muhammed/Ahmet_Salih_Sari.pdf";
+            }
+        }
+        if (full.includes("hüseyin") || full.includes("huseyin") || full.includes("batuhan")) {
+            return "https://assets.reflectandshoot.com/certificates/ummeti_muhammed/Huseyin_Batuhan.pdf";
+        }
+        if (full.includes("metehan") || full.includes("sarıyıldız") || full.includes("sariyildiz")) {
+            return "https://assets.reflectandshoot.com/certificates/ummeti_muhammed/Metehan_Sariyildiz.pdf";
+        }
+        if (full.includes("muhammed") && (full.includes("salih") || !full.includes("ahmet"))) {
+            return "https://assets.reflectandshoot.com/certificates/ummeti_muhammed/Muhammed_Salih.pdf";
+        }
+        if (full.includes("murad") || full.includes("humbatov") || full.includes("murat")) {
+            return "https://assets.reflectandshoot.com/certificates/ummeti_muhammed/Murad_Humbatov.pdf";
+        }
+        if (full.includes("yiğit") || full.includes("yigit") || full.includes("efe")) {
+            return "https://assets.reflectandshoot.com/certificates/ummeti_muhammed/Yigit_Efe.pdf";
+        }
+    }
 
     if (teamName.includes("ethereal") && teamName.includes("nova")) {
         if (full.includes("ayşenaz") || full.includes("aysenaz") || full.includes("ucar") || full.includes("uçar")) {
