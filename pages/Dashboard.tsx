@@ -82,7 +82,7 @@ const NextActionCard = ({ app, isDeadlinePassed, onAction }: { app: any, isDeadl
     if (isWinner === true) {
         action = { text: "Tebrikler! Takımınız ödül kazandı. Katılım formunu doldurun.", btn: "Katılım Formuna Git", tab: "AWARD_WIN", type: "success" };
     } else if (isWinner === false) {
-        action = { text: "Yarışmamıza katılımınız için teşekkür ederiz. Emekleriniz için minnettarız.", btn: "Katılım Sertifikasını 22 Mayıs'tan itibaren buradan alabilirsiniz.", tab: "STATUS", type: "success" };
+        action = { text: "Yarışmamıza katılımınız için teşekkür ederiz. Emekleriniz için minnettarız.", btn: "Katılım Sertifikalarını Buradan İndirebilirsiniz", tab: "STATUS", type: "success" };
     } else if (app.status === ApplicationStatus.FINAL_SUBMITTED || app.status === ApplicationStatus.UNDER_REVIEW) {
         action = { text: "Ödül Töreni değerlendirme süreci tamamlandı. Katılımlarınızdan dolayı teşekkür ederiz.", btn: "Detayları Gör", tab: "STATUS", type: "info" };
     } else if (isDeadlinePassed) {
@@ -1181,11 +1181,11 @@ export const Dashboard: React.FC = () => {
                                     </p>
 
                                     {/* Bilgi Paneli */}
-                                    <div className="bg-amber-950/20 border border-amber-500/30 text-amber-400 p-3.5 rounded-xl text-xs mb-6 flex items-start gap-2.5">
-                                        <Clock size={16} className="shrink-0 mt-0.5" />
+                                    <div className="bg-emerald-950/25 border border-emerald-500/30 text-emerald-400 p-3.5 rounded-xl text-xs mb-6 flex items-start gap-2.5">
+                                        <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-500" />
                                         <div>
-                                            <span className="font-bold block mb-0.5">Sertifikalar Hazırlanıyor</span>
-                                            <span>Sertifikaların hazırlanma süreci devam etmektedir. İsme özel düzenlenen özel belgeler dışındaki genel katılım/teşekkür belgeleri şu an indirmeye kapalıdır ve tamamlandığında aktif olacaktır.</span>
+                                            <span className="font-bold block mb-0.5">Sertifikalarınız Hazır!</span>
+                                            <span>2025-2026 Sezonu için tüm katılım ve teşekkür belgeleri hazırlanmıştır. Hem kendiniz için danışman sertifikasını hem de öğrencilerinizin katılım belgelerini anında indirip kaydedebilirsiniz.</span>
                                         </div>
                                     </div>
 
@@ -1886,7 +1886,7 @@ export const Dashboard: React.FC = () => {
                             </div>
 
                             <p className="text-sm text-slate-400 mb-8 max-w-lg mx-auto">
-                                Öğrencilerinize ve size emeklerinizden dolayı sonsuz teşekkürler. Hazırlanan teşekkür e-sertifikalarını ilerleyen günlerde panelinizden görüntüleyebileceksiniz.
+                                Öğrencilerinize ve size emeklerinizden dolayı sonsuz teşekkürler. Hazırlanan teşekkür e-sertifikalarını panelinizden anında görüntüleyebilir ve indirebilirsiniz.
                             </p>
 
                             <button onClick={handleCloseThanksModal} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-10 rounded-2xl transition-colors">

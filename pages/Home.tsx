@@ -205,6 +205,13 @@ export const Home: React.FC = () => {
   return (
     <div className="bg-slate-950 min-h-screen relative overflow-x-hidden font-sans">
       
+      {/* 2025-2026 Sezonu Sertifika Duyuru Bandı */}
+      <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-slate-950 text-center py-2.5 px-4 font-bold text-xs md:text-sm flex items-center justify-center gap-2 relative z-50 shadow-md">
+        <Sparkles size={16} className="text-slate-950 animate-pulse shrink-0" />
+        <span>2025-2026 Sezonu Tüm Sertifikalar Hazırdır! Öğretmenlerimiz hem kendi danışman sertifikalarına hem de öğrencilerinin katılım sertifikalarına panellerinden kolaylıkla ulaşabilirler.</span>
+        <Sparkles size={16} className="text-slate-950 animate-pulse shrink-0" />
+      </div>
+      
       <AnimatePresence>
         {showCountdownPopup && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
