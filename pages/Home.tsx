@@ -305,7 +305,7 @@ export const Home: React.FC = () => {
               <div className="flex flex-wrap justify-center gap-6 my-2">
                   {[
                     { icon: Clapperboard, val: "58", label: "Takım" },
-                    { icon: MapPin, val: "5", label: "Coğrafi Bölge" },
+                    { icon: MapPin, val: "5", label: "Bölge" },
                     { icon: Users, val: "350+", label: "Öğrenci" }
                   ].map((stat, i) => (
                     <div key={i} className="flex flex-col items-center justify-center px-8 py-5 md:px-10 md:py-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-amber-500/50 hover:bg-white/10 hover:scale-105 transition-all duration-300 group min-w-[140px] md:min-w-[180px]">
