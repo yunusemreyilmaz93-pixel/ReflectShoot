@@ -1,5 +1,6 @@
 {
   "name": "Reflect&Shoot Film Yarışması",
   "description": "Liseler arası kısa film yarışması başvuru ve yönetim platformu.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

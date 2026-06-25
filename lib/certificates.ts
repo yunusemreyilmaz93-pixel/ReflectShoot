@@ -124,20 +124,20 @@ export async function generateCertificatePdfBytes(
   const ptH = cmToPt(config.height);
   
   // Format the name: uppercase Turkish representation
-  const upperName = recipientName.toLocaleUpperCase('tr-TR');
+  const upperName = recipientName.toLocaleUpperCase('tr-TR').trim().replace(/\s+/g, ' ');
   
   // Dynamic font size calculation
   let fontSize = config.defaultFontSize || 24;
-  let textWidth = customFont.widthOfTextAtSize(upperName, fontSize);
+  const minFontSize = config.minFontSize || 12;
+  const maxFontSize = config.maxFontSize || 36;
   
-  if (textWidth > ptW) {
-    fontSize = fontSize * (ptW / textWidth);
-    if (fontSize < (config.minFontSize || 12)) {
-      fontSize = config.minFontSize || 12;
-    }
+  if (fontSize > maxFontSize) {
+    fontSize = maxFontSize;
   }
-  if (fontSize > (config.maxFontSize || 36)) {
-    fontSize = config.maxFontSize || 36;
+  
+  // Scale down if name exceeds box width
+  while (fontSize > minFontSize && customFont.widthOfTextAtSize(upperName, fontSize) > ptW) {
+    fontSize -= 1;
   }
   
   // Measure width again with final font size
@@ -228,7 +228,7 @@ export async function downloadCertificate({
     const pdfBytes = await generateCertificatePdfBytes(templateBytes, fontBytes, recipientName, config);
     
     // 6. Trigger client side download
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     
     const slugifyName = (name: string) => name

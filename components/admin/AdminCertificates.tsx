@@ -65,8 +65,14 @@ export const AdminCertificates: React.FC = () => {
       
       const fileKey = await uploadFileToR2(file, customKey);
       
-      handleConfigChange('templateKey', fileKey);
-      showToast('Şablon başarıyla yüklendi.', 'success');
+      const updatedConfig = {
+        ...config,
+        templateKey: fileKey
+      };
+      
+      setConfig(updatedConfig);
+      await saveCertificateConfig(activeType, updatedConfig);
+      showToast('Şablon başarıyla yüklendi ve kaydedildi.', 'success');
     } catch (error: any) {
       console.error('Template upload failed:', error);
       showToast('Şablon yüklenirken hata oluştu.', 'error');
@@ -143,7 +149,7 @@ export const AdminCertificates: React.FC = () => {
         URL.revokeObjectURL(previewPdfUrl);
       }
       
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
       const previewUrl = URL.createObjectURL(blob);
       setPreviewPdfUrl(previewUrl);
       showToast('Önizleme başarıyla oluşturuldu.', 'success');
