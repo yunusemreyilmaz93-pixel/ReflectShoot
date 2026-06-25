@@ -114,6 +114,29 @@ export async function generateCertificatePdfBytes(
   // Embed custom font
   const customFont = await pdfDoc.embedFont(fontArrayBuffer);
   
+  // Disable buggy RTL/joining substitutions for standard Latin characters in font layout
+  try {
+    const fkFont = (customFont as any).embedder?.font;
+    if (fkFont && typeof fkFont.layout === 'function') {
+      const originalLayout = fkFont.layout.bind(fkFont);
+      fkFont.layout = function (text: string, features: any) {
+        return originalLayout(text, {
+          fina: false,
+          init: false,
+          medi: false,
+          calt: false,
+          liga: false,
+          rlig: false,
+          aalt: false,
+          salt: false,
+          ...features
+        });
+      };
+    }
+  } catch (err) {
+    console.error('Failed to wrap font layout:', err);
+  }
+  
   const pages = pdfDoc.getPages();
   const page = pages[0];
   const { width: pageW, height: pageH } = page.getSize();
