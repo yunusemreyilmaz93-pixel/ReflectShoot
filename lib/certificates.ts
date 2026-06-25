@@ -1,4 +1,5 @@
 import { PDFDocument, rgb, degrees } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -106,6 +107,9 @@ export async function generateCertificatePdfBytes(
   config: CertificateConfig
 ): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.load(templateArrayBuffer);
+  
+  // Register fontkit
+  pdfDoc.registerFontkit(fontkit);
   
   // Embed custom font
   const customFont = await pdfDoc.embedFont(fontArrayBuffer);
