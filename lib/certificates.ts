@@ -115,12 +115,13 @@ export async function generateCertificatePdfBytes(
   const customFont = await pdfDoc.embedFont(fontArrayBuffer);
   
   // Disable buggy RTL/joining substitutions for standard Latin characters in font layout
+  // and fix the extremely narrow space character (which collapses the words together)
   try {
     const fkFont = (customFont as any).embedder?.font;
     if (fkFont && typeof fkFont.layout === 'function') {
       const originalLayout = fkFont.layout.bind(fkFont);
       fkFont.layout = function (text: string, features: any) {
-        return originalLayout(text, {
+        const run = originalLayout(text, {
           fina: false,
           init: false,
           medi: false,
@@ -131,7 +132,35 @@ export async function generateCertificatePdfBytes(
           salt: false,
           ...features
         });
+        
+        // Ensure space characters have a normal, legible width in drawing layout
+        if (run && run.glyphs && run.positions) {
+          for (let i = 0; i < run.glyphs.length; i++) {
+            const g = run.glyphs[i];
+            if (g && (g.name === 'space' || g.id === 3 || g.id === 4 || (g.codePoints && g.codePoints.includes(32)))) {
+              if (run.positions[i]) {
+                run.positions[i].xAdvance = 1000;
+              }
+            }
+          }
+        }
+        return run;
       };
+
+      // Also override the static advanceWidth on the cached space glyph object itself
+      // so that customFont.widthOfTextAtSize correctly measures text with normal space widths.
+      try {
+        const spaceGlyph = fkFont.glyphForCodePoint(32);
+        if (spaceGlyph) {
+          Object.defineProperty(spaceGlyph, 'advanceWidth', {
+            get() { return 1000; },
+            configurable: true,
+            enumerable: true
+          });
+        }
+      } catch (err) {
+        console.error('Failed to override space glyph advanceWidth:', err);
+      }
     }
   } catch (err) {
     console.error('Failed to wrap font layout:', err);
