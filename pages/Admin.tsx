@@ -16,6 +16,7 @@ import { TurkeyMap } from '../components/TurkeyMap';
 import { AdminJuryStatus } from '../components/admin/AdminJuryStatus';
 import { AdminAwards } from '../components/admin/AdminAwards';
 import { AcademicJuryScorePanel } from '../components/AcademicJuryScorePanel';
+import { AdminCertificates } from '../components/admin/AdminCertificates';
 import { writeBatch, doc, collection } from 'firebase/firestore'; // Import needed for direct batch writing
 import { db } from '../lib/firebase'; // Import db
 
@@ -184,6 +185,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }: Si
         { id: 'JURY_STATUS', icon: Activity, label: 'Jüri İlerlemeleri' },
         { id: 'USERS', icon: Users, label: 'Kullanıcılar & Jüri' },
         { id: 'CONTENT', icon: LayoutTemplate, label: 'İçerik Yönetimi (CMS)' },
+        { id: 'CERTIFICATES', icon: FileText, label: 'Sertifika Şablonları' },
         { id: 'SETTINGS', icon: Settings, label: 'Sistem Ayarları' },
         { id: 'LOGS', icon: List, label: 'Denetim Kayıtları' },
     ];
@@ -1778,6 +1780,7 @@ export const Admin: React.FC = () => {
                       {activeTab === 'JURY_STATUS' && 'Jüri İlerlemeleri'}
                       {activeTab === 'USERS' && 'Kullanıcılar & Jüri'}
                       {activeTab === 'CONTENT' && 'İçerik Yönetimi (CMS)'}
+                      {activeTab === 'CERTIFICATES' && 'Sertifika Şablonları & Tasarımı'}
                       {activeTab === 'SETTINGS' && 'Sistem Ayarları'}
                       {activeTab === 'LOGS' && 'Denetim Kayıtları'}
                   </h2>
@@ -1833,6 +1836,7 @@ export const Admin: React.FC = () => {
                     {activeTab === 'JURY_STATUS' && <AdminJuryStatus apps={allApplications} />}
                     {activeTab === 'USERS' && <AdminUsers />}
                     {activeTab === 'CONTENT' && <AdminCMS />}
+                    {activeTab === 'CERTIFICATES' && <AdminCertificates />}
                     {activeTab === 'SETTINGS' && (
                         <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto pb-10">
                              

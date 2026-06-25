@@ -3,11 +3,72 @@ export interface StudentInfo {
     lastName: string;
 }
 
+// Automatic Slugification Helpers for R2 Bucket URLs
+const toTeamSlug = (text: string): string => {
+    const trMap: { [key: string]: string } = {
+        'ç': 'c', 'Ç': 'c',
+        'ğ': 'g', 'Ğ': 'g',
+        'ı': 'i', 'I': 'i', 'İ': 'i',
+        'ö': 'o', 'Ö': 'o',
+        'ş': 's', 'Ş': 's',
+        'ü': 'u', 'Ü': 'u'
+    };
+    let clean = text.toLowerCase().trim();
+    for (const key in trMap) {
+        clean = clean.replace(new RegExp(key, 'g'), trMap[key]);
+    }
+    // Replace '-i' word connection with 'i', and other hyphens with spaces
+    let prepared = clean.replace(/-i\b/g, 'i').replace(/-/g, ' ');
+    const words = prepared.split(/[\s_]+/).filter(Boolean);
+    const slug = words.join('_');
+    if (slug === '5n1k' || slug === '5_n_1_k' || slug.includes('5n1k')) {
+        return '5n1k_ekibi';
+    }
+    return slug;
+};
+
+const toPascalUnderscore = (text: string): string => {
+    const trMap: { [key: string]: string } = {
+        'ç': 'c', 'Ç': 'C',
+        'ğ': 'g', 'Ğ': 'G',
+        'ı': 'i', 'I': 'I', 'İ': 'I',
+        'ö': 'o', 'Ö': 'O',
+        'ş': 's', 'Ş': 'S',
+        'ü': 'u', 'Ü': 'U'
+    };
+    let clean = text.trim();
+    for (const key in trMap) {
+        clean = clean.replace(new RegExp(key, 'g'), trMap[key]);
+    }
+    const words = clean.split(/[\s\-_]+/);
+    return words
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .filter(Boolean)
+        .join('_');
+};
+
+const toSnakeCase = (text: string): string => {
+    const trMap: { [key: string]: string } = {
+        'ç': 'c', 'Ç': 'c',
+        'ğ': 'g', 'Ğ': 'g',
+        'ı': 'i', 'I': 'i', 'İ': 'i',
+        'ö': 'o', 'Ö': 'o',
+        'ş': 's', 'Ş': 's',
+        'ü': 'u', 'Ü': 'u'
+    };
+    let clean = text.toLowerCase().trim();
+    for (const key in trMap) {
+        clean = clean.replace(new RegExp(key, 'g'), trMap[key]);
+    }
+    const words = clean.split(/[\s\-_]+/).filter(Boolean);
+    return words.join('_');
+};
+
 /**
  * Returns the custom 2026 advisor/teacher certificate URL based on teacher's full name.
  * Returns null if no custom certificate exists.
  */
-export const getTeacherCertificateUrl_2026 = (teacherNameInput: string): string | null => {
+export const getTeacherCertificateUrl_2026 = (teacherNameInput: string, teamNameInput?: string): string | null => {
     const teacherName = (teacherNameInput || "").toLowerCase();
     if (teacherName.includes("hafize") && (teacherName.includes("kırdı") || teacherName.includes("kirdi"))) {
         return "https://assets.reflectandshoot.com/certificates/ethereal_nova/Hafize_K%C4%B1rd%C4%B1_danisman.pdf";
@@ -21,6 +82,14 @@ export const getTeacherCertificateUrl_2026 = (teacherNameInput: string): string 
     if (teacherName.includes("elif") && (teacherName.includes("koç") || teacherName.includes("koc") || teacherName.includes("zeycan"))) {
         return "https://assets.reflectandshoot.com/certificates/ummeti_muhammed/elif_zeycan_koc.pdf";
     }
+
+    // Dynamic Automatic Fallback
+    if (teamNameInput) {
+        const teamSlug = toTeamSlug(teamNameInput);
+        const teacherSlug = toSnakeCase(teacherNameInput);
+        return `https://assets.reflectandshoot.com/certificates/${teamSlug}/${teacherSlug}_danisman.pdf`;
+    }
+
     return null;
 };
 
@@ -116,5 +185,13 @@ export const getStudentCertificateUrl_2026 = (student: StudentInfo, teamNameInpu
             return "https://assets.reflectandshoot.com/certificates/open_ideas/open_ideas_zeynep_erkul.pdf";
         }
     }
+
+    // Dynamic Automatic Fallback
+    if (teamNameInput) {
+        const teamSlug = toTeamSlug(teamNameInput);
+        const studentSlug = toPascalUnderscore(`${student.firstName} ${student.lastName}`);
+        return `https://assets.reflectandshoot.com/certificates/${teamSlug}/${studentSlug}.pdf`;
+    }
+
     return null;
 };

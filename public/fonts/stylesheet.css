@@ -1,0 +1,13 @@
+@font-face {
+    font-family: 'RTL-Romman';
+    src: url('RTL-Romman-Regular.eot');
+    src: local('RTL-Romman Regular'), local('RTL-Romman-Regular'),
+        url('RTL-Romman-Regular.eot?#iefix') format('embedded-opentype'),
+        url('RTL-Romman-Regular.woff2') format('woff2'),
+        url('RTL-Romman-Regular.woff') format('woff'),
+        url('RTL-Romman-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+

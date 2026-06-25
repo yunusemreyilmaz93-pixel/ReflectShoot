@@ -20,6 +20,7 @@ import { CertificateGenerator, printCertificate } from '../components/Certificat
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getTeacherCertificateUrl_2026, getStudentCertificateUrl_2026 } from '../data/certificates_2026';
+import { downloadCertificate } from '../lib/certificates';
 
 // Placeholder Template URLs
 const TEMPLATE_PARENT_URL = "https://assets.reflectandshoot.com/veli_izin_belgesi.pdf";
@@ -206,7 +207,8 @@ export const Dashboard: React.FC = () => {
 
     const getTeacherCertificateUrl = () => {
         const teacherName = currentApplication?.teacher?.fullName || currentUser?.fullName || "";
-        return getTeacherCertificateUrl_2026(teacherName);
+        const teamName = currentApplication?.team?.name || "";
+        return getTeacherCertificateUrl_2026(teacherName, teamName);
     };
 
     const getStudentCertificateUrl = (student: { firstName: string, lastName: string }) => {
@@ -1194,28 +1196,19 @@ export const Dashboard: React.FC = () => {
                                                 <span className="text-[9px] uppercase font-black text-slate-500 tracking-wider block">Danışman Öğretmen</span>
                                                 <span className="text-sm font-bold text-white">{currentApplication?.teacher?.fullName || currentUser?.fullName}</span>
                                             </div>
-                                            {getTeacherCertificateUrl() ? (
-                                                <button 
-                                                    onClick={() => {
-                                                        const customUrl = getTeacherCertificateUrl();
-                                                        if (customUrl) {
-                                                            window.open(customUrl, '_blank');
-                                                        }
-                                                    }}
-                                                    className="bg-amber-600 hover:bg-amber-500 text-slate-950 hover:-translate-y-1 transition-all py-2 px-4 rounded-xl text-xs font-black shadow-lg shadow-amber-950/20 flex items-center gap-1.5 cursor-pointer"
-                                                >
-                                                    <Printer size={13}/> İndir (PDF)
-                                                </button>
-                                            ) : (
-                                                <button 
-                                                    onClick={() => {
-                                                        showToast("Danışman öğretmen katılım belgesinin hazırlanma süreci devam etmektedir. Lütfen daha sonra tekrar deneyiniz.", "info");
-                                                    }}
-                                                    className="bg-slate-800/40 text-slate-500 border border-slate-800 py-2 px-4 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-help"
-                                                >
-                                                    <Lock size={12}/> Hazırlanıyor
-                                                </button>
-                                            )}
+                                            <button 
+                                                onClick={() => {
+                                                    const teacherName = currentApplication?.teacher?.fullName || currentUser?.fullName || "";
+                                                    downloadCertificate({
+                                                        recipientName: teacherName,
+                                                        type: 'APPRECIATION',
+                                                        showToast
+                                                    });
+                                                }}
+                                                className="bg-amber-600 hover:bg-amber-500 text-slate-950 hover:-translate-y-1 transition-all py-2 px-4 rounded-xl text-xs font-black shadow-lg shadow-amber-950/20 flex items-center gap-1.5 cursor-pointer"
+                                            >
+                                                <Printer size={13}/> İndir (PDF)
+                                            </button>
                                         </div>
 
                                         <div className="w-full h-px bg-slate-800/60 my-4"></div>
@@ -1223,32 +1216,24 @@ export const Dashboard: React.FC = () => {
                                         
                                         <div className="grid gap-2 max-h-[220px] overflow-y-auto pr-1 scrollbar-hide">
                                             {currentApplication.team.students.map((student) => {
-                                                const studentUrl = getStudentCertificateUrl(student);
                                                 return (
                                                     <div key={student.id} className="p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl flex items-center justify-between hover:border-slate-700 transition-colors">
                                                         <div>
                                                             <span className="text-xs font-bold text-slate-200">{student.firstName} {student.lastName}</span>
                                                             <span className="text-[9px] font-bold text-slate-600 uppercase block">{student.grade} - Öğrenci</span>
                                                         </div>
-                                                        {studentUrl ? (
-                                                            <button 
-                                                                onClick={() => {
-                                                                    window.open(studentUrl, '_blank');
-                                                                }}
-                                                                className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all py-1.5 px-3 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-                                                            >
-                                                                <Printer size={11}/> Belge
-                                                            </button>
-                                                        ) : (
-                                                            <button 
-                                                                onClick={() => {
-                                                                    showToast(`${student.firstName} ${student.lastName} isimli öğrencinin katılım belgesinin hazırlanma süreci devam etmektedir. Lütfen daha sonra tekrar deneyiniz.`, "info");
-                                                                }}
-                                                                className="text-slate-600 bg-slate-900/30 border border-slate-950/50 py-1.5 px-3 rounded-lg text-[11px] font-medium flex items-center gap-1 cursor-help"
-                                                            >
-                                                                <Lock size={10}/> Hazırlanıyor
-                                                            </button>
-                                                        )}
+                                                        <button 
+                                                            onClick={() => {
+                                                                downloadCertificate({
+                                                                    recipientName: `${student.firstName} ${student.lastName}`,
+                                                                    type: 'ATTENDANCE',
+                                                                    showToast
+                                                                });
+                                                            }}
+                                                            className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all py-1.5 px-3 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                                                        >
+                                                            <Printer size={11}/> Belge
+                                                        </button>
                                                     </div>
                                                 );
                                             })}
