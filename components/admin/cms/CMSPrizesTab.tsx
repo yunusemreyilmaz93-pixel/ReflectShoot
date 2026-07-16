@@ -25,20 +25,20 @@ const CMSPrizeEditor = ({ prizeId, label }: { prizeId: string, label: string }) 
             </h4>
             <div className="grid md:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label className="label-text">Ödül İsmi</label>
-                    <input value={localPrize.title} onChange={e => setLocalPrize({...localPrize, title: e.target.value})} className="input-field" placeholder="Ödül Başlığı"/>
+                    <label className="label-text" htmlFor="cms-prizes-1">Ödül İsmi</label>
+                    <input id="cms-prizes-1" value={localPrize.title} onChange={e => setLocalPrize({...localPrize, title: e.target.value})} className="input-field" placeholder="Ödül Başlığı"/>
                 </div>
                 <div>
-                    <label className="label-text">Tutar / Değer</label>
-                    <input value={localPrize.reward} onChange={e => setLocalPrize({...localPrize, reward: e.target.value})} className="input-field" placeholder="40.000 TL"/>
+                    <label className="label-text" htmlFor="cms-prizes-2">Tutar / Değer</label>
+                    <input id="cms-prizes-2" value={localPrize.reward} onChange={e => setLocalPrize({...localPrize, reward: e.target.value})} className="input-field" placeholder="40.000 TL"/>
                 </div>
             </div>
             <div className="mb-4">
-                <label className="label-text">Açıklama</label>
-                <textarea value={localPrize.description} onChange={e => setLocalPrize({...localPrize, description: e.target.value})} className="input-field h-20" placeholder="Kısa açıklama..."/>
+                <label className="label-text" htmlFor="cms-prizes-3">Açıklama</label>
+                <textarea id="cms-prizes-3" value={localPrize.description} onChange={e => setLocalPrize({...localPrize, description: e.target.value})} className="input-field h-20" placeholder="Kısa açıklama..."/>
             </div>
             <div className="text-right">
-                <button onClick={save} className="bg-slate-800 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-xs transition-colors flex items-center gap-2 ml-auto border border-slate-700">
+                <button type="button" onClick={save} className="bg-slate-800 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-xs transition-colors flex items-center gap-2 ml-auto border border-slate-700">
                     <Save size={14}/> Kaydet
                 </button>
             </div>

@@ -179,7 +179,7 @@ export const AdminCertificates: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex gap-4 border-b border-slate-800 pb-4 overflow-x-auto scrollbar-hide">
-        <button 
+        <button type="button" 
           onClick={() => setActiveType('ATTENDANCE')} 
           className={`px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${
             activeType === 'ATTENDANCE' 
@@ -189,7 +189,7 @@ export const AdminCertificates: React.FC = () => {
         >
           <Sliders size={16} /> Student / Certificate of Attendance
         </button>
-        <button 
+        <button type="button" 
           onClick={() => setActiveType('APPRECIATION')} 
           className={`px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${
             activeType === 'APPRECIATION' 
@@ -412,7 +412,7 @@ export const AdminCertificates: React.FC = () => {
               </div>
 
               {/* Save Configuration Button */}
-              <button 
+              <button type="button" 
                 onClick={handleSaveConfig}
                 disabled={saving}
                 className="w-full mt-4 flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white py-3 px-6 rounded-xl font-bold transition-all disabled:opacity-50 shadow-lg"
@@ -450,7 +450,7 @@ export const AdminCertificates: React.FC = () => {
                   />
                 </div>
                 <div className="md:col-span-4 flex items-end">
-                  <button 
+                  <button type="button" 
                     onClick={handleGeneratePreview}
                     disabled={previewLoading || (!selectedFile && !config.templateKey)}
                     className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-black py-3 px-4 rounded-xl font-black transition-all disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 shadow-lg h-[46px]"

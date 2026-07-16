@@ -6,97 +6,9 @@ import { Timeline } from '../components/Timeline';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { useAppContext } from '../context/AppContext';
 import { motion, AnimatePresence } from 'motion/react';
-
-// Competition Schedule Configuration
-const COMPETITION_PHASES = [
-  { label: 'Başvuru ve Eser Gönderimi', date: '2026-05-04T23:59:59' },
-  { label: 'Ön Sonuçların Açıklanması', date: '2026-05-07T12:00:00' },
-  { label: 'Ödül Alan Takımların Açıklanması', date: '2026-05-08T12:00:00' },
-  { label: 'Büyük Final & Ödül Töreni', date: '2026-05-22T10:30:00' }
-];
-
-// Helper to find the next active phase
-const getNextPhase = (cmsTimeline: any[]) => {
-  const now = new Date();
-  
-  // Create a sorted list of phases from cmsTimeline that have a targetDate
-  // and are not part of the cancelled phases
-  const phases = cmsTimeline
-    .filter(item => item.targetDate && 
-      !item.title.toLowerCase().includes('akademi') && 
-      !item.title.toLowerCase().includes('eğitim') && 
-      !item.title.toLowerCase().includes('revize') &&
-      !item.title.toLowerCase().includes('nihai')
-    )
-    .map(item => ({ label: item.title, date: item.targetDate }))
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-  if (phases.length === 0) {
-    return COMPETITION_PHASES.find(phase => new Date(phase.date) > now) || COMPETITION_PHASES[COMPETITION_PHASES.length - 1];
-  }
-
-  const nextEvent = phases.find(phase => new Date(phase.date) > now);
-  return nextEvent || phases[phases.length - 1];
-};
-
-// Countdown Component
-const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    const target = new Date(targetDate).getTime();
-    const calculateTime = () => {
-      const now = new Date().getTime();
-      const difference = target - now;
-
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((difference % (1000 * 60)) / 1000),
-        });
-      } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      }
-    };
-    calculateTime();
-    const interval = setInterval(calculateTime, 1000);
-    return () => clearInterval(interval);
-  }, [targetDate]);
-
-  return (
-    <div className="flex gap-3 md:gap-6 justify-center text-white/90">
-      {[
-        { value: timeLeft.days, label: 'GÜN' },
-        { value: timeLeft.hours, label: 'SAAT' },
-        { value: timeLeft.minutes, label: 'DK' },
-        { value: timeLeft.seconds, label: 'SN' },
-      ].map((item, idx) => (
-        <div key={idx} className="flex flex-col items-center">
-          <div className="text-2xl md:text-4xl font-light tabular-nums tracking-tight bg-white/5 rounded-lg py-2 px-3 min-w-[3.5rem] md:min-w-[4.5rem] text-center backdrop-blur-sm border border-white/10 shadow-inner">
-             {item.value.toString().padStart(2, '0')}
-          </div>
-          <span className="text-[10px] font-bold tracking-widest opacity-60 mt-2 text-amber-500">{item.label}</span>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-interface CategoryData {
-  id: string;
-  title: string;
-  badge: string;
-  shortDesc: string;
-  icon: React.ElementType;
-  color: string;
-  techSpecs: { icon: React.ElementType, label: string }[];
-  details: {
-    description: string[];
-    warnings: string[];
-  }
-}
+import { getNextPhase } from './home/competitionPhases';
+import { CountdownTimer } from './home/CountdownTimer';
+import { HOME_CATEGORIES, type CategoryData } from './home/categoryCards';
 
 export const Home: React.FC = () => {
   const { cmsLinks, cmsTimeline } = useAppContext();
@@ -130,58 +42,7 @@ export const Home: React.FC = () => {
     ));
   };
 
-  const categories: CategoryData[] = [
-    {
-      id: 'live-action',
-      title: 'Canlı Çekim',
-      badge: 'SİNEMATOGRAFİ',
-      shortDesc: 'Gerçek oyuncular, set ışıkları ve kamera lensinin gücü ile fikrini filme dönüştür.',
-      icon: Film,
-      color: 'teal',
-      techSpecs: [
-        { icon: Clapperboard, label: 'Kurmaca / Belgesel' },
-        { icon: Layout, label: '1920x1080 FHD' },
-        { icon: CalendarDays, label: '3-8 Dakika' }
-      ],
-      details: {
-        description: [
-           "Geleneksel sinema teknikleri kullanılarak üretilmelidir.",
-           "Senaryo özgün olmalı ve belirlenen temalardan birini işlemelidir.",
-           "Oyuncu yönetimi, ışık kullanımı ve ses kalitesi değerlendirmede önemlidir."
-        ],
-        warnings: [
-          "Telif hakkı içeren müzik veya görüntü kullanılamaz.",
-          "Okul ve genel ahlak kurallarına aykırı içerikler diskalifiye sebebidir.",
-          "Filmin dili İngilizce, altyazılar Türkçe olmalıdır."
-        ]
-      }
-    },
-    {
-      id: 'ai-animation',
-      title: 'Yapay Zeka Animasyon',
-      badge: 'SENTETİK MEDYA',
-      shortDesc: 'Prompt mühendisliği ile oluşturulan dijital hikayeler ve görsel anlatım.',
-      icon: Cpu,
-      color: 'purple',
-      techSpecs: [
-        { icon: Layout, label: 'Yapay Zeka' },
-        { icon: Layout, label: '1920x1080 FHD' },
-        { icon: CalendarDays, label: '3-8 Dakika' }
-      ],
-      details: {
-        description: [
-           "Görüntü oluşturma ve video üretiminde Yapay Zeka araçları (Midjourney, Runway, Pika vb.) kullanılmalıdır.",
-           "Prompt mühendisliği ve görsel tutarlılık esas alınır.",
-           "Senaryo ve kurgu bütünlüğü teknik kapasite kadar önemlidir."
-        ],
-        warnings: [
-          "Tamamen stok görüntülerden oluşan kolajlar kabul edilmez.",
-          "Yapay zeka tarafından üretilen içeriklerin etik kullanımı esastır.",
-          "Filmin dili İngilizce (AI Seslendirme kabul edilir), altyazılar Türkçe olmalıdır."
-        ]
-      }
-    }
-  ];
+  const categories = HOME_CATEGORIES;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -231,7 +92,7 @@ export const Home: React.FC = () => {
               <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600" />
               
-              <button 
+              <button type="button" 
                 onClick={closePopup}
                 className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors z-10"
                 aria-label="Kapat"
@@ -369,7 +230,7 @@ export const Home: React.FC = () => {
                 </span>
              </Link>
              
-             <button 
+             <button type="button" 
                disabled
                className="px-10 py-5 border border-white/10 text-slate-500 rounded-full font-bold flex items-center justify-center gap-2 w-full sm:w-auto cursor-not-allowed bg-white/5"
                title="Yeni sezonda güncellenecektir."
@@ -380,7 +241,7 @@ export const Home: React.FC = () => {
         </div>
 
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-40">
-           <button onClick={scrollToContent} className="text-slate-500 hover:text-amber-500 transition-colors animate-bounce">
+           <button type="button" onClick={scrollToContent} className="text-slate-500 hover:text-amber-500 transition-colors animate-bounce">
               <ChevronDown size={32} />
            </button>
         </div>
@@ -529,7 +390,7 @@ export const Home: React.FC = () => {
                             ))}
                         </div>
 
-                        <button 
+                        <button type="button" 
                             onClick={() => setSelectedCategory(cat)}
                             className="w-full py-5 bg-slate-900 text-white font-bold rounded-xl hover:bg-rose-600 transition-colors flex items-center justify-center gap-2 group-hover:shadow-lg text-sm tracking-wide uppercase"
                         >
@@ -708,7 +569,7 @@ export const Home: React.FC = () => {
              </Link>
 
              {/* Card 4: Şartname */}
-             <button onClick={() => handleDownload(cmsLinks.specUrl)} className="group bg-white p-8 rounded-[2rem] border border-slate-200 shadow-lg hover:shadow-2xl hover:border-rose-500/30 transition-all duration-300 transform hover:-translate-y-2 flex flex-col h-full text-left">
+             <button type="button" onClick={() => handleDownload(cmsLinks.specUrl)} className="group bg-white p-8 rounded-[2rem] border border-slate-200 shadow-lg hover:shadow-2xl hover:border-rose-500/30 transition-all duration-300 transform hover:-translate-y-2 flex flex-col h-full text-left">
                 <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner">
                    <ScrollText size={32} />
                 </div>
@@ -830,7 +691,7 @@ export const Home: React.FC = () => {
             
             {/* Header */}
             <div className="relative p-8 pb-6 border-b border-slate-800 bg-slate-950/50">
-              <button 
+              <button type="button" 
                 onClick={() => setSelectedCategory(null)}
                 className="absolute top-6 right-6 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-rose-600 transition-all z-10"
               >
@@ -894,7 +755,7 @@ export const Home: React.FC = () => {
 
             {/* Footer Actions */}
             <div className="p-6 border-t border-slate-800 bg-slate-950 flex flex-col sm:flex-row gap-4">
-                <button 
+                <button type="button" 
                     onClick={() => handleDownload(cmsLinks.specUrl)}
                     className="flex-1 py-4 rounded-xl border border-slate-700 text-slate-300 font-bold hover:bg-slate-800 hover:text-white transition-all flex items-center justify-center gap-2"
                 >

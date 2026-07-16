@@ -60,7 +60,7 @@ export const CMSAcademyTab: React.FC = () => {
             <h3 className="font-bold text-white text-lg mb-6 border-b border-slate-700 pb-4 flex items-center justify-between">
                 <span>{isEditing ? 'İçeriği Düzenle' : 'Yeni Eğitim İçeriği Ekle'}</span>
                 {isEditing && (
-                    <button onClick={handleCancel} className="text-xs text-rose-400 flex items-center gap-1 hover:underline">
+                    <button type="button" onClick={handleCancel} className="text-xs text-rose-400 flex items-center gap-1 hover:underline" aria-label="Kapat">
                         <X size={14}/> Vazgeç
                     </button>
                 )}
@@ -71,13 +71,13 @@ export const CMSAcademyTab: React.FC = () => {
                 {/* Basic Info */}
                 <div className="grid md:grid-cols-2 gap-5 mb-4">
                     <div>
-                        <label className="label-text">Başlık</label>
-                        <input required value={academyForm.title || ''} onChange={(e) => setAcademyForm({...academyForm, title: e.target.value})} className="input-field" placeholder="Senaryo 101" />
+                        <label className="label-text" htmlFor="cms-academy-1">Başlık</label>
+                        <input id="cms-academy-1" required value={academyForm.title || ''} onChange={(e) => setAcademyForm({...academyForm, title: e.target.value})} className="input-field" placeholder="Senaryo 101" />
                     </div>
                     <div className="grid grid-cols-1 gap-4">
                         <div>
-                            <label className="label-text">Kategori</label>
-                            <select value={academyForm.category || 'Senaryo & Tema'} onChange={(e) => setAcademyForm({...academyForm, category: e.target.value as any})} className="input-field">
+                            <label className="label-text" htmlFor="cms-academy-2">Kategori</label>
+                            <select id="cms-academy-2" value={academyForm.category || 'Senaryo & Tema'} onChange={(e) => setAcademyForm({...academyForm, category: e.target.value as any})} className="input-field">
                                 <option value="Senaryo & Tema">Senaryo & Tema</option>
                                 <option value="Teknik & Kurgu">Teknik & Kurgu</option>
                                 <option value="Yapay Zeka">Yapay Zeka</option>
@@ -88,8 +88,8 @@ export const CMSAcademyTab: React.FC = () => {
                 </div>
 
                 <div className="mb-4">
-                    <label className="label-text">Açıklama</label>
-                    <input value={academyForm.description || ''} onChange={(e) => setAcademyForm({...academyForm, description: e.target.value})} className="input-field" placeholder="Kısa açıklama..." />
+                    <label className="label-text" htmlFor="cms-academy-3">Açıklama</label>
+                    <input id="cms-academy-3" value={academyForm.description || ''} onChange={(e) => setAcademyForm({...academyForm, description: e.target.value})} className="input-field" placeholder="Kısa açıklama..." />
                 </div>
 
                 {/* Configuration / Links */}
@@ -190,10 +190,10 @@ export const CMSAcademyTab: React.FC = () => {
                             </div>
                         </div>
                         <div className="flex gap-2 justify-end">
-                            <button onClick={() => handleEdit(item)} className="bg-blue-900/30 text-blue-400 hover:bg-blue-900/50 p-2 rounded-lg transition-colors" title="Düzenle">
+                            <button type="button" onClick={() => handleEdit(item)} className="bg-blue-900/30 text-blue-400 hover:bg-blue-900/50 p-2 rounded-lg transition-colors" title="Düzenle">
                                 <PenTool size={18}/>
                             </button>
-                            <button onClick={() => deleteCMSAcademyItem(item.id)} className="bg-red-900/30 text-red-400 hover:bg-red-900/50 p-2 rounded-lg transition-colors" title="Sil">
+                            <button type="button" onClick={() => deleteCMSAcademyItem(item.id)} className="bg-red-900/30 text-red-400 hover:bg-red-900/50 p-2 rounded-lg transition-colors" title="Sil">
                                 <Trash2 size={18}/>
                             </button>
                         </div>

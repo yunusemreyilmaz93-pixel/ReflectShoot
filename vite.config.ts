@@ -26,6 +26,22 @@ export default defineConfig({
   ],
   build: {
     outDir: 'dist',
-    sourcemap: false
-  }
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        // Split heavy vendor libs so public shell stays lighter.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('firebase')) return 'vendor-firebase';
+          if (id.includes('xlsx')) return 'vendor-xlsx';
+          if (id.includes('jspdf')) return 'vendor-jspdf';
+          if (id.includes('motion') || id.includes('framer-motion')) return 'vendor-motion';
+          if (id.includes('react-dom') || id.includes('react-router') || id.includes('/react/')) {
+            return 'vendor-react';
+          }
+        },
+      },
+    },
+    chunkSizeWarningLimit: 900,
+  },
 })

@@ -19,9 +19,9 @@ export const Footer: React.FC = () => {
               {cmsGeneral.footerText}
             </p>
             <div className="flex space-x-4">
-              {cmsGeneral.socialInstagram !== '#' && <a href={cmsGeneral.socialInstagram} target="_blank" rel="noreferrer" className="hover:text-teal-400 transition-colors"><Instagram size={24} /></a>}
-              {cmsGeneral.socialTwitter !== '#' && <a href={cmsGeneral.socialTwitter} target="_blank" rel="noreferrer" className="hover:text-teal-400 transition-colors"><Twitter size={24} /></a>}
-              {cmsGeneral.socialYoutube !== '#' && <a href={cmsGeneral.socialYoutube} target="_blank" rel="noreferrer" className="hover:text-teal-400 transition-colors"><Youtube size={24} /></a>}
+              {cmsGeneral.socialInstagram !== '#' && <a href={cmsGeneral.socialInstagram} target="_blank" rel="noreferrer" aria-label="Instagram" className="hover:text-teal-400 transition-colors"><Instagram size={24} /></a>}
+              {cmsGeneral.socialTwitter !== '#' && <a href={cmsGeneral.socialTwitter} target="_blank" rel="noreferrer" aria-label="Twitter" className="hover:text-teal-400 transition-colors"><Twitter size={24} /></a>}
+              {cmsGeneral.socialYoutube !== '#' && <a href={cmsGeneral.socialYoutube} target="_blank" rel="noreferrer" aria-label="YouTube" className="hover:text-teal-400 transition-colors"><Youtube size={24} /></a>}
             </div>
           </div>
           

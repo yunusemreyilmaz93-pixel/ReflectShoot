@@ -28,11 +28,6 @@ export const Navbar: React.FC<NavbarProps> = () => {
     { name: 'SSS', path: '/faq' },
   ];
 
-  // Add Public Vote link if active
-  if (systemSettings.features.publicVotingActive) {
-      navLinks.splice(5, 0, { name: 'Halk Oylaması', path: '/vote' });
-  }
-
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -101,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                      {getDashboardIcon()}
                      {getDashboardLabel()}
                    </Link>
-                   <button 
+                   <button type="button" 
                       onClick={handleLogout}
                       className="text-slate-400 hover:text-white p-2 rounded-full hover:bg-white/10 transition-all"
                       title="Çıkış Yap"
@@ -130,8 +125,10 @@ export const Navbar: React.FC<NavbarProps> = () => {
           
           <div className="-mr-2 flex lg:hidden">
             {currentUser && <div className="mr-2"><NotificationBell /></div>}
-            <button
+            <button type="button"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? 'Menüyü kapat' : 'Menüyü aç'}
+              aria-expanded={isOpen}
               className="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-white hover:bg-white/10 focus:outline-none transition-colors"
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -166,7 +163,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
               >
                 {getDashboardLabel()}
               </Link>
-              <button
+              <button type="button"
                 onClick={() => {
                   handleLogout();
                   setIsOpen(false);

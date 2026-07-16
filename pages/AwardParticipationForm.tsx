@@ -9,214 +9,23 @@ import {
   User, Compass, Home, CheckCircle2, Trash2,
   ChevronDown, ChevronUp, Loader2, Info
 } from 'lucide-react';
+import {
+  DEADLINE,
+  TRANSPORTATION_OPTIONS,
+  SPECIAL_CONDITIONS,
+  inputCls,
+  readonlyCls,
+  type SaveStatus,
+} from './award-form/constants';
+import {
+  SectionHeader,
+  Field,
+  FieldLabel,
+  StudentCard,
+  validate,
+  type ValidationErrors,
+} from './award-form/AwardFormUi';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-const DEADLINE = new Date('2026-05-11T13:00:00');
-
-const TRANSPORTATION_OPTIONS = [
-  'Kendi imkânlarıyla',
-  'Otobüs',
-  'Tren',
-  'Uçak',
-  'Diğer',
-];
-
-const SPECIAL_CONDITIONS = [
-  'Yok',
-  'Sağlık durumu',
-  'Alerji',
-  'Düzenli kullanılan ilaç',
-  'Beslenme hassasiyeti',
-  'Diğer',
-];
-
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-const SectionHeader = ({ number, title }: { number: number; title: string }) => (
-  <h2 className="text-xl font-black text-white mb-6 flex items-center gap-3">
-    <span className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center text-sm font-black flex-shrink-0">
-      {number}
-    </span>
-    {title}
-  </h2>
-);
-
-const FieldLabel = ({ children, required }: { children: React.ReactNode; required?: boolean }) => (
-  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-    {children}
-    {required && <span className="text-rose-500 ml-1">*</span>}
-  </label>
-);
-
-const inputCls = "w-full bg-slate-800/60 border border-slate-700 focus:border-amber-500 focus:bg-slate-800 rounded-xl p-3.5 text-white outline-none transition-colors placeholder:text-slate-600 text-sm";
-const readonlyCls = "w-full bg-slate-900/60 border border-slate-800 rounded-xl p-3.5 text-slate-400 text-sm cursor-not-allowed";
-
-interface FieldProps {
-  label: string;
-  required?: boolean;
-  className?: string;
-  children: React.ReactNode;
-}
-
-const Field = ({ label, required, className = '', children }: FieldProps) => (
-  <div className={`space-y-2 ${className}`}>
-    <FieldLabel required={required}>{label}</FieldLabel>
-    {children}
-  </div>
-);
-
-// ─── Student Card ─────────────────────────────────────────────────────────────
-interface StudentCardProps {
-  student: AwardParticipation['students'][0];
-  index: number;
-  onChange: (index: number, field: string, value: string) => void;
-  onRemove: (index: number) => void;
-  readOnly?: boolean;
-}
-
-const StudentCard = ({ student, index, onChange, onRemove, readOnly }: StudentCardProps) => {
-  const [expanded, setExpanded] = useState(true);
-
-  return (
-    <div className="bg-slate-900/60 rounded-2xl border border-slate-800 overflow-hidden transition-all">
-      <button
-        type="button"
-        onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-800/30 transition-colors"
-      >
-        <span className="font-bold text-slate-200 text-sm flex items-center gap-2">
-          <User size={15} className="text-amber-500" />
-          {student.fullName || `${index + 1}. Öğrenci`}
-        </span>
-        <div className="flex items-center gap-3">
-          {!readOnly && (
-            <span
-              role="button"
-              onClick={(e) => { e.stopPropagation(); onRemove(index); }}
-              className="text-slate-600 hover:text-rose-500 transition-colors p-1"
-            >
-              <Trash2 size={15} />
-            </span>
-          )}
-          {expanded ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
-        </div>
-      </button>
-
-      {expanded && (
-        <div className="px-5 pb-5 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-800/60 pt-4">
-          <Field label="Ad Soyad">
-            <input
-              type="text"
-              value={student.fullName}
-              onChange={(e) => onChange(index, 'fullName', e.target.value)}
-              className={readOnly ? readonlyCls : inputCls}
-              readOnly={readOnly}
-              placeholder="Öğrencinin adı soyadı"
-            />
-          </Field>
-          <Field label="Sınıf">
-            <input
-              type="text"
-              value={student.grade}
-              onChange={(e) => onChange(index, 'grade', e.target.value)}
-              className={readOnly ? readonlyCls : inputCls}
-              readOnly={readOnly}
-              placeholder="9-A, 10-B vb."
-            />
-          </Field>
-          <Field label="Öğrenci Cep Telefonu">
-            <input
-              type="tel"
-              value={student.phone}
-              onChange={(e) => onChange(index, 'phone', e.target.value)}
-              className={readOnly ? readonlyCls : inputCls}
-              readOnly={readOnly}
-              placeholder="05xx xxx xx xx"
-            />
-          </Field>
-          <Field label="Veli Ad Soyad">
-            <input
-              type="text"
-              value={student.parentName}
-              onChange={(e) => onChange(index, 'parentName', e.target.value)}
-              className={readOnly ? readonlyCls : inputCls}
-              readOnly={readOnly}
-              placeholder="Velinin adı soyadı"
-            />
-          </Field>
-          <Field label="Veli Cep Telefonu">
-            <input
-              type="tel"
-              value={student.parentPhone}
-              onChange={(e) => onChange(index, 'parentPhone', e.target.value)}
-              className={readOnly ? readonlyCls : inputCls}
-              readOnly={readOnly}
-              placeholder="05xx xxx xx xx"
-            />
-          </Field>
-          <Field label="Özel Durum">
-            {readOnly ? (
-              <input type="text" value={student.specialCondition} readOnly className={readonlyCls} />
-            ) : (
-              <select
-                value={student.specialCondition}
-                onChange={(e) => onChange(index, 'specialCondition', e.target.value)}
-                className={inputCls}
-              >
-                {SPECIAL_CONDITIONS.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            )}
-          </Field>
-          {student.specialCondition === 'Diğer' && (
-            <Field label="Özel Durum Açıklaması" className="md:col-span-2">
-              <input
-                type="text"
-                value={student.specialConditionDescription || ''}
-                onChange={(e) => onChange(index, 'specialConditionDescription', e.target.value)}
-                className={readOnly ? readonlyCls : inputCls}
-                readOnly={readOnly}
-                placeholder="Lütfen detaylandırınız..."
-              />
-            </Field>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ─── Validation ───────────────────────────────────────────────────────────────
-interface ValidationErrors {
-  advisorName?: string;
-  advisorPhone?: string;
-  advisorEmail?: string;
-  advisorParticipationStatus?: string;
-  transportationType?: string;
-  parentConsentAccepted?: string;
-  students?: string;
-}
-
-const validate = (formData: Partial<AwardParticipation>): ValidationErrors => {
-  const errors: ValidationErrors = {};
-  if (!formData.advisorName?.trim()) errors.advisorName = 'Ad Soyad zorunludur.';
-  if (!formData.advisorPhone?.trim()) errors.advisorPhone = 'Telefon zorunludur.';
-  if (!formData.advisorEmail?.trim()) errors.advisorEmail = 'E-posta zorunludur.';
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.advisorEmail)) errors.advisorEmail = 'Geçerli bir e-posta giriniz.';
-  if (!formData.advisorParticipationStatus || (formData.advisorParticipationStatus as any) === '') errors.advisorParticipationStatus = 'Katılım durumunuzu belirtiniz.';
-  if (!formData.transportationType) errors.transportationType = 'Ulaşım şekli seçiniz.';
-  if (!formData.parentConsentAccepted) errors.parentConsentAccepted = 'Onay kutusunu işaretleyiniz.';
-
-  const studentsWithNames = (formData.students || []).filter(s => s.fullName?.trim());
-  if (studentsWithNames.length === 0) errors.students = 'En az bir öğrenci ekleyiniz.';
-
-  return errors;
-};
-
-// ─── Main Component ───────────────────────────────────────────────────────────
 export const AwardParticipationForm = () => {
   const { teamId } = useParams();
   const navigate = useNavigate();
@@ -353,12 +162,17 @@ export const AwardParticipationForm = () => {
     (patch: Partial<AwardParticipation>) => {
       setFormData((prev) => {
         const next = { ...prev, ...patch };
-        scheduleAutoSave(next);
         return next;
       });
     },
-    [scheduleAutoSave]
+    []
   );
+
+  // Auto-save after form state changes (side effects outside the updater)
+  useEffect(() => {
+    if (isSubmitted || !formData.applicationId) return;
+    scheduleAutoSave(formData);
+  }, [formData, isSubmitted, scheduleAutoSave]);
 
   // ── Student helpers ──
   const handleStudentChange = useCallback(
@@ -366,12 +180,10 @@ export const AwardParticipationForm = () => {
       setFormData((prev) => {
         const newStudents = [...(prev.students || [])];
         newStudents[index] = { ...newStudents[index], [field]: value };
-        const next = { ...prev, students: newStudents };
-        scheduleAutoSave(next);
-        return next;
+        return { ...prev, students: newStudents };
       });
     },
-    [scheduleAutoSave]
+    []
   );
 
   const addStudent = () => {
@@ -432,7 +244,7 @@ export const AwardParticipationForm = () => {
         <div className="max-w-lg w-full bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center">
           <AlertTriangle className="text-amber-500 w-14 h-14 mx-auto mb-5" />
           <h2 className="text-xl font-bold text-white mb-4">{accessError}</h2>
-          <button
+          <button type="button"
             onClick={() => navigate('/dashboard')}
             className="mt-4 bg-amber-600 hover:bg-amber-500 text-black font-bold py-3 px-8 rounded-xl transition-colors"
           >
@@ -464,13 +276,13 @@ export const AwardParticipationForm = () => {
             </p>
           </div>
           <div className="flex gap-3 justify-center flex-wrap">
-            <button
+            <button type="button"
               onClick={() => navigate('/city-guide')}
               className="bg-amber-600 hover:bg-amber-500 text-black font-bold py-3 px-7 rounded-xl transition-colors"
             >
               Şehir Rehberi
             </button>
-            <button
+            <button type="button"
               onClick={() => navigate('/dashboard')}
               className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-7 rounded-xl transition-colors"
             >

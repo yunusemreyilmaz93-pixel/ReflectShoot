@@ -23,6 +23,7 @@ import {
   Hourglass
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { resolvePublicTimelineEvents, type ResolvedTimelineEvent } from '../lib/domain/timeline';
 
 const iconMap: Record<string, React.ElementType> = {
   Clapperboard,
@@ -55,42 +56,47 @@ interface TimelineEvent {
   color?: string; // 'rose' | 'teal' | 'amber'
 }
 
-// Static Data to ensure correct schedule display
-const STATIC_EVENTS: TimelineEvent[] = [
+// Fallback when CMS is empty (admin henüz kayıt eklememişse)
+const STATIC_EVENTS: ResolvedTimelineEvent[] = [
   {
     date: '20 Ocak 2026',
     title: 'Başvuru ve Eser Gönderimi Başlıyor',
     description: 'Yarışma süreci resmen başlıyor. Sisteme kayıt ol, takımını kur ve filmini çekmeye başla.',
-    icon: Clapperboard,
-    color: 'teal'
+    icon: 'Clapperboard',
+    color: 'teal',
+    order: 1,
   },
   {
     date: '4 Mayıs 2026',
     title: 'Başvuru ve Eser Teslim (Son Gün)',
     description: 'Sisteme video yüklemek veya link göndermek için son gün. Bu tarihten sonra yapılan başvurular kabul edilmeyecektir.',
-    icon: Upload,
-    color: 'rose'
+    icon: 'Upload',
+    color: 'rose',
+    order: 2,
   },
   {
     date: '7 Mayıs 2026',
     title: 'Ön Sonuçlar',
     description: 'Jüri ön değerlendirmesi sonucu finale kalan takımların web sitesi üzerinden duyurulması.',
-    icon: Star,
-    color: 'amber'
+    icon: 'Star',
+    color: 'amber',
+    order: 3,
   },
   {
     date: '8 Mayıs 2026',
     title: 'Ödül Alan Takımların Açıklanması',
     description: 'Değerlendirme sonucunda ödül almaya hak kazanan takımlar duyurulacaktır.',
-    icon: CheckCircle2,
-    color: 'teal'
+    icon: 'CheckCircle2',
+    color: 'teal',
+    order: 4,
   },
   {
     date: '22 Mayıs 2026',
     title: 'Büyük Ödül Töreni',
     description: 'Konya\'da düzenlenecek görkemli törenle kazananların açıklanması ve ödüllerin takdimi.',
-    icon: Trophy,
-    color: 'rose'
+    icon: 'Trophy',
+    color: 'rose',
+    order: 5,
   }
 ];
 
@@ -199,65 +205,66 @@ const MobileTimelineItem: React.FC<{ event: TimelineEvent; index: number }> = ({
   );
 };
 
-const FUTURE_EVENTS_2026_2027: TimelineEvent[] = [
+const FUTURE_EVENTS_DRAFT: ResolvedTimelineEvent[] = [
   {
     date: 'Planlama Aşamasında',
     title: 'Şartname ve Kategori İlanı',
     description: 'Yeni sezona dair detaylı katılım koşulları, teknik yönergeler ve kategori kuralları web sitemizde ilan edilecektir.',
-    icon: Clapperboard,
-    color: 'amber'
+    icon: 'Clapperboard',
+    color: 'amber',
+    order: 1,
   },
   {
     date: 'Planlama Aşamasında',
     title: 'Kayıtların & Başvuruların Başlaması',
     description: 'Öğrenci ve danışman öğretmen üyeliklerinin açılması, takımların kurulması ve heyecanın resmen başlaması.',
-    icon: Upload,
-    color: 'teal'
+    icon: 'Upload',
+    color: 'teal',
+    order: 2,
   },
   {
     date: 'Planlama Aşamasında',
     title: 'Sinema Atölyeleri & Yapay Zeka Eğitimleri',
     description: 'Kış dönemi kurgu teknikleri ve yeni nesil generative AI animasyon araçlarına dair özel akademisyen eğitimleri.',
-    icon: BookOpen,
-    color: 'amber'
+    icon: 'BookOpen',
+    color: 'amber',
+    order: 3,
   },
   {
     date: 'Planlama Aşamasında',
     title: 'Eser Gönderimleri ve Son Teslim',
     description: 'Sisteme video yüklemek, canlı çekim ve yapay zeka tasarımlarını kurula iletmek için son gün.',
-    icon: Video,
-    color: 'rose'
+    icon: 'Video',
+    color: 'rose',
+    order: 4,
   },
   {
     date: 'Planlama Aşamasında',
     title: 'Seçici Kurul Değerlendirmesi',
     description: 'Akademik ve sektörel jürilerimizin eserleri teknik, senaryo ve sinematografi yönünden değerlendirme aşaması.',
-    icon: Star,
-    color: 'teal'
+    icon: 'Star',
+    color: 'teal',
+    order: 5,
   },
   {
     date: 'Planlama Aşamasında',
     title: 'Büyük Gala ve Kazananların İlanı',
     description: 'Konya Tarihi Taş Bina veya sinema salonunda gerçekleşecek görkemli kırmızı halı geçişi ve kupa törenleri.',
-    icon: Trophy,
-    color: 'rose'
+    icon: 'Trophy',
+    color: 'rose',
+    order: 6,
   }
 ];
 
 export const Timeline: React.FC = () => {
-  const { cmsTimeline } = useAppContext();
-  const [selectedSeason, setSelectedSeason] = useState<'2025-2026' | '2026-2027'>('2026-2027');
-  
-  // Filter out the cancelled phases from the backend timeline as well to be safe
-  const filteredCms = cmsTimeline ? cmsTimeline.filter(e => 
-     !e.title.toLowerCase().includes('akademi') && 
-     !e.title.toLowerCase().includes('eğitim') && 
-     !e.title.toLowerCase().includes('revize') &&
-     !e.title.toLowerCase().includes('nihai')
-  ) : [];
+  const { cmsTimeline, systemSettings } = useAppContext();
+  // Default = CMS-driven live calendar (admin panel edits land here)
+  const [selectedSeason, setSelectedSeason] = useState<'live' | 'draft'>('live');
 
-  const pastEvents = filteredCms.length > 0 ? filteredCms : STATIC_EVENTS;
-  const events = selectedSeason === '2025-2026' ? pastEvents : FUTURE_EVENTS_2026_2027;
+  const liveEvents = resolvePublicTimelineEvents(cmsTimeline, STATIC_EVENTS);
+  const events = selectedSeason === 'live' ? liveEvents : FUTURE_EVENTS_DRAFT;
+  const seasonLabel = systemSettings?.season?.label || 'Güncel Takvim';
+  const fromCms = (cmsTimeline?.length || 0) > 0;
 
   return (
     <section className="bg-slate-950 py-24 overflow-hidden relative border-t border-white/5">
@@ -293,31 +300,31 @@ export const Timeline: React.FC = () => {
             </div>
 
             <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-850 w-full md:w-auto">
-              <button
-                onClick={() => setSelectedSeason('2025-2026')}
+              <button type="button"
+                onClick={() => setSelectedSeason('live')}
                 className={`flex-1 md:flex-none px-6 py-3 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center gap-2 ${
-                  selectedSeason === '2025-2026'
+                  selectedSeason === 'live'
                     ? 'bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/10'
                     : 'text-slate-400 hover:text-white hover:bg-slate-900'
                 }`}
               >
-                <CheckCircle2 size={12} /> 2025-2026 Sezonu
+                <CheckCircle2 size={12} /> {seasonLabel}
               </button>
-              <button
-                onClick={() => setSelectedSeason('2026-2027')}
+              <button type="button"
+                onClick={() => setSelectedSeason('draft')}
                 className={`flex-1 md:flex-none px-6 py-3 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center gap-2 ${
-                  selectedSeason === '2026-2027'
+                  selectedSeason === 'draft'
                     ? 'bg-rose-500 text-white font-bold shadow-lg shadow-rose-500/10'
                     : 'text-slate-400 hover:text-white hover:bg-slate-900'
                 }`}
               >
-                <Sparkles size={12} className="animate-pulse" /> 2026-2027 Sezonu
+                <Sparkles size={12} className="animate-pulse" /> Sonraki Sezon (Taslak)
               </button>
             </div>
           </div>
 
           {/* Announcement card placed in front of/above the timeline */}
-          {selectedSeason === '2026-2027' ? (
+          {selectedSeason === 'draft' ? (
             <div className="bg-gradient-to-r from-rose-950/40 via-slate-900/80 to-rose-950/40 backdrop-blur-xl border border-rose-500/20 rounded-[2.5rem] p-8 md:p-10 text-center shadow-2xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-[40px] pointer-events-none"></div>
               
@@ -326,11 +333,11 @@ export const Timeline: React.FC = () => {
               </div>
               
               <h3 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">
-                2026-2027 Sezonu Yolculuk Aşamaları Hazırlanıyor
+                Sonraki Sezon Yolculuk Aşamaları Hazırlanıyor
               </h3>
               
               <p className="text-slate-300 text-sm md:text-base font-light leading-relaxed max-w-2xl mx-auto">
-                Reflect&Shoot Kısa Film Yarışması’nın 2026-2027 sezonu hazırlıkları son hızla devam etmektedir. Resmi başvuru takvimi ve kesin süreç adımları yakında açıklanacaktır. Aşağıda tahmini süreç taslağını inceleyebilirsiniz.
+                Reflect&Shoot Kısa Film Yarışması’nın bir sonraki sezonu hazırlıkları devam etmektedir. Resmi başvuru takvimi ve kesin süreç adımları yakında açıklanacaktır. Aşağıda tahmini süreç taslağını inceleyebilirsiniz.
               </p>
 
               <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -352,11 +359,13 @@ export const Timeline: React.FC = () => {
               </div>
               
               <h3 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">
-                2025-2026 Sezonu Tamamlandı & Arşivlendi
+                {seasonLabel}
               </h3>
               
               <p className="text-slate-300 text-sm md:text-base font-light leading-relaxed max-w-2xl mx-auto">
-                Büyük Ödül Töreni ile görkemli bir şekilde sonuçlandırılan 2025-2026 yarışmamıza ait resmi işlem adımları ve tamamlanan teslim süreçleri aşağıda arşiv başlığı altında yer almaktadır.
+                {fromCms
+                  ? 'Bu takvim Yönetici paneli → İçerik Yönetimi → Zaman Çizelgesi üzerinden güncellenir. Aşağıdaki adımlar canlı CMS verisidir.'
+                  : 'Canlı CMS kaydı henüz yok; varsayılan takvim gösteriliyor. Admin panelinden adım eklediğinizde burası otomatik güncellenir.'}
               </p>
             </div>
           )}

@@ -211,7 +211,7 @@ export const Finals: React.FC = () => {
           </div>
           
           <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-850 w-full md:w-auto">
-            <button
+            <button type="button"
               onClick={() => setSelectedSeason('2025-2026')}
               className={`flex-1 md:flex-none px-8 py-3.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 selectedSeason === '2025-2026'
@@ -221,7 +221,7 @@ export const Finals: React.FC = () => {
             >
               <Trophy size={14} /> 2025-2026 Sezonu (Nihai)
             </button>
-            <button
+            <button type="button"
               onClick={() => setSelectedSeason('2026-2027')}
               className={`flex-1 md:flex-none px-8 py-3.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 selectedSeason === '2026-2027'

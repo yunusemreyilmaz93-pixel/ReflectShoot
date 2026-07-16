@@ -17,7 +17,11 @@ const baseTeam = {
   name: 'Işık Takımı',
   category: 'Canlı Çekim',
   theme: "Kur'an'dan Ayetler",
-  students: [{ id: 'student-one', firstName: 'Ada', lastName: 'Y.', grade: '10-A', hasParentalConsent: false, hasKvkkConsent: false }],
+  students: [
+    { id: 'student-one', firstName: 'Ada', lastName: 'Y.', grade: '10-A', hasParentalConsent: false, hasKvkkConsent: false },
+    { id: 'student-two', firstName: 'Can', lastName: 'K.', grade: '10-B', hasParentalConsent: false, hasKvkkConsent: false },
+    { id: 'student-three', firstName: 'Ece', lastName: 'D.', grade: '11-A', hasParentalConsent: false, hasKvkkConsent: false },
+  ],
   videoStatus: 'PENDING',
   isPreliminaryStageComplete: false,
   isFinalStageComplete: false,
@@ -98,7 +102,15 @@ describe('Firestore security boundary', () => {
       team: { ...baseTeam, id: 'team-two', name: 'Yeni Takım' },
       status: 'Taslak',
       submittedAt: '2026-01-01T00:00:00.000Z',
+      seasonId: '2026',
+      archived: false,
     }));
+  });
+
+  test('teacher cannot archive or re-season an application via client update', async () => {
+    const ref = doc(userDb('teacher', 'TEACHER'), 'applications/team-one');
+    await assertFails(updateDoc(ref, { archived: true }));
+    await assertFails(updateDoc(ref, { seasonId: '2099' }));
   });
 
   test('teacher cannot promote an application to finalist or modify public vote totals', async () => {
