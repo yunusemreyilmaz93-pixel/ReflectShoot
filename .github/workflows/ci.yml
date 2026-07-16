@@ -18,7 +18,8 @@ jobs:
           cache: npm
 
       - name: Install
-        run: npm ci
+        # npm install: lockfile generated with npm 11 / Node 24 locally; npm ci is stricter across platforms
+        run: npm install
 
       - name: Typecheck
         run: npm run lint
