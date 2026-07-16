@@ -293,7 +293,7 @@ export const Timeline: React.FC = () => {
             </div>
 
             <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-850 w-full md:w-auto">
-              <button
+              <button type="button"
                 onClick={() => setSelectedSeason('2025-2026')}
                 className={`flex-1 md:flex-none px-6 py-3 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center gap-2 ${
                   selectedSeason === '2025-2026'
@@ -303,7 +303,7 @@ export const Timeline: React.FC = () => {
               >
                 <CheckCircle2 size={12} /> 2025-2026 Sezonu
               </button>
-              <button
+              <button type="button"
                 onClick={() => setSelectedSeason('2026-2027')}
                 className={`flex-1 md:flex-none px-6 py-3 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center gap-2 ${
                   selectedSeason === '2026-2027'

@@ -134,7 +134,7 @@ export const AcademicJuryScorePanel: React.FC<AcademicJuryScorePanelProps> = ({
                 className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden transition-all duration-300"
               >
                 {/* Accordion Trigger */}
-                <button
+                <button type="button"
                   onClick={() => toggleJury(jury.juryName)}
                   className="w-full flex justify-between items-center p-4 hover:bg-slate-850/50 transition-colors"
                 >

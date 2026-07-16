@@ -217,7 +217,7 @@ export const CityGuide: React.FC = () => {
                   { id: 'tasks', label: 'Gezgin Checklist', icon: CheckSquare },
                   { id: 'survival', label: 'Pratik Bilgiler', icon: Info },
               ].map((item) => (
-                  <button 
+                  <button type="button" 
                     key={item.id} 
                     onClick={() => scrollTo(item.id)}
                     className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl bg-slate-900/60 hover:bg-white hover:text-black text-white border border-white/10 backdrop-blur-md transition-all duration-300 font-bold text-xs md:text-sm group"
@@ -566,7 +566,7 @@ export const CityGuide: React.FC = () => {
                                   {loc.description}
                               </p>
 
-                              <button 
+                              <button type="button" 
                                 onClick={() => setSelectedLocation(loc)}
                                 className="text-amber-500 text-sm font-bold flex items-center gap-2 hover:gap-3 transition-all group justify-center lg:justify-start w-full lg:w-auto"
                               >
@@ -788,7 +788,7 @@ export const CityGuide: React.FC = () => {
               <div className="bg-slate-900 w-full md:max-w-4xl h-full md:h-auto md:max-h-[90vh] md:rounded-3xl border-0 md:border border-slate-700 shadow-2xl relative overflow-y-auto flex flex-col md:flex-row">
                   
                   {/* Close Button */}
-                  <button 
+                  <button type="button" 
                     onClick={() => setSelectedLocation(null)}
                     className="absolute top-4 right-4 z-50 p-2 bg-black/50 text-white rounded-full hover:bg-rose-600 transition-colors"
                   >

@@ -231,7 +231,7 @@ export const Home: React.FC = () => {
               <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600" />
               
-              <button 
+              <button type="button" 
                 onClick={closePopup}
                 className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors z-10"
                 aria-label="Kapat"
@@ -369,7 +369,7 @@ export const Home: React.FC = () => {
                 </span>
              </Link>
              
-             <button 
+             <button type="button" 
                disabled
                className="px-10 py-5 border border-white/10 text-slate-500 rounded-full font-bold flex items-center justify-center gap-2 w-full sm:w-auto cursor-not-allowed bg-white/5"
                title="Yeni sezonda güncellenecektir."
@@ -380,7 +380,7 @@ export const Home: React.FC = () => {
         </div>
 
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-40">
-           <button onClick={scrollToContent} className="text-slate-500 hover:text-amber-500 transition-colors animate-bounce">
+           <button type="button" onClick={scrollToContent} className="text-slate-500 hover:text-amber-500 transition-colors animate-bounce">
               <ChevronDown size={32} />
            </button>
         </div>
@@ -529,7 +529,7 @@ export const Home: React.FC = () => {
                             ))}
                         </div>
 
-                        <button 
+                        <button type="button" 
                             onClick={() => setSelectedCategory(cat)}
                             className="w-full py-5 bg-slate-900 text-white font-bold rounded-xl hover:bg-rose-600 transition-colors flex items-center justify-center gap-2 group-hover:shadow-lg text-sm tracking-wide uppercase"
                         >
@@ -708,7 +708,7 @@ export const Home: React.FC = () => {
              </Link>
 
              {/* Card 4: Şartname */}
-             <button onClick={() => handleDownload(cmsLinks.specUrl)} className="group bg-white p-8 rounded-[2rem] border border-slate-200 shadow-lg hover:shadow-2xl hover:border-rose-500/30 transition-all duration-300 transform hover:-translate-y-2 flex flex-col h-full text-left">
+             <button type="button" onClick={() => handleDownload(cmsLinks.specUrl)} className="group bg-white p-8 rounded-[2rem] border border-slate-200 shadow-lg hover:shadow-2xl hover:border-rose-500/30 transition-all duration-300 transform hover:-translate-y-2 flex flex-col h-full text-left">
                 <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner">
                    <ScrollText size={32} />
                 </div>
@@ -830,7 +830,7 @@ export const Home: React.FC = () => {
             
             {/* Header */}
             <div className="relative p-8 pb-6 border-b border-slate-800 bg-slate-950/50">
-              <button 
+              <button type="button" 
                 onClick={() => setSelectedCategory(null)}
                 className="absolute top-6 right-6 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-rose-600 transition-all z-10"
               >
@@ -894,7 +894,7 @@ export const Home: React.FC = () => {
 
             {/* Footer Actions */}
             <div className="p-6 border-t border-slate-800 bg-slate-950 flex flex-col sm:flex-row gap-4">
-                <button 
+                <button type="button" 
                     onClick={() => handleDownload(cmsLinks.specUrl)}
                     className="flex-1 py-4 rounded-xl border border-slate-700 text-slate-300 font-bold hover:bg-slate-800 hover:text-white transition-all flex items-center justify-center gap-2"
                 >

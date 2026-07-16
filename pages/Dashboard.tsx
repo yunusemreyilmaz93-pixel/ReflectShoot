@@ -22,187 +22,20 @@ import { db } from '../lib/firebase';
 import { getTeacherCertificateUrl_2026, getStudentCertificateUrl_2026 } from '../data/certificates_2026';
 import { downloadCertificate } from '../lib/certificates';
 
+import { ProductionStatusRing, NextActionCard, TeamSwitcher } from './dashboard/DashboardWidgets';
+import { DashboardUIProvider, type DashboardUI } from './dashboard/DashboardUIContext';
+import { DashboardStatusTab } from './dashboard/tabs/DashboardStatusTab';
+import { DashboardAcademyTab } from './dashboard/tabs/DashboardAcademyTab';
+import { DashboardDocumentsTab } from './dashboard/tabs/DashboardDocumentsTab';
+import { DashboardVideoTab } from './dashboard/tabs/DashboardVideoTab';
+import { DashboardChatTab } from './dashboard/tabs/DashboardChatTab';
+
 // Placeholder Template URLs
 const TEMPLATE_PARENT_URL = "https://assets.reflectandshoot.com/veli_izin_belgesi.pdf";
 const TEMPLATE_CONSENT_URL = "https://assets.reflectandshoot.com/acik_riza_metni.pdf";
 
-// --- COMPONENTS ---
-
-// 1. Premium Circular Progress
-const ProductionStatusRing = ({ progress }: { progress: number }) => {
-    const size = 80;
-    const stroke = 6;
-    const radius = (size / 2) - stroke;
-    const circumference = radius * 2 * Math.PI;
-    const offset = circumference - (progress / 100) * circumference;
-
-    return (
-        <div className="relative flex items-center justify-center group cursor-default">
-            {/* Glow Effect */}
-            <div className={`absolute inset-0 rounded-full blur-xl opacity-20 transition-all duration-1000 ${progress === 100 ? 'bg-green-500' : 'bg-rose-500'}`}></div>
-            
-            <div className="relative" style={{ width: size, height: size }}>
-                <svg width={size} height={size} className="transform -rotate-90">
-                    <circle cx={size/2} cy={size/2} r={radius} stroke="currentColor" strokeWidth={stroke} fill="transparent" className="text-slate-800" />
-                    <circle 
-                        cx={size/2} cy={size/2} r={radius} stroke="currentColor" strokeWidth={stroke} fill="transparent" 
-                        strokeDasharray={circumference}
-                        style={{ strokeDashoffset: offset, transition: 'stroke-dashoffset 1.5s ease-in-out' }}
-                        strokeLinecap="round"
-                        className={progress === 100 ? 'text-green-500' : 'text-rose-600'} 
-                    />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-lg font-black text-white">{progress}%</span>
-                    <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Hazır</span>
-                </div>
-            </div>
-            
-            {progress === 100 && (
-                <div className="absolute -top-2 -right-2 bg-green-500 text-slate-900 p-1.5 rounded-full shadow-lg animate-bounce">
-                    <CheckCircle2 size={16} />
-                </div>
-            )}
-        </div>
-    );
-};
-
-// 2. Next Action Card (Smart Assistant)
-const NextActionCard = ({ app, isDeadlinePassed, onAction }: { app: any, isDeadlinePassed?: boolean, onAction: (tab: string, subAction?: any) => void }) => {
-    let action = { text: "Tüm aşamalar tamamlandı! Arkanıza yaslanın.", btn: "Durumu Kontrol Et", tab: "STATUS", type: "success" };
-    
-    // Logic Chain
-    
-    // Check Students (Dynamic Check)
-    const missingParent = app.team.students.find((s: Student) => !s.hasParentalConsent);
-    const missingKvkk = app.team.students.find((s: Student) => !s.hasKvkkConsent);
-
-    const isWinner = app.team.isWinner;
-
-    if (isWinner === true) {
-        action = { text: "Tebrikler! Takımınız ödül kazandı. Katılım formunu doldurun.", btn: "Katılım Formuna Git", tab: "AWARD_WIN", type: "success" };
-    } else if (isWinner === false) {
-        action = { text: "Yarışmamıza katılımınız için teşekkür ederiz. Emekleriniz için minnettarız.", btn: "Katılım Sertifikalarını Buradan İndirebilirsiniz", tab: "STATUS", type: "success" };
-    } else if (app.status === ApplicationStatus.FINAL_SUBMITTED || app.status === ApplicationStatus.UNDER_REVIEW) {
-        action = { text: "Ödül Töreni değerlendirme süreci tamamlandı. Katılımlarınızdan dolayı teşekkür ederiz.", btn: "Detayları Gör", tab: "STATUS", type: "info" };
-    } else if (isDeadlinePassed) {
-        if (app.team.videoStatus === 'SUBMITTED_LINK' || app.team.videoStatus === 'UPLOADED') {
-            action = { text: "Video teslim aşaması sona erdi. Jüri değerlendirmesi sürüyor.", btn: "Durumu Gör", tab: "STATUS", type: "success" };
-        } else {
-            action = { text: "Film yükleme süresi sona ermiştir. İşlemi tamamlayamadınız.", btn: "İncele", tab: "STATUS", type: "urgent" };
-        }
-    } else if (app.team.students.length < 3) {
-        action = { text: "Takım en az 3 kişiden oluşmalıdır.", btn: "Öğrenci Ekle", tab: "DOCUMENTS", type: "urgent" };
-    } else if (missingParent) {
-        action = { text: `${missingParent.firstName} isimli öğrencinin Veli İzin Belgesi eksik.`, btn: "Belgeyi Yükle", tab: "DOCUMENTS", type: "warning" };
-    } else if (missingKvkk) {
-        action = { text: `${missingKvkk.firstName} isimli öğrencinin KVKK Metni eksik.`, btn: "Belgeyi Yükle", tab: "DOCUMENTS", type: "warning" };
-    } else if (app.team.videoStatus === 'PENDING' || app.team.videoStatus === 'ERROR') {
-        action = { text: "Prodüksiyon belgeleri tamam. Sırada film teslimi var.", btn: "Videoyu Teslim Et", tab: "VIDEO", type: "info" };
-    } else if (app.team.videoStatus === 'SUBMITTED_LINK') {
-        action = { text: "Video inceleme aşamasında. Onay bekleniyor.", btn: "Detayları Gör", tab: "VIDEO", type: "success" };
-    }
-
-    return (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 shadow-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 group">
-            {/* Background pattern */}
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none"></div>
-            <div className={`absolute left-0 top-0 bottom-0 w-2 ${action.type === 'success' ? 'bg-green-500' : action.type === 'urgent' ? 'bg-red-500' : action.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
-
-            <div className="flex items-center gap-6 relative z-10 w-full md:w-auto">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 ${action.type === 'success' ? 'bg-green-500/20 text-green-500' : action.type === 'urgent' ? 'bg-red-500/20 text-red-500' : 'bg-amber-500/20 text-amber-500'}`}>
-                    {action.type === 'success' ? <PartyPopper size={28} /> : <Megaphone size={28} className="animate-pulse" />}
-                </div>
-                <div>
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Sıradaki Görev</h4>
-                    <p className="text-lg md:text-xl font-bold text-white leading-tight">{action.text}</p>
-                </div>
-            </div>
-
-            <button 
-                onClick={() => onAction(action.tab)}
-                className="relative z-10 bg-white text-slate-900 hover:bg-slate-200 px-8 py-4 rounded-xl font-black text-sm flex items-center gap-2 transition-all shadow-xl hover:-translate-y-1 whitespace-nowrap w-full md:w-auto justify-center"
-            >
-                {action.btn} <ArrowRight size={16} />
-            </button>
-        </div>
-    );
-};
-
-// 3. Team Switcher
-const TeamSwitcher = ({ 
-    applications, 
-    activeId, 
-    onSwitch, 
-    onCreate, 
-    canCreate 
-}: { 
-    applications: any[], 
-    activeId: string | null, 
-    onSwitch: (id: string) => void, 
-    onCreate: () => void,
-    canCreate: boolean
-}) => {
-    return (
-        <div className="flex items-center gap-3 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-            {applications.map((app, index) => (
-                <button
-                    key={app.id}
-                    onClick={() => onSwitch(app.id)}
-                    className={`
-                        group relative flex items-center gap-3 px-4 py-2 rounded-2xl border transition-all duration-300 whitespace-nowrap
-                        ${activeId === app.id 
-                            ? 'bg-rose-500/10 border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.2)]' 
-                            : 'bg-slate-900/50 border-slate-800 hover:border-slate-600'}
-                    `}
-                >
-                    <div className={`
-                        w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs
-                        ${activeId === app.id ? 'bg-rose-500 text-white' : 'bg-slate-800 text-slate-400 group-hover:text-white'}
-                    `}>
-                        {index + 1}
-                    </div>
-                    <div className="text-left">
-                        <span className={`block text-xs font-black uppercase tracking-wider ${activeId === app.id ? 'text-rose-500' : 'text-slate-500 group-hover:text-slate-300'}`}>
-                            Takım {index + 1}
-                        </span>
-                        <span className={`block text-sm font-bold ${activeId === app.id ? 'text-white' : 'text-slate-400'}`}>
-                            {app.team.name}
-                        </span>
-                    </div>
-                    {activeId === app.id && (
-                        <motion.div 
-                            layoutId="active-team-glow"
-                            className="absolute inset-0 rounded-2xl bg-rose-500/5 blur-md -z-10"
-                        />
-                    )}
-                </button>
-            ))}
-
-            {canCreate && (
-                <button
-                    onClick={onCreate}
-                    className="flex items-center gap-3 px-4 py-2 rounded-2xl border border-dashed border-slate-700 hover:border-rose-500/50 hover:bg-rose-500/5 transition-all group whitespace-nowrap"
-                >
-                    <div className="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center text-slate-500 group-hover:bg-rose-500 group-hover:text-white transition-colors">
-                        <Plus size={18} />
-                    </div>
-                    <div className="text-left">
-                        <span className="block text-xs font-black uppercase tracking-wider text-slate-500 group-hover:text-rose-500">
-                            Yeni Takım
-                        </span>
-                        <span className="block text-sm font-bold text-slate-400 group-hover:text-white">
-                            Takım Ekle ({applications.length}/5)
-                        </span>
-                    </div>
-                </button>
-            )}
-        </div>
-    );
-};
-
 export const Dashboard: React.FC = () => {
-    const { currentUser, currentApplication, myApplications, activeApplicationId, setActiveApplicationId, createApplication, updateApplication, showToast, systemSettings, simulatedApplicationId, setSimulatedApplicationId } = useAppContext();
+    const { currentUser, currentApplication, myApplications, activeApplicationId, setActiveApplicationId, createApplication, updateApplication, showToast, systemSettings, simulatedApplicationId, setSimulatedApplicationId, cmsAcademy } = useAppContext();
     const navigate = useNavigate();
 
     const getTeacherCertificateUrl = () => {
@@ -794,12 +627,12 @@ export const Dashboard: React.FC = () => {
                         )}
                         <div className="grid md:grid-cols-2 gap-8">
                             <div>
-                                <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Takım Adı</label>
-                                <input name="teamName" value={teamForm.teamName} onChange={(e) => setTeamForm({...teamForm, teamName: e.target.value})} maxLength={40} className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold placeholder-slate-700 transition-colors" placeholder="Örn: Yıldızlar Ekibi" />
+                                <label htmlFor="teamName" className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Takım Adı</label>
+                                <input name="teamName" id="teamName" value={teamForm.teamName} onChange={(e) => setTeamForm({...teamForm, teamName: e.target.value})} maxLength={40} className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold placeholder-slate-700 transition-colors" placeholder="Örn: Yıldızlar Ekibi" />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Kategori</label>
-                                <select name="category" value={teamForm.category} onChange={(e) => setTeamForm({...teamForm, category: e.target.value as Category})} className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold transition-colors">
+                                <label htmlFor="category" className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Kategori</label>
+                                <select name="category" id="category" value={teamForm.category} onChange={(e) => setTeamForm({...teamForm, category: e.target.value as Category})} className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold transition-colors">
                                     {Object.values(Category).map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
@@ -807,9 +640,9 @@ export const Dashboard: React.FC = () => {
 
                         <div className="grid md:grid-cols-2 gap-8">
                             <div>
-                                <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Proje Teması</label>
+                                <label htmlFor="theme" className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Proje Teması</label>
                                 <select 
-                                    name="theme" 
+                                    name="theme" id="theme" 
                                     value={teamForm.theme} 
                                     onChange={(e) => setTeamForm({...teamForm, theme: e.target.value as Theme})} 
                                     className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold transition-colors"
@@ -819,9 +652,9 @@ export const Dashboard: React.FC = () => {
                             </div>
                             {teamForm.theme === Theme.AYET && (
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Seçilen Ayet</label>
+                                    <label htmlFor="selectedVerse" className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Seçilen Ayet</label>
                                     <select 
-                                        name="selectedVerse" 
+                                        name="selectedVerse" id="selectedVerse" 
                                         value={teamForm.selectedVerse} 
                                         onChange={(e) => setTeamForm({...teamForm, selectedVerse: e.target.value})} 
                                         className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold transition-colors"
@@ -910,8 +743,23 @@ export const Dashboard: React.FC = () => {
 
     // Logic for Chat Indicator
     const showRedDot = isLastMessageFromAdmin && latestMessageId !== lastReadMessageId && activeTab !== 'CHAT';
+
+    const dashboardUI: DashboardUI = {
+      currentUser, currentApplication, myApplications, activeApplicationId, setActiveApplicationId,
+      systemSettings, cmsAcademy, IS_DEADLINE_PASSED, progress, missingDocsCount, remainingDays,
+      allVideoChecksPassed, pendingTheme, setPendingTheme, pendingVerse, setPendingVerse,
+      pendingTopic, setPendingTopic, isSavingTheme, hasThemeChanges: !!hasThemeChanges, handleSaveTheme, renderVerseText,
+      uploadingDoc, selectedFiles, verifyCodes, declarationModal, declarationAccepted, setDeclarationAccepted,
+      handleOpenStudentModal, handleDeleteStudent, handleGenerateCode, copyCode,
+      handleOpenDeclarationModal, handleConfirmDeclaration, handleFileSelect, handleDocUpload, handleDeleteDoc,
+      videoChecklist, setVideoChecklist, videoLink, setVideoLink, confirmVideoSubmission,
+      handleActionRedirect, getCategoryStyle, getTeacherCertificateUrl, getStudentCertificateUrl,
+      TEMPLATE_PARENT_URL, TEMPLATE_CONSENT_URL,
+      showToast, setVerifyCodes,
+    };
     
     return (
+      <DashboardUIProvider value={dashboardUI}>
         <div className="bg-slate-950 min-h-screen text-slate-200 font-sans pb-24 relative overflow-x-hidden">
             {currentUser?.role === UserRole.ADMIN && simulatedApplicationId && (
                 <div className="bg-gradient-to-r from-amber-600 to-rose-700 text-white py-3.5 px-4 sticky top-0 z-[100] shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3 animate-slideIn">
@@ -932,7 +780,7 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button 
+                        <button type="button" 
                             onClick={() => {
                                 setSimulatedApplicationId(null);
                                 navigate('/admin');
@@ -1005,7 +853,7 @@ export const Dashboard: React.FC = () => {
                             { id: 'VIDEO', label: 'Video Teslim', icon: Film },
                             { id: 'CHAT', label: 'Yönetimle İletişim', icon: MessageSquare }
                         ].map(tab => (
-                            <button 
+                            <button type="button" 
                                 key={tab.id} 
                                 onClick={() => setActiveTab(tab.id)} 
                                 className={`
@@ -1037,715 +885,18 @@ export const Dashboard: React.FC = () => {
             <div id="dashboard-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10 animate-fadeIn">
                 
                 {/* 1. STATUS TAB */}
-                {activeTab === 'STATUS' && (
-                    <div className="grid lg:grid-cols-2 gap-8">
-                        {/* Left Column */}
-                        <div className="space-y-8">
-                            {/* Academic Jury Score Card for Winner Teams */}
-                            {currentApplication.team.isWinner && (
-                                <div className="bg-slate-900 p-8 rounded-[2rem] border border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.05)] relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[40px] pointer-events-none"></div>
-                                    <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-800">
-                                        <h3 className="font-bold text-white flex items-center gap-3 text-lg">
-                                            <Trophy size={22} className="text-amber-500"/> Seçici Kurul Değerlendirme Raporu
-                                        </h3>
-                                        <span className="px-3 py-1 bg-amber-500/10 text-amber-500 text-[10px] font-black rounded-full uppercase tracking-wider">
-                                            AKADEMİK SKOR YAPISI
-                                        </span>
-                                    </div>
-                                    <AcademicJuryScorePanel 
-                                        teamName={currentApplication.team.name} 
-                                        category={currentApplication.team.category} 
-                                        hideMetaData={false} 
-                                    />
-                                    {/* Evaluation Report / Feedback Text Area */}
-                                    <div className="mt-6 border-t border-slate-800 pt-6">
-                                        <span className="text-[12.5px] font-black uppercase text-slate-400 tracking-wider">Seçici Kurul Görüşü</span>
-                                        <p className="text-[13px] text-slate-200 leading-relaxed font-semibold mt-1.5 bg-slate-950/40 p-5 border border-slate-850 rounded-2xl text-justify leading-relaxed select-text">
-                                            {getJuryFeedback(
-                                                currentApplication.team.name, 
-                                                currentApplication.team.category, 
-                                                [], 
-                                                null, 
-                                                currentApplication.team.awardCategory || ''
-                                            )}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Multi-Team Overview Card */}
-                            {myApplications.length > 1 && (
-                                <div className="bg-slate-900/40 backdrop-blur-md p-6 rounded-[2rem] border border-slate-800/50 shadow-xl">
-                                    <h3 className="font-bold text-white flex items-center gap-3 text-lg mb-6">
-                                        <Users size={22} className="text-rose-500"/> Tüm Takımlarım
-                                    </h3>
-                                    <div className="grid gap-3">
-                                        {myApplications.map((app, idx) => (
-                                            <button 
-                                                key={app.id}
-                                                onClick={() => setActiveApplicationId(app.id)}
-                                                className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                                                    activeApplicationId === app.id 
-                                                    ? 'bg-rose-500/10 border-rose-500/50 shadow-lg' 
-                                                    : 'bg-slate-950/50 border-slate-800 hover:border-slate-700'
-                                                }`}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${activeApplicationId === app.id ? 'bg-rose-500 text-white' : 'bg-slate-800 text-slate-500'}`}>
-                                                        {idx + 1}
-                                                    </div>
-                                                    <div className="text-left">
-                                                        <span className="block text-sm font-bold text-white">{app.team.name}</span>
-                                                        <span className="block text-[10px] uppercase font-black tracking-widest text-slate-500">{app.status}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    {app.team.videoStatus === 'SUBMITTED_LINK' ? (
-                                                        <CheckCircle2 size={16} className="text-green-500" />
-                                                    ) : (
-                                                        <Clock size={16} className="text-amber-500" />
-                                                    )}
-                                                    <ArrowRight size={14} className="text-slate-600" />
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-xl relative overflow-hidden group">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="font-bold text-white flex items-center gap-3 text-lg"><Info size={22} className="text-teal-500"/> Proje Teması</h3>
-                                </div>
-                                
-                                <div className="space-y-6 relative z-10">
-                                    {/* Theme Display (Read-Only) */}
-                                    <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                                        <span className="text-slate-500 font-medium">Seçilen Tema</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-white font-bold text-lg">{currentApplication.team.theme}</span>
-                                            <Lock size={14} className="text-slate-600" />
-                                        </div>
-                                    </div>
-
-                                    {/* Display Area */}
-                                    <div className="mt-6">
-                                        {currentApplication.team.theme === Theme.AYET && currentApplication.team.selectedVerse && verseDetails[currentApplication.team.selectedVerse] ? (
-                                            <div className="p-6 bg-slate-950/50 border border-slate-800 rounded-2xl space-y-4 shadow-inner relative group/verse">
-                                                <div className="absolute -top-3 left-4 px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-[10px] font-black text-amber-500 tracking-wider">
-                                                    {currentApplication.team.selectedVerse}
-                                                </div>
-                                                <p className="text-right text-2xl font-serif text-amber-400 leading-loose pt-2" dir="rtl">
-                                                    {renderVerseText(verseDetails[currentApplication.team.selectedVerse].arabic, true)}
-                                                </p>
-                                                <div className="w-full h-px bg-slate-800"></div>
-                                                <p className="text-sm text-slate-300 italic leading-relaxed">
-                                                    "{renderVerseText(verseDetails[currentApplication.team.selectedVerse].turkish, false)}"
-                                                </p>
-                                            </div>
-                                        ) : (currentApplication.team.theme === Theme.HADITH || currentApplication.team.theme === Theme.SAHABE) ? (
-                                            <div className="p-8 bg-slate-950/50 border border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center gap-4">
-                                                <div className={`w-16 h-16 ${currentApplication.team.theme === Theme.HADITH ? 'bg-amber-500/10 text-amber-500' : 'bg-teal-500/10 text-teal-500'} rounded-full flex items-center justify-center`}>
-                                                    {currentApplication.team.theme === Theme.HADITH ? <Sparkles size={32} /> : <Users size={32} />}
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-white font-bold mb-2">{currentApplication.team.selectedTopic || (currentApplication.team.theme === Theme.HADITH ? 'Hadis-i Şerif' : 'Sahabe Hikayesi')}</h4>
-                                                    <p className="text-slate-400 text-sm leading-relaxed max-w-[300px]">
-                                                        {currentApplication.team.theme === Theme.HADITH 
-                                                            ? 'Seçilen hadis-i şerif üzerine kurgulanan sinematik eser.' 
-                                                            : 'Seçilen sahabe efendimizin hayatından bir kesit sunan sinematik eser.'}
-                                                    </p>
-                                                    <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-widest">{currentApplication.team.theme}</p>
-                                                </div>
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Dijital Sertifikalar */}
-                            <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-xl relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-[40px] pointer-events-none"></div>
-                                <div className="relative z-10">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h3 className="font-bold text-white flex items-center gap-3 text-lg">
-                                            <Trophy size={22} className="text-amber-500"/> Dijital Sertifikalar
-                                        </h3>
-                                        <span className="px-3 py-1 bg-amber-500/10 text-amber-500 text-[10px] font-black rounded-full uppercase tracking-wider">
-                                            E-Belge
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-                                        Reflect & Shoot Kısa Film Yarışması kapsamında danışman öğretmen ve öğrenci katılım belgelerinizi aşağıdaki bağlantılardan indirebilirsiniz.
-                                    </p>
-
-                                    {/* Bilgi Paneli */}
-                                    <div className="bg-emerald-950/25 border border-emerald-500/30 text-emerald-400 p-3.5 rounded-xl text-xs mb-6 flex items-start gap-2.5">
-                                        <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-500" />
-                                        <div>
-                                            <span className="font-bold block mb-0.5">Sertifikalarınız Hazır!</span>
-                                            <span>2025-2026 Sezonu için tüm katılım ve teşekkür belgeleri hazırlanmıştır. Hem kendiniz için danışman sertifikasını hem de öğrencilerinizin katılım belgelerini anında indirip kaydedebilirsiniz.</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        {/* Danışman Öğretmen Belgesi */}
-                                        <div className="p-4 bg-slate-950/60 rounded-2xl border border-slate-800 flex items-center justify-between">
-                                            <div>
-                                                <span className="text-[9px] uppercase font-black text-slate-500 tracking-wider block">Danışman Öğretmen</span>
-                                                <span className="text-sm font-bold text-white">{currentApplication?.teacher?.fullName || currentUser?.fullName}</span>
-                                            </div>
-                                            <button 
-                                                onClick={() => {
-                                                    const teacherName = currentApplication?.teacher?.fullName || currentUser?.fullName || "";
-                                                    downloadCertificate({
-                                                        recipientName: teacherName,
-                                                        type: 'APPRECIATION',
-                                                        showToast
-                                                    });
-                                                }}
-                                                className="bg-amber-600 hover:bg-amber-500 text-slate-950 hover:-translate-y-1 transition-all py-2 px-4 rounded-xl text-xs font-black shadow-lg shadow-amber-950/20 flex items-center gap-1.5 cursor-pointer"
-                                            >
-                                                <Printer size={13}/> İndir (PDF)
-                                            </button>
-                                        </div>
-
-                                        <div className="w-full h-px bg-slate-800/60 my-4"></div>
-                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">Öğrenci Kadrosu</span>
-                                        
-                                        <div className="grid gap-2 max-h-[220px] overflow-y-auto pr-1 scrollbar-hide">
-                                            {currentApplication.team.students.map((student) => {
-                                                return (
-                                                    <div key={student.id} className="p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl flex items-center justify-between hover:border-slate-700 transition-colors">
-                                                        <div>
-                                                            <span className="text-xs font-bold text-slate-200">{student.firstName} {student.lastName}</span>
-                                                            <span className="text-[9px] font-bold text-slate-600 uppercase block">{student.grade} - Öğrenci</span>
-                                                        </div>
-                                                        <button 
-                                                            onClick={() => {
-                                                                downloadCertificate({
-                                                                    recipientName: `${student.firstName} ${student.lastName}`,
-                                                                    type: 'ATTENDANCE',
-                                                                    showToast
-                                                                });
-                                                            }}
-                                                            className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all py-1.5 px-3 rounded-lg text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-                                                        >
-                                                            <Printer size={11}/> Belge
-                                                        </button>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-xl">
-                                <h3 className="font-bold text-white mb-6 flex items-center gap-3 text-lg"><Bell size={22} className="text-amber-500"/> Hatırlatıcılar</h3>
-                                <div className="space-y-4">
-                                    <div className="p-5 bg-rose-900/10 border border-rose-500/20 rounded-2xl flex gap-4 transition-transform hover:scale-[1.02]">
-                                        <div className="w-12 h-12 bg-rose-500/20 rounded-xl flex items-center justify-center flex-shrink-0"><Clock className="text-rose-500" size={24}/></div>
-                                        <div>
-                                            <p className="font-bold text-rose-200">Video Teslimi</p>
-                                            <p className="text-xs text-slate-400 mt-1">Son teslim tarihine <strong className="text-white">{remainingDays} gün</strong> kaldı. ({new Date(systemSettings.dates.videoUploadEnd).toLocaleDateString()})</p>
-                                        </div>
-                                    </div>
-                                    <div className="p-5 bg-teal-900/10 border border-teal-500/20 rounded-2xl flex gap-4 transition-transform hover:scale-[1.02]">
-                                        <div className="w-12 h-12 bg-teal-500/20 rounded-xl flex items-center justify-center flex-shrink-0"><FileCheck className="text-teal-500" size={24}/></div>
-                                        <div>
-                                            <p className="font-bold text-teal-200">Belge Onayları</p>
-                                            {missingDocsCount > 0 ? (
-                                                <p className="text-xs text-slate-400 mt-1">Takımda <strong className="text-white">{missingDocsCount} adet</strong> eksik belge bulunuyor.</p>
-                                            ) : (
-                                                <p className="text-xs text-green-400 mt-1">Harika! Tüm belgeler tamamlandı.</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Right Column: Timeline */}
-                        <div className="bg-slate-900 p-8 rounded-[2rem] border border-slate-800 shadow-xl">
-                            <h3 className="font-bold text-white mb-8 flex items-center gap-3 text-lg"><Clock size={22} className="text-blue-500"/> Süreç Takibi</h3>
-                            <div className="space-y-8 relative pl-4">
-                                <div className="absolute left-[27px] top-4 bottom-4 w-0.5 bg-slate-800"></div>
-                                {[
-                                    { label: 'Başvuru Oluşturuldu', done: true, date: new Date(currentApplication.submittedAt).toLocaleDateString() },
-                                    { label: 'Belgeler Tamamlandı', done: currentApplication.team.students.every(s => s.hasParentalConsent && s.hasKvkkConsent) },
-                                    { label: 'Video Teslim Edildi', done: currentApplication.team.videoStatus !== 'PENDING' },
-                                    { label: 'Ön Eleme Sonucu', done: currentApplication.team.isPreliminaryStageComplete },
-                                    { label: 'Ödül Töreni', done: false }
-                                ].map((step, i) => (
-                                    <div key={i} className="relative flex items-center gap-6 group">
-                                        <div className={`w-6 h-6 rounded-full border-4 relative z-10 flex-shrink-0 transition-all duration-500 ${step.done ? 'bg-green-500 border-slate-900 shadow-[0_0_15px_rgba(34,197,94,0.5)]' : 'bg-slate-800 border-slate-900'}`}></div>
-                                        <div className={`flex-1 p-4 rounded-2xl border transition-all ${step.done ? 'bg-slate-800 border-slate-700' : 'bg-transparent border-transparent opacity-50'}`}>
-                                            <p className={`text-sm font-bold ${step.done ? 'text-white' : 'text-slate-500'}`}>{step.label}</p>
-                                            {step.date && <p className="text-[10px] text-slate-500 mt-1 font-mono">{step.date}</p>}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
+                {activeTab === 'STATUS' && <DashboardStatusTab />}
 
                 {/* 2. ACADEMY TAB */}
-                {activeTab === 'ACADEMY' && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-8"
-                    >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="text-2xl font-black text-white">Akademi İçerikleri</h3>
-                                <p className="text-slate-400 text-sm">Yarışma sürecinde size rehberlik edecek temel eğitimler.</p>
-                            </div>
-                            <button 
-                                onClick={() => window.open('/academy', '_blank')}
-                                className="text-rose-500 hover:text-rose-400 text-sm font-bold flex items-center gap-2"
-                            >
-                                Tümünü Gör <ExternalLink size={16} />
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {useAppContext().cmsAcademy.slice(0, 6).map((item: any) => {
-                                const styles = getCategoryStyle(item.category);
-                                return (
-                                    <div 
-                                        key={item.id}
-                                        onClick={() => item.pdfFile ? window.open(item.pdfFile, '_blank') : window.open(item.url, '_blank')}
-                                        className="group bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden cursor-pointer hover:border-slate-600 transition-all hover:-translate-y-1"
-                                    >
-                                        <div className="h-40 relative overflow-hidden">
-                                            <img 
-                                                src={item.coverImage || 'https://images.unsplash.com/photo-1478720568477-152d9b164e63?auto=format&fit=crop&q=80&w=800'} 
-                                                alt={item.title}
-                                                className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
-                                            />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
-                                            <div className="absolute bottom-4 left-4">
-                                                <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${styles.badge}`}>
-                                                    {item.category}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="p-6">
-                                            <h4 className={`text-white font-bold mb-2 line-clamp-1 transition-colors ${styles.title}`}>{item.title}</h4>
-                                            <p className="text-slate-500 text-xs line-clamp-2 mb-4">{item.description}</p>
-                                            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
-                                                <span className="text-slate-600 flex items-center gap-1">
-                                                    <Clock size={12} /> 5 Dakika
-                                                </span>
-                                                <span className={`flex items-center gap-1 ${styles.btn}`}>
-                                                    İncele <ArrowRight size={12} />
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </motion.div>
-                )}
+                {activeTab === 'ACADEMY' && <DashboardAcademyTab />}
 
                 {/* 3. DOCUMENTS TAB (Cast & Crew) */}
-                {activeTab === 'DOCUMENTS' && (
-                    <div className="space-y-12">
-                        {/* Guide Section */}
-                        <div className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-blue-500/20 rounded-[2.5rem] p-10 relative overflow-hidden shadow-2xl group">
-                            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none -mr-20 -mt-20"></div>
-                            <h3 className="text-xl font-black text-white uppercase tracking-widest mb-10 flex items-center gap-3">
-                                <Info size={24} className="text-blue-500"/> Belge Yükleme Rehberi
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
-                                {[
-                                    { icon: RefreshCw, title: '1. Kodu Oluştur', desc: 'Sistemden her belge için benzersiz kod üret.' },
-                                    { icon: PenTool, title: '2. Belgeye Yaz', desc: 'Kodu çıktısını aldığın belgenin üzerine el yazısıyla yaz.' },
-                                    { icon: Camera, title: '3. PDF Olarak Tara', desc: 'İmzalı ve kodlu belgenizi PDF formatında taratın.' },
-                                    { icon: Upload, title: '4. Sisteme Yükle', desc: 'Beyanı onayla ve dosyayı yükle.' }
-                                ].map((step, i) => (
-                                    <div key={i} className="flex flex-col items-center text-center group/item hover:-translate-y-1 transition-transform duration-300">
-                                        <div className="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center mb-6 border-2 border-slate-700 group-hover/item:border-blue-500 group-hover/item:bg-slate-900 transition-all shadow-xl">
-                                            <step.icon size={32} className="text-slate-400 group-hover/item:text-blue-400 transition-colors" />
-                                        </div>
-                                        <h4 className="text-white font-bold text-lg mb-2">{step.title}</h4>
-                                        <p className="text-sm text-slate-400 leading-relaxed font-light max-w-[200px]">{step.desc}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Download Cards */}
-                        <div className="grid md:grid-cols-2 gap-6">
-                            <a href={TEMPLATE_PARENT_URL} target="_blank" className="group bg-slate-900 p-6 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-amber-900/20 rounded-xl text-amber-500 border border-amber-900/50">
-                                        <Download size={24}/>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-white group-hover:text-amber-500 transition-colors">Veli İzin Belgesi</h4>
-                                        <p className="text-xs text-slate-500">İndir, yazdır ve veliye imzalat.</p>
-                                    </div>
-                                </div>
-                                <ExternalLink size={16} className="text-slate-600 group-hover:text-white transition-colors" />
-                            </a>
-                            <a href={TEMPLATE_CONSENT_URL} target="_blank" className="group bg-slate-900 p-6 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-teal-900/20 rounded-xl text-teal-500 border border-teal-900/50">
-                                        <Download size={24}/>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-white group-hover:text-teal-500 transition-colors">KVKK Açık Rıza Metni</h4>
-                                        <p className="text-xs text-slate-500">İndir, yazdır ve imzalat.</p>
-                                    </div>
-                                </div>
-                                <ExternalLink size={16} className="text-slate-600 group-hover:text-white transition-colors" />
-                            </a>
-                        </div>
-
-                        {/* Cast Grid */}
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {currentApplication.team.students.map((student, idx) => (
-                                <motion.div 
-                                    key={student.id} 
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: idx * 0.1 }}
-                                    className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative"
-                                >
-                                    
-                                    {/* Student Header */}
-                                    <div className="p-6 pb-4 flex justify-between items-start">
-                                        <div>
-                                            <h4 className="font-black text-white text-xl leading-tight">{student.firstName} {student.lastName}</h4>
-                                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">{student.grade}</span>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button 
-                                                onClick={() => handleOpenStudentModal(student)}
-                                                className="p-2 text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-                                                title="Düzenle"
-                                            >
-                                                <Edit size={16} />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDeleteStudent(student.id)}
-                                                className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-900/20 rounded-lg transition-colors"
-                                                title="Sil"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Documents Sections */}
-                                    <div className="px-6 pb-6 space-y-4">
-                                        {/* 1. Parent Consent */}
-                                        <div className="bg-slate-950/50 rounded-2xl border border-dashed border-slate-800 p-5 relative group/section hover:border-slate-700 transition-colors">
-                                            <div className="flex justify-between items-center mb-4">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">VELİ İZİN BELGESİ</span>
-                                                {student.hasParentalConsent && (
-                                                    <div className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded border ${
-                                                        student.docStatus === 'APPROVED' ? 'bg-green-900/20 text-green-500 border-green-900/50' :
-                                                        student.docStatus === 'REJECTED' ? 'bg-red-900/20 text-red-500 border-red-900/50' :
-                                                        'bg-blue-900/20 text-blue-500 border-blue-900/50'
-                                                    }`}>
-                                                        {student.docStatus === 'APPROVED' ? <CheckSquare size={12}/> : student.docStatus === 'REJECTED' ? <AlertOctagon size={12}/> : <Clock size={12}/>}
-                                                        {student.docStatus === 'APPROVED' ? 'ONAYLANDI' : student.docStatus === 'REJECTED' ? 'REDDEDİLDİ' : 'İNCELEMEDE'}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {student.hasParentalConsent && student.docStatus !== 'REJECTED' ? (
-                                                <div className="text-center py-4">
-                                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 ${student.docStatus === 'APPROVED' ? 'bg-green-500/10 text-green-500' : 'bg-blue-500/10 text-blue-500'}`}>
-                                                        {student.docStatus === 'APPROVED' ? <CheckCircle2 size={24} /> : <Clock size={24} />}
-                                                    </div>
-                                                    <p className={`text-xs font-bold ${student.docStatus === 'APPROVED' ? 'text-green-400' : 'text-blue-400'}`}>
-                                                        {student.docStatus === 'APPROVED' ? 'Belge Onaylandı' : 'İnceleme Bekliyor'}
-                                                    </p>
-                                                    {student.docStatus !== 'APPROVED' && (
-                                                        <button onClick={() => handleDeleteDoc(student.id, 'PARENT')} className="mt-4 text-[10px] text-red-400 hover:text-red-300 flex items-center justify-center gap-1 w-full py-2 hover:bg-red-900/10 rounded transition-colors">
-                                                            <Trash2 size={12}/> Sil ve Yeniden Yükle
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-3">
-                                                    {student.docStatus === 'REJECTED' && student.rejectionReason && (
-                                                        <div className="bg-red-900/20 border border-red-900/50 p-3 rounded-xl mb-3">
-                                                            <p className="text-[10px] text-red-400 leading-tight">
-                                                                <strong className="uppercase">Red Nedeni:</strong> {student.rejectionReason}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                    {!student.parentalExpectedId ? (
-                                                        <button onClick={() => handleGenerateCode(student.id, 'PARENT')} className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors border border-slate-700">
-                                                            KODU OLUŞTUR
-                                                        </button>
-                                                    ) : (
-                                                        <>
-                                                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-center relative">
-                                                                <span className="text-[9px] text-slate-500 uppercase tracking-wider block mb-1">Belgeye Yazılan Kod</span>
-                                                                <div className="text-xl font-black text-rose-500 tracking-widest font-mono select-all">{student.parentalExpectedId}</div>
-                                                                <p className="text-[9px] text-amber-500/80 mt-2 leading-tight">Bu kod hem sisteme girilmeli hem de belge üzerinde el yazısıyla yer almalıdır.</p>
-                                                                <button onClick={() => copyCode(student.parentalExpectedId!)} className="absolute top-2 right-2 text-slate-600 hover:text-white"><Copy size={12}/></button>
-                                                            </div>
-                                                            
-                                                            <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2">
-                                                                <span className="text-[10px] font-bold text-slate-500 uppercase">GİR:</span>
-                                                                <input 
-                                                                    value={verifyCodes[`${student.id}_PARENT`] || ''}
-                                                                    onChange={(e) => setVerifyCodes({...verifyCodes, [`${student.id}_PARENT`]: e.target.value})}
-                                                                    className="bg-transparent text-white text-sm font-bold w-full outline-none placeholder-slate-700"
-                                                                    placeholder="Kodu Buraya Yazın"
-                                                                    maxLength={12}
-                                                                />
-                                                            </div>
-
-                                                            <input type="file" id={`file-input-${student.id}-PARENT`} className="hidden" accept=".pdf" onChange={(e) => handleFileSelect(e, `${student.id}_PARENT`)} />
-                                                            
-                                                            <div className="grid grid-cols-2 gap-3">
-                                                                <button 
-                                                                    onClick={() => document.getElementById(`file-input-${student.id}-PARENT`)?.click()}
-                                                                    className={`py-3 rounded-xl text-xs font-bold transition-all border ${selectedFiles[`${student.id}_PARENT`] ? 'bg-slate-800 border-green-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}`}
-                                                                >
-                                                                    {selectedFiles[`${student.id}_PARENT`] ? 'Dosya Değiştir' : 'BELGEYİ SEÇ'}
-                                                                </button>
-
-                                                                <button 
-                                                                    onClick={() => handleOpenDeclarationModal(student.id, 'PARENT')}
-                                                                    disabled={!selectedFiles[`${student.id}_PARENT`]}
-                                                                    className={`py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${selectedFiles[`${student.id}_PARENT`] ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20 hover:bg-rose-500' : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-800'}`}
-                                                                >
-                                                                    {uploadingDoc === `${student.id}_PARENT` ? <Loader2 className="animate-spin" size={14}/> : <UploadCloud size={14}/>} 
-                                                                    YÜKLE
-                                                                </button>
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* 2. KVKK Consent */}
-                                        <div className="bg-slate-950/50 rounded-2xl border border-dashed border-slate-800 p-5 relative group/section hover:border-slate-700 transition-colors">
-                                            <div className="flex justify-between items-center mb-4">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">KVKK METNİ</span>
-                                                {student.hasKvkkConsent && (
-                                                    <div className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded border ${
-                                                        student.docStatus === 'APPROVED' ? 'bg-green-900/20 text-green-500 border-green-900/50' :
-                                                        student.docStatus === 'REJECTED' ? 'bg-red-900/20 text-red-500 border-red-900/50' :
-                                                        'bg-blue-900/20 text-blue-500 border-blue-900/50'
-                                                    }`}>
-                                                        {student.docStatus === 'APPROVED' ? <CheckSquare size={12}/> : student.docStatus === 'REJECTED' ? <AlertOctagon size={12}/> : <Clock size={12}/>}
-                                                        {student.docStatus === 'APPROVED' ? 'ONAYLANDI' : student.docStatus === 'REJECTED' ? 'REDDEDİLDİ' : 'İNCELEMEDE'}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {student.hasKvkkConsent && student.docStatus !== 'REJECTED' ? (
-                                                <div className="text-center py-4">
-                                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 ${student.docStatus === 'APPROVED' ? 'bg-green-500/10 text-green-500' : 'bg-blue-500/10 text-blue-500'}`}>
-                                                        {student.docStatus === 'APPROVED' ? <CheckCircle2 size={24} /> : <Clock size={24} />}
-                                                    </div>
-                                                    <p className={`text-xs font-bold ${student.docStatus === 'APPROVED' ? 'text-green-400' : 'text-blue-400'}`}>
-                                                        {student.docStatus === 'APPROVED' ? 'Belge Onaylandı' : 'İnceleme Bekliyor'}
-                                                    </p>
-                                                    {student.docStatus !== 'APPROVED' && (
-                                                        <button onClick={() => handleDeleteDoc(student.id, 'KVKK')} className="mt-4 text-[10px] text-red-400 hover:text-red-300 flex items-center justify-center gap-1 w-full py-2 hover:bg-red-900/10 rounded transition-colors">
-                                                            <Trash2 size={12}/> Sil ve Yeniden Yükle
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-3">
-                                                    {student.docStatus === 'REJECTED' && student.rejectionReason && (
-                                                        <div className="bg-red-900/20 border border-red-900/50 p-3 rounded-xl mb-3">
-                                                            <p className="text-[10px] text-red-400 leading-tight">
-                                                                <strong className="uppercase">Red Nedeni:</strong> {student.rejectionReason}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                    {!student.kvkkExpectedId ? (
-                                                        <button onClick={() => handleGenerateCode(student.id, 'KVKK')} className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors border border-slate-700">
-                                                            KODU OLUŞTUR
-                                                        </button>
-                                                    ) : (
-                                                        <>
-                                                            <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-center relative">
-                                                                <span className="text-[9px] text-slate-500 uppercase tracking-wider block mb-1">Belgeye Yazılan Kod</span>
-                                                                <div className="text-xl font-black text-rose-500 tracking-widest font-mono select-all">{student.kvkkExpectedId}</div>
-                                                                <p className="text-[9px] text-amber-500/80 mt-2 leading-tight">Bu kod hem sisteme girilmeli hem de belge üzerinde el yazısıyla yer almalıdır.</p>
-                                                                <button onClick={() => copyCode(student.kvkkExpectedId!)} className="absolute top-2 right-2 text-slate-600 hover:text-white"><Copy size={12}/></button>
-                                                            </div>
-                                                            
-                                                            <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2">
-                                                                <span className="text-[10px] font-bold text-slate-500 uppercase">GİR:</span>
-                                                                <input 
-                                                                    value={verifyCodes[`${student.id}_KVKK`] || ''}
-                                                                    onChange={(e) => setVerifyCodes({...verifyCodes, [`${student.id}_KVKK`]: e.target.value})}
-                                                                    className="bg-transparent text-white text-sm font-bold w-full outline-none placeholder-slate-700"
-                                                                    placeholder="Kodu Buraya Yazın"
-                                                                    maxLength={12}
-                                                                />
-                                                            </div>
-
-                                                            <input type="file" id={`file-input-${student.id}-KVKK`} className="hidden" accept=".pdf" onChange={(e) => handleFileSelect(e, `${student.id}_KVKK`)} />
-                                                            
-                                                            <div className="grid grid-cols-2 gap-3">
-                                                                <button 
-                                                                    onClick={() => document.getElementById(`file-input-${student.id}-KVKK`)?.click()}
-                                                                    className={`py-3 rounded-xl text-xs font-bold transition-all border ${selectedFiles[`${student.id}_KVKK`] ? 'bg-slate-800 border-green-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}`}
-                                                                >
-                                                                    {selectedFiles[`${student.id}_KVKK`] ? 'Dosya Değiştir' : 'BELGEYİ SEÇ'}
-                                                                </button>
-
-                                                                <button 
-                                                                    onClick={() => handleOpenDeclarationModal(student.id, 'KVKK')}
-                                                                    disabled={!selectedFiles[`${student.id}_KVKK`]}
-                                                                    className={`py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${selectedFiles[`${student.id}_KVKK`] ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20 hover:bg-rose-500' : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-800'}`}
-                                                                >
-                                                                    {uploadingDoc === `${student.id}_KVKK` ? <Loader2 className="animate-spin" size={14}/> : <UploadCloud size={14}/>} 
-                                                                    YÜKLE
-                                                                </button>
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            ))}
-
-                            {/* Add Student Card */}
-                            {currentApplication.team.students.length < 6 && (
-                                <button 
-                                    onClick={() => handleOpenStudentModal()}
-                                    className="group flex flex-col items-center justify-center gap-4 bg-slate-900/30 border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-3xl transition-all min-h-[500px]"
-                                >
-                                    <div className="w-16 h-16 rounded-full bg-slate-800 group-hover:bg-rose-600 group-hover:text-white text-slate-600 flex items-center justify-center transition-all shadow-lg">
-                                        <Plus size={32} />
-                                    </div>
-                                    <span className="font-bold text-slate-500 group-hover:text-white transition-colors">Yeni Öğrenci Ekle</span>
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                )}
+                {activeTab === 'DOCUMENTS' && <DashboardDocumentsTab />}
 
                 {/* 3. VIDEO TAB (Cinema Room) - OPEN TO TEACHERS */}
-                {activeTab === 'VIDEO' && (
-                    <div className="max-w-5xl mx-auto space-y-12">
-                        
-                        {/* Video Upload Guide */}
-                        <div className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-rose-500/20 rounded-[2.5rem] p-10 relative overflow-hidden shadow-2xl group">
-                            <div className="absolute top-0 right-0 w-96 h-96 bg-rose-500/10 rounded-full blur-[100px] pointer-events-none -mr-20 -mt-20"></div>
-                            <h3 className="text-xl font-black text-white uppercase tracking-widest mb-10 flex items-center gap-3">
-                                <Youtube size={24} className="text-red-500"/> Video Yükleme Rehberi
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
-                                {[
-                                    { icon: Youtube, title: '1. YouTube\'a Yükle', desc: 'Hazırladığınız filmi kendi kanalınıza yükleyin.' },
-                                    { icon: Lock, title: '2. Liste Dışı Yap', desc: 'Gizlilik ayarını "Liste Dışı" (Unlisted) olarak seçin.' },
-                                    { icon: Copy, title: '3. Linki Kopyala', desc: 'Videonun izleme bağlantısını (URL) kopyalayın.' },
-                                    { icon: CheckCircle2, title: '4. Panele Yapıştır', desc: 'Linki aşağıya yapıştırıp onaylayın.' }
-                                ].map((step, i) => (
-                                    <div key={i} className="flex flex-col items-center text-center group/item hover:-translate-y-1 transition-transform duration-300">
-                                        <div className="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center mb-6 border-2 border-slate-700 group-hover/item:border-rose-500 group-hover/item:bg-slate-900 transition-all shadow-xl">
-                                            <step.icon size={32} className="text-slate-400 group-hover/item:text-rose-400 transition-colors" />
-                                        </div>
-                                        <h4 className="text-white font-bold text-lg mb-2">{step.title}</h4>
-                                        <p className="text-sm text-slate-400 leading-relaxed font-light max-w-[200px]">{step.desc}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                {activeTab === 'VIDEO' && <DashboardVideoTab />}
 
-                        {/* Submission Form */}
-                        <div className="relative bg-black rounded-[2rem] border-4 border-slate-800 shadow-2xl overflow-hidden group">
-                            {/* Curtain Effect */}
-                            <div className="absolute top-0 left-0 w-12 h-full bg-gradient-to-r from-red-950 to-transparent opacity-50 z-10"></div>
-                            <div className="absolute top-0 right-0 w-12 h-full bg-gradient-to-l from-red-950 to-transparent opacity-50 z-10"></div>
-                            
-                            <div className="p-12 md:p-16 flex flex-col items-center justify-center text-center relative z-20">
-                                <div className="w-24 h-24 bg-rose-600 rounded-full flex items-center justify-center mb-8 shadow-[0_0_50px_rgba(225,29,72,0.5)] animate-pulse">
-                                    <Film size={40} className="text-white"/>
-                                </div>
-                                <h3 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">Final Sahnesi</h3>
-                                <p className="text-xl text-slate-400 mb-10 max-w-2xl leading-relaxed">
-                                    Filminizi jüriyle buluşturmak için YouTube linkini aşağıya giriniz.
-                                </p>
-
-                                <div className="w-full max-w-2xl bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl p-8 text-left">
-                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6 border-b border-slate-800 pb-2">Yönetmen Kontrol Listesi</h4>
-                                    
-                                    <div className="mb-6">
-                                        <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">YouTube Video Linki</label>
-                                        <div className="flex gap-2">
-                                            <input 
-                                                value={videoLink}
-                                                onChange={(e) => setVideoLink(e.target.value)}
-                                                placeholder="https://youtu.be/..." 
-                                                className="flex-1 bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-sm transition-colors"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        {[
-                                            { id: 'resolution', label: '1080p Çözünürlük (FHD)' },
-                                            { id: 'audio', label: 'Ses Dili: İngilizce' },
-                                            { id: 'credits', label: 'Türkçe Altyazı & Jenerik' },
-                                            { id: 'copyright', label: 'Telif Hakkı İhlali Yok' }
-                                        ].map(item => (
-                                            <div 
-                                                key={item.id} 
-                                                onClick={() => !IS_DEADLINE_PASSED && setVideoChecklist(prev => ({...prev, [item.id]: !prev[item.id as keyof typeof videoChecklist]}))}
-                                                className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer border transition-all ${videoChecklist[item.id as keyof typeof videoChecklist] ? 'bg-green-900/20 border-green-500/50' : 'bg-slate-950 border-slate-800 hover:border-slate-600'} ${IS_DEADLINE_PASSED ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            >
-                                                <div className={`w-6 h-6 rounded flex items-center justify-center border transition-colors ${videoChecklist[item.id as keyof typeof videoChecklist] ? 'bg-green-500 border-green-500' : 'border-slate-600'}`}>
-                                                    {videoChecklist[item.id as keyof typeof videoChecklist] && <CheckSquare size={16} className="text-white" />}
-                                                </div>
-                                                <span className={`font-bold ${videoChecklist[item.id as keyof typeof videoChecklist] ? 'text-white' : 'text-slate-400'}`}>{item.label}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {IS_DEADLINE_PASSED && (
-                                        <div className="mt-6 p-4 bg-red-900/40 border border-red-500/50 rounded-xl text-red-200 text-sm font-bold flex items-center gap-2">
-                                            <AlertCircle size={20} className="text-red-500" /> Video teslim süresi 4 Mayıs 2026 23:59 itibarıyla sona ermiştir.
-                                        </div>
-                                    )}
-
-                                    <button 
-                                        onClick={confirmVideoSubmission} 
-                                        disabled={!allVideoChecksPassed || IS_DEADLINE_PASSED}
-                                        className={`w-full mt-8 py-5 rounded-xl font-black text-lg uppercase tracking-wider shadow-xl transition-all ${allVideoChecksPassed && !IS_DEADLINE_PASSED ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/30 hover:-translate-y-1' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
-                                    >
-                                        {IS_DEADLINE_PASSED ? 'Süre Doldu' : currentApplication.team.videoStatus === 'SUBMITTED_LINK' ? 'Linki Güncelle' : allVideoChecksPassed ? 'Teslimi Onayla ve Bitir' : 'Listeyi Tamamlayın'}
-                                    </button>
-                                    
-                                    {currentApplication.team.videoStatus === 'SUBMITTED_LINK' && (
-                                        <p className="mt-4 text-center text-xs text-green-500 font-bold flex items-center justify-center gap-2">
-                                            <CheckCircle2 size={14}/> Video linki başarıyla teslim edildi.
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'CHAT' && (
-                    <div className="max-w-4xl mx-auto"><ChatArea appId={currentApplication.id} /></div>
-                )}
+                {activeTab === 'CHAT' && <DashboardChatTab />}
 
             </div>
 
@@ -1758,7 +909,7 @@ export const Dashboard: React.FC = () => {
                             <h3 className="font-bold text-white flex items-center gap-2">
                                 <ShieldCheck className="text-amber-500" size={20} /> Yasal Sorumluluk Beyanı
                             </h3>
-                            <button onClick={() => setDeclarationModal(null)} className="text-slate-500 hover:text-white transition-colors">
+                            <button type="button" onClick={() => setDeclarationModal(null)} className="text-slate-500 hover:text-white transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
@@ -1782,8 +933,8 @@ export const Dashboard: React.FC = () => {
                             </label>
                         </div>
                         <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end gap-3">
-                            <button onClick={() => setDeclarationModal(null)} className="px-6 py-3 rounded-xl text-slate-400 hover:text-white font-bold text-sm transition-colors">İptal</button>
-                            <button 
+                            <button type="button" onClick={() => setDeclarationModal(null)} className="px-6 py-3 rounded-xl text-slate-400 hover:text-white font-bold text-sm transition-colors">İptal</button>
+                            <button type="button" 
                                 onClick={handleConfirmDeclaration}
                                 disabled={!declarationAccepted}
                                 className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-900 px-8 py-3 rounded-xl font-black text-sm shadow-lg shadow-amber-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-95"
@@ -1803,7 +954,7 @@ export const Dashboard: React.FC = () => {
                         <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/20 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none"></div>
                         <div className="absolute bottom-0 left-0 w-64 h-64 bg-rose-500/20 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none"></div>
 
-                        <button onClick={handleCloseWinnerModal} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors z-20">
+                        <button type="button" onClick={handleCloseWinnerModal} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors z-20" aria-label="Kapat">
                             <X size={32} />
                         </button>
 
@@ -1826,7 +977,7 @@ export const Dashboard: React.FC = () => {
                                             <h4 className="font-bold text-white text-lg">{app.team.name}</h4>
                                             <p className="text-sm text-slate-400">{app.team.awardCategory}</p>
                                         </div>
-                                        <button 
+                                        <button type="button" 
                                             onClick={() => {
                                                 handleCloseWinnerModal();
                                                 setTimeout(() => window.location.href = `#/award-participation/team/${app.team.id}`, 300);
@@ -1843,7 +994,7 @@ export const Dashboard: React.FC = () => {
                                 Ödül Töreni hazırlıkları için katılım durumunuzu bildiren formu en geç <strong className="text-white">11 Mayıs 2026 Pzt. Saat 13:00'e</strong> kadar doldurmanız gerekmektedir.
                             </p>
 
-                            <button onClick={handleCloseWinnerModal} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 px-10 rounded-2xl transition-colors">
+                            <button type="button" onClick={handleCloseWinnerModal} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 px-10 rounded-2xl transition-colors">
                                 Anladım, Panele Dön
                             </button>
                         </div>
@@ -1858,7 +1009,7 @@ export const Dashboard: React.FC = () => {
                         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none"></div>
                         <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] -ml-20 -mb-20 pointer-events-none"></div>
 
-                        <button onClick={handleCloseThanksModal} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors z-20">
+                        <button type="button" onClick={handleCloseThanksModal} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors z-20" aria-label="Kapat">
                             <X size={32} />
                         </button>
 
@@ -1889,7 +1040,7 @@ export const Dashboard: React.FC = () => {
                                 Öğrencilerinize ve size emeklerinizden dolayı sonsuz teşekkürler. Hazırlanan teşekkür e-sertifikalarını panelinizden anında görüntüleyebilir ve indirebilirsiniz.
                             </p>
 
-                            <button onClick={handleCloseThanksModal} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-10 rounded-2xl transition-colors">
+                            <button type="button" onClick={handleCloseThanksModal} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-10 rounded-2xl transition-colors">
                                 Anladım, Panele Dön
                             </button>
                         </div>
@@ -1923,7 +1074,7 @@ export const Dashboard: React.FC = () => {
                                 Büyük bir emeğin ürününü teslim ettiğiniz için teşekkür ederiz. Artık arkanıza yaslanıp ödül törenini bekleyebilirsiniz.
                             </p>
 
-                            <button 
+                            <button type="button" 
                                 onClick={() => setShowVideoSuccessModal(false)}
                                 className="bg-white text-slate-900 hover:bg-slate-200 px-10 py-4 rounded-xl font-black text-lg shadow-xl hover:-translate-y-1 transition-all"
                             >
@@ -1960,7 +1111,7 @@ export const Dashboard: React.FC = () => {
                                 Sonuçlar, ödül töreninde açıklanacaktır. Hazırlıklarınızı yapmayı unutmayın!
                             </p>
 
-                            <button 
+                            <button type="button" 
                                 onClick={() => setShowDeadlineModal(false)}
                                 className="bg-white text-slate-900 hover:bg-slate-200 px-10 py-4 rounded-xl font-black text-lg shadow-xl hover:-translate-y-1 transition-all"
                             >
@@ -1975,7 +1126,7 @@ export const Dashboard: React.FC = () => {
             {isStudentModalOpen && editingStudent && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
                     <div className="bg-slate-900 w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl p-8 relative">
-                        <button onClick={() => setIsStudentModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white">
+                        <button type="button" onClick={() => setIsStudentModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white">
                             <X size={20} />
                         </button>
                         <h3 className="text-xl font-bold text-white mb-6">
@@ -2006,7 +1157,7 @@ export const Dashboard: React.FC = () => {
                                     className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white outline-none focus:border-rose-500"
                                 />
                             </div>
-                            <button 
+                            <button type="button" 
                                 onClick={handleSaveStudent}
                                 className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl mt-4 transition-colors"
                             >
@@ -2024,5 +1175,7 @@ export const Dashboard: React.FC = () => {
                 .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
             `}</style>
         </div>
+      </DashboardUIProvider>
     );
 };
+

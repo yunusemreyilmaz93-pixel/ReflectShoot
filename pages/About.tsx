@@ -175,7 +175,7 @@ export const About: React.FC = () => {
           
           {/* Vision Document Download Button */}
           <div className="mt-10 flex flex-col items-center gap-6 animate-fadeIn delay-300">
-              <button 
+              <button type="button" 
                 onClick={() => handleDownload('https://assets.reflectandshoot.com/Vizyon_Belgesi.pdf')}
                 className="group relative inline-flex items-center gap-4 px-8 py-4 bg-slate-900/50 hover:bg-slate-800 border border-amber-500/30 hover:border-amber-500 text-white rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(245,158,11,0.1)] hover:shadow-[0_0_30px_rgba(245,158,11,0.3)] backdrop-blur-md"
               >
@@ -334,7 +334,7 @@ export const About: React.FC = () => {
                         "En güvenilir kaynaklardan seçilen rivayetler esastır."
                     </div>
                     <div className="pt-4 border-t border-slate-700">
-                        <button 
+                        <button type="button" 
                             onClick={() => setThemeModal({ title: "Hadislerden Örnek Fikirler", color: "teal", examples: themeExamples.hadith })}
                             className="text-teal-500 text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:text-teal-400 transition-colors"
                         >
@@ -358,7 +358,7 @@ export const About: React.FC = () => {
                         "Tarihsel gerçekliğe sadık kalınarak dramatize edilmelidir."
                     </div>
                     <div className="pt-4 border-t border-slate-700">
-                        <button 
+                        <button type="button" 
                             onClick={() => setThemeModal({ title: "Sahabelerden Örnek Fikirler", color: "rose", examples: themeExamples.sahabe })}
                             className="text-rose-500 text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:text-rose-400 transition-colors"
                         >
@@ -481,7 +481,7 @@ export const About: React.FC = () => {
                     </div>
 
                     <div className="mt-6 text-center">
-                        <button onClick={() => document.getElementById('evaluation')?.scrollIntoView({behavior: 'smooth'})} className="text-teal-500 text-xs font-bold hover:underline">
+                        <button type="button" onClick={() => document.getElementById('evaluation')?.scrollIntoView({behavior: 'smooth'})} className="text-teal-500 text-xs font-bold hover:underline">
                             Değerlendirme Kriterlerini Gör
                         </button>
                     </div>
@@ -667,7 +667,7 @@ export const About: React.FC = () => {
                       <h3 className={`text-xl font-bold ${themeModal.color === 'teal' ? 'text-teal-400' : 'text-rose-400'} flex items-center gap-2`}>
                           <Sparkles size={20} /> {themeModal.title}
                       </h3>
-                      <button onClick={() => setThemeModal(null)} className="text-slate-400 hover:text-white transition-colors p-2 rounded-full hover:bg-slate-800">
+                      <button type="button" onClick={() => setThemeModal(null)} className="text-slate-400 hover:text-white transition-colors p-2 rounded-full hover:bg-slate-800">
                           <X size={20} />
                       </button>
                   </div>
@@ -684,7 +684,7 @@ export const About: React.FC = () => {
                   </div>
 
                   <div className="p-6 border-t border-slate-800 bg-slate-950 flex justify-end">
-                      <button onClick={() => setThemeModal(null)} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold text-sm transition-colors border border-slate-700">
+                      <button type="button" onClick={() => setThemeModal(null)} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold text-sm transition-colors border border-slate-700">
                           Kapat
                       </button>
                   </div>

@@ -161,13 +161,13 @@ export const AdminJuryStatus = ({ apps }: Props) => {
             {/* Controls */}
             <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-800 p-2 rounded-xl">
                 <div className="flex bg-slate-900 rounded-lg p-1 w-full sm:w-auto">
-                    <button 
+                    <button type="button" 
                         onClick={() => setViewMode('JURY')}
                         className={`flex-1 sm:flex-none px-6 py-2 rounded-md font-bold text-sm transition-all ${viewMode === 'JURY' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'}`}
                     >
                         Jüri Bazlı
                     </button>
-                    <button 
+                    <button type="button" 
                         onClick={() => setViewMode('TEAM')}
                         className={`flex-1 sm:flex-none px-6 py-2 rounded-md font-bold text-sm transition-all ${viewMode === 'TEAM' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'}`}
                     >

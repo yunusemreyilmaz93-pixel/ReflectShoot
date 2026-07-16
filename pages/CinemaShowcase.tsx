@@ -429,7 +429,7 @@ export const CinemaShowcase: React.FC = () => {
           </div>
           
           <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-850 w-full sm:w-auto">
-            <button
+            <button type="button"
               onClick={() => setSelectedSeason('2025-2026')}
               className={`flex-1 sm:flex-none px-6 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 ${
                 selectedSeason === '2025-2026'
@@ -440,7 +440,7 @@ export const CinemaShowcase: React.FC = () => {
               <Trophy size={14} /> 2025-2026 Sezonu
             </button>
             
-            <button
+            <button type="button"
               onClick={() => setSelectedSeason('2026-2027')}
               className={`flex-1 sm:flex-none px-6 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 ${
                 selectedSeason === '2026-2027'
@@ -491,7 +491,7 @@ export const CinemaShowcase: React.FC = () => {
         <div className="flex flex-col sm:flex-row gap-6 justify-between items-center bg-slate-900/40 p-4 rounded-3xl border border-slate-900 backdrop-blur-sm">
           {/* Category Switches */}
           <div className="flex p-1 bg-slate-950 rounded-2xl border border-slate-800 w-full sm:w-auto">
-            <button
+            <button type="button"
               onClick={() => {
                 setActiveCategory(Category.LIVE_ACTION);
                 setFilterWinnerStatus('all');
@@ -504,7 +504,7 @@ export const CinemaShowcase: React.FC = () => {
             >
               <Film size={14} /> Canlı Çekim
             </button>
-            <button
+            <button type="button"
               onClick={() => {
                 setActiveCategory(Category.AI_ANIMATION);
                 setFilterWinnerStatus('all');
@@ -528,7 +528,7 @@ export const CinemaShowcase: React.FC = () => {
                 { id: 'winners', label: 'İlk 5' },
                 { id: 'others', label: 'Katılımcılar' }
               ].map((tab) => (
-                <button
+                <button type="button"
                   key={tab.id}
                   onClick={() => setFilterWinnerStatus(tab.id as any)}
                   className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer whitespace-nowrap ${
@@ -682,7 +682,7 @@ export const CinemaShowcase: React.FC = () => {
 
                               {/* Play Buttons overlay */}
                               {hasVideo && (
-                                <button
+                                <button type="button"
                                   onClick={(e) => {
                                     e.stopPropagation(); // Stop card flipping
                                     setSelectedVideo(team.videoUrl);
@@ -772,7 +772,7 @@ export const CinemaShowcase: React.FC = () => {
                               </div>
 
                               {hasVideo ? (
-                                <button
+                                <button type="button"
                                   onClick={(e) => {
                                     e.stopPropagation(); // Stop flipping
                                     setSelectedVideo(team.videoUrl);
@@ -910,7 +910,7 @@ export const CinemaShowcase: React.FC = () => {
           }}
         >
           {/* Close button */}
-          <button 
+          <button type="button" 
             className="absolute top-6 right-6 text-slate-400 hover:text-white transition-all p-3 hover:bg-slate-900 rounded-full"
             onClick={() => {
               setSelectedVideo(null);

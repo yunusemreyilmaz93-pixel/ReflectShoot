@@ -1,6 +1,11 @@
 import { createHash } from 'node:crypto';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getAdminServices } from '../server/firebaseAdmin.js';
+import {
+  validatePublicVoteBody,
+  isVoteRateLimited,
+  isApplicationVoteEligible,
+} from '../server/publicVoteValidate.js';
 
 class VoteError extends Error {
   constructor(status, message, code) {
@@ -33,13 +38,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { appId, fingerprint } = req.body || {};
-    if (!/^[a-z0-9_-]{3,80}$/i.test(appId || '')) {
-      throw new VoteError(400, 'Geçersiz film kimliği.', 'invalid_application_id');
+    const validated = validatePublicVoteBody(req.body);
+    if (!validated.ok) {
+      throw new VoteError(validated.status, validated.message, validated.code);
     }
-    if (!/^[a-z0-9_-]{16,128}$/i.test(fingerprint || '')) {
-      throw new VoteError(400, 'Geçersiz oy kimliği.', 'invalid_fingerprint');
-    }
+    const { appId, fingerprint } = validated;
 
     const { db } = getAdminServices();
     const now = Timestamp.now();
@@ -67,7 +70,7 @@ export default async function handler(req, res) {
       }
 
       const application = applicationSnapshot.data() || {};
-      if (!application.team?.isFinalist || !application.team?.videoUrl) {
+      if (!isApplicationVoteEligible(application)) {
         throw new VoteError(400, 'Bu film halk oylamasına açık değil.', 'application_not_eligible');
       }
       if (voteSnapshot.exists) {
@@ -75,11 +78,10 @@ export default async function handler(req, res) {
       }
 
       const rateData = rateSnapshot.data() || {};
-      const count = Number(rateData.count || 0);
-      const lastVoteAt = rateData.lastVoteAt?.toMillis?.() || 0;
-      if (count >= 50 || now.toMillis() - lastVoteAt < 2000) {
+      if (isVoteRateLimited(rateData, now.toMillis())) {
         throw new VoteError(429, 'Çok fazla oy denemesi yapıldı. Lütfen daha sonra tekrar deneyin.', 'rate_limited');
       }
+      const count = Number(rateData.count || 0);
 
       transaction.create(voteRef, {
         appId,

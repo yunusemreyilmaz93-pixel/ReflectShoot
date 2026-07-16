@@ -8,10 +8,18 @@
     "build": "vite build",
     "lint": "tsc --noEmit",
     "preview": "vite preview",
+    "check": "npm run lint && npm run build",
+    "test:unit": "vitest run tests/unit",
     "test:rules": "firebase emulators:exec --project reflect-and-shoot-test --only firestore \"npm run test:rules:unit\"",
     "test:rules:unit": "vitest run tests/firestore.rules.test.ts",
     "test:visual": "playwright test tests/visual",
-    "test:visual:update": "playwright test tests/visual --update-snapshots"
+    "test:visual:update": "playwright test tests/visual --update-snapshots",
+    "test:e2e": "playwright test -c playwright.e2e.config.ts",
+    "doctor": "react-doctor --verbose",
+    "doctor:score": "react-doctor --score",
+    "test:all": "npm run lint && npm run test:unit && npm run test:e2e",
+    "ci": "npm run lint && npm run test:unit && npm run build && npm run test:e2e",
+    "verify": "npm run ci"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.525.0",
@@ -47,6 +55,7 @@
     "autoprefixer": "^10.4.18",
     "firebase-tools": "^15.24.0",
     "postcss": "^8.4.35",
+    "react-doctor": "^0.7.8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.2.2",
     "vite": "^5.2.0",

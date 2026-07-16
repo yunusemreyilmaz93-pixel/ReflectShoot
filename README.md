@@ -1,20 +1,70 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Reflect & Shoot
 
-# Run and deploy your AI Studio app
+Öğrenci kısa film yarışması platformu: başvuru, belge yükleme, jüri puanlama, halk oylaması, finalist vitrini, CMS, sertifika ve ödül katılım formu.
 
-This contains everything you need to run your app locally.
+**Stack:** React 18 · TypeScript · Vite · Firebase Auth/Firestore · Cloudflare R2 · Vercel serverless API
 
-View your app in AI Studio: https://ai.studio/apps/56a2b7a0-dc4c-4bd5-abd0-ef43e5c8d00d
+## Roller
 
-## Run Locally
+| Rol | Ne yapar |
+|-----|----------|
+| **TEACHER / STUDENT** | Takım başvurusu, belge, video teslimi, panel sohbeti |
+| **JUDGE** | Atanmış eserlere 4×25 kriter puanı (sunucu transaction) |
+| **ADMIN** | Onay, jüri atama, CMS, ödül, sertifika, sistem bayrakları |
+| **PENDING_TEACHER** | Kayıt sonrası admin onayı bekler |
 
-**Prerequisites:**  Node.js
+## Yerel geliştirme
 
+```bash
+npm install
+# .env.local içinde VITE_FIREBASE_* değişkenleri
+npm run dev
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Temel komutlar
+
+| Komut | Açıklama |
+|-------|----------|
+| `npm run dev` | Vite geliştirme sunucusu |
+| `npm run build` | Production build |
+| `npm run lint` | TypeScript (`tsc --noEmit`) |
+| `npm run check` | lint + build |
+| `npm run test:unit` | Domain + API validation birim testleri |
+| `npm run test:e2e` | Functional smoke (screenshot yok) |
+| `npm run test:rules` | Firestore rules (emulator) |
+| `npm run test:visual` | Playwright görsel regresyon |
+| `npm run ci` / `npm run verify` | lint + unit + build + e2e |
+| `npm run doctor` | React Doctor tarama |
+| `npm run doctor:score` | Sadece sağlık skoru |
+
+## Ortam değişkenleri
+
+**İstemci (`VITE_*`):** Firebase web config, isteğe bağlı Sentry DSN.
+
+**Sunucu (Vercel / API — asla `VITE_` ile istemciye koyma):**
+
+- `FIREBASE_SERVICE_ACCOUNT_JSON` veya `FIREBASE_PROJECT_ID` + `FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY`
+- `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`
+- `R2_PRIVATE_BUCKET_NAME`, `R2_PUBLIC_BUCKET_NAME`
+- `VOTE_HASH_SALT` (≥32 karakter)
+
+Ayrıntı: [docs/security-deployment.md](docs/security-deployment.md)
+
+## Dağıtım sırası
+
+1. Env’leri Vercel Production/Preview/Development’a yaz
+2. `npm run check` (+ mümkünse `test:rules`, `test:visual`, `doctor`)
+3. `firebase deploy --only firestore:rules`
+4. Uygulamayı yayınla; smoke: belge yükleme, jüri puan, özel dosya görüntüleme, halk oyu
+
+## Mimari notlar
+
+- **Güvenlik:** Jüri puanı ve halk oyu yalnızca sunucu API; Firestore client write kapalı. Public showcase PII strip.
+- **Depolama:** Özel belgeler R2 private + presigned URL; logolar public bucket.
+- **Admin / Dashboard:** Bölünmüş modüller (`pages/admin/*`, `pages/dashboard/*`).
+- **Domain:** `lib/domain/*` — isim/puan/status/sanitize pure fonksiyonlar.
+- **Görsel kimlik:** [docs/visual-identity-guardrails.md](docs/visual-identity-guardrails.md) — güvenlik/refactor PR’larında görünüm değiştirilmez.
+
+## Ops script’leri
+
+`scripts/` altındaki one-off araçlar (split, öğrenci listesi vb.) production bundle’a girmez. Bkz. `scripts/README.md`.

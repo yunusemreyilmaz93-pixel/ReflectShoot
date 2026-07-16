@@ -29,20 +29,20 @@ export const CMSGeneralTab: React.FC = () => {
                 </h3>
                 <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                        <label className="label-text">Yarışma Şartnamesi URL</label>
-                        <input value={linksForm.specUrl} onChange={(e) => setLinksForm({...linksForm, specUrl: e.target.value})} className="input-field" placeholder="https://..." />
+                        <label className="label-text" htmlFor="cms-general-1">Yarışma Şartnamesi URL</label>
+                        <input id="cms-general-1" value={linksForm.specUrl} onChange={(e) => setLinksForm({...linksForm, specUrl: e.target.value})} className="input-field" placeholder="https://..." />
                     </div>
                     <div>
-                        <label className="label-text">Veli İzin Belgesi URL</label>
-                        <input value={linksForm.parentalUrl} onChange={(e) => setLinksForm({...linksForm, parentalUrl: e.target.value})} className="input-field" placeholder="https://..." />
+                        <label className="label-text" htmlFor="cms-general-2">Veli İzin Belgesi URL</label>
+                        <input id="cms-general-2" value={linksForm.parentalUrl} onChange={(e) => setLinksForm({...linksForm, parentalUrl: e.target.value})} className="input-field" placeholder="https://..." />
                     </div>
                     <div>
-                        <label className="label-text">KVKK Metni URL</label>
-                        <input value={linksForm.kvkkUrl} onChange={(e) => setLinksForm({...linksForm, kvkkUrl: e.target.value})} className="input-field" placeholder="https://..." />
+                        <label className="label-text" htmlFor="cms-general-3">KVKK Metni URL</label>
+                        <input id="cms-general-3" value={linksForm.kvkkUrl} onChange={(e) => setLinksForm({...linksForm, kvkkUrl: e.target.value})} className="input-field" placeholder="https://..." />
                     </div>
                     <div>
-                        <label className="label-text">Afiş / Görsel URL (Opsiyonel)</label>
-                        <input value={linksForm.posterUrl} onChange={(e) => setLinksForm({...linksForm, posterUrl: e.target.value})} className="input-field" placeholder="https://..." />
+                        <label className="label-text" htmlFor="cms-general-4">Afiş / Görsel URL (Opsiyonel)</label>
+                        <input id="cms-general-4" value={linksForm.posterUrl} onChange={(e) => setLinksForm({...linksForm, posterUrl: e.target.value})} className="input-field" placeholder="https://..." />
                     </div>
                 </div>
             </div>
@@ -54,17 +54,17 @@ export const CMSGeneralTab: React.FC = () => {
                 </h3>
                 <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                        <label className="label-text">E-posta Adresi</label>
-                        <input value={generalForm.contactEmail} onChange={(e) => setGeneralForm({...generalForm, contactEmail: e.target.value})} className="input-field" />
+                        <label className="label-text" htmlFor="cms-general-5">E-posta Adresi</label>
+                        <input id="cms-general-5" value={generalForm.contactEmail} onChange={(e) => setGeneralForm({...generalForm, contactEmail: e.target.value})} className="input-field" />
                     </div>
                     <div>
-                        <label className="label-text">Telefon</label>
-                        <input value={generalForm.contactPhone} onChange={(e) => setGeneralForm({...generalForm, contactPhone: e.target.value})} className="input-field" />
+                        <label className="label-text" htmlFor="cms-general-6">Telefon</label>
+                        <input id="cms-general-6" value={generalForm.contactPhone} onChange={(e) => setGeneralForm({...generalForm, contactPhone: e.target.value})} className="input-field" />
                     </div>
                 </div>
                 <div className="mt-4">
-                    <label className="label-text">Adres</label>
-                    <textarea value={generalForm.contactAddress} onChange={(e) => setGeneralForm({...generalForm, contactAddress: e.target.value})} className="input-field h-24 resize-none" />
+                    <label className="label-text" htmlFor="cms-general-7">Adres</label>
+                    <textarea id="cms-general-7" value={generalForm.contactAddress} onChange={(e) => setGeneralForm({...generalForm, contactAddress: e.target.value})} className="input-field h-24 resize-none" />
                 </div>
             </div>
 

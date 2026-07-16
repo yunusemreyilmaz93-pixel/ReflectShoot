@@ -36,8 +36,10 @@ export const NotificationBell: React.FC = () => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button type="button" 
         onClick={() => setIsOpen(!isOpen)}
+        aria-label="Bildirimler"
+        aria-expanded={isOpen}
         className="relative p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-full transition-colors"
       >
         <Bell size={20} />
@@ -67,7 +69,7 @@ export const NotificationBell: React.FC = () => {
                               <span className="text-[10px] text-slate-600 mt-2 block">{new Date(n.createdAt).toLocaleString('tr-TR')}</span>
                           </div>
                           {!n.read && (
-                              <button onClick={(e) => handleRead(e, n.id)} className="text-slate-500 hover:text-green-500 p-1" title="Okundu işaretle">
+                              <button type="button" onClick={(e) => handleRead(e, n.id)} className="text-slate-500 hover:text-green-500 p-1" title="Okundu işaretle">
                                   <Check size={14} />
                               </button>
                           )}

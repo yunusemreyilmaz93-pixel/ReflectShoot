@@ -208,7 +208,7 @@ export const FAQ: React.FC = () => {
         {/* Categories Tabs - Moved Here floating over the sections */}
         <div className="flex flex-wrap justify-center gap-4 mb-16 animate-fadeIn delay-300">
             {categories.map((cat) => (
-                <button
+                <button type="button"
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id as any)}
                     className={getButtonClass(cat.id, activeCategory === cat.id)}
@@ -266,7 +266,7 @@ export const FAQ: React.FC = () => {
                     <div className="col-span-2 text-center py-20 bg-slate-900/50 rounded-3xl border border-slate-800">
                         <Search size={48} className="mx-auto text-slate-700 mb-4" />
                         <p className="text-slate-400 text-lg font-medium">Aradığınız kriterlere uygun sonuç bulunamadı.</p>
-                        <button onClick={() => {setSearchQuery(''); setActiveCategory('Tümü')}} className="mt-4 text-teal-400 hover:text-teal-300 font-bold underline">Filtreleri Temizle</button>
+                        <button type="button" onClick={() => {setSearchQuery(''); setActiveCategory('Tümü')}} className="mt-4 text-teal-400 hover:text-teal-300 font-bold underline">Filtreleri Temizle</button>
                     </div>
                 )}
             </div>
@@ -385,9 +385,9 @@ export const FAQ: React.FC = () => {
                         <form ref={formRef} onSubmit={handleContactSubmit} className="space-y-5">
                             <div className="grid grid-cols-2 gap-5">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ad Soyad</label>
+                                    <label htmlFor="name" className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ad Soyad</label>
                                     <input 
-                                       name="name"
+                                       name="name" id="name"
                                        value={contactForm.name}
                                        onChange={handleContactChange}
                                        required
@@ -396,9 +396,9 @@ export const FAQ: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">E-posta</label>
+                                    <label htmlFor="email" className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">E-posta</label>
                                     <input 
-                                       name="email"
+                                       name="email" id="email"
                                        type="email"
                                        value={contactForm.email}
                                        onChange={handleContactChange}
@@ -410,9 +410,9 @@ export const FAQ: React.FC = () => {
                             </div>
                             
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Konu</label>
+                                <label htmlFor="title" className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Konu</label>
                                 <select 
-                                   name="title"
+                                   name="title" id="title"
                                    value={contactForm.title}
                                    onChange={handleContactChange}
                                    required
@@ -427,9 +427,9 @@ export const FAQ: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Mesajınız</label>
+                                <label htmlFor="message" className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Mesajınız</label>
                                 <textarea 
-                                   name="message"
+                                   name="message" id="message"
                                    value={contactForm.message}
                                    onChange={handleContactChange}
                                    required

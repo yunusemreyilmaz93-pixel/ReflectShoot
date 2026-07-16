@@ -250,16 +250,16 @@ export const JuryDashboard: React.FC = () => {
 
               {/* Filters */}
               <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-                  <button onClick={() => setFilter('ALL')} className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all flex items-center gap-2 whitespace-nowrap ${filter === 'ALL' ? 'bg-slate-800 text-white border-slate-600' : 'text-slate-500 border-transparent hover:bg-slate-900'}`}>
+                  <button type="button" onClick={() => setFilter('ALL')} className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all flex items-center gap-2 whitespace-nowrap ${filter === 'ALL' ? 'bg-slate-800 text-white border-slate-600' : 'text-slate-500 border-transparent hover:bg-slate-900'}`}>
                       <LayoutGrid size={14}/> Tümü
                   </button>
-                  <button onClick={() => setFilter('GRADED')} className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all flex items-center gap-2 whitespace-nowrap ${filter === 'GRADED' ? 'bg-green-900/20 text-green-400 border-green-900/50' : 'text-slate-500 border-transparent hover:bg-slate-900'}`}>
+                  <button type="button" onClick={() => setFilter('GRADED')} className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all flex items-center gap-2 whitespace-nowrap ${filter === 'GRADED' ? 'bg-green-900/20 text-green-400 border-green-900/50' : 'text-slate-500 border-transparent hover:bg-slate-900'}`}>
                       <CheckSquare size={14}/> Tamamlananlar
                   </button>
-                  <button onClick={() => setFilter('DRAFT')} className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all flex items-center gap-2 whitespace-nowrap ${filter === 'DRAFT' ? 'bg-amber-900/20 text-amber-400 border-amber-900/50' : 'text-slate-500 border-transparent hover:bg-slate-900'}`}>
+                  <button type="button" onClick={() => setFilter('DRAFT')} className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all flex items-center gap-2 whitespace-nowrap ${filter === 'DRAFT' ? 'bg-amber-900/20 text-amber-400 border-amber-900/50' : 'text-slate-500 border-transparent hover:bg-slate-900'}`}>
                       <FileEdit size={14}/> Taslaklar
                   </button>
-                  <button onClick={() => setFilter('PENDING')} className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all flex items-center gap-2 whitespace-nowrap ${filter === 'PENDING' ? 'bg-slate-800/50 text-slate-300 border-slate-700' : 'text-slate-500 border-transparent hover:bg-slate-900'}`}>
+                  <button type="button" onClick={() => setFilter('PENDING')} className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all flex items-center gap-2 whitespace-nowrap ${filter === 'PENDING' ? 'bg-slate-800/50 text-slate-300 border-slate-700' : 'text-slate-500 border-transparent hover:bg-slate-900'}`}>
                       <Clock size={14}/> Bekleyenler
                   </button>
               </div>
@@ -344,7 +344,7 @@ export const JuryDashboard: React.FC = () => {
                <div className="w-full max-w-7xl h-full md:h-[90vh] bg-slate-900 md:rounded-3xl overflow-hidden flex flex-col lg:flex-row shadow-2xl border border-slate-800 relative">
                    
                    {/* Close Button */}
-                   <button onClick={handleCloseModal} className="absolute top-4 right-4 z-50 bg-black/50 p-2 rounded-full text-white hover:bg-rose-600 transition-colors">
+                   <button type="button" onClick={handleCloseModal} className="absolute top-4 right-4 z-50 bg-black/50 p-2 rounded-full text-white hover:bg-rose-600 transition-colors" aria-label="Kapat">
                        <X size={24} />
                    </button>
 
@@ -353,14 +353,14 @@ export const JuryDashboard: React.FC = () => {
                         
                         {/* Navigation Overlay (Visible on Hover) */}
                         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 z-30 pointer-events-none">
-                            <button 
+                            <button type="button" 
                                 onClick={() => navigateApp('prev')} 
                                 disabled={!hasPrev}
                                 className={`pointer-events-auto p-3 rounded-full bg-black/50 text-white backdrop-blur-md transition-all hover:bg-rose-600 ${!hasPrev ? 'opacity-0' : 'opacity-100'}`}
                             >
                                 <ChevronLeft size={32} />
                             </button>
-                            <button 
+                            <button type="button" 
                                 onClick={() => navigateApp('next')} 
                                 disabled={!hasNext}
                                 className={`pointer-events-auto p-3 rounded-full bg-black/50 text-white backdrop-blur-md transition-all hover:bg-rose-600 ${!hasNext ? 'opacity-0' : 'opacity-100'}`}
@@ -371,7 +371,7 @@ export const JuryDashboard: React.FC = () => {
 
                         <div className="flex-1 flex items-center justify-center relative">
                             {embedUrl ? (
-                                <iframe 
+                                <iframe title="Video önizleme" 
                                     src={embedUrl} 
                                     className="w-full h-full" 
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -387,9 +387,9 @@ export const JuryDashboard: React.FC = () => {
                         
                         {/* Mobile Navigation Bar (Bottom) */}
                         <div className="lg:hidden flex justify-between items-center p-4 bg-slate-900 border-t border-slate-800">
-                             <button disabled={!hasPrev} onClick={() => navigateApp('prev')} className="text-slate-400 disabled:opacity-30"><ChevronLeft size={24}/></button>
+                             <button type="button" disabled={!hasPrev} onClick={() => navigateApp('prev')} className="text-slate-400 disabled:opacity-30"><ChevronLeft size={24}/></button>
                              <span className="text-xs font-bold text-slate-500">{currentIndex + 1} / {filteredApps.length}</span>
-                             <button disabled={!hasNext} onClick={() => navigateApp('next')} className="text-slate-400 disabled:opacity-30"><ChevronRight size={24}/></button>
+                             <button type="button" disabled={!hasNext} onClick={() => navigateApp('next')} className="text-slate-400 disabled:opacity-30"><ChevronRight size={24}/></button>
                         </div>
                    </div>
 
@@ -400,7 +400,7 @@ export const JuryDashboard: React.FC = () => {
                        {saveError && (
                            <div className="absolute top-0 left-0 right-0 bg-red-600 text-white text-xs font-bold p-3 text-center z-50 flex items-center justify-center gap-2 animate-pulse">
                                <CloudOff size={14}/> {saveError}
-                               <button onClick={() => handleScoreSubmit(myScores[selectedApp.id]?.isDraft)} className="underline ml-2">Tekrar Dene</button>
+                               <button type="button" onClick={() => handleScoreSubmit(myScores[selectedApp.id]?.isDraft)} className="underline ml-2">Tekrar Dene</button>
                            </div>
                        )}
 
@@ -496,7 +496,7 @@ export const JuryDashboard: React.FC = () => {
                            </div>
                            
                            <div className="grid grid-cols-2 gap-3">
-                               <button 
+                               <button type="button" 
                                  onClick={() => handleScoreSubmit(true, false)}
                                  disabled={isSubmitting}
                                  className="bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50"
@@ -504,14 +504,14 @@ export const JuryDashboard: React.FC = () => {
                                    <FileEdit size={16}/> Taslak Kaydet
                                </button>
                                {saveError ? (
-                                   <button 
+                                   <button type="button" 
                                      onClick={() => handleScoreSubmit(false, false)}
                                      className="bg-red-600 hover:bg-red-500 text-white py-3 rounded-xl font-bold transition-all text-sm flex items-center justify-center gap-2 shadow-lg"
                                    >
                                        <RefreshCcw size={16}/> Tekrar Dene
                                    </button>
                                ) : (
-                                   <button 
+                                   <button type="button" 
                                      onClick={() => handleScoreSubmit(false, false)}
                                      disabled={isSubmitting}
                                      className="bg-rose-600 hover:bg-rose-500 text-white py-3 rounded-xl font-bold transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-rose-900/20"
@@ -522,7 +522,7 @@ export const JuryDashboard: React.FC = () => {
                                )}
                            </div>
                            
-                           <button 
+                           <button type="button" 
                                 onClick={() => handleScoreSubmit(false, true)}
                                 className="w-full text-xs text-slate-500 hover:text-slate-300 flex items-center justify-center gap-1 transition-colors py-2"
                            >

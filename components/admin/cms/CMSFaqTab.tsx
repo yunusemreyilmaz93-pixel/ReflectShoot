@@ -45,7 +45,7 @@ export const CMSFaqTab: React.FC = () => {
             <h3 className="font-bold text-white text-lg mb-6 border-b border-slate-700 pb-4 flex items-center justify-between">
                 <span>{isEditing ? 'Soruyu Düzenle' : 'Yeni Soru Ekle'}</span>
                 {isEditing && (
-                    <button onClick={handleCancel} className="text-xs text-rose-400 flex items-center gap-1 hover:underline">
+                    <button type="button" onClick={handleCancel} className="text-xs text-rose-400 flex items-center gap-1 hover:underline" aria-label="Kapat">
                         <X size={14}/> Vazgeç
                     </button>
                 )}
@@ -54,8 +54,8 @@ export const CMSFaqTab: React.FC = () => {
             <form onSubmit={handleSubmit} className={`p-6 rounded-xl border mb-8 transition-all ${isEditing ? 'bg-blue-900/20 border-blue-500/50' : 'bg-slate-900 border-slate-600'}`}>
                 <div className="grid md:grid-cols-4 gap-5 mb-4">
                     <div className="md:col-span-1">
-                        <label className="label-text">Kategori</label>
-                        <select 
+                        <label className="label-text" htmlFor="cms-faq-1">Kategori</label>
+                        <select id="cms-faq-1" 
                             value={faqForm.category} 
                             onChange={(e) => setFaqForm({...faqForm, category: e.target.value as FAQCategory})}
                             className="input-field"
@@ -67,8 +67,8 @@ export const CMSFaqTab: React.FC = () => {
                         </select>
                     </div>
                     <div className="md:col-span-3">
-                        <label className="label-text">Soru</label>
-                        <input 
+                        <label className="label-text" htmlFor="cms-faq-2">Soru</label>
+                        <input id="cms-faq-2" 
                             value={faqForm.question} 
                             onChange={(e) => setFaqForm({...faqForm, question: e.target.value})} 
                             className="input-field" 
@@ -78,8 +78,8 @@ export const CMSFaqTab: React.FC = () => {
                     </div>
                 </div>
                 <div className="mb-4">
-                    <label className="label-text">Cevap</label>
-                    <textarea 
+                    <label className="label-text" htmlFor="cms-faq-3">Cevap</label>
+                    <textarea id="cms-faq-3" 
                         value={faqForm.answer} 
                         onChange={(e) => setFaqForm({...faqForm, answer: e.target.value})} 
                         className="input-field h-24" 
@@ -121,10 +121,10 @@ export const CMSFaqTab: React.FC = () => {
                             </div>
                         </div>
                         <div className="flex gap-2 justify-end ml-4">
-                            <button onClick={() => handleEdit(faq)} className="bg-blue-900/30 text-blue-400 hover:bg-blue-900/50 p-2 rounded-lg transition-colors" title="Düzenle">
+                            <button type="button" onClick={() => handleEdit(faq)} className="bg-blue-900/30 text-blue-400 hover:bg-blue-900/50 p-2 rounded-lg transition-colors" title="Düzenle">
                                 <PenTool size={18}/>
                             </button>
-                            <button onClick={() => deleteCMSFaq(faq.id)} className="bg-red-900/30 text-red-400 hover:bg-red-900/50 p-2 rounded-lg transition-colors" title="Sil">
+                            <button type="button" onClick={() => deleteCMSFaq(faq.id)} className="bg-red-900/30 text-red-400 hover:bg-red-900/50 p-2 rounded-lg transition-colors" title="Sil">
                                 <Trash2 size={18}/>
                             </button>
                         </div>

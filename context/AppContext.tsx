@@ -1,10 +1,9 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-// @ts-ignore
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { 
-    User, onAuthStateChanged, signInWithEmailAndPassword, signOut, 
+    onAuthStateChanged, signInWithEmailAndPassword, signOut, 
     createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, 
-    updateProfile 
+    updateProfile,
 } from 'firebase/auth';
 import { 
     doc, getDoc, setDoc, updateDoc, collection, query, where, onSnapshot, 
@@ -12,117 +11,24 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { authenticatedFetch } from '../lib/authenticatedFetch';
+import { sanitizeData } from '../lib/sanitize';
+import { teamNameError, MAX_TEAMS_PER_TEACHER } from '../lib/domain/teamValidation';
 import { 
     UserProfile, UserRole, Application, ApplicationStatus, SystemSettings, 
-    Notification, ToastMessage, CMSGeneral, CMSLinks, CMSPrize, CMSFaqItem, 
+    Notification, CMSGeneral, CMSLinks, CMSPrize, CMSFaqItem, 
     CMSGalleryItem, CMSAcademyItem, CMSTimelineItem, LogEntry, ContactMessage, 
-    ScoreDocument, Team, Student, EvaluationCriteria, Category, NotificationTarget
+    ScoreDocument, Team, EvaluationCriteria, NotificationTarget
 } from '../types';
-
-const PUBLIC_ASSETS_BASE_URL = "https://assets.reflectandshoot.com";
-
-// Helper to remove undefined values for Firestore
-const sanitizeData = (obj: any): any => {
-    if (Array.isArray(obj)) {
-        return obj.map(v => sanitizeData(v));
-    } else if (obj !== null && typeof obj === 'object') {
-        return Object.keys(obj).reduce((acc, key) => {
-            const value = sanitizeData(obj[key]);
-            if (value !== undefined) {
-                acc[key] = value;
-            }
-            return acc;
-        }, {} as any);
-    }
-    return obj;
-};
-
-interface AppContextType {
-    currentUser: UserProfile | null;
-    loading: boolean;
-    login: (e: string, p: string) => Promise<void>;
-    logout: () => Promise<void>;
-    registerTeacher: (data: any) => Promise<void>;
-    resetPassword: (email: string) => Promise<void>;
-    resendVerificationEmail: () => Promise<void>;
-    
-    currentApplication: Application | null;
-    myApplications: Application[];
-    activeApplicationId: string | null;
-    setActiveApplicationId: (id: string | null) => void;
-    simulatedApplicationId: string | null;
-    setSimulatedApplicationId: (id: string | null) => void;
-    allApplications: Application[];
-    createApplication: (data: any) => Promise<void>;
-    updateApplication: (app: Application) => Promise<void>;
-    updateApplicationStatus: (appId: string, newStatus: ApplicationStatus) => Promise<void>;
-    deleteApplication: (appId: string) => Promise<void>; // Added
-    
-    systemSettings: SystemSettings;
-    updateSystemSettings: (s: SystemSettings) => Promise<void>;
-    
-    cmsGeneral: CMSGeneral;
-    updateCMSGeneral: (d: CMSGeneral) => Promise<void>;
-    cmsLinks: CMSLinks;
-    updateCMSLinks: (d: CMSLinks) => Promise<void>;
-    cmsAcademy: CMSAcademyItem[];
-    addCMSAcademyItem: (i: CMSAcademyItem) => Promise<void>;
-    updateCMSAcademyItem: (id: string, d: Partial<CMSAcademyItem>) => Promise<void>;
-    deleteCMSAcademyItem: (id: string) => Promise<void>;
-    cmsGallery: CMSGalleryItem[];
-    addCMSGalleryItem: (i: CMSGalleryItem) => Promise<void>;
-    deleteCMSGalleryItem: (id: string) => Promise<void>;
-    cmsFaqs: CMSFaqItem[];
-    addCMSFaq: (i: CMSFaqItem) => Promise<void>;
-    updateCMSFaq: (id: string, d: Partial<CMSFaqItem>) => Promise<void>;
-    deleteCMSFaq: (id: string) => Promise<void>;
-    cmsTimeline: CMSTimelineItem[];
-    addCMSTimelineItem: (i: CMSTimelineItem) => Promise<void>;
-    updateCMSTimelineItem: (id: string, d: Partial<CMSTimelineItem>) => Promise<void>;
-    deleteCMSTimelineItem: (id: string) => Promise<void>;
-    cmsPrizes: CMSPrize[];
-    updateCMSPrize: (p: CMSPrize) => Promise<void>;
-    
-    toasts: ToastMessage[];
-    showToast: (msg: string, type?: 'success'|'error'|'info'|'warning') => void;
-    removeToast: (id: string) => void;
-    
-    notifications: Notification[];
-    markNotificationAsRead: (id: string) => Promise<void>;
-    
-    contactMessages: ContactMessage[];
-    sendContactMessage: (data: any) => Promise<void>;
-    markContactMessageAsRead: (id: string) => Promise<void>;
-    replyToContactMessage: (messageId: string, replyText: string) => Promise<void>;
-    deleteContactMessage: (id: string) => Promise<void>; // Added
-    
-    allUsers: UserProfile[];
-    updateUserRole: (uid: string, role: UserRole) => Promise<void>;
-    deleteUser: (uid: string) => Promise<void>;
-    
-    auditLogs: LogEntry[];
-    logAction: (action: string, details: string, targetId?: string) => Promise<void>;
-    
-    fetchJuryScores: (appId: string) => Promise<ScoreDocument[]>;
-    fetchMyScore: (appId: string) => Promise<ScoreDocument | null>;
-    submitScore: (appId: string, criteria: EvaluationCriteria, notes: string, isDraft?: boolean, isRecused?: boolean) => Promise<void>;
-    assignJury: (appId: string, juryIds: string[]) => Promise<void>;
-    bulkAssignJury: (assignments: {appId: string, juryIds: string[]}[]) => Promise<void>;
-    
-    sendMessage: (appId: string, text: string) => Promise<void>;
-    submitPublicVote: (appId: string, fingerprint: string) => Promise<void>;
-    sendAnnouncement: (target: NotificationTarget, title: string, message: string, type: string) => Promise<void>;
-    
-    downloadFullBackup: () => Promise<void>;
-    seedAcademyContent: () => Promise<void>;
-}
+import type { AppContextType } from './appContextTypes';
+import { DEFAULT_SYSTEM_SETTINGS, DEFAULT_CMS_GENERAL, DEFAULT_CMS_LINKS } from './defaults';
+import { useToasts } from './hooks/useToasts';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
-    const [toasts, setToasts] = useState<ToastMessage[]>([]);
+    const { toasts, showToast, removeToast } = useToasts();
     
     // Data States
     const [currentApplication, setCurrentApplication] = useState<Application | null>(null);
@@ -131,39 +37,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [simulatedApplicationId, setSimulatedApplicationId] = useState<string | null>(null);
     const [allApplications, setAllApplications] = useState<Application[]>([]);
     const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
-    const [systemSettings, setSystemSettings] = useState<SystemSettings>({
-        dates: {
-            applicationStart: '2026-01-20T09:00',
-            applicationEnd: '2026-05-04T23:59',
-            videoUploadStart: '2026-01-20T09:00',
-            videoUploadEnd: '2026-05-04T23:59',
-            academyStart: '2026-05-10T09:00',
-            galaDate: '2026-05-22T10:30',
-            finalistRevealStart: '2026-05-07T12:00',
-            reviseUploadEnd: '2026-05-17T23:59',
-            publicVoteStart: '',
-            publicVoteEnd: ''
-        },
-        features: {
-            judgeSystemActive: false,
-            publicResultReveal: false,
-            allowNewRegistrations: true,
-            publicVotingActive: false,
-            videoUploadActive: false,
-            maintenanceMode: false
-        }
-    });
+    const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SYSTEM_SETTINGS);
     
     // CMS States
-    const [cmsGeneral, setCMSGeneral] = useState<CMSGeneral>({
-        contactEmail: '', contactPhone: '', contactAddress: '', socialInstagram: '#', socialTwitter: '#', socialYoutube: '#', footerText: ''
-    });
-    const [cmsLinks, setCMSLinks] = useState<CMSLinks>({ 
-        specUrl: 'https://assets.reflectandshoot.com/Reflect%20And%20Shoot%20Yar%C4%B1%C5%9Fma%20%C5%9Eartnamesi.pdf', 
-        parentalUrl: 'https://assets.reflectandshoot.com/veli_izin_belgesi.pdf', 
-        kvkkUrl: 'https://assets.reflectandshoot.com/acik_riza_metni.pdf', 
-        posterUrl: '' 
-    });
+    const [cmsGeneral, setCMSGeneral] = useState<CMSGeneral>(DEFAULT_CMS_GENERAL);
+    const [cmsLinks, setCMSLinks] = useState<CMSLinks>(DEFAULT_CMS_LINKS);
     const [cmsAcademy, setCmsAcademy] = useState<CMSAcademyItem[]>([]);
     const [cmsGallery, setCmsGallery] = useState<CMSGalleryItem[]>([]);
     const [cmsFaqs, setCmsFaqs] = useState<CMSFaqItem[]>([]);
@@ -173,17 +51,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
     const [auditLogs, setAuditLogs] = useState<LogEntry[]>([]);
-
-    // Toast Helper
-    const showToast = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
-        const id = Math.random().toString(36).substring(7);
-        setToasts(prev => [...prev, { id, message, type }]);
-        setTimeout(() => removeToast(id), 5000);
-    };
-
-    const removeToast = (id: string) => {
-        setToasts(prev => prev.filter(t => t.id !== id));
-    };
 
     // --- AUTH LISTENERS ---
     useEffect(() => {
@@ -393,13 +260,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if(!auth.currentUser) return;
 
         // 0. Limit Check (Max 5 teams)
-        if (myApplications.length >= 5) {
+        if (myApplications.length >= MAX_TEAMS_PER_TEACHER) {
             throw new Error("Bir öğretmen en fazla 5 takıma danışmanlık yapabilir.");
         }
         
         // 1. Character Limit Check
-        if (data.teamName.length < 3 || data.teamName.length > 40) {
-            throw new Error("Takım ismi en az 3, en fazla 40 karakter olmalıdır.");
+        const nameErr = teamNameError(data.teamName || '');
+        if (nameErr) {
+            throw new Error(nameErr);
         }
         // Check uniqueness through the authenticated server without exposing other applications.
         const nameResponse = await authenticatedFetch('/api/team-name-available', {
@@ -450,7 +318,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             submittedAt: new Date().toISOString()
         };
         
-        const safeData = sanitizeData(app);
+        const safeData = sanitizeData(app) as unknown as Record<string, unknown>;
         
         // Use a batch to create app and update user's lastActionAt for rate limiting
         const batch = writeBatch(db);
@@ -465,7 +333,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const updateApplication = async (app: Application) => {
-        const safeData = sanitizeData(app);
+        const safeData = sanitizeData(app) as unknown as Record<string, unknown>;
         await updateDoc(doc(db, "applications", app.id), safeData);
         showToast('Başvuru güncellendi.', 'success');
     };
@@ -801,8 +669,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         showToast("İçerik yükleme özelliği şimdilik devre dışı.", 'info');
     };
 
-    return (
-        <AppContext.Provider value={{
+    const value = useMemo<AppContextType>(() => ({
             currentUser, loading, login, logout, registerTeacher, resetPassword, resendVerificationEmail,
             currentApplication, myApplications, activeApplicationId, setActiveApplicationId, simulatedApplicationId, setSimulatedApplicationId, allApplications, createApplication, updateApplication, updateApplicationStatus, deleteApplication,
             systemSettings, updateSystemSettings,
@@ -820,7 +687,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             fetchJuryScores, fetchMyScore, submitScore, assignJury, bulkAssignJury,
             sendMessage, submitPublicVote, sendAnnouncement,
             downloadFullBackup, seedAcademyContent
-        }}>
+    // Functions close over latest state; state fields are listed as deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }), [
+        currentUser, loading, currentApplication, myApplications, activeApplicationId,
+        simulatedApplicationId, allApplications, systemSettings, cmsGeneral, cmsLinks,
+        cmsAcademy, cmsGallery, cmsFaqs, cmsTimeline, cmsPrizes, toasts, notifications,
+        contactMessages, allUsers, auditLogs, userIp,
+    ]);
+
+    return (
+        <AppContext.Provider value={value}>
             {children}
         </AppContext.Provider>
     );

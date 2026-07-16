@@ -14,12 +14,12 @@ export const AdminCMS: React.FC = () => {
         <div className="space-y-6 animate-fadeIn">
             {/* Tabs */}
             <div className="flex gap-4 border-b border-slate-700 pb-4 overflow-x-auto">
-                <button onClick={() => setActiveTab('GENERAL')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'GENERAL' ? 'bg-amber-500 text-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>Genel & Dosyalar</button>
-                <button onClick={() => setActiveTab('PRIZES')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'PRIZES' ? 'bg-amber-500 text-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>Ödüller</button>
-                <button onClick={() => setActiveTab('FAQ')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'FAQ' ? 'bg-amber-500 text-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>SSS</button>
-                <button onClick={() => setActiveTab('GALLERY')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'GALLERY' ? 'bg-amber-500 text-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>Galeri</button>
-                <button onClick={() => setActiveTab('ACADEMY')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'ACADEMY' ? 'bg-amber-500 text-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>Akademi</button>
-                <button onClick={() => setActiveTab('TIMELINE')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'TIMELINE' ? 'bg-amber-500 text-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>Zaman Çizelgesi</button>
+                <button type="button" onClick={() => setActiveTab('GENERAL')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'GENERAL' ? 'bg-amber-500 text-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>Genel & Dosyalar</button>
+                <button type="button" onClick={() => setActiveTab('PRIZES')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'PRIZES' ? 'bg-amber-500 text-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>Ödüller</button>
+                <button type="button" onClick={() => setActiveTab('FAQ')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'FAQ' ? 'bg-amber-500 text-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>SSS</button>
+                <button type="button" onClick={() => setActiveTab('GALLERY')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'GALLERY' ? 'bg-amber-500 text-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>Galeri</button>
+                <button type="button" onClick={() => setActiveTab('ACADEMY')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'ACADEMY' ? 'bg-amber-500 text-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>Akademi</button>
+                <button type="button" onClick={() => setActiveTab('TIMELINE')} className={`px-6 py-2 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'TIMELINE' ? 'bg-amber-500 text-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>Zaman Çizelgesi</button>
             </div>
 
             {/* Content */}

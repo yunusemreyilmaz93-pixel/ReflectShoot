@@ -83,7 +83,7 @@ export const PublicVote: React.FC = () => {
                        {/* Thumbnail */}
                        <div className="aspect-video bg-black relative flex items-center justify-center overflow-hidden">
                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10 opacity-60"></div>
-                           <img src={app.team.logoUrl || "https://picsum.photos/800/450"} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" />
+                           <img alt="" src={app.team.logoUrl || "https://picsum.photos/800/450"} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" />
                            <div className="absolute z-20 w-16 h-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 group-hover:bg-rose-600 group-hover:border-rose-600 transition-colors">
                                <Play className="fill-white text-white ml-1" size={32} />
                            </div>
@@ -95,7 +95,7 @@ export const PublicVote: React.FC = () => {
                                    <h3 className="text-xl font-bold text-white mb-1 leading-tight">{app.team.name}</h3>
                                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{app.team.category}</p>
                                </div>
-                               <button 
+                               <button type="button" 
                                  onClick={(e) => isVotingActive && handleVote(e, app)}
                                  disabled={!isVotingActive}
                                  className={`p-3 rounded-full transition-all flex items-center gap-2 font-bold text-xs ${votedApps.includes(app.id) ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'}`}
@@ -119,7 +119,7 @@ export const PublicVote: React.FC = () => {
                <div className="w-full max-w-5xl bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800 relative flex flex-col">
                    <div className="aspect-video bg-black relative">
                         {activeVideo.team.videoUrl ? (
-                            <iframe 
+                            <iframe title="Video önizleme" 
                                 src={getYouTubeEmbedUrl(activeVideo.team.videoUrl) || ""} 
                                 className="w-full h-full" 
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -128,7 +128,7 @@ export const PublicVote: React.FC = () => {
                         ) : (
                             <div className="flex items-center justify-center h-full text-slate-500">Video yüklenemedi.</div>
                         )}
-                        <button onClick={() => setActiveVideo(null)} className="absolute top-4 right-4 bg-black/50 p-2 rounded-full text-white hover:bg-rose-600 transition-colors z-20">
+                        <button type="button" onClick={() => setActiveVideo(null)} className="absolute top-4 right-4 bg-black/50 p-2 rounded-full text-white hover:bg-rose-600 transition-colors z-20">
                            <Play size={24} className="rotate-45" /> {/* Close icon trick or import X */}
                         </button>
                    </div>
@@ -138,7 +138,7 @@ export const PublicVote: React.FC = () => {
                            <p className="text-slate-400 mt-1">{activeVideo.team.category} • {activeVideo.teacher.school}</p>
                        </div>
                        <div className="flex gap-4">
-                            <button 
+                            <button type="button" 
                                  onClick={(e) => isVotingActive && handleVote(e, activeVideo)}
                                  disabled={!isVotingActive}
                                  className={`px-8 py-4 rounded-xl transition-all flex items-center gap-3 font-bold ${votedApps.includes(activeVideo.id) ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/50' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'}`}
@@ -146,7 +146,7 @@ export const PublicVote: React.FC = () => {
                                    <Heart size={20} className={votedApps.includes(activeVideo.id) ? 'fill-current' : ''} /> 
                                    {votedApps.includes(activeVideo.id) ? 'Oylandı' : 'Oy Ver'}
                            </button>
-                           <button className="p-4 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all">
+                           <button type="button" className="p-4 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all">
                                <Share2 size={20} />
                            </button>
                        </div>

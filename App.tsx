@@ -1,6 +1,5 @@
 
-
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -8,21 +7,31 @@ import { Home } from './pages/Home';
 import { About } from './pages/About';
 import { Apply } from './pages/Apply';
 import { Login } from './pages/Login';
-import { Dashboard } from './pages/Dashboard';
 import { Academy } from './pages/Academy';
 import { AcademyDetail } from './pages/AcademyDetail';
 import { Finals } from './pages/Finals';
 import { Gallery } from './pages/Gallery';
-import { CinemaShowcase } from './pages/CinemaShowcase';
-import { Admin } from './pages/Admin';
 import { FAQ } from './pages/FAQ';
-import { JuryDashboard } from './pages/JuryDashboard'; 
 import { PublicVote } from './pages/PublicVote'; 
-import { CityGuide } from './pages/CityGuide'; // Import CityGuide
-import { AwardParticipationForm } from './pages/AwardParticipationForm';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { UserRole } from './types';
 import { ShieldAlert, Mail, CheckCircle2, AlertCircle, Info, X, Construction, Settings, AlertTriangle } from 'lucide-react';
+
+// Heavy authenticated / rare routes — loaded on demand (public pages stay eager).
+const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.Dashboard })));
+const Admin = lazy(() => import('./pages/Admin').then((m) => ({ default: m.Admin })));
+const JuryDashboard = lazy(() => import('./pages/JuryDashboard').then((m) => ({ default: m.JuryDashboard })));
+const AwardParticipationForm = lazy(() =>
+  import('./pages/AwardParticipationForm').then((m) => ({ default: m.AwardParticipationForm }))
+);
+const CinemaShowcase = lazy(() => import('./pages/CinemaShowcase').then((m) => ({ default: m.CinemaShowcase })));
+const CityGuide = lazy(() => import('./pages/CityGuide').then((m) => ({ default: m.CityGuide })));
+
+const RouteFallback = () => (
+  <div className="min-h-[40vh] bg-slate-950 flex items-center justify-center" role="status" aria-label="Yükleniyor">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500" />
+  </div>
+);
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -69,7 +78,7 @@ const ToastContainer = () => {
            
            <span className="text-sm font-medium flex-1">{toast.message}</span>
            
-           <button onClick={() => removeToast(toast.id)} className="text-white/50 hover:text-white transition-colors">
+           <button type="button" aria-label="Bildirimi kapat" onClick={() => removeToast(toast.id)} className="text-white/50 hover:text-white transition-colors">
               <X size={16} />
            </button>
         </div>
@@ -113,7 +122,7 @@ const ProtectedRoute = ({ children, allowedRoles }: { children?: React.ReactNode
                   <p className="text-gray-600 mb-6">
                       Sisteme erişebilmek için lütfen <strong>{currentUser.email}</strong> adresine gönderilen doğrulama linkine tıklayınız.
                   </p>
-                  <button onClick={() => resendVerificationEmail()} className="text-rose-600 font-bold hover:underline">Doğrulama mailini tekrar gönder</button>
+                  <button type="button" onClick={() => resendVerificationEmail()} className="text-rose-600 font-bold hover:underline">Doğrulama mailini tekrar gönder</button>
               </div>
           </div>
       );
@@ -165,6 +174,7 @@ const AppRoutes: React.FC = () => {
       
       <ToastContainer />
       <main className="flex-grow">
+        <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
@@ -174,7 +184,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/sinema" element={<CinemaShowcase />} />
           <Route path="/faq" element={<FAQ />} />
-          <Route path="/city-guide" element={<CityGuide />} /> {/* New Route */}
+          <Route path="/city-guide" element={<CityGuide />} />
           <Route path="/award-participation/team/:teamId" element={
             <ProtectedRoute allowedRoles={[UserRole.TEACHER, UserRole.ADMIN]}>
                <AwardParticipationForm />
@@ -202,6 +212,7 @@ const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           } />
         </Routes>
+        </Suspense>
       </main>
       {/* Hide Footer on Maintenance Page */}
       {(!systemSettings.features.maintenanceMode || currentUser?.role === UserRole.ADMIN) && <Footer />}

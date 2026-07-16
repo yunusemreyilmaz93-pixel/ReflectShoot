@@ -117,3 +117,6 @@ dist
 
 test-results/
 playwright-report/
+doctor-baseline.json
+doctor-report.json
+*.doctor.json

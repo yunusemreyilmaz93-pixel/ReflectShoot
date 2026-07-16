@@ -36,7 +36,7 @@ export const CMSTimelineTab: React.FC = () => {
             <h3 className="font-bold text-white text-lg mb-6 border-b border-slate-700 pb-4 flex items-center justify-between">
                 <span>{isEditing ? 'Adımı Düzenle' : 'Yeni Zaman Çizelgesi Adımı'}</span>
                 {isEditing && (
-                    <button onClick={handleCancel} className="text-xs text-rose-400 flex items-center gap-1 hover:underline">
+                    <button type="button" onClick={handleCancel} className="text-xs text-rose-400 flex items-center gap-1 hover:underline" aria-label="Kapat">
                         <X size={14}/> Vazgeç
                     </button>
                 )}
@@ -45,26 +45,26 @@ export const CMSTimelineTab: React.FC = () => {
             <form onSubmit={handleSubmit} className={`p-6 rounded-xl border mb-8 transition-all ${isEditing ? 'bg-blue-900/20 border-blue-500/50' : 'bg-slate-900 border-slate-600'}`}>
                 <div className="grid md:grid-cols-4 gap-5 mb-4">
                     <div>
-                        <label className="label-text">Sıra No</label>
-                        <input type="number" required value={timelineForm.order} onChange={(e) => setTimelineForm({...timelineForm, order: parseInt(e.target.value)})} className="input-field" placeholder="1" />
+                        <label className="label-text" htmlFor="cms-timeline-1">Sıra No</label>
+                        <input id="cms-timeline-1" type="number" required value={timelineForm.order} onChange={(e) => setTimelineForm({...timelineForm, order: parseInt(e.target.value)})} className="input-field" placeholder="1" />
                     </div>
                     <div>
-                        <label className="label-text">Tarih Metni</label>
-                        <input required value={timelineForm.date} onChange={(e) => setTimelineForm({...timelineForm, date: e.target.value})} className="input-field" placeholder="20 Ocak 2026" />
+                        <label className="label-text" htmlFor="cms-timeline-2">Tarih Metni</label>
+                        <input id="cms-timeline-2" required value={timelineForm.date} onChange={(e) => setTimelineForm({...timelineForm, date: e.target.value})} className="input-field" placeholder="20 Ocak 2026" />
                     </div>
                     <div className="col-span-2">
-                        <label className="label-text">Başlık</label>
-                        <input required value={timelineForm.title} onChange={(e) => setTimelineForm({...timelineForm, title: e.target.value})} className="input-field" placeholder="Başvuruların Başlaması" />
+                        <label className="label-text" htmlFor="cms-timeline-3">Başlık</label>
+                        <input id="cms-timeline-3" required value={timelineForm.title} onChange={(e) => setTimelineForm({...timelineForm, title: e.target.value})} className="input-field" placeholder="Başvuruların Başlaması" />
                     </div>
                 </div>
                 <div className="grid md:grid-cols-3 gap-5 mb-4">
                     <div>
-                        <label className="label-text">Hedef Tarih (Geri Sayım İçin)</label>
-                        <input type="datetime-local" value={timelineForm.targetDate} onChange={(e) => setTimelineForm({...timelineForm, targetDate: e.target.value})} className="input-field [color-scheme:dark]" />
+                        <label className="label-text" htmlFor="cms-timeline-4">Hedef Tarih (Geri Sayım İçin)</label>
+                        <input id="cms-timeline-4" type="datetime-local" value={timelineForm.targetDate} onChange={(e) => setTimelineForm({...timelineForm, targetDate: e.target.value})} className="input-field [color-scheme:dark]" />
                     </div>
                     <div>
-                        <label className="label-text">İkon</label>
-                        <select value={timelineForm.icon} onChange={(e) => setTimelineForm({...timelineForm, icon: e.target.value})} className="input-field">
+                        <label className="label-text" htmlFor="cms-timeline-5">İkon</label>
+                        <select id="cms-timeline-5" value={timelineForm.icon} onChange={(e) => setTimelineForm({...timelineForm, icon: e.target.value})} className="input-field">
                             <option value="Clapperboard">Clapperboard</option>
                             <option value="Upload">Upload</option>
                             <option value="Star">Star</option>
@@ -75,8 +75,8 @@ export const CMSTimelineTab: React.FC = () => {
                         </select>
                     </div>
                     <div>
-                        <label className="label-text">Renk</label>
-                        <select value={timelineForm.color} onChange={(e) => setTimelineForm({...timelineForm, color: e.target.value})} className="input-field">
+                        <label className="label-text" htmlFor="cms-timeline-6">Renk</label>
+                        <select id="cms-timeline-6" value={timelineForm.color} onChange={(e) => setTimelineForm({...timelineForm, color: e.target.value})} className="input-field">
                             <option value="teal">Teal</option>
                             <option value="rose">Rose</option>
                             <option value="amber">Amber</option>
@@ -84,8 +84,8 @@ export const CMSTimelineTab: React.FC = () => {
                     </div>
                 </div>
                 <div className="mb-4">
-                    <label className="label-text">Açıklama</label>
-                    <input value={timelineForm.description} onChange={(e) => setTimelineForm({...timelineForm, description: e.target.value})} className="input-field" placeholder="Açıklama..." />
+                    <label className="label-text" htmlFor="cms-timeline-7">Açıklama</label>
+                    <input id="cms-timeline-7" value={timelineForm.description} onChange={(e) => setTimelineForm({...timelineForm, description: e.target.value})} className="input-field" placeholder="Açıklama..." />
                 </div>
                 <div className="text-right flex justify-end gap-3">
                     {isEditing && (
@@ -116,10 +116,10 @@ export const CMSTimelineTab: React.FC = () => {
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <button onClick={() => handleEdit(item)} className="bg-blue-900/30 text-blue-400 hover:bg-blue-900/50 p-2 rounded-lg transition-colors" title="Düzenle">
+                            <button type="button" onClick={() => handleEdit(item)} className="bg-blue-900/30 text-blue-400 hover:bg-blue-900/50 p-2 rounded-lg transition-colors" title="Düzenle">
                                 <PenTool size={18}/>
                             </button>
-                            <button onClick={() => deleteCMSTimelineItem(item.id)} className="bg-red-900/30 text-red-400 hover:bg-red-900/50 p-2 rounded-lg transition-colors" title="Sil">
+                            <button type="button" onClick={() => deleteCMSTimelineItem(item.id)} className="bg-red-900/30 text-red-400 hover:bg-red-900/50 p-2 rounded-lg transition-colors" title="Sil">
                                 <Trash2 size={18}/>
                             </button>
                         </div>

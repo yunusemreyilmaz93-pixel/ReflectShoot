@@ -550,19 +550,19 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                         </div>
                     </div>
                     <div className="flex flex-wrap gap-2.5 w-full sm:w-auto">
-                        <button
+                        <button type="button"
                             onClick={() => setShowWinnerStudentsList(!showWinnerStudentsList)}
                             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-750 text-amber-500 hover:text-amber-400 px-4 py-2.5 rounded-xl text-xs font-black transition-all border border-slate-700 cursor-pointer"
                         >
                             Öğrenci Listesi Göster / Kopyala
                         </button>
-                        <button
+                        <button type="button"
                             onClick={exportRankingsPDF}
                             className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-black transition-all shadow-md shadow-amber-500/10 active:scale-95 cursor-pointer"
                         >
                             <Download size={14} className="stroke-[3]" /> Derece Listesi PDF İndir
                         </button>
-                        <button
+                        <button type="button"
                             onClick={() => setShowOfficialRankings(!showOfficialRankings)}
                             className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-colors border border-slate-700"
                         >
@@ -578,7 +578,7 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                                 <h4 className="text-sm font-black text-amber-400 tracking-wider uppercase">🏆 Ödül Alan Takımlar & Öğrenci Listeleri</h4>
                                 <p className="text-[11px] text-slate-500 mt-0.5">Aşağıdaki listeyi kopyalayarak sertifikalar, davetiyeler veya diğer dökümanlar için doğrudan kullanabilirsiniz.</p>
                             </div>
-                            <button
+                            <button type="button"
                                 onClick={() => {
                                     const text = getWinnerStudentsText();
                                     navigator.clipboard.writeText(text);
@@ -722,10 +722,10 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                     </div>
                     
                     <div className="flex gap-2">
-                        <button onClick={exportToPDF} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-xl font-bold flex items-center gap-2 border border-slate-700 transition-colors">
+                        <button type="button" onClick={exportToPDF} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-xl font-bold flex items-center gap-2 border border-slate-700 transition-colors">
                             <Download size={18} /> PDF Olarak İndir
                         </button>
-                        <button onClick={exportToExcel} className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-xl font-bold flex items-center gap-2 border border-emerald-600 transition-colors">
+                        <button type="button" onClick={exportToExcel} className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-xl font-bold flex items-center gap-2 border border-emerald-600 transition-colors">
                             <Download size={18} /> Excel Olarak İndir
                         </button>
                     </div>
@@ -793,7 +793,7 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                                             <td className="p-4">
                                                 <div className="flex flex-col gap-1.5">
                                                     {app.team.videoUrl ? (
-                                                        <button
+                                                        <button type="button"
                                                             onClick={() => setPreviewVideoUrl(app.team.videoUrl || null)}
                                                             className="inline-flex items-center gap-1 bg-red-500/10 hover:bg-red-500/20 text-rose-400 border border-red-500/20 text-[11px] px-2 py-1 rounded font-bold transition-all w-fit cursor-pointer"
                                                             title="YouTube Üzerinden İzle"
@@ -850,7 +850,7 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                                                 <div className="text-sm text-slate-300">{p?.transportationType || '-'}</div>
                                             </td>
                                             <td className="p-4">
-                                                <button
+                                                <button type="button"
                                                     onClick={() => setSelectedAppView(app.id)}
                                                     className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-colors"
                                                     title="Form Detaylarını Gör"
@@ -876,7 +876,7 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                                 <h3 className="text-xl font-black text-white">Katılım Formu Detayları</h3>
                                 <p className="text-sm text-slate-400 mt-1">Form verileri ve konaklama talepleri</p>
                             </div>
-                            <button onClick={() => setSelectedAppView(null)} className="text-slate-500 hover:text-white p-2">
+                            <button type="button" onClick={() => setSelectedAppView(null)} className="text-slate-500 hover:text-white p-2">
                                 <XSquare size={24} />
                             </button>
                         </div>
@@ -912,7 +912,7 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                                                     <div>
                                                         <span className="text-slate-500 text-xs font-bold block mb-2 uppercase">Tanımlanan YouTube Yayını</span>
                                                         <div className="rounded-xl overflow-hidden border border-slate-700 aspect-video">
-                                                            <iframe
+                                                            <iframetitle="Video önizleme" 
                                                                 src={getYouTubeEmbedUrl(app.team.videoUrl) || ""}
                                                                 className="w-full h-full"
                                                                 allowFullScreen
@@ -991,7 +991,7 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                             <h4 className="font-bold text-white text-sm flex items-center gap-2">
                                 <Video className="text-rose-500 animate-pulse" size={16} /> Film Ön İzleme
                             </h4>
-                            <button 
+                            <button type="button" 
                                 onClick={() => setPreviewVideoUrl(null)} 
                                 className="text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded-lg transition-colors"
                             >
@@ -999,7 +999,7 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                             </button>
                         </div>
                         <div className="aspect-video w-full bg-black">
-                            <iframe
+                            <iframetitle="Video önizleme" 
                                 src={getYouTubeEmbedUrl(previewVideoUrl) || ""}
                                 className="w-full h-full"
                                 allowFullScreen

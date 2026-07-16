@@ -175,7 +175,7 @@ export const Academy: React.FC = () => {
                          const style = getCategoryStyle(cat.id);
                          const isActive = activeCategory === cat.id;
                          return (
-                             <button
+                             <button type="button"
                                  key={cat.id}
                                  onClick={() => setActiveCategory(cat.id)}
                                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all ${isActive ? style.activeBtn : style.inactiveBtn}`}
@@ -195,7 +195,7 @@ export const Academy: React.FC = () => {
                         </div>
                         <h3 className="text-white font-bold text-xl mb-2">İçerik Bulunamadı</h3>
                         <p className="text-slate-500 text-sm mb-6">Bu kategoride henüz eğitim materyali eklenmemiş.</p>
-                        <button onClick={() => setActiveCategory('Tümü')} className="text-blue-400 text-sm font-bold hover:underline">Tümünü Göster</button>
+                        <button type="button" onClick={() => setActiveCategory('Tümü')} className="text-blue-400 text-sm font-bold hover:underline">Tümünü Göster</button>
                     </div>
                 )}
                 
@@ -242,7 +242,7 @@ export const Academy: React.FC = () => {
                                 
                                 <div className="mt-auto pt-6 border-t border-slate-800 flex items-center justify-between">
                                     <div className="flex gap-2">
-                                        <button 
+                                        <button type="button" 
                                             className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1 hover:underline ${styles.btn}`}
                                             onClick={(e) => { e.stopPropagation(); handleCardClick(item); }}
                                         >

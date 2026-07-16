@@ -128,15 +128,13 @@ export const Apply: React.FC = () => {
             
             <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                    Ad Soyad
-                  </label>
+                  <label htmlFor="name" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Ad Soyad</label>
                   <div className="relative rounded-lg shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <User className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
-                      name="name"
+                      name="name" id="name"
                       type="text"
                       required
                       value={formData.name}
@@ -148,15 +146,13 @@ export const Apply: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                    E-posta
-                  </label>
+                  <label htmlFor="email" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">E-posta</label>
                   <div className="relative rounded-lg shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Mail className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
-                      name="email"
+                      name="email" id="email"
                       type="email"
                       required
                       value={formData.email}
@@ -170,15 +166,13 @@ export const Apply: React.FC = () => {
 
             <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                    Okul Adı
-                  </label>
+                  <label htmlFor="school" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Okul Adı</label>
                   <div className="relative rounded-lg shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <School className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
-                      name="school"
+                      name="school" id="school"
                       type="text"
                       required
                       value={formData.school}
@@ -190,15 +184,13 @@ export const Apply: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                    Şehir
-                  </label>
+                  <label htmlFor="city" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Şehir</label>
                   <div className="relative rounded-lg shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <MapPin className="h-5 w-5 text-gray-400" />
                     </div>
                     <select
-                      name="city"
+                      name="city" id="city"
                       required
                       value={formData.city}
                       onChange={handleChange}
@@ -218,15 +210,13 @@ export const Apply: React.FC = () => {
 
             <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                    Şifre
-                  </label>
+                  <label htmlFor="password" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Şifre</label>
                   <div className="relative rounded-lg shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Lock className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
-                      name="password"
+                      name="password" id="password"
                       type="password"
                       required
                       value={formData.password}
@@ -238,15 +228,13 @@ export const Apply: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                    Şifre Tekrar
-                  </label>
+                  <label htmlFor="confirmPassword" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Şifre Tekrar</label>
                   <div className="relative rounded-lg shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Lock className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
-                      name="confirmPassword"
+                      name="confirmPassword" id="confirmPassword"
                       type="password"
                       required
                       value={formData.confirmPassword}

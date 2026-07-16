@@ -135,7 +135,7 @@ export const AcademyDetail: React.FC = () => {
                  </h3>
                  
                  <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-2xl border border-slate-800 bg-black relative z-10">
-                     <iframe 
+                     <iframe title="Video önizleme" 
                         src={embedUrl}
                         className="w-full h-full"
                         allowFullScreen

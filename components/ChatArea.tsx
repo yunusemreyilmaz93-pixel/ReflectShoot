@@ -135,10 +135,11 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ appId, theme = 'dark' }) => 
             <input 
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Mesajınızı yazın..." 
+                placeholder="Mesajınızı yazın..."
+                aria-label="Mesaj"
                 className={`flex-1 border rounded-xl px-5 py-4 text-sm outline-none transition-all shadow-sm ${inputClass}`}
             />
-            <button type="submit" className="bg-rose-600 hover:bg-rose-500 text-white p-4 rounded-xl transition-all shadow-lg shadow-rose-600/20 transform hover:-translate-y-0.5 active:translate-y-0">
+            <button type="submit" aria-label="Gönder" className="bg-rose-600 hover:bg-rose-500 text-white p-4 rounded-xl transition-all shadow-lg shadow-rose-600/20 transform hover:-translate-y-0.5 active:translate-y-0">
                 <Send size={20} />
             </button>
         </form>

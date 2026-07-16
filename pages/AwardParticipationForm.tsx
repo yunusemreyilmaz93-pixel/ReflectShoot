@@ -353,12 +353,17 @@ export const AwardParticipationForm = () => {
     (patch: Partial<AwardParticipation>) => {
       setFormData((prev) => {
         const next = { ...prev, ...patch };
-        scheduleAutoSave(next);
         return next;
       });
     },
-    [scheduleAutoSave]
+    []
   );
+
+  // Auto-save after form state changes (side effects outside the updater)
+  useEffect(() => {
+    if (isSubmitted || !formData.applicationId) return;
+    scheduleAutoSave(formData);
+  }, [formData, isSubmitted, scheduleAutoSave]);
 
   // ── Student helpers ──
   const handleStudentChange = useCallback(
@@ -366,12 +371,10 @@ export const AwardParticipationForm = () => {
       setFormData((prev) => {
         const newStudents = [...(prev.students || [])];
         newStudents[index] = { ...newStudents[index], [field]: value };
-        const next = { ...prev, students: newStudents };
-        scheduleAutoSave(next);
-        return next;
+        return { ...prev, students: newStudents };
       });
     },
-    [scheduleAutoSave]
+    []
   );
 
   const addStudent = () => {
@@ -432,7 +435,7 @@ export const AwardParticipationForm = () => {
         <div className="max-w-lg w-full bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center">
           <AlertTriangle className="text-amber-500 w-14 h-14 mx-auto mb-5" />
           <h2 className="text-xl font-bold text-white mb-4">{accessError}</h2>
-          <button
+          <button type="button"
             onClick={() => navigate('/dashboard')}
             className="mt-4 bg-amber-600 hover:bg-amber-500 text-black font-bold py-3 px-8 rounded-xl transition-colors"
           >
@@ -464,13 +467,13 @@ export const AwardParticipationForm = () => {
             </p>
           </div>
           <div className="flex gap-3 justify-center flex-wrap">
-            <button
+            <button type="button"
               onClick={() => navigate('/city-guide')}
               className="bg-amber-600 hover:bg-amber-500 text-black font-bold py-3 px-7 rounded-xl transition-colors"
             >
               Şehir Rehberi
             </button>
-            <button
+            <button type="button"
               onClick={() => navigate('/dashboard')}
               className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-7 rounded-xl transition-colors"
             >

@@ -185,7 +185,7 @@ export const Gallery: React.FC = () => {
 
           <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800/80 w-full md:w-auto">
             {['2025-2026', '2024-2025'].map((season) => (
-              <button
+              <button type="button"
                 key={season}
                 onClick={() => {
                   setActiveSeason(season as '2024-2025' | '2025-2026');
@@ -212,7 +212,7 @@ export const Gallery: React.FC = () => {
           </span>
           <div className="flex flex-wrap gap-2.5">
             {availableCategories.map((cat) => (
-              <button
+              <button type="button"
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${
@@ -277,7 +277,7 @@ export const Gallery: React.FC = () => {
             className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-fadeIn"
             onClick={() => setSelectedImage(null)}
           >
-              <button 
+              <button type="button" 
                 className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors p-3 hover:bg-white/10 rounded-full"
                 onClick={() => setSelectedImage(null)}
               >
