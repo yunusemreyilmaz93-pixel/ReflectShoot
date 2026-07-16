@@ -20,7 +20,6 @@ import { JuryDashboard } from './pages/JuryDashboard';
 import { PublicVote } from './pages/PublicVote'; 
 import { CityGuide } from './pages/CityGuide'; // Import CityGuide
 import { AwardParticipationForm } from './pages/AwardParticipationForm';
-import { SetupAdmin } from './pages/SetupAdmin';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { UserRole } from './types';
 import { ShieldAlert, Mail, CheckCircle2, AlertCircle, Info, X, Construction, Settings, AlertTriangle } from 'lucide-react';
@@ -182,7 +181,6 @@ const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           } />
           <Route path="/login" element={<Login />} />
-          <Route path="/setup-admin" element={<SetupAdmin />} />
           <Route path="/apply" element={<Apply />} />
           <Route path="/vote" element={<PublicVote />} />
 

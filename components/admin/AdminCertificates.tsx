@@ -9,6 +9,7 @@ import {
 } from '../../lib/certificates';
 import { uploadFileToR2 } from '../../lib/cloudStorage';
 import { useAppContext } from '../../context/AppContext';
+import { authenticatedFetch } from '../../lib/authenticatedFetch';
 
 export const AdminCertificates: React.FC = () => {
   const { showToast } = useAppContext();
@@ -121,7 +122,7 @@ export const AdminCertificates: React.FC = () => {
           throw new Error('Sertifika şablonu yüklü değil. Lütfen önce bir PDF şablonu yükleyin veya seçin.');
         }
         
-        const viewResponse = await fetch(`/api/view?key=${encodeURIComponent(config.templateKey)}`);
+        const viewResponse = await authenticatedFetch(`/api/view?key=${encodeURIComponent(config.templateKey)}`);
         if (!viewResponse.ok) {
           throw new Error('Şablon adresi alınamadı.');
         }

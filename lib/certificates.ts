@@ -2,6 +2,7 @@ import { PDFDocument, rgb, degrees } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
+import { authenticatedFetch } from './authenticatedFetch';
 
 export interface CertificateConfig {
   templateKey: string; // R2 file key of the PDF template
@@ -253,7 +254,7 @@ export async function downloadCertificate({
     }
     
     // 2. Fetch template PDF signed URL
-    const viewResponse = await fetch(`/api/view?key=${encodeURIComponent(config.templateKey)}`);
+    const viewResponse = await authenticatedFetch(`/api/view?key=${encodeURIComponent(config.templateKey)}`);
     if (!viewResponse.ok) {
       throw new Error('Sertifika şablonu indirme adresi alınamadı.');
     }

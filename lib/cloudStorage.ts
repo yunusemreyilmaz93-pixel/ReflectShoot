@@ -1,5 +1,6 @@
 
 import { jsPDF } from 'jspdf';
+import { authenticatedFetch } from './authenticatedFetch';
 
 /**
  * Dosyayı Cloudflare R2'ye yükler (Private Bucket).
@@ -48,13 +49,14 @@ export const uploadFileToR2 = async (file: File, customKey?: string): Promise<st
         contentType = contentType || 'application/octet-stream';
 
         // 1. Get Presigned URL from our API
-        const apiResponse = await fetch('/api/upload', {
+        const apiResponse = await authenticatedFetch('/api/upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 filename: fileName,
                 contentType: contentType,
-                customKey
+                customKey,
+                fileSize: fileToUpload.size
             })
         });
 
@@ -120,12 +122,13 @@ export const uploadPublicLogo = async (file: File, teamId: string): Promise<stri
     try {
         const contentType = file.type || 'image/png';
 
-        const apiResponse = await fetch('/api/public-upload', {
+        const apiResponse = await authenticatedFetch('/api/public-upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contentType: contentType,
-                teamId
+                teamId,
+                fileSize: file.size
             })
         });
 

@@ -9,9 +9,9 @@ import {
 import { 
     doc, getDoc, setDoc, updateDoc, collection, query, where, onSnapshot, 
     addDoc, getDocs, deleteDoc, orderBy, serverTimestamp, limit, writeBatch,
-    Timestamp, arrayUnion, arrayRemove
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { authenticatedFetch } from '../lib/authenticatedFetch';
 import { 
     UserProfile, UserRole, Application, ApplicationStatus, SystemSettings, 
     Notification, ToastMessage, CMSGeneral, CMSLinks, CMSPrize, CMSFaqItem, 
@@ -43,7 +43,6 @@ interface AppContextType {
     login: (e: string, p: string) => Promise<void>;
     logout: () => Promise<void>;
     registerTeacher: (data: any) => Promise<void>;
-    createAdminAccount: (email: string, pass: string) => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
     resendVerificationEmail: () => Promise<void>;
     
@@ -225,20 +224,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const unsubTimeline = onSnapshot(query(collection(db, "cms_timeline"), orderBy("order")), (snap) => setCmsTimeline(snap.docs.map(d => ({id:d.id, ...d.data()} as CMSTimelineItem))), (err) => console.error("Timeline listener error:", err));
         const unsubPrizes = onSnapshot(collection(db, "cms_prizes"), (snap) => setCmsPrizes(snap.docs.map(d => ({id:d.id, ...d.data()} as CMSPrize))), (err) => console.error("Prizes listener error:", err));
 
-        // Public Vote / Finalists for everyone (so guests can see voting page)
-        const unsubFinalists = onSnapshot(query(collection(db, "applications"), where("team.isFinalist", "==", true)), (snap) => {
-            if (!currentUser) {
-                 setAllApplications(snap.docs.map(d => ({id:d.id, ...d.data()} as Application)));
-            }
-        }, (error) => {
-            console.log("Public finalist fetch info:", error.message);
-        });
+        // Guests receive a deliberately sanitized projection from the server.
+        // Private application documents never cross the public Firestore boundary.
+        let publicRequestCancelled = false;
+        if (!currentUser) {
+            fetch('/api/public-showcase')
+                .then(async response => {
+                    if (!response.ok) throw new Error('Public showcase could not be loaded');
+                    return response.json();
+                })
+                .then(data => {
+                    if (!publicRequestCancelled) {
+                        setAllApplications((data.applications || []) as Application[]);
+                    }
+                })
+                .catch(error => {
+                    console.log("Public showcase fetch info:", error.message);
+                });
+        }
 
         return () => {
+            publicRequestCancelled = true;
             unsubSettings();
             unsubGeneral(); unsubLinks();
             unsubAcademy(); unsubGallery(); unsubFaq(); unsubTimeline(); unsubPrizes();
-            unsubFinalists();
         }
     }, [currentUser]);
 
@@ -359,7 +368,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             fullName: data.name,
             school: data.school,
             city: data.city,
-            role: data.email.endsWith('@k12.tr') ? UserRole.TEACHER : UserRole.PENDING_TEACHER,
+            role: UserRole.PENDING_TEACHER,
             createdAt: new Date().toISOString(),
             emailVerified: false,
             lastActionAt: serverTimestamp()
@@ -369,25 +378,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setCurrentUser(userProfile);
     };
 
-    const createAdminAccount = async (email: string, pass: string) => {
-        const { user } = await createUserWithEmailAndPassword(auth, email, pass);
-        await updateProfile(user, { displayName: "Admin" });
-        
-        const userProfile: UserProfile = {
-            uid: user.uid,
-            email: email,
-            fullName: "Admin",
-            school: "System",
-            city: "System",
-            role: UserRole.ADMIN,
-            createdAt: new Date().toISOString(),
-            emailVerified: true,
-            lastActionAt: serverTimestamp()
-        };
-        
-        await setDoc(doc(db, "users", user.uid), userProfile);
-        setCurrentUser(userProfile);
-    };
 
     const resetPassword = async (email: string) => {
         await sendPasswordResetEmail(auth, email);
@@ -411,11 +401,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (data.teamName.length < 3 || data.teamName.length > 40) {
             throw new Error("Takım ismi en az 3, en fazla 40 karakter olmalıdır.");
         }
-
-        // 2. Duplicate Name Check
-        const q = query(collection(db, "applications"), where("team.name", "==", data.teamName));
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
+        // Check uniqueness through the authenticated server without exposing other applications.
+        const nameResponse = await authenticatedFetch('/api/team-name-available', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: data.teamName })
+        });
+        const nameResult = await nameResponse.json().catch(() => ({}));
+        if (!nameResponse.ok) {
+            throw new Error(nameResult.error || 'Takım adı kontrol edilemedi.');
+        }
+        if (!nameResult.available) {
             throw new Error("Bu takım ismi zaten alınmış. Lütfen başka bir isim seçiniz.");
         }
         
@@ -585,9 +581,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const sendContactMessage = async (data: any) => {
-        await addDoc(collection(db, "contact_messages"), {
-            ...data, createdAt: new Date().toISOString(), status: 'UNREAD'
+        const response = await fetch('/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
         });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(result.error || 'Mesajınız gönderilemedi.');
+        }
         showToast("Mesajınız iletildi.", 'success');
     };
 
@@ -651,68 +653,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const submitScore = async (appId: string, criteria: EvaluationCriteria, notes: string, isDraft: boolean = false, isRecused: boolean = false) => {
-        if(!currentUser) return;
-        
-        const batch = writeBatch(db);
-        
-        // Save the individual score document
-        const total = isRecused ? 0 : (criteria.story + criteria.technical + criteria.originality + criteria.themeFit);
-        const scoreDoc: ScoreDocument = {
-            juryId: currentUser.uid,
-            juryName: currentUser.fullName,
-            total, criteria, notes,
-            updatedAt: new Date().toISOString(),
-            isDraft,
-            isRecused
-        };
-        
-        const scoreRef = doc(db, "applications", appId, "scores", currentUser.uid);
-        batch.set(scoreRef, scoreDoc);
-        
-        // Update user's lastActionAt for rate limiting
-        batch.update(doc(db, "users", currentUser.uid), { lastActionAt: serverTimestamp() });
-        
-        // Handle Global Aggregation & Status
-        const appRef = doc(db, "applications", appId);
+        if (!currentUser) return;
 
-        // Commit the score first to fetch it correctly in aggregate
-        await batch.commit(); 
-        
-        // 1. Fetch all scores to recalculate averages
-        const scores = await fetchJuryScores(appId);
-        
-        // Filter out drafts and recusals for the math
-        const validScores = scores.filter(s => !s.isDraft && !s.isRecused);
-        
-        // Format to 2 decimal places to avoid long floating point strings, or just keep as number but rounded
-        const avg = validScores.length > 0 
-            ? Math.round((validScores.reduce((acc, s) => acc + s.total, 0) / validScores.length) * 10) / 10 
-            : 0;
-        
+        const response = await authenticatedFetch('/api/jury-score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ appId, criteria, notes, isDraft, isRecused })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(result.error || 'Puan kaydedilemedi.');
+        }
+
         if (isDraft) {
-            // Update Application Doc but remove from gradedBy
-            await updateDoc(appRef, {
-                finalScore: avg,
-                juryCount: validScores.length,
-                gradedBy: arrayRemove(currentUser.uid)
-            });
             showToast("Taslak olarak kaydedildi.", 'info');
-        } else {
-            // Update Application Doc and add to gradedBy
-            await updateDoc(appRef, {
-                finalScore: avg,
-                juryCount: validScores.length, 
-                gradedBy: arrayUnion(currentUser.uid),
-                status: ApplicationStatus.GRADED
-            });
+            return;
+        }
 
-            if (isRecused) {
-                showToast("Bu eser için çekimser kaldınız.", 'warning');
-                await logAction("RECUSE_SCORE", `Jüri çekimser kaldı.`, appId);
-            } else {
-                showToast("Puan kaydedildi ve gönderildi.", 'success');
-                await logAction("SUBMIT_SCORE", `Puan verildi: ${total}`, appId);
-            }
+        if (isRecused) {
+            showToast("Bu eser için çekimser kaldınız.", 'warning');
+            await logAction("RECUSE_SCORE", 'Jüri çekimser kaldı.', appId);
+        } else {
+            showToast("Puan kaydedildi ve gönderildi.", 'success');
+            await logAction("SUBMIT_SCORE", `Puan verildi: ${result.total}`, appId);
         }
     };
 
@@ -768,19 +731,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     const submitPublicVote = async (appId: string, fingerprint: string) => {
-        const q = query(collection(db, "public_votes"), where("voterFingerprint", "==", fingerprint), where("appId", "==", appId));
-        const snap = await getDocs(q);
-        if(!snap.empty) throw new Error("Bu videoya daha önce oy verdiniz.");
-
-        await addDoc(collection(db, "public_votes"), {
-            appId, fingerprint, timestamp: new Date().toISOString()
+        const response = await fetch('/api/public-vote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ appId, fingerprint }),
         });
-        
-        const appRef = doc(db, "applications", appId);
-        const appSnap = await getDoc(appRef);
-        if(appSnap.exists()) {
-            await updateDoc(appRef, { publicVotes: (appSnap.data().publicVotes || 0) + 1 });
+
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(result.error || 'Oyunuz kaydedilemedi.');
         }
+
+        setAllApplications(previous => previous.map(application =>
+            application.id === appId
+                ? { ...application, team: { ...application.team, publicVotes: (application.team.publicVotes || 0) + 1 } }
+                : application
+        ));
     };
 
     const sendAnnouncement = async (target: NotificationTarget, title: string, message: string, type: string) => {
@@ -837,7 +803,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     return (
         <AppContext.Provider value={{
-            currentUser, loading, login, logout, registerTeacher, createAdminAccount, resetPassword, resendVerificationEmail,
+            currentUser, loading, login, logout, registerTeacher, resetPassword, resendVerificationEmail,
             currentApplication, myApplications, activeApplicationId, setActiveApplicationId, simulatedApplicationId, setSimulatedApplicationId, allApplications, createApplication, updateApplication, updateApplicationStatus, deleteApplication,
             systemSettings, updateSystemSettings,
             cmsGeneral, updateCMSGeneral, cmsLinks, updateCMSLinks, 

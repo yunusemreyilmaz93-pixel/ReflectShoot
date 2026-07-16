@@ -1,8 +1,6 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- HELPER FUNCTIONS ---
     function isSignedIn() {
       return request.auth != null;
     }
@@ -11,140 +9,219 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function getUserData() {
-      return isSignedIn() 
-             ? (exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
-                ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data
-                : null)
-             : null;
+    function hasProfile() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
     function hasRole(role) {
-      let userData = getUserData();
+      return hasProfile() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+
+    function isVerifiedRole(role) {
+      return hasRole(role) && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return hasRole('ADMIN');
+    }
+
+    function isApplicationOwnerData(data) {
+      return isSignedIn() && data.teacher.id == request.auth.uid;
+    }
+
+    function ownsApplication(appId) {
       return isSignedIn() &&
-             userData != null &&
-             (userData.role == role || userData.role == role.lower());
+        get(/databases/$(database)/documents/applications/$(appId)).data.teacher.id == request.auth.uid;
+    }
+
+    function isAssignedJudgeData(data) {
+      return isVerifiedRole('JUDGE') &&
+        data.assignedJuryIds is list &&
+        request.auth.uid in data.assignedJuryIds;
     }
 
     function isNotRateLimited() {
-      let userData = getUserData();
-      return userData == null ||
-             !('lastActionAt' in userData) ||
-             request.time > userData.lastActionAt + duration.value(10, 's');
+      return !hasProfile() ||
+        !('lastActionAt' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data) ||
+        request.time > get(/databases/$(database)/documents/users/$(request.auth.uid)).data.lastActionAt + duration.value(2, 's');
     }
 
-    // --- 1. SYSTEM & CMS ---
+    function validApplicationCreate(appId) {
+      return request.resource.data.keys().hasOnly(['id', 'teacher', 'team', 'status', 'submittedAt', 'updatedAt']) &&
+        request.resource.data.id == appId &&
+        request.resource.data.teacher.id == request.auth.uid &&
+        request.resource.data.status == 'Taslak' &&
+        request.resource.data.team.name is string &&
+        request.resource.data.team.name.size() >= 3 &&
+        request.resource.data.team.name.size() <= 40 &&
+        request.resource.data.team.students is list &&
+        request.resource.data.team.students.size() >= 1 &&
+        request.resource.data.team.students.size() <= 5;
+    }
+
+    function validOwnerApplicationUpdate() {
+      return request.resource.data.teacher == resource.data.teacher &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['team', 'status', 'submittedAt', 'updatedAt']) &&
+        request.resource.data.team.diff(resource.data.team).affectedKeys().hasOnly([
+          'name', 'logoUrl', 'logoKey', 'category', 'theme', 'selectedVerse',
+          'selectedTopic', 'students', 'submissionDownloadUrl', 'videoUrl',
+          'videoStatus', 'isPreliminaryStageComplete', 'isFinalStageComplete',
+          'participationFormStatus', 'participationSubmittedAt'
+        ]) &&
+        request.resource.data.team.name is string &&
+        request.resource.data.team.name.size() >= 3 &&
+        request.resource.data.team.name.size() <= 40 &&
+        request.resource.data.team.students is list &&
+        request.resource.data.team.students.size() <= 5 &&
+        request.resource.data.status in [
+          'Taslak', 'Ön Başvuru Yapıldı', 'Video İnceleniyor', 'Düzeltme Gerekli'
+        ] &&
+        (!('videoUrl' in request.resource.data.team) ||
+          request.resource.data.team.videoUrl.matches('^https://(www\\.)?(youtube\\.com|youtu\\.be)/.*$'));
+    }
+
+
+    function validDashboardContact() {
+      return isSignedIn() &&
+        request.resource.data.keys().hasOnly([
+          'name', 'email', 'title', 'message', 'createdAt', 'status', 'source', 'applicationId'
+        ]) &&
+        request.resource.data.source == 'DASHBOARD_CHAT' &&
+        request.resource.data.status == 'UNREAD' &&
+        ownsApplication(request.resource.data.applicationId) &&
+        request.resource.data.message is string && request.resource.data.message.size() >= 1 && request.resource.data.message.size() <= 3000;
+    }
+
     match /system/{document=**} {
       allow read: if true;
-      allow write: if hasRole('ADMIN');
+      allow write: if isAdmin();
     }
 
     match /cms/{document=**} {
       allow read: if true;
-      allow write: if hasRole('ADMIN');
+      allow write: if isAdmin();
     }
 
-    match /cms_prizes/{doc}   { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_faq/{doc}      { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_gallery/{doc}  { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_academy/{doc}  { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /cms_timeline/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /academycontent/{doc} { allow read: if true; allow write: if hasRole('ADMIN'); }
-    match /award_participations/{docId} { 
-      allow read: if isSignedIn(); 
-      allow write: if isSignedIn(); 
-    }
+    match /cms_prizes/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /cms_faq/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /cms_gallery/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /cms_academy/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /cms_timeline/{doc} { allow read: if true; allow write: if isAdmin(); }
+    match /academycontent/{doc} { allow read: if true; allow write: if isAdmin(); }
 
-    // --- 2. USERS ---
     match /users/{userId} {
-      allow read:   if isOwner(userId) || hasRole('ADMIN');
+      allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) &&
-                       (request.resource.data.role == 'PENDING_TEACHER' ||
-                        request.resource.data.role == 'TEACHER' ||
-                        request.resource.data.role == 'STUDENT');
-      allow update: if hasRole('ADMIN') ||
-                       (isOwner(userId) && request.resource.data.role == resource.data.role);
-      allow delete: if hasRole('ADMIN'); // ← eklendi
+        request.resource.data.uid == userId &&
+        request.resource.data.role in ['PENDING_TEACHER', 'STUDENT'] &&
+        request.resource.data.keys().hasOnly([
+          'uid', 'email', 'fullName', 'school', 'city', 'phone', 'role',
+          'createdAt', 'emailVerified', 'lastActionAt'
+        ]);
+      allow update: if isAdmin() ||
+        (isOwner(userId) &&
+          request.resource.data.uid == resource.data.uid &&
+          request.resource.data.email == resource.data.email &&
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['fullName', 'school', 'city', 'phone', 'emailVerified', 'lastActionAt']));
+      allow delete: if isAdmin();
     }
 
-    // --- 3. APPLICATIONS ---
     match /applications/{appId} {
-      allow get: if hasRole('ADMIN') || hasRole('REPORTER') ||
-                    ((hasRole('TEACHER') || hasRole('STUDENT')) && resource.data.teacher.id == request.auth.uid) ||
-                    (hasRole('JUDGE') && request.auth.uid in resource.data.assignedJuryIds) ||
-                    resource.data.team.isFinalist == true;
-
-      allow list: if hasRole('ADMIN') || hasRole('REPORTER') ||
-                     ((hasRole('TEACHER') || hasRole('STUDENT')) && resource.data.teacher.id == request.auth.uid) || 
-                     (hasRole('JUDGE') && request.auth.uid in resource.data.assignedJuryIds) || 
-                     resource.data.team.isFinalist == true;
-
-      allow create: if (hasRole('TEACHER') || hasRole('STUDENT') || hasRole('ADMIN')) && isNotRateLimited();
-
-      allow update: if hasRole('ADMIN') ||
-                       (((hasRole('TEACHER') || hasRole('STUDENT')) && resource.data.teacher.id == request.auth.uid) && isNotRateLimited()) ||
-                       (hasRole('JUDGE') &&
-                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gradedBy', 'finalScore', 'juryCount', 'status'])
-                       );
-
-      allow delete: if hasRole('ADMIN'); // ← eklendi
+      allow read: if isAdmin() || hasRole('REPORTER') ||
+        isApplicationOwnerData(resource.data) || isAssignedJudgeData(resource.data);
+      allow create: if (isVerifiedRole('TEACHER') || isVerifiedRole('STUDENT')) &&
+        isNotRateLimited() && validApplicationCreate(appId);
+      allow update: if isAdmin() ||
+        ((isVerifiedRole('TEACHER') || isVerifiedRole('STUDENT')) &&
+          isApplicationOwnerData(resource.data) && isNotRateLimited() &&
+          validOwnerApplicationUpdate());
+      allow delete: if isAdmin();
 
       match /scores/{juryId} {
-        allow read:  if hasRole('ADMIN') || hasRole('JUDGE');
-        allow write: if hasRole('JUDGE') && isOwner(juryId) && isNotRateLimited();
-        allow delete: if hasRole('ADMIN'); // ← eklendi
+        allow read: if isAdmin() ||
+          (isAssignedJudgeData(
+            get(/databases/$(database)/documents/applications/$(appId)).data
+          ) && juryId == request.auth.uid);
+        allow write: if false;
       }
 
-      match /messages/{msgId} {
-        allow read: if hasRole('ADMIN') ||
-                       ((hasRole('TEACHER') || hasRole('STUDENT')) && get(/databases/$(database)/documents/applications/$(appId)).data.teacher.id == request.auth.uid);
-        allow create: if hasRole('ADMIN') || hasRole('TEACHER') || hasRole('STUDENT');
-        allow delete: if hasRole('ADMIN'); // ← eklendi
+      match /messages/{messageId} {
+        allow read: if isAdmin() || ownsApplication(appId);
+        allow create: if (isAdmin() || ownsApplication(appId)) &&
+          request.resource.data.keys().hasOnly([
+            'senderId', 'senderName', 'senderRole', 'text', 'createdAt'
+          ]) &&
+          request.resource.data.senderId == request.auth.uid &&
+          request.resource.data.text is string &&
+          request.resource.data.text.size() >= 1 &&
+          request.resource.data.text.size() <= 3000;
+        allow update, delete: if isAdmin();
       }
     }
 
-    // --- 3.5 COLLECTION GROUPS ---
     match /{path=**}/scores/{scoreDocId} {
-      allow read: if hasRole('ADMIN') || hasRole('JUDGE');
+      allow read, write: if false;
     }
 
-    // --- 4. NOTIFICATIONS ---
+    match /award_participations/{appId} {
+      allow read: if isAdmin() || ownsApplication(appId);
+      allow create: if ownsApplication(appId) &&
+        request.resource.data.applicationId == appId &&
+        request.resource.data.status in ['draft', 'submitted'];
+      allow update: if isAdmin() ||
+        (ownsApplication(appId) &&
+          resource.data.status != 'submitted' &&
+          request.resource.data.applicationId == appId &&
+          request.resource.data.status in ['draft', 'submitted']);
+      allow delete: if isAdmin();
+    }
+
     match /notifications/{notificationId} {
-      allow read:   if isOwner(resource.data.userId);
-      allow create: if isSignedIn();
-      allow update: if isOwner(resource.data.userId);
-      allow delete: if isOwner(resource.data.userId) || hasRole('ADMIN'); // ← eklendi
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isAdmin();
+      allow update: if isOwner(resource.data.userId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
-    // --- 5. PUBLIC VOTES ---
     match /public_votes/{voteId} {
-      allow read:   if true;
-      allow create: if true;
-      allow delete: if hasRole('ADMIN'); // ← eklendi
+      allow read, write: if false;
     }
 
-    // --- 6. CONTACT MESSAGES ---
-    match /contact_messages/{msgId} {
-      allow read:   if hasRole('ADMIN');
-      allow create: if true;
-      allow update: if hasRole('ADMIN');
-      allow delete: if hasRole('ADMIN'); // ← eklendi
+    match /vote_rate_limits/{document=**} {
+      allow read, write: if false;
+    }
+    match /contact_rate_limits/{document=**} {
+      allow read, write: if false;
     }
 
-    // --- 7. AUDIT LOGS ---
+    match /contact_messages/{messageId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if validDashboardContact();
+    }
+
     match /logs/{logId} {
-      allow read:   if hasRole('ADMIN');
-      allow create: if isSignedIn()
-        && request.resource.data.performedBy == request.auth.token.email
-        && request.resource.data.performedByUid == request.auth.uid
-        && request.resource.data.keys().hasOnly(['action', 'details', 'performedBy', 'performedByUid', 'timestamp', 'targetId', 'ip', 'userAgent', 'metadata'])
-        && request.resource.data.action is string && request.resource.data.action.size() > 0 && request.resource.data.action.size() <= 100
-        && request.resource.data.details is string && request.resource.data.details.size() > 0 && request.resource.data.details.size() <= 2000
-        && request.resource.data.timestamp is string
-        && (!('targetId' in request.resource.data) || request.resource.data.targetId is string)
-        && (!('ip' in request.resource.data) || request.resource.data.ip is string)
-        && (!('userAgent' in request.resource.data) || request.resource.data.userAgent is string);
-      // Logs intentionally have no delete — audit trail must be immutable
+      allow read: if isAdmin();
+      allow create: if isSignedIn() &&
+        request.resource.data.performedBy == request.auth.token.email &&
+        request.resource.data.performedByUid == request.auth.uid &&
+        request.resource.data.keys().hasOnly([
+          'action', 'details', 'performedBy', 'performedByUid', 'timestamp',
+          'targetId', 'ip', 'userAgent', 'metadata'
+        ]) &&
+        request.resource.data.action is string && request.resource.data.action.size() >= 1 && request.resource.data.action.size() <= 100 &&
+        request.resource.data.details is string && request.resource.data.details.size() >= 1 && request.resource.data.details.size() <= 2000 &&
+        request.resource.data.timestamp is string;
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

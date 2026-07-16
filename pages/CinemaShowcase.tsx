@@ -4,8 +4,6 @@ import {
   Play, X, Zap, Star, Award, ShieldAlert, Sparkles,
   Search, SlidersHorizontal, MonitorPlay, ExternalLink, RotateCw
 } from 'lucide-react';
-import { db } from '../lib/firebase';
-import { collection, getDocs, query, where, collectionGroup } from 'firebase/firestore';
 import { useAppContext } from '../context/AppContext';
 import { UserRole, Application, Category } from '../types';
 import { getJuryFeedback } from '../data/juryFeedback';
@@ -56,38 +54,14 @@ export const CinemaShowcase: React.FC = () => {
   useEffect(() => {
     const fetchAppsAndScores = async () => {
       try {
-        const q = query(
-          collection(db, 'applications'),
-          where('status', 'in', ['Onaylandı', 'Puanlandı'])
-        );
-        const querySnapshot = await getDocs(q);
-        const appsList: Application[] = [];
-        querySnapshot.forEach((doc) => {
-          appsList.push({ id: doc.id, ...doc.data() } as Application);
-        });
-        setApplications(appsList);
-
-        // Fetch scores
-        try {
-          const scoresSnap = await getDocs(collectionGroup(db, 'scores'));
-          const scoresMap: Record<string, any[]> = {};
-          scoresSnap.forEach((doc) => {
-            const data = doc.data();
-            if (data.isDraft || data.isRecused) return; // Skip drafts & recused jüris
-            
-            const pathSegments = doc.ref.path.split('/');
-            const appId = pathSegments[pathSegments.length - 3];
-            if (appId) {
-              if (!scoresMap[appId]) {
-                scoresMap[appId] = [];
-              }
-              scoresMap[appId].push(data);
-            }
-          });
-          setAllJuryScores(scoresMap);
-        } catch (scoreErr) {
-          console.error('Scores could not be fetched:', scoreErr);
+        const response = await fetch('/api/public-showcase');
+        if (!response.ok) {
+          throw new Error('Public showcase could not be loaded');
         }
+
+        const data = await response.json();
+        setApplications((data.applications || []) as Application[]);
+        setAllJuryScores((data.scores || {}) as Record<string, any[]>);
       } catch (err) {
         console.error('Applications could not be fetched:', err);
       } finally {

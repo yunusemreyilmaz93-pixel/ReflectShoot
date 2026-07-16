@@ -19,6 +19,7 @@ import { AcademicJuryScorePanel } from '../components/AcademicJuryScorePanel';
 import { AdminCertificates } from '../components/admin/AdminCertificates';
 import { writeBatch, doc, collection } from 'firebase/firestore'; // Import needed for direct batch writing
 import { db } from '../lib/firebase'; // Import db
+import { authenticatedFetch } from '../lib/authenticatedFetch';
 
 // Removed CSV Export function since we use xlsx and jspdf now
 
@@ -1739,7 +1740,7 @@ export const Admin: React.FC = () => {
 
   const handleViewDoc = async (key: string) => {
       try {
-          const res = await fetch(`/api/view?key=${encodeURIComponent(key)}`);
+          const res = await authenticatedFetch(`/api/view?key=${encodeURIComponent(key)}`);
           const data = await res.json();
           if (data.signedUrl) {
               window.open(data.signedUrl, '_blank');
