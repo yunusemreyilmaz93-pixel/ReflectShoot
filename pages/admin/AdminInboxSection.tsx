@@ -51,7 +51,18 @@ export const AdminInbox = () => {
             </div>
             
             <div className="grid gap-4">
-                {filtered.length === 0 && <p className="text-slate-500 text-center py-8">Mesaj yok.</p>}
+                {filtered.length === 0 && (
+                    <div className="bg-slate-800/50 border border-dashed border-slate-700 rounded-2xl p-12 text-center">
+                        <p className="text-slate-300 font-bold mb-1">
+                            {filter === 'UNREAD' ? 'Okunmamış mesaj yok' : 'Gelen kutusu boş'}
+                        </p>
+                        <p className="text-slate-500 text-sm max-w-md mx-auto">
+                            {filter === 'UNREAD'
+                                ? 'Tümü filtresine geçerek geçmiş mesajlara bakabilirsiniz.'
+                                : 'İletişim formu ve panel sohbetinden gelen mesajlar burada görünür.'}
+                        </p>
+                    </div>
+                )}
                 {filtered.map(msg => (
                     <div key={msg.id} className={`bg-slate-800 p-6 rounded-xl border transition-all ${msg.status === 'UNREAD' ? 'border-rose-500/50 shadow-lg shadow-rose-900/10' : 'border-slate-700 opacity-75'}`}>
                         <div className="flex justify-between items-start mb-4">

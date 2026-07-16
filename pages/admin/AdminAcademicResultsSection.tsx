@@ -7,21 +7,9 @@ import {
     Cpu, Activity, PieChart, BarChart3, Clock, UserCheck, Star, Plus, Lock, 
     Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog, MessageSquare, ExternalLink, Link as LinkIcon, Save, Youtube, PenTool, LayoutTemplate, HelpCircle, Bell, Image as ImageIcon, Megaphone, BookOpen, Calendar, Trophy, CheckCircle2, AlertOctagon, Info, ToggleRight, ToggleLeft, Power, Globe, Upload, LayoutGrid, Filter, TrendingUp, Wand2, Square, CheckSquare, MailOpen, Database, Construction, ChevronDown, Copy, AlertCircle
 } from 'lucide-react';
-import { ApplicationStatus, Category, Theme, Application, UserRole, LogEntry, SystemSettings, ScoreDocument, CMSGeneral, CMSFaqItem, FAQCategory, NotificationTarget, CMSGalleryItem, CMSAcademyItem, CMSTimelineItem, CMSPrize, CMSLinks, ContactMessage } from '../../types';
-import { useAppContext } from '../../context/AppContext';
-import { ChatArea } from '../../components/ChatArea';
-import { getYouTubeEmbedUrl } from '../../lib/videoUtils';
-import { AdminCMS } from '../../components/admin/AdminCMS';
-import { TurkeyMap } from '../../components/TurkeyMap';
-import { AdminJuryStatus } from '../../components/admin/AdminJuryStatus';
-import { AdminAwards } from '../../components/admin/AdminAwards';
+import { Category, Application } from '../../types';
 import { AcademicJuryScorePanel } from '../../components/AcademicJuryScorePanel';
-import { AdminCertificates } from '../../components/admin/AdminCertificates';
-import { writeBatch, doc, collection } from 'firebase/firestore'; // Import needed for direct batch writing
-import { db } from '../../lib/firebase'; // Import db
-import { authenticatedFetch } from '../../lib/authenticatedFetch';
-
-// Removed CSV Export function since we use xlsx and jspdf now
+import { academicJuryScores } from '../../data/academicJuryScores';
 
 interface AdminAcademicResultsProps {
   apps: Application[];
@@ -31,17 +19,11 @@ export const AdminAcademicResults = ({ apps }: AdminAcademicResultsProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Get only finalist / winner teams that exist in our academic jury list
+  // Data-driven: team names come from academicJuryScores (no hard-coded season list)
   const filteredTeams = useMemo(() => {
-    // Official finalists from academicJuryScores list
-    const academicFinalistNames = [
-      "Diriliş Perileri", "sinemektep", "MSR Justice Without Doubt", "Sosyal Kızlar42", "Homines Longinqui",
-      "mitra", "Technokasyon", "Threee", "PURE INSIGHT", "Clear Vision"
-    ];
-
+    const academicFinalistNames = academicJuryScores.map((r) => r.teamName);
     const normalize = (s: string) => s.toLocaleLowerCase('tr-TR').trim().replace(/\s+/g, '');
     
-    // We can filter our active applications that match, or construct nice virtual profiles
     return apps.filter(app => {
       const match = academicFinalistNames.some(name => normalize(name) === normalize(app.team.name));
       const matchesCategory = selectedCategory === 'all' || 
@@ -96,8 +78,12 @@ export const AdminAcademicResults = ({ apps }: AdminAcademicResultsProps) => {
       </div>
 
       {filteredTeams.length === 0 ? (
-        <div className="bg-slate-900/40 p-12 rounded-3xl border border-dashed border-slate-850 text-center text-slate-500 italic">
-          Aranan kriterlere uygun finalist/derece sahibi takım bulunamadı.
+        <div className="bg-slate-900/40 p-12 rounded-3xl border border-dashed border-slate-700 text-center">
+          <p className="text-slate-400 font-bold mb-2">Sonuç yok</p>
+          <p className="text-slate-500 text-sm max-w-md mx-auto">
+            Akademik jüri listesinde (`data/academicJuryScores`) eşleşen takım bulunamadı veya filtreler çok dar.
+            Listeyi sezon verisine göre güncelleyin.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">

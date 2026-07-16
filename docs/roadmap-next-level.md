@@ -12,15 +12,21 @@ Görsel kimlik ve güvenlik modeli korunur. Her faz sonunda: `npm run verify`.
 
 ## Faz 2 — Program ürünü
 
-- Sezon / arşiv modeli
-- Otomatik yedek
-- Admin bundle lazy / ağır lib split
+- [x] Sezon / arşiv temeli (`seasonId`, `archived`, admin filtre, ayarlar, satır arşiv)
+- [x] Admin rol güncelleme sunucu API (`/api/admin-user-role`)
+- [x] xlsx/jspdf zaten dynamic import (AdminTeams)
+- [x] Sunucu yedek API (`/api/admin-backup`) + client fallback
+- [x] Toplu arşiv (admin takım listesi)
+- [x] Firestore create: `seasonId` / `archived` kuralları
+- [x] Sunucu yedek API (manuel admin)
+- [x] Cron **kaldırıldı** (sezon statik; günlük yedek gereksiz)
+- [x] Yeni e-posta stack şart değil (mevcut EmailJS yeterli)
 
 ## Faz 3 — Üst lig
 
-- E-posta yaşam döngüsü
-- jspdf kontrollü upgrade + PDF test
-- Sentry release bağlama
+- [x] jspdf 4.x upgrade + unit smoke
+- [ ] Sentry release bağlama
+- [ ] (İsteğe bağlı) Resend / cron — ihtiyaç olursa
 
 ## Smoke checklist (manuel, 5 dk)
 

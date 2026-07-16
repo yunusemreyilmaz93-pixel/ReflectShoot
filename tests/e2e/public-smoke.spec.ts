@@ -77,3 +77,23 @@ test('smoke: /#/jury redirects unauthenticated users', async ({ page }) => {
     (await page.locator('input[type="email"], input[type="password"]').count()) > 0;
   expect(gated).toBeTruthy();
 });
+
+test('smoke: award-participation is auth-gated', async ({ page }) => {
+  await page.goto('/#/award-participation/team/demo-team', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(800);
+  const url = page.url();
+  const gated =
+    url.includes('/login') ||
+    (await page.locator('input[type="email"], input[type="password"]').count()) > 0;
+  expect(gated).toBeTruthy();
+});
+
+test('smoke: admin content deep-link still auth-gates', async ({ page }) => {
+  await page.goto('/#/admin?tab=CONTENT&cms=TIMELINE', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(800);
+  const url = page.url();
+  const gated =
+    url.includes('/login') ||
+    (await page.locator('input[type="email"], input[type="password"]').count()) > 0;
+  expect(gated).toBeTruthy();
+});

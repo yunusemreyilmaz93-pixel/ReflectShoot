@@ -20,15 +20,20 @@ import { AdminCertificates } from '../../components/admin/AdminCertificates';
 import { writeBatch, doc, collection } from 'firebase/firestore'; // Import needed for direct batch writing
 import { db } from '../../lib/firebase'; // Import db
 import { authenticatedFetch } from '../../lib/authenticatedFetch';
+import { countMissingDocs } from '../../lib/adminExport';
 
 // Removed CSV Export function since we use xlsx and jspdf now
 
 export const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategoryFilter }: { apps: Application[], onSelectApp: (app: Application) => void, onToggleFinalist: (app: Application) => void, initialCategoryFilter?: string | null }) => {
-    const { deleteApplication, updateApplicationStatus, showToast, setSimulatedApplicationId } = useAppContext();
+    const { deleteApplication, updateApplicationStatus, showToast, setSimulatedApplicationId, systemSettings, setApplicationArchived } = useAppContext();
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
     const [categoryFilter, setCategoryFilter] = useState<string>(initialCategoryFilter || 'ALL');
+    const [seasonFilter, setSeasonFilter] = useState<string>('current');
+    const [showArchived, setShowArchived] = useState(false);
+    /** Support ops default: focus teams with missing parent/KVKK docs */
+    const [missingDocsOnly, setMissingDocsOnly] = useState(false);
     const [viewMode, setViewMode] = useState<'LIST' | 'MAP'>('LIST');
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isBulkProcessing, setIsBulkProcessing] = useState(false);
@@ -39,14 +44,27 @@ export const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategor
         }
     }, [initialCategoryFilter]);
 
+    const activeSeasonId = systemSettings.season?.id || '2026';
+
     // Filtering
     const filteredApps = apps.filter(app => {
         const matchesSearch = app.team.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                               app.teacher.school.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'ALL' || app.status === statusFilter;
         const matchesCategory = categoryFilter === 'ALL' || app.team.category === categoryFilter;
+        const matchesArchive = showArchived ? true : !app.archived;
+        let matchesSeason = true;
+        if (seasonFilter === 'current') {
+          // Current season + untagged legacy apps
+          matchesSeason = !app.seasonId || app.seasonId === activeSeasonId;
+        } else if (seasonFilter === 'legacy') {
+          matchesSeason = !app.seasonId;
+        } else if (seasonFilter !== 'all') {
+          matchesSeason = app.seasonId === seasonFilter;
+        }
+        const matchesMissingDocs = !missingDocsOnly || countMissingDocs(app) > 0;
         
-        return matchesSearch && matchesStatus && matchesCategory;
+        return matchesSearch && matchesStatus && matchesCategory && matchesArchive && matchesSeason && matchesMissingDocs;
     });
 
     const handleBulkStatusUpdate = async (newStatus: ApplicationStatus) => {
@@ -62,6 +80,24 @@ export const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategor
         } catch (error) {
             console.error(error);
             showToast('Toplu işlem sırasında hata oluştu.', 'error');
+        } finally {
+            setIsBulkProcessing(false);
+        }
+    };
+
+    const handleBulkArchive = async (archived: boolean) => {
+        if (selectedIds.size === 0) return;
+        const label = archived ? 'arşivlemek' : 'arşivden çıkarmak';
+        if (!window.confirm(`Seçili ${selectedIds.size} takımı ${label} istediğinize emin misiniz?`)) return;
+
+        setIsBulkProcessing(true);
+        try {
+            await Promise.all(Array.from(selectedIds).map((id) => setApplicationArchived(id, archived)));
+            showToast(`${selectedIds.size} takım ${archived ? 'arşivlendi' : 'arşivden çıkarıldı'}.`, 'success');
+            setSelectedIds(new Set());
+        } catch (error) {
+            console.error(error);
+            showToast('Toplu arşiv işlemi başarısız.', 'error');
         } finally {
             setIsBulkProcessing(false);
         }
@@ -114,20 +150,12 @@ export const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategor
     };
 
     const handleExportExcel = async () => {
-        const XLSX = await import('xlsx');
-        const data = filteredApps.map(app => ({
-            "Takım": app.team.name,
-            "Okul": app.teacher.school,
-            "Kategori": app.team.category,
-            "Durum": app.status,
-            "Puan": app.finalScore || 0,
-            "E-Posta": app.teacher.email,
-            "Telefon": app.teacher.phone
-        }));
-        const worksheet = XLSX.utils.json_to_sheet(data);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Takımlar");
-        XLSX.writeFile(workbook, `takim_listesi_${new Date().toISOString().split('T')[0]}.xlsx`);
+        const { exportApplicationsExcel } = await import('../../lib/adminExport');
+        exportApplicationsExcel(filteredApps, {
+          filename: `takim_listesi_${new Date().toISOString().split('T')[0]}.xlsx`,
+          sheetName: 'Takımlar',
+        });
+        showToast('Excel indirildi (eksik belge, video, jüri sütunları dahil).', 'success');
     };
 
     const handleExportPDF = async () => {
@@ -231,10 +259,49 @@ export const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategor
                         value={categoryFilter} 
                         onChange={(e) => setCategoryFilter(e.target.value)}
                         className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-300 outline-none focus:border-rose-500"
+                        aria-label="Kategori filtresi"
                     >
                         <option value="ALL">Tüm Kategoriler</option>
                         {Object.values(Category).map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
+
+                    <select
+                        value={seasonFilter}
+                        onChange={(e) => setSeasonFilter(e.target.value)}
+                        className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-300 outline-none focus:border-rose-500"
+                        aria-label="Sezon filtresi"
+                    >
+                        <option value="current">Aktif sezon ({activeSeasonId})</option>
+                        <option value="all">Tüm sezonlar</option>
+                        <option value="legacy">Etiketsiz (legacy)</option>
+                    </select>
+
+                    <label className="flex items-center gap-2 text-xs text-slate-400 whitespace-nowrap cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={showArchived}
+                            onChange={(e) => setShowArchived(e.target.checked)}
+                            className="rounded border-slate-600"
+                        />
+                        Arşiv
+                    </label>
+
+                    <label
+                      className={`flex items-center gap-2 text-xs whitespace-nowrap cursor-pointer px-2.5 py-1.5 rounded-lg border transition-colors ${
+                        missingDocsOnly
+                          ? 'bg-amber-500/10 border-amber-500/40 text-amber-300'
+                          : 'border-slate-700 text-slate-400 hover:border-slate-500'
+                      }`}
+                      title="Eksik veli izni veya KVKK olan takımlar"
+                    >
+                        <input
+                            type="checkbox"
+                            checked={missingDocsOnly}
+                            onChange={(e) => setMissingDocsOnly(e.target.checked)}
+                            className="rounded border-slate-600"
+                        />
+                        Eksik belge &gt; 0
+                    </label>
 
                     <div className="h-8 w-px bg-slate-700 mx-1"></div>
 
@@ -295,6 +362,20 @@ export const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategor
                             className="px-4 py-2 bg-rose-800 text-white rounded-lg text-xs font-bold hover:bg-rose-900 transition-colors disabled:opacity-50"
                         >
                             Hepsini Reddet
+                        </button>
+                        <button type="button"
+                            disabled={isBulkProcessing}
+                            onClick={() => handleBulkArchive(true)}
+                            className="px-4 py-2 bg-slate-900/40 text-white rounded-lg text-xs font-bold hover:bg-slate-900/60 transition-colors disabled:opacity-50"
+                        >
+                            Arşivle
+                        </button>
+                        <button type="button"
+                            disabled={isBulkProcessing}
+                            onClick={() => handleBulkArchive(false)}
+                            className="px-4 py-2 bg-slate-900/40 text-white rounded-lg text-xs font-bold hover:bg-slate-900/60 transition-colors disabled:opacity-50"
+                        >
+                            Arşivden Çıkar
                         </button>
                         <div className="w-px h-8 bg-white/20 mx-1"></div>
                         <button type="button" 
@@ -373,7 +454,13 @@ export const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategor
                         <tbody className="divide-y divide-slate-700">
                             {filteredApps.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="p-12 text-center text-slate-500">Kayıt bulunamadı.</td>
+                                    <td colSpan={8} className="p-12 text-center">
+                                        <p className="text-slate-300 font-bold mb-1">Eşleşen takım yok</p>
+                                        <p className="text-slate-500 text-sm max-w-md mx-auto">
+                                            Arama / sezon / durum filtrelerini gevşetin veya &quot;Tüm sezonlar&quot; seçin.
+                                            Yeni başvuru kapalıysa Sistem Ayarları&apos;ndan kilitleri kontrol edin.
+                                        </p>
+                                    </td>
                                 </tr>
                             ) : (
                                 filteredApps.map(app => (
@@ -388,7 +475,19 @@ export const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategor
                                         </td>
                                         <td className="p-4">
                                             <div className="flex items-center gap-3">
-                                                <button type="button" onClick={(e) => { e.stopPropagation(); onToggleFinalist(app); }} className="text-slate-600 hover:text-amber-500 transition-colors">
+                                                <button
+                                                    type="button"
+                                                    title={app.archived ? 'Arşivden çıkar' : 'Arşivle'}
+                                                    aria-label={app.archived ? 'Arşivden çıkar' : 'Arşivle'}
+                                                    onClick={async (e) => {
+                                                        e.stopPropagation();
+                                                        await setApplicationArchived(app.id, !app.archived);
+                                                    }}
+                                                    className="text-slate-600 hover:text-slate-300 transition-colors"
+                                                >
+                                                    <Database size={16} className={app.archived ? 'text-amber-500' : ''} />
+                                                </button>
+                                                <button type="button" onClick={(e) => { e.stopPropagation(); onToggleFinalist(app); }} className="text-slate-600 hover:text-amber-500 transition-colors" aria-label="Finalist işaretle">
                                                     <Star size={18} className={app.team.isFinalist ? "fill-amber-500 text-amber-500" : ""} />
                                                 </button>
                                                 <div className="w-10 h-10 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">

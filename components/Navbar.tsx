@@ -28,11 +28,6 @@ export const Navbar: React.FC<NavbarProps> = () => {
     { name: 'SSS', path: '/faq' },
   ];
 
-  // Add Public Vote link if active
-  if (systemSettings.features.publicVotingActive) {
-      navLinks.splice(5, 0, { name: 'Halk Oylaması', path: '/vote' });
-  }
-
   const handleLogout = () => {
     logout();
     navigate('/');

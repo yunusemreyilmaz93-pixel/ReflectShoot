@@ -12,7 +12,7 @@ import { AcademyDetail } from './pages/AcademyDetail';
 import { Finals } from './pages/Finals';
 import { Gallery } from './pages/Gallery';
 import { FAQ } from './pages/FAQ';
-import { PublicVote } from './pages/PublicVote'; 
+
 import { AppProvider, useAppContext } from './context/AppContext';
 import { UserRole } from './types';
 import { ShieldAlert, Mail, CheckCircle2, AlertCircle, Info, X, Construction, Settings, AlertTriangle } from 'lucide-react';
@@ -192,7 +192,6 @@ const AppRoutes: React.FC = () => {
           } />
           <Route path="/login" element={<Login />} />
           <Route path="/apply" element={<Apply />} />
-          <Route path="/vote" element={<PublicVote />} />
 
           <Route path="/dashboard" element={
             <ProtectedRoute allowedRoles={[UserRole.TEACHER, UserRole.STUDENT, UserRole.ADMIN]}>

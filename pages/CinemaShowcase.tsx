@@ -8,8 +8,13 @@ import { useAppContext } from '../context/AppContext';
 import { UserRole, Application, Category } from '../types';
 import { getJuryFeedback } from '../data/juryFeedback';
 import { AcademicJuryScorePanel } from '../components/AcademicJuryScorePanel';
-
-const UNLOCK_DATE = new Date('2026-05-23T18:30:00+03:00'); // Turkey timezone
+import {
+  UNLOCK_DATE,
+  officialLiveActionWinners,
+  officialAiWinners,
+  LIVE_ACTION_WINNER_NAMES,
+  getCinemaEmbedUrl,
+} from './cinema/showcaseData';
 
 export const CinemaShowcase: React.FC = () => {
   const { currentUser } = useAppContext();
@@ -76,41 +81,6 @@ export const CinemaShowcase: React.FC = () => {
   const isAdmin = currentUser?.role === UserRole.ADMIN;
   const showContent = !isLocked || isAdmin;
 
-  // Official rankings definition
-  const officialLiveActionWinners = [
-    { rank: '1.', name: 'Sosyal Kızlar42', school: 'Konya Türk Telekom Sosyal Bilimler Lisesi', award: 'Birincilik Ödülü', type: 'gold' },
-    { rank: '2.', name: 'Diriliş Perileri', school: 'Güngören İTO Kız Anadolu İmam Hatip Lisesi', award: 'İkincilik Ödülü', type: 'silver' },
-    { rank: '3.', name: 'sinemektep', school: 'Güngören İTO Kız Anadolu İmam Hatip Lisesi', award: 'Üçüncülük Ödülü', type: 'bronze' },
-    { rank: 'Jüri Özel', name: 'Homines Longinqui', school: 'Uluslararası Mevlana Anadolu İmam Hatip Lisesi', award: 'Jüri Özel Ödülü', type: 'special' },
-    { rank: 'Mansiyon', name: 'Justice Without Doubt', school: 'Mahmut Sami Ramazanoğlu Anadolu İmam Hatip Lisesi', award: 'Mansiyon Ödülü', type: 'mention' }
-  ];
-
-  const officialAiWinners = [
-    { rank: '1.', name: 'mitra', school: '15 Temmuz Şehitleri Anadolu İmam Hatip Lisesi', award: 'Birincilik Ödülü', type: 'gold' },
-    { rank: '2.', name: 'Technokasyon', school: 'Kadıköy Anadolu İmam Hatip Lisesi', award: 'İkincilik Ödülü', type: 'silver' },
-    { rank: '3.', name: 'Threee', school: 'Maltepe Kız Anadolu İmam Hatip Lisesi', award: 'Üçüncülük Ödülü', type: 'bronze' },
-    { rank: 'Jüri Özel', name: 'PURE INSIGHT', school: 'Selçuklu Fen Lisesi', award: 'Jüri Özel Ödülü', type: 'special' },
-    { rank: 'Mansiyon', name: 'Clear Vision', school: 'Konya Anadolu İmam Hatip Lisesi', award: 'Mansiyon Ödülü', type: 'mention' }
-  ];
-
-  // Helper to extract YouTube ID or embed URL safely
-  const getEmbedUrl = (rawUrl?: string): string | null => {
-    if (!rawUrl) return null;
-    if (rawUrl.includes('embed/')) return rawUrl;
-    
-    // Convert watch URL to embed URL
-    try {
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-      const match = rawUrl.match(regExp);
-      if (match && match[2].length === 11) {
-        return `https://www.youtube.com/embed/${match[2]}?autoplay=1`;
-      }
-    } catch (e) {
-      // Return URL as is if anything fails
-    }
-    return rawUrl;
-  };
-
   // Helper to toggle flipped card state
   const toggleCardFlip = (teamName: string) => {
     setFlippedCards(prev => ({
@@ -129,13 +99,7 @@ export const CinemaShowcase: React.FC = () => {
 
     // We need to identify who is the 8th film in LIVE_ACTION overall.
     // In LIVE_ACTION, we have 5 winners. The 8th overall film will be index 2 of non-winners under Category.LIVE_ACTION.
-    const liveActionWinnerNames = [
-      'Sosyal Kızlar42',
-      'Diriliş Perileri',
-      'sinemektep',
-      'Homines Longinqui',
-      'Justice Without Doubt'
-    ].map(w => w.trim().toLowerCase());
+    const liveActionWinnerNames = LIVE_ACTION_WINNER_NAMES;
 
     const rawLiveApps = applications.filter(app => {
       if (!app?.team || app.team.category !== Category.LIVE_ACTION) return false;
@@ -642,7 +606,7 @@ export const CinemaShowcase: React.FC = () => {
                                 <div className="absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-700">
                                   {team.videoUrl.includes('youtu') ? (
                                     <img 
-                                      src={`https://img.youtube.com/vi/${getEmbedUrl(team.videoUrl)?.split('/embed/')[1]?.split('?')[0]}/hqdefault.jpg`} 
+                                      src={`https://img.youtube.com/vi/${getCinemaEmbedUrl(team.videoUrl)?.split('/embed/')[1]?.split('?')[0]}/hqdefault.jpg`} 
                                       alt={team.name}
                                       className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300"
                                       referrerPolicy="no-referrer"
@@ -924,9 +888,9 @@ export const CinemaShowcase: React.FC = () => {
             className="w-full max-w-5xl aspect-video rounded-3xl bg-slate-950 border border-slate-800 shadow-2xl relative overflow-hidden animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
-            {getEmbedUrl(selectedVideo) ? (
+            {getCinemaEmbedUrl(selectedVideo) ? (
               <iframe
-                src={getEmbedUrl(selectedVideo) || ''}
+                src={getCinemaEmbedUrl(selectedVideo) || ''}
                 title={`${selectedTeamName || 'Eser'} - Reflect & Shoot Gala Salonu`}
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

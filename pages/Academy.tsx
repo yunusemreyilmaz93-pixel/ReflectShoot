@@ -6,6 +6,11 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
+import {
+  publicAcademyItems as publicAcademyItemsFromDomain,
+  findAcademyByShareCode,
+  academyShareCode,
+} from '../lib/domain/academy';
 
 // Title-Based Image Mapping for Unique Cards (Fallback if no coverImage)
 const getTitleImage = (title: string): string => {
@@ -18,25 +23,30 @@ const getTitleImage = (title: string): string => {
 };
 
 export const Academy: React.FC = () => {
-  const { cmsAcademy, currentApplication } = useAppContext();
+  const { cmsAcademy } = useAppContext();
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('Tümü');
-  
-  const isFinalist = false; // "Bu yıl akademi olmayacak" kuralı geregi kapalı tutuluyor.
+  const [codeInput, setCodeInput] = useState('');
 
-  // Filter out finalist content for general view
-  const publicAcademyItems = cmsAcademy.filter(item => !item.isFinalistContent);
+  // Public page: never expose finalist-only content
+  const publicAcademyItems = publicAcademyItemsFromDomain(cmsAcademy);
 
   // Apply Category Filter
   const filteredItems = publicAcademyItems.filter(item => activeCategory === 'Tümü' || item.category === activeCategory);
 
   const handleCardClick = (item: any) => {
-      // Direct access to PDF if available, otherwise open URL
-      if (item.pdfFile) {
-          window.open(item.pdfFile, '_blank');
-      } else if (item.url) {
-          window.open(item.url, '_blank');
+      const url = item.pdfFile || item.url;
+      if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const openByCode = () => {
+      const found = findAcademyByShareCode(publicAcademyItems, codeInput);
+      if (!found) {
+          // soft UX without toast context on some guests
+          alert('Kod bulunamadı. Finalist içerikler public sayfada açılmaz; danışman paneline bakın.');
+          return;
       }
+      handleCardClick(found);
   };
 
   // Helper to determine styles based on category
@@ -146,9 +156,26 @@ export const Academy: React.FC = () => {
                     Akademi
                 </span>
             </h1>
-            <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed mb-10 font-light animate-fadeIn delay-200">
-                Yarışma sürecinde size rehberlik edecek temel eğitim içerikleri.
+            <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed mb-8 font-light animate-fadeIn delay-200">
+                Yarışma sürecinde size rehberlik edecek temel eğitim içerikleri. Finalist paketi
+                yalnızca danışman panellerinde açılır.
             </p>
+            <div className="inline-flex items-center gap-2 bg-slate-950/60 border border-slate-700 rounded-2xl px-4 py-3 animate-fadeIn delay-300">
+              <input
+                value={codeInput}
+                onChange={(e) => setCodeInput(e.target.value)}
+                placeholder="Sınıf kodu ile aç"
+                className="bg-transparent text-sm text-white outline-none w-36 placeholder:text-slate-600"
+                aria-label="Akademi sınıf kodu"
+              />
+              <button
+                type="button"
+                onClick={openByCode}
+                className="text-xs font-black uppercase tracking-wider text-amber-400 hover:text-amber-300"
+              >
+                Aç
+              </button>
+            </div>
         </div>
       </div>
 
@@ -224,7 +251,7 @@ export const Academy: React.FC = () => {
                                 <div className="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-sm p-2 rounded-full border border-white/10 text-white z-10 shadow-lg">
                                     <BookOpen size={18}/>
                                 </div>
-                                <div className="absolute top-4 left-4">
+                                <div className="absolute top-4 left-4 flex flex-col gap-1 items-start">
                                     <span className={`text-[10px] px-3 py-1.5 rounded-lg border uppercase tracking-wider font-bold ${styles.badge}`}>
                                         {item.category}
                                     </span>
@@ -241,6 +268,9 @@ export const Academy: React.FC = () => {
                                 </p>
                                 
                                 <div className="mt-auto pt-6 border-t border-slate-800 flex items-center justify-between">
+                                    <span className="text-[10px] font-mono text-slate-600 tracking-wider">
+                                      {academyShareCode(item.id)}
+                                    </span>
                                     <div className="flex gap-2">
                                         <button type="button" 
                                             className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1 hover:underline ${styles.btn}`}

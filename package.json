@@ -19,7 +19,8 @@
     "doctor:score": "react-doctor --score",
     "test:all": "npm run lint && npm run test:unit && npm run test:e2e",
     "ci": "npm run lint && npm run test:unit && npm run build && npm run test:e2e",
-    "verify": "npm run ci"
+    "verify": "npm run ci",
+    "verify:full": "npm run lint && npm run test:unit && npm run test:rules && npm run build && npm run test:e2e && npm run test:visual"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.525.0",
@@ -33,7 +34,7 @@
     "d3-scale": "^4.0.2",
     "firebase": "^10.9.0",
     "firebase-admin": "13.10.0",
-    "jspdf": "^2.5.2",
+    "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.363.0",
     "motion": "^12.35.1",

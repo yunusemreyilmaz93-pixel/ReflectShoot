@@ -20,6 +20,11 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
     publicVotingActive: false,
     videoUploadActive: false,
     maintenanceMode: false,
+    blockNewApplications: false,
+  },
+  season: {
+    id: '2026',
+    label: 'Reflect & Shoot 2026',
   },
 };
 

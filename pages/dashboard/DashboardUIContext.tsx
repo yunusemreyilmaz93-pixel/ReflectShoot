@@ -1,6 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { Application, Student, Theme, UserProfile } from '../../types';
-import type { SystemSettings } from '../../types';
+import type { Application, Student, UserProfile, SystemSettings } from '../../types';
 
 /** Shared dashboard UI bag — populated by Dashboard shell; consumed by tab components. */
 export type DashboardUI = {
@@ -16,16 +15,6 @@ export type DashboardUI = {
   missingDocsCount: number;
   remainingDays: number;
   allVideoChecksPassed: boolean;
-  // theme
-  pendingTheme: Theme;
-  setPendingTheme: (t: Theme) => void;
-  pendingVerse: string;
-  setPendingVerse: (v: string) => void;
-  pendingTopic: string;
-  setPendingTopic: (t: string) => void;
-  isSavingTheme: boolean;
-  hasThemeChanges: boolean | null | undefined;
-  handleSaveTheme: () => Promise<void>;
   renderVerseText: (text: string, isArabic: boolean) => React.ReactNode;
   // docs
   uploadingDoc: string | null;
@@ -45,7 +34,9 @@ export type DashboardUI = {
   handleDeleteDoc: (studentId: string, type: 'PARENT' | 'KVKK') => Promise<void>;
   // video
   videoChecklist: { resolution: boolean; audio: boolean; credits: boolean; copyright: boolean };
-  setVideoChecklist: React.Dispatch<React.SetStateAction<{ resolution: boolean; audio: boolean; credits: boolean; copyright: boolean }>>;
+  setVideoChecklist: React.Dispatch<
+    React.SetStateAction<{ resolution: boolean; audio: boolean; credits: boolean; copyright: boolean }>
+  >;
   videoLink: string;
   setVideoLink: (v: string) => void;
   confirmVideoSubmission: () => Promise<void>;

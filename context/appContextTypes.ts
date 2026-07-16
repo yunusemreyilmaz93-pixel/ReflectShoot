@@ -67,6 +67,7 @@ export interface AppContextType {
   allUsers: UserProfile[];
   updateUserRole: (uid: string, role: UserRole) => Promise<void>;
   deleteUser: (uid: string) => Promise<void>;
+  setApplicationArchived: (appId: string, archived: boolean) => Promise<void>;
 
   auditLogs: LogEntry[];
   logAction: (action: string, details: string, targetId?: string) => Promise<void>;
@@ -84,9 +85,19 @@ export interface AppContextType {
   bulkAssignJury: (assignments: { appId: string; juryIds: string[] }[]) => Promise<void>;
 
   sendMessage: (appId: string, text: string) => Promise<void>;
-  submitPublicVote: (appId: string, fingerprint: string) => Promise<void>;
   sendAnnouncement: (target: NotificationTarget, title: string, message: string, type: string) => Promise<void>;
 
   downloadFullBackup: () => Promise<void>;
   seedAcademyContent: () => Promise<void>;
+  /** Admin: tag applications missing seasonId (dryRun default recommended first). */
+  tagLegacySeasons?: (dryRun?: boolean) => Promise<{ legacyCount: number; updated: number; seasonId: string }>;
+  /** Admin: open a new competition season (settings + optional archive of previous apps). */
+  startNewSeason?: (input: {
+    id: string;
+    label: string;
+    shiftYears?: number;
+    openApplications?: boolean;
+    resetVideoUpload?: boolean;
+    archivePrevious?: boolean;
+  }) => Promise<{ previousSeasonId: string; archivedCount: number; season: { id: string; label: string } }>;
 }

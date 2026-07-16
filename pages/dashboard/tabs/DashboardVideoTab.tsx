@@ -1,33 +1,15 @@
 import React from 'react';
-import { motion } from 'motion/react';
 import {
-  Clapperboard, Users, FileText, Video, MessageSquare, AlertCircle,
-  CheckCircle2, Clock, Upload, X, Save, Film, HelpCircle, LogOut, Ban, ShieldAlert,
-  Download, Lock, ExternalLink, RefreshCw, FileCheck, BookOpen, Eye, Calendar, Bell, Copy, Info, Loader2, File,
-  Plus, Trash2, Edit, AlertOctagon, CheckSquare, Camera, PenTool, Printer, ShieldCheck,
-  Sparkles, ArrowRight, UploadCloud, Megaphone, Star, PartyPopper, User, RefreshCcw, Youtube, Trophy
+  CheckCircle2, Lock, Copy, Film, Youtube, CheckSquare, AlertCircle,
 } from 'lucide-react';
-import { Category, Theme, ApplicationStatus, UserRole } from '../../../types';
-import { versesList, verseDetails } from '../../../data/verses';
-import { AcademicJuryScorePanel } from '../../../components/AcademicJuryScorePanel';
-import { getJuryFeedback } from '../../../data/juryFeedback';
-import { CertificateGenerator } from '../../../components/CertificateGenerator';
-import { downloadCertificate } from '../../../lib/certificates';
 import { useDashboardUI } from '../DashboardUIContext';
 
 
 export function DashboardVideoTab() {
   const {
-    currentUser, currentApplication, myApplications, activeApplicationId, setActiveApplicationId,
-    systemSettings, cmsAcademy, IS_DEADLINE_PASSED, progress, missingDocsCount, remainingDays,
-    allVideoChecksPassed, pendingTheme, setPendingTheme, pendingVerse, setPendingVerse,
-    pendingTopic, setPendingTopic, isSavingTheme, hasThemeChanges, handleSaveTheme, renderVerseText,
-    uploadingDoc, selectedFiles, verifyCodes, declarationModal, declarationAccepted, setDeclarationAccepted,
-    handleOpenStudentModal, handleDeleteStudent, handleGenerateCode, copyCode,
-    handleOpenDeclarationModal, handleConfirmDeclaration, handleFileSelect, handleDocUpload, handleDeleteDoc,
+    currentApplication, IS_DEADLINE_PASSED, systemSettings,
+    allVideoChecksPassed,
     videoChecklist, setVideoChecklist, videoLink, setVideoLink, confirmVideoSubmission,
-    handleActionRedirect, getCategoryStyle, getTeacherCertificateUrl, getStudentCertificateUrl,
-    TEMPLATE_PARENT_URL, TEMPLATE_CONSENT_URL,
   } = useDashboardUI();
 
   return (
@@ -109,7 +91,11 @@ export function DashboardVideoTab() {
 
                                     {IS_DEADLINE_PASSED && (
                                         <div className="mt-6 p-4 bg-red-900/40 border border-red-500/50 rounded-xl text-red-200 text-sm font-bold flex items-center gap-2">
-                                            <AlertCircle size={20} className="text-red-500" /> Video teslim süresi 4 Mayıs 2026 23:59 itibarıyla sona ermiştir.
+                                            <AlertCircle size={20} className="text-red-500 shrink-0" />
+                                            Video teslimi kapalı
+                                            {systemSettings?.dates?.videoUploadEnd
+                                              ? ` (bitiş: ${new Date(systemSettings.dates.videoUploadEnd).toLocaleString('tr-TR')})`
+                                              : ' (yükleme anahtarı kapalı veya süre doldu)'}.
                                         </div>
                                     )}
 

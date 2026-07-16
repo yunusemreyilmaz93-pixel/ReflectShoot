@@ -1,34 +1,22 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import {
-  Clapperboard, Users, FileText, Video, MessageSquare, AlertCircle,
-  CheckCircle2, Clock, Upload, X, Save, Film, HelpCircle, LogOut, Ban, ShieldAlert,
-  Download, Lock, ExternalLink, RefreshCw, FileCheck, BookOpen, Eye, Calendar, Bell, Copy, Info, Loader2, File,
-  Plus, Trash2, Edit, AlertOctagon, CheckSquare, Camera, PenTool, Printer, ShieldCheck,
-  Sparkles, ArrowRight, UploadCloud, Megaphone, Star, PartyPopper, User, RefreshCcw, Youtube, Trophy
+  FileText, CheckCircle2, Download, Copy, Info, Loader2, Plus, Trash2, Edit, AlertOctagon,
+  RefreshCw, PenTool, Camera, Upload, ExternalLink, CheckSquare, Clock, UploadCloud,
 } from 'lucide-react';
-import { Category, Theme, ApplicationStatus, UserRole } from '../../../types';
-import { versesList, verseDetails } from '../../../data/verses';
-import { AcademicJuryScorePanel } from '../../../components/AcademicJuryScorePanel';
-import { getJuryFeedback } from '../../../data/juryFeedback';
-import { CertificateGenerator } from '../../../components/CertificateGenerator';
-import { downloadCertificate } from '../../../lib/certificates';
 import { useDashboardUI } from '../DashboardUIContext';
+import { MAX_STUDENTS_PER_TEAM } from '../../../lib/domain/teamValidation';
 
 
 export function DashboardDocumentsTab() {
   const {
-    currentUser, currentApplication, myApplications, activeApplicationId, setActiveApplicationId,
-    systemSettings, cmsAcademy, IS_DEADLINE_PASSED, progress, missingDocsCount, remainingDays,
-    allVideoChecksPassed, pendingTheme, setPendingTheme, pendingVerse, setPendingVerse,
-    pendingTopic, setPendingTopic, isSavingTheme, hasThemeChanges, handleSaveTheme, renderVerseText,
-    uploadingDoc, selectedFiles, verifyCodes, declarationModal, declarationAccepted, setDeclarationAccepted,
+    currentApplication,
+    IS_DEADLINE_PASSED,
+    uploadingDoc, selectedFiles, verifyCodes,
     handleOpenStudentModal, handleDeleteStudent, handleGenerateCode, copyCode,
-    handleOpenDeclarationModal, handleConfirmDeclaration, handleFileSelect, handleDocUpload, handleDeleteDoc,
-    videoChecklist, setVideoChecklist, videoLink, setVideoLink, confirmVideoSubmission,
-    handleActionRedirect, getCategoryStyle, getTeacherCertificateUrl, getStudentCertificateUrl,
+    handleOpenDeclarationModal, handleFileSelect, handleDocUpload, handleDeleteDoc,
     TEMPLATE_PARENT_URL, TEMPLATE_CONSENT_URL,
-    showToast, setVerifyCodes,
+    setVerifyCodes,
   } = useDashboardUI();
 
   return (
@@ -302,7 +290,7 @@ export function DashboardDocumentsTab() {
                             ))}
 
                             {/* Add Student Card */}
-                            {currentApplication.team.students.length < 6 && (
+                            {currentApplication.team.students.length < MAX_STUDENTS_PER_TEAM && (
                                 <button type="button" 
                                     onClick={() => handleOpenStudentModal()}
                                     className="group flex flex-col items-center justify-center gap-4 bg-slate-900/30 border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-3xl transition-all min-h-[500px]"

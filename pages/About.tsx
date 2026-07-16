@@ -387,7 +387,7 @@ export const About: React.FC = () => {
                     <ul className="space-y-6 flex-1">
                         {[
                             { key: "Kapsam:", text: "Bu yarışma, Türkiye genelindeki tüm lise öğrencilerine açıktır." },
-                            { key: "Takım Yapısı:", text: "Takımlar en az 3, en fazla 6 öğrenciden oluşmalıdır. Bireysel başvuru kabul edilmez." },
+                            { key: "Takım Yapısı:", text: "Takımlar en az 3, en fazla 5 öğrenciden oluşmalıdır. Bireysel başvuru kabul edilmez." },
                             { key: "Danışman Öğretmen:", text: "Her takımın, başvuru sürecini ve çalışmaları takip eden bir Danışman Öğretmeni bulunması zorunludur. Danışman Öğretmen, sistem üzerinden takım adına işlem yapar." },
                             { key: "Katılım Hakkı:", text: "Her öğrenci yalnızca bir (1) projede görev alabilir. Birden fazla projede yer aldığı tespit edilen öğrencilerin başvuruları değerlendirme dışı bırakılır." },
                             { key: "Dil & Altyazı:", text: "Proje dili İngilizce olmalıdır. Videolarda Türkçe altyazı kullanılması zorunludur." },

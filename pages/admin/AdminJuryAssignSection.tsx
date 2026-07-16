@@ -24,17 +24,49 @@ import { authenticatedFetch } from '../../lib/authenticatedFetch';
 // Removed CSV Export function since we use xlsx and jspdf now
 
 export const AdminJuryAssign = ({ apps }: { apps: Application[] }) => {
-    const { allUsers, bulkAssignJury, assignJury, showToast } = useAppContext();
+    const { allUsers, bulkAssignJury, assignJury, showToast, systemSettings } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
+    const [listFilter, setListFilter] = useState<'ALL' | 'VIDEO' | 'UNASSIGNED' | 'ASSIGNED'>('VIDEO');
     const [editingApp, setEditingApp] = useState<Application | null>(null);
     const [selectedJuries, setSelectedJuries] = useState<Set<string>>(new Set());
     const [isAutoAssigning, setIsAutoAssigning] = useState(false);
 
     const juries = useMemo(() => allUsers.filter(u => u.role === UserRole.JUDGE), [allUsers]);
 
-    const filteredApps = apps.filter(app => 
-        app.team.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const activeApps = useMemo(
+      () => apps.filter((a) => !a.archived),
+      [apps]
     );
+
+    const stats = useMemo(() => {
+      const withVideo = activeApps.filter(
+        (a) => a.team.videoStatus === 'UPLOADED' || a.team.videoStatus === 'SUBMITTED_LINK'
+      );
+      const unassigned = withVideo.filter((a) => !a.assignedJuryIds?.length);
+      const assigned = withVideo.filter((a) => (a.assignedJuryIds?.length || 0) > 0);
+      return {
+        juries: juries.length,
+        withVideo: withVideo.length,
+        unassigned: unassigned.length,
+        assigned: assigned.length,
+      };
+    }, [activeApps, juries.length]);
+
+    const filteredApps = useMemo(() => {
+      return activeApps.filter((app) => {
+        const matchesSearch =
+          app.team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (app.teacher?.school || '').toLowerCase().includes(searchTerm.toLowerCase());
+        if (!matchesSearch) return false;
+        const hasVideo =
+          app.team.videoStatus === 'UPLOADED' || app.team.videoStatus === 'SUBMITTED_LINK';
+        const n = app.assignedJuryIds?.length || 0;
+        if (listFilter === 'VIDEO') return hasVideo;
+        if (listFilter === 'UNASSIGNED') return hasVideo && n === 0;
+        if (listFilter === 'ASSIGNED') return n > 0;
+        return true;
+      });
+    }, [activeApps, searchTerm, listFilter]);
 
     const openEditModal = (app: Application) => {
         setEditingApp(app);
@@ -65,14 +97,19 @@ export const AdminJuryAssign = ({ apps }: { apps: Application[] }) => {
             return;
         }
 
-        const validApps = apps.filter(a => a.team.videoStatus === 'UPLOADED' || a.team.videoStatus === 'SUBMITTED_LINK');
+        // Only unassigned with video — don't overwrite existing jury work
+        const validApps = activeApps.filter(
+          (a) =>
+            (a.team.videoStatus === 'UPLOADED' || a.team.videoStatus === 'SUBMITTED_LINK') &&
+            !(a.assignedJuryIds && a.assignedJuryIds.length > 0)
+        );
         
         if (validApps.length === 0) {
-            showToast('Videosunu teslim etmiş hiçbir takım bulunamadı.', 'error');
+            showToast('Atanacak (video var, jüri yok) takım bulunamadı.', 'error');
             return;
         }
         
-        if (!window.confirm(`Sadece videosunu teslim etmiş olan (${validApps.length}) takıma otomatik dağıtım yapılacaktır. Adil dağılım algoritması ile her filme 4 jüri atanacaktır. Onaylıyor musunuz?`)) return;
+        if (!window.confirm(`Videosu teslim edilmiş ve jürisi olmayan ${validApps.length} takıma otomatik dağıtım yapılacak. Her filme en fazla 4 jüri. Onaylıyor musunuz?`)) return;
 
         setIsAutoAssigning(true);
         try {
@@ -90,7 +127,7 @@ export const AdminJuryAssign = ({ apps }: { apps: Application[] }) => {
             });
 
             await bulkAssignJury(assignments);
-            showToast('Otomatik dağıtım tamamlandı. Adaletli dağılım yapıldı.', 'success');
+            showToast(`${validApps.length} takıma otomatik jüri atandı.`, 'success');
         } catch (error) {
             console.error(error);
             showToast('Otomatik atama sırasında hata oluştu.', 'error');
@@ -101,30 +138,88 @@ export const AdminJuryAssign = ({ apps }: { apps: Application[] }) => {
 
     return (
         <div className="space-y-6 animate-fadeIn">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: 'Jüri', value: stats.juries, color: 'text-purple-400' },
+                { label: 'Video teslim', value: stats.withVideo, color: 'text-blue-400' },
+                { label: 'Atanmamış', value: stats.unassigned, color: 'text-amber-400' },
+                { label: 'Atanmış', value: stats.assigned, color: 'text-emerald-400' },
+              ].map((s) => (
+                <div key={s.label} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{s.label}</p>
+                  <p className={`text-2xl font-black mt-1 ${s.color}`}>{s.value}</p>
+                </div>
+              ))}
+            </div>
+
             {/* Header / Toolbar */}
-            <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
                 <div className="flex items-center gap-2 text-white font-bold">
                     <UserCheck size={20} className="text-slate-400"/>
-                    Jüri Atama ve Dağıtım
+                    Jüri Atama
+                    {systemSettings?.season?.label && (
+                      <span className="text-[10px] font-bold text-slate-500 uppercase ml-2">{systemSettings.season.label}</span>
+                    )}
                 </div>
                 
-                <div className="flex items-center gap-3 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-64">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                    <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-700 text-[10px] font-bold">
+                      {([
+                        ['VIDEO', 'Video'],
+                        ['UNASSIGNED', 'Atanmamış'],
+                        ['ASSIGNED', 'Atanmış'],
+                        ['ALL', 'Tümü'],
+                      ] as const).map(([id, label]) => (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => setListFilter(id)}
+                          className={`px-3 py-1.5 rounded-md transition-colors ${listFilter === id ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-white'}`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="relative flex-1 sm:w-56">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                         <input 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Takım ara..." 
+                            placeholder="Takım veya okul ara..." 
                             className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:border-rose-500 outline-none"
                         />
                     </div>
-                    <button type="button" 
-                        onClick={handleAutoAssign}
-                        disabled={isAutoAssigning}
-                        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-lg shadow-purple-900/20 disabled:opacity-50"
-                    >
-                        {isAutoAssigning ? 'Dağıtılıyor...' : <><Wand2 size={16}/> Otomatik Dağıt</>}
-                    </button>
+                    <div className="flex flex-col items-stretch sm:items-end gap-1">
+                        <button type="button" 
+                            onClick={handleAutoAssign}
+                            disabled={isAutoAssigning || stats.juries === 0 || stats.unassigned === 0}
+                            title={
+                              stats.juries === 0
+                                ? 'Önce jüri ekleyin'
+                                : stats.unassigned === 0
+                                  ? 'Atanmamış takım yok'
+                                  : undefined
+                            }
+                            className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-lg shadow-purple-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isAutoAssigning ? 'Dağıtılıyor...' : <><Wand2 size={16}/> Otomatik Dağıt</>}
+                        </button>
+                        {stats.unassigned === 0 && stats.withVideo > 0 && (
+                          <p className="text-[11px] text-emerald-400/90 font-medium max-w-xs sm:text-right">
+                            Tüm video teslimleri jüriye atanmış — otomatik dağıtım gerekmiyor.
+                          </p>
+                        )}
+                        {stats.unassigned === 0 && stats.withVideo === 0 && (
+                          <p className="text-[11px] text-slate-500 font-medium max-w-xs sm:text-right">
+                            Video teslimi olan takım yok; atama için önce video bekleniyor.
+                          </p>
+                        )}
+                        {stats.juries === 0 && (
+                          <p className="text-[11px] text-amber-400/90 font-medium max-w-xs sm:text-right">
+                            Sistemde jüri yok — önce Kullanıcılar’dan jüri ekleyin.
+                          </p>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -143,7 +238,12 @@ export const AdminJuryAssign = ({ apps }: { apps: Application[] }) => {
                         <tbody className="divide-y divide-slate-700">
                             {filteredApps.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="p-8 text-center text-slate-500">Kayıt bulunamadı.</td>
+                                    <td colSpan={4} className="p-10 text-center">
+                                      <p className="text-slate-300 font-bold mb-1">Eşleşen takım yok</p>
+                                      <p className="text-slate-500 text-sm">
+                                        Filtreyi değiştirin veya video teslimi / jüri eklemeyi kontrol edin.
+                                      </p>
+                                    </td>
                                 </tr>
                             ) : (
                                 filteredApps.map(app => {

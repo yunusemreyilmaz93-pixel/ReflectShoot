@@ -1,343 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Download, Filter, Eye, Trophy, Calendar, CheckSquare, XSquare, HelpCircle, EyeOff, Clock, Play, Video, ExternalLink, Youtube, Link as LinkIcon } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Download, Trophy, Calendar, CheckSquare, XSquare, HelpCircle, Clock, Video, ExternalLink, Youtube, Play, Eye, ChevronDown } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { Application, AwardParticipation } from '../../types';
 import { getYouTubeEmbedUrl } from '../../lib/videoUtils';
+import { getWinnerStudentsText, filterAwardApps } from './awards/awardsHelpers';
+import { exportRankingsPDF } from './awards/exportRankingsPdf';
+import { exportAwardsExcel } from './awards/exportAwardsExcel';
+import { exportAwardsPdf } from './awards/exportAwardsPdf';
 
 export const AdminAwards = ({ apps }: { apps: Application[] }) => {
     const [participations, setParticipations] = useState<Record<string, AwardParticipation>>({});
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus, setFilterStatus] = useState<string>('all'); // all, submitted, waiting
-    const [filterAccom, setFilterAccom] = useState<string>('all'); // all, yes, no
-
+    const [filterStatus, setFilterStatus] = useState<string>('all');
+    const [filterAccom, setFilterAccom] = useState<string>('all');
     const [selectedAppView, setSelectedAppView] = useState<string | null>(null);
     const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
     const [showOfficialRankings, setShowOfficialRankings] = useState(true);
     const [showWinnerStudentsList, setShowWinnerStudentsList] = useState(false);
+    const [exportMenuOpen, setExportMenuOpen] = useState(false);
+    const exportMenuRef = useRef<HTMLDivElement>(null);
 
-    const getWinnerStudentsText = () => {
-        const normalize = (s: string) => (s || '').toLocaleLowerCase('tr-TR').trim().replace(/\s+/g, '');
-        const winnerNamesNormalized = [
-            "dirilişperileri",
-            "sinemektep",
-            "msrjusticewithoutdoubt",
-            "justicewithoutdoubt",
-            "sosyalkızlar42",
-            "homineslonginqui",
-            "mitra",
-            "technokasyon",
-            "threee",
-            "pureinsight",
-            "clearvision"
-        ];
-        
-        const winnerApps = apps.filter(app => {
-            const normName = normalize(app.team?.name);
-            return winnerNamesNormalized.includes(normName);
-        });
-
-        if (winnerApps.length === 0) {
-            return "Veritabanında ödül alan takım bilgisi bulunamadı veya henüz yüklenmedi.";
-        }
-
-        let output = "";
-        winnerApps.forEach((app, index) => {
-            const p = participations[app.id];
-            const students = p?.students || app.team?.students || [];
-            
-            output += `${index + 1}) Takım: ${app.team?.name}\n`;
-            output += `Kategori: ${app.team?.category || '-'}\n`;
-            output += `Ödül: ${app.team?.awardCategory || '-'}\n`;
-            output += `Okul: ${app.teacher?.school || '-'}\n`;
-            output += `Öğretmen / Danışman: ${p?.advisorName || app.teacher?.fullName || '-'}\n`;
-            output += `Öğrenciler:\n`;
-            
-            if (students.length > 0) {
-                students.forEach((s: any, i: number) => {
-                    const name = s.fullName || `${s.firstName || ''} ${s.lastName || ''}`.trim();
-                    output += `   - ${name} (${s.grade || '-'})\n`;
-                });
-            } else {
-                output += `   - Öğrenci kaydı bulunamadı.\n`;
+    useEffect(() => {
+        if (!exportMenuOpen) return;
+        const onDocClick = (e: MouseEvent) => {
+            if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+                setExportMenuOpen(false);
             }
-            output += `\n=========================================\n\n`;
-        });
-        
-        return output;
-    };
-
-    const exportRankingsPDF = () => {
-        const content = `
-      <!DOCTYPE html>
-      <html lang="tr">
-      <head>
-        <meta charset="UTF-8">
-        <title>Reflect & Shoot - Resmi Ödül Sıralama Listesi</title>
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
-        <style>
-           @page { size: A4 portrait; margin: 10mm; }
-           body {
-             font-family: 'Inter', sans-serif;
-             color: #0f172a;
-             background-color: #ffffff;
-             margin: 0;
-             padding: 0;
-             -webkit-print-color-adjust: exact;
-             print-color-adjust: exact;
-           }
-           .page {
-             page-break-after: always;
-             border: 3px double #d4af37;
-             padding: 40px;
-             border-radius: 8px;
-             box-sizing: border-box;
-             min-height: 275mm;
-             display: flex;
-             flex-direction: column;
-             justify-content: flex-start;
-             margin-bottom: 20px;
-           }
-           .page:last-child {
-             page-break-after: avoid;
-             margin-bottom: 0;
-           }
-           .logo-table {
-             width: 100%;
-             border-collapse: collapse;
-             margin-bottom: 25px;
-           }
-           .header-logo {
-             height: 65px;
-             object-fit: contain;
-           }
-           .header-section {
-             text-align: center;
-             border-bottom: 2px solid #e2e8f0;
-             padding-bottom: 15px;
-             margin-bottom: 30px;
-           }
-           .main-title {
-             font-family: 'Cinzel', serif;
-             font-size: 22pt;
-             color: #0f172a;
-             margin: 5px 0;
-             letter-spacing: 1.5px;
-             font-weight: 800;
-           }
-           .sub-title {
-             font-family: 'Cinzel', serif;
-             font-size: 13pt;
-             color: #b45309;
-             margin: 0 0 10px 0;
-             letter-spacing: 4px;
-             font-weight: 600;
-             text-transform: uppercase;
-           }
-           .doc-date {
-             font-size: 10pt;
-             color: #64748b;
-             font-weight: 500;
-           }
-           .category-title {
-             font-family: 'Cinzel', serif;
-             font-size: 14pt;
-             color: #1e293b;
-             border-bottom: 2px solid #b45309;
-             padding-bottom: 6px;
-             margin-top: 20px;
-             margin-bottom: 20px;
-             text-transform: uppercase;
-             font-weight: bold;
-           }
-           .data-table {
-             width: 100%;
-             border-collapse: collapse;
-             margin-top: 10px;
-           }
-           .data-table th {
-             background-color: #f8fafc;
-             border-bottom: 2px solid #cbd5e1;
-             color: #334155;
-             font-weight: 700;
-             font-size: 10pt;
-             text-align: left;
-             padding: 12px;
-           }
-           .data-table td {
-             font-size: 10pt;
-             padding: 14px 12px;
-             border-bottom: 1px solid #f1f5f9;
-           }
-           .rank-cell {
-             width: 25%;
-           }
-           .team-cell {
-             font-weight: 700;
-             width: 35%;
-             color: #0f172a;
-           }
-           .school-cell {
-             color: #475569;
-             width: 40%;
-           }
-           .badge-rank {
-             display: inline-block;
-             padding: 4px 12px;
-             border-radius: 99px;
-             font-size: 9.5pt;
-             font-weight: 800;
-             text-align: center;
-           }
-           .badge-rank.gold {
-             background: #fef3c7;
-             color: #92400e;
-             border: 1px solid #fde68a;
-           }
-           .badge-rank.special {
-             background: #f0fdf4;
-             color: #166534;
-             border: 1px solid #bbf7d0;
-           }
-           .badge-rank.mention {
-             background: #eff6ff;
-             color: #1e40af;
-             border: 1px solid #bfdbfe;
-           }
-        </style>
-      </head>
-      <body>
-        <!-- PAGE 1: CANLI ÇEKİM -->
-        <div class="page">
-          <table class="logo-table">
-            <tr>
-              <td style="text-align:left; border:none; padding:0;">
-                <img class="header-logo" src="https://assets.reflectandshoot.com/Reflect_Shoot_Logo.png" alt="Reflect & Shoot">
-              </td>
-              <td style="text-align:right; border:none; padding:0;">
-                <img class="header-logo" src="https://assets.reflectandshoot.com/20113118_yeni_logo_konyaihl.png" alt="Konya Anadolu İHL">
-              </td>
-            </tr>
-          </table>
-
-          <div class="header-section">
-            <div class="main-title">REFLECT & SHOOT YARIŞMASI</div>
-            <div class="sub-title">Resmi Ödül Sıralama Listesi</div>
-            <div class="doc-date">Tarih: 22 Mayıs 2026</div>
-          </div>
-
-          <div class="category-title">🏆 CANLI ÇEKİM ÖDÜL SIRALAMASI</div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Derece / Ödül</th>
-                <th>Takım Adı</th>
-                <th>Okul Adı</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="rank-cell"><span class="badge-rank gold">1. Derece</span></td>
-                <td class="team-cell">Sosyal Kızlar42</td>
-                <td class="school-cell">Konya Türk Telekom Sosyal Bilimler Lisesi</td>
-              </tr>
-              <tr>
-                <td class="rank-cell"><span class="badge-rank gold">2. Derece</span></td>
-                <td class="team-cell">Diriliş Perileri</td>
-                <td class="school-cell">Güngören İTO Kız Anadolu İmam Hatip Lisesi</td>
-              </tr>
-              <tr>
-                <td class="rank-cell"><span class="badge-rank gold">3. Derece</span></td>
-                <td class="team-cell">sinemektep</td>
-                <td class="school-cell">Güngören İTO Kız Anadolu İmam Hatip Lisesi</td>
-              </tr>
-              <tr>
-                <td class="rank-cell"><span class="badge-rank special">Jüri Özel</span></td>
-                <td class="team-cell">Homines Longinqui</td>
-                <td class="school-cell">Uluslararası Mevlana Anadolu İmam Hatip Lisesi</td>
-              </tr>
-              <tr>
-                <td class="rank-cell"><span class="badge-rank mention">Mansiyon</span></td>
-                <td class="team-cell">Justice Without Doubt</td>
-                <td class="school-cell">Mahmut Sami Ramazanoğlu Anadolu İmam Hatip Lisesi</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- PAGE 2: YAPAY ZEKÂ -->
-        <div class="page">
-          <table class="logo-table">
-            <tr>
-              <td style="text-align:left; border:none; padding:0;">
-                <img class="header-logo" src="https://assets.reflectandshoot.com/Reflect_Shoot_Logo.png" alt="Reflect & Shoot">
-              </td>
-              <td style="text-align:right; border:none; padding:0;">
-                <img class="header-logo" src="https://assets.reflectandshoot.com/20113118_yeni_logo_konyaihl.png" alt="Konya Anadolu İHL">
-              </td>
-            </tr>
-          </table>
-
-          <div class="header-section">
-            <div class="main-title">REFLECT & SHOOT YARIŞMASI</div>
-            <div class="sub-title">Resmi Ödül Sıralama Listesi</div>
-            <div class="doc-date">Tarih: 22 Mayıs 2026</div>
-          </div>
-
-          <div class="category-title">🤖 YAPAY ZEKÂ ÖDÜL SIRALAMASI</div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Derece / Ödül</th>
-                <th>Takım Adı</th>
-                <th>Okul Adı</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="rank-cell"><span class="badge-rank gold">1. Derece</span></td>
-                <td class="team-cell">mitra</td>
-                <td class="school-cell">15 Temmuz Şehitleri Anadolu İmam Hatip Lisesi</td>
-              </tr>
-              <tr>
-                <td class="rank-cell"><span class="badge-rank gold">2. Derece</span></td>
-                <td class="team-cell">Technokasyon</td>
-                <td class="school-cell">Kadıköy Anadolu İmam Hatip Lisesi</td>
-              </tr>
-              <tr>
-                <td class="rank-cell"><span class="badge-rank gold">3. Derece</span></td>
-                <td class="team-cell">Threee</td>
-                <td class="school-cell">Maltepe Kız Anadolu İmam Hatip Lisesi</td>
-              </tr>
-              <tr>
-                <td class="rank-cell"><span class="badge-rank special">Jüri Özel</span></td>
-                <td class="team-cell">PURE INSIGHT</td>
-                <td class="school-cell">Selçuklu Fen Lisesi</td>
-              </tr>
-              <tr>
-                <td class="rank-cell"><span class="badge-rank mention">Mansiyon</span></td>
-                <td class="team-cell">Clear Vision</td>
-                <td class="school-cell">Konya Anadolu İmam Hatip Lisesi</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <script>
-          window.onload = function() {
-            window.print();
-          }
-        </script>
-      </body>
-      </html>
-    `;
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-            printWindow.document.write(content);
-            printWindow.document.close();
-        }
-    };
+        };
+        document.addEventListener('mousedown', onDocClick);
+        return () => document.removeEventListener('mousedown', onDocClick);
+    }, [exportMenuOpen]);
 
     const winningApps = apps.filter(a => a.team.isWinner);
 
@@ -346,192 +40,23 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
             const q = query(collection(db, 'award_participations'));
             const snap = await getDocs(q);
             const data: Record<string, AwardParticipation> = {};
-            snap.forEach(doc => {
-                data[doc.id] = doc.data() as AwardParticipation;
+            snap.forEach(docSnap => {
+                data[docSnap.id] = { id: docSnap.id, ...docSnap.data() } as AwardParticipation;
             });
             setParticipations(data);
             setLoading(false);
         };
         fetchParticipations();
-    }, [apps]);
+    }, []);
 
-    const exportToExcel = async () => {
-        const XLSX = await import('xlsx');
-        const data = filteredApps.map(app => {
-            const p = participations[app.id];
-            
-            const studentInfo = (p?.students || app.team.students || []).map((s, i) =>
-                `${i + 1}. Öğrenci: ${s.fullName} (${s.grade}) | Tel: ${s.phone || '-'} | Veli: ${s.parentName || '-'} (${s.parentPhone || '-'}) | Özel Durum: ${s.specialCondition || 'Yok'} ${s.specialConditionDescription ? `(${s.specialConditionDescription})` : ''}`
-            ).join('\n');
-
-            return {
-                "Takım Adı": app.team.name,
-                "Ödül Kategorisi": app.team.awardCategory || '-',
-                "Okul Adı": app.teacher.school,
-                "İl": app.teacher.city,
-                "İlçe": p?.schoolDistrict || '-',
-                "Danışman": p?.advisorName || app.teacher.fullName,
-                "Danışman Tel": p?.advisorPhone || app.teacher.phone,
-                "Danışman E-Posta": p?.advisorEmail || app.teacher.email,
-                "Danışman Katılım": p?.advisorParticipationStatus === 'Attending' ? 'Katılıyor' : p?.advisorParticipationStatus === 'Not_Attending' ? 'Katılmıyor' : 'Belirsiz',
-                "Öğrenci Sayısı": (p?.students || app.team.students).length,
-                "Konaklayacak Kişi (Toplam)": p?.accommodationPersonCount || 0,
-                "Ulaşım Yöntemi": p?.transportationType || '-',
-                "Ulaşım Detayı": p?.transportationOtherDesc || '-',
-                "Tahmini Varış": `${p?.arrivalDate || '-'} ${p?.arrivalTime || '-'}`,
-                "Tahmini Dönüş": `${p?.departureDate || '-'} ${p?.departureTime || '-'}`,
-                "Konaklama Talebi": p?.accommodationRequired === 'Yes' ? 'Var' : p?.accommodationRequired === 'No' ? 'Yok' : 'Belirsiz',
-                "Form Durumu": app.team.participationFormStatus === 'submitted' ? 'Dolduruldu' : 'Bekliyor',
-                "Ek Notlar": p?.additionalNotes || '',
-                "Öğrenci ve Veli Bilgileri": studentInfo
-            };
-        });
-
-        if (data.length === 0) return;
-        
-        const worksheet = XLSX.utils.json_to_sheet(data);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Katılım Raporu");
-        XLSX.writeFile(workbook, `odul_toreni_katilim_raporu_${new Date().toISOString().split('T')[0]}.xlsx`);
-    };
-
-    const exportToPDF = async () => {
-        const { default: jsPDF } = await import('jspdf');
-        const { default: autoTable } = await import('jspdf-autotable');
-
-        // Dikey mod (portrait) yapıyoruz ki sayfaya daha rahat sığsın takım bazlı yapı
-        const doc = new jsPDF('portrait');
-        
-        try {
-            const fetchFont = async (url: string) => {
-                const response = await fetch(url);
-                const buffer = await response.arrayBuffer();
-                let binary = '';
-                const bytes = new Uint8Array(buffer);
-                for (let i = 0; i < bytes.byteLength; i++) {
-                    binary += String.fromCharCode(bytes[i]);
-                }
-                return window.btoa(binary);
-            };
-
-            const [regFont, boldFont] = await Promise.all([
-                fetchFont("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Regular.ttf"),
-                fetchFont("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Medium.ttf")
-            ]);
-
-            doc.addFileToVFS('Roboto-Regular.ttf', regFont);
-            doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
-            
-            doc.addFileToVFS('Roboto-Medium.ttf', boldFont);
-            doc.addFont('Roboto-Medium.ttf', 'Roboto', 'bold');
-            
-            doc.setFont('Roboto', 'bold');
-        } catch (e) {
-            console.warn("Font yüklenemedi", e);
-        }
-        
-        doc.setFontSize(16);
-        doc.text("Ödül Töreni Katılım Detay Raporu", 14, 20);
-
-        let currentY = 30;
-
-        filteredApps.forEach((app, index) => {
-            const p = participations[app.id];
-
-            // Sayfa sonuna yaklaşıldıysa yeni sayfa aç
-            if (currentY > 210) {
-                doc.addPage();
-                currentY = 20;
-            }
-
-            // Takım Başlığı
-            doc.setFontSize(13);
-            doc.setFont('Roboto', 'bold');
-            doc.setTextColor(30, 41, 59);
-            doc.text(`${index + 1}. Takım: ${app.team.name}`, 14, currentY);
-            currentY += 6;
-
-            // Genel Bilgiler Tablosu
-            const generalInfo = [
-                ['Okul:', app.teacher.school, 'Danışman:', p?.advisorName || app.teacher.fullName],
-                ['İl / İlçe:', `${app.teacher.city} / ${p?.schoolDistrict || '-'}`, 'Danışman Tel:', p?.advisorPhone || app.teacher.phone],
-                ['Ulaşım:', p?.transportationType || '-', 'Danışman E-Posta:', p?.advisorEmail || app.teacher.email],
-                ['Konaklama İhtiyacı:', p?.accommodationRequired === 'Yes' ? 'Var' : p?.accommodationRequired === 'No' ? 'Yok' : 'Belirsiz', 'Törene Katılım Durumu:', p?.advisorParticipationStatus === 'Attending' ? 'Katılıyor' : p?.advisorParticipationStatus === 'Not_Attending' ? 'Katılmıyor' : 'Belirsiz'],
-                ['Konaklayacak Kişi:', (p?.accommodationPersonCount || 0).toString(), 'Form Durumu:', app.team.participationFormStatus === 'submitted' ? 'Dolduruldu' : 'Bekliyor'],
-                ['Tahmini Varış:', `${p?.arrivalDate || '-'} ${p?.arrivalTime || '-'}`, 'Tahmini Kalkış:', `${p?.departureDate || '-'} ${p?.departureTime || '-'}`],
-                ['Ek Notlar:', { content: p?.additionalNotes || 'Yok', colSpan: 3 }]
-            ];
-
-            autoTable(doc, {
-                startY: currentY,
-                body: generalInfo,
-                theme: 'plain',
-                styles: { font: 'Roboto', fontSize: 9, cellPadding: 2, textColor: [51, 65, 85] },
-                columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 35 },
-                    1: { cellWidth: 55 },
-                    2: { fontStyle: 'bold', cellWidth: 35 },
-                    3: { cellWidth: 'auto' }
-                },
-                margin: { left: 14, right: 14 }
-            });
-
-            currentY = (doc as any).lastAutoTable.finalY + 3;
-
-            // Öğrenci Bilgileri Tablosu
-            const students = p?.students || app.team.students || [];
-            if (students.length > 0) {
-                const studentData = students.map((s, i) => [
-                    (i + 1).toString(),
-                    s.fullName || '-',
-                    s.grade || '-',
-                    s.phone || '-',
-                    s.parentName || '-',
-                    s.parentPhone || '-',
-                    s.specialCondition === 'Diğer' && s.specialConditionDescription 
-                        ? `Diğer - ${s.specialConditionDescription}` 
-                        : (s.specialCondition || 'Yok')
-                ]);
-
-                autoTable(doc, {
-                    startY: currentY,
-                    head: [['#', 'Öğrenci', 'Sınıf', 'Öğr. Tel', 'Veli', 'Veli Tel', 'Özel Durum']],
-                    body: studentData,
-                    theme: 'grid',
-                    styles: { font: 'Roboto', fontSize: 8, cellPadding: 2 },
-                    headStyles: { fillColor: [71, 85, 105], textColor: 255, fontStyle: 'bold' },
-                    margin: { left: 14, right: 14 }
-                });
-                currentY = (doc as any).lastAutoTable.finalY + 10;
-            } else {
-                currentY += 5;
-            }
-
-            // Sayfada yer varsa takımlar arasına ayırıcı çizgi koy
-            if (currentY < 270 && index < filteredApps.length - 1) {
-                doc.setDrawColor(203, 213, 225);
-                doc.line(14, currentY - 3, 196, currentY - 3);
-                currentY += 5;
-            }
-        });
-
-        doc.save(`toren_katilim_raporu_${new Date().toISOString().split('T')[0]}.pdf`);
-    };
-
-    const filteredApps = winningApps.filter(app => {
-        const matchesSearch = app.team.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                              app.teacher.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              app.teacher.school.toLowerCase().includes(searchTerm.toLowerCase());
-        
-        const pStatus = app.team.participationFormStatus === 'submitted' ? 'submitted' : 'waiting';
-        const matchesStatus = filterStatus === 'all' || pStatus === filterStatus;
-        
-        const p = participations[app.id];
-        const aStatus = p?.accommodationRequired === 'Yes' ? 'yes' : p?.accommodationRequired === 'No' ? 'no' : 'not_sure';
-        const matchesAccom = filterAccom === 'all' || aStatus === filterAccom;
-
-        return matchesSearch && matchesStatus && matchesAccom;
+    const filteredApps = filterAwardApps(winningApps, participations, {
+      searchTerm,
+      filterStatus,
+      filterAccom,
     });
+
+    const handleExportExcel = () => { void exportAwardsExcel(filteredApps, participations); };
+    const handleExportPdf = () => { void exportAwardsPdf(filteredApps, participations); };
 
     return (
         <div className="space-y-6 animate-fadeIn pb-12">
@@ -557,12 +82,6 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                             Öğrenci Listesi Göster / Kopyala
                         </button>
                         <button type="button"
-                            onClick={exportRankingsPDF}
-                            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-black transition-all shadow-md shadow-amber-500/10 active:scale-95 cursor-pointer"
-                        >
-                            <Download size={14} className="stroke-[3]" /> Derece Listesi PDF İndir
-                        </button>
-                        <button type="button"
                             onClick={() => setShowOfficialRankings(!showOfficialRankings)}
                             className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-colors border border-slate-700"
                         >
@@ -580,7 +99,7 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                             </div>
                             <button type="button"
                                 onClick={() => {
-                                    const text = getWinnerStudentsText();
+                                    const text = getWinnerStudentsText(apps, participations);
                                     navigator.clipboard.writeText(text);
                                     alert("Başarıyla panoya kopyalandı!");
                                 }}
@@ -590,7 +109,7 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                             </button>
                         </div>
                         <pre className="bg-slate-950/90 border border-slate-800 rounded-2xl p-4 text-xs font-mono text-slate-300 whitespace-pre-wrap max-h-96 overflow-y-auto custom-scrollbar select-all">
-                            {getWinnerStudentsText()}
+                            {getWinnerStudentsText(apps, participations)}
                         </pre>
                     </div>
                 )}
@@ -721,13 +240,48 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                         </div>
                     </div>
                     
-                    <div className="flex gap-2">
-                        <button type="button" onClick={exportToPDF} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-3 rounded-xl font-bold flex items-center gap-2 border border-slate-700 transition-colors">
-                            <Download size={18} /> PDF Olarak İndir
+                    <div className="relative" ref={exportMenuRef}>
+                        <button
+                            type="button"
+                            onClick={() => setExportMenuOpen((v) => !v)}
+                            aria-haspopup="menu"
+                            aria-expanded={exportMenuOpen}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-xl font-bold flex items-center gap-2 border border-emerald-600 transition-colors"
+                        >
+                            <Download size={18} /> Dışa aktar
+                            <ChevronDown size={16} className={`transition-transform ${exportMenuOpen ? 'rotate-180' : ''}`} />
                         </button>
-                        <button type="button" onClick={exportToExcel} className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-xl font-bold flex items-center gap-2 border border-emerald-600 transition-colors">
-                            <Download size={18} /> Excel Olarak İndir
-                        </button>
+                        {exportMenuOpen && (
+                            <div
+                                role="menu"
+                                className="absolute right-0 mt-2 z-30 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden py-1"
+                            >
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => { exportRankingsPDF(); setExportMenuOpen(false); }}
+                                    className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-200 hover:bg-slate-800 flex items-center gap-2"
+                                >
+                                    <Download size={14} className="text-amber-500" /> Derece listesi PDF
+                                </button>
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => { handleExportPdf(); setExportMenuOpen(false); }}
+                                    className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-200 hover:bg-slate-800 flex items-center gap-2"
+                                >
+                                    <Download size={14} className="text-slate-400" /> Katılım formları PDF
+                                </button>
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => { handleExportExcel(); setExportMenuOpen(false); }}
+                                    className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-200 hover:bg-slate-800 flex items-center gap-2"
+                                >
+                                    <Download size={14} className="text-emerald-400" /> Katılım formları Excel
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -1012,3 +566,4 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
         </div>
     );
 };
+

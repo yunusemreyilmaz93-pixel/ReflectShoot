@@ -183,6 +183,16 @@ export interface Application {
   juryCount?: number;  // How many juries graded this (cached on parent)
   gradedBy?: string[]; // Array of Jury IDs who graded this (for UI filtering)
   assignedJuryIds?: string[]; // NEW: For Jury Assignment
+
+  /** Competition season key, e.g. "2026". Missing = legacy pre-season data. */
+  seasonId?: string;
+  /** Soft-archive: hidden from default admin/current-season views. */
+  archived?: boolean;
+}
+
+export interface SeasonConfig {
+  id: string;
+  label: string;
 }
 
 export interface SystemSettings {
@@ -207,7 +217,11 @@ export interface SystemSettings {
         publicVotingActive?: boolean;
         videoUploadActive: boolean; // NEW: Master switch for video uploads
         maintenanceMode: boolean; // NEW: Global maintenance switch
+        /** When true, teachers cannot create new applications. */
+        blockNewApplications?: boolean;
     };
+    /** Active competition season (optional for backward compatibility). */
+    season?: SeasonConfig;
 }
 
 export interface LogEntry {

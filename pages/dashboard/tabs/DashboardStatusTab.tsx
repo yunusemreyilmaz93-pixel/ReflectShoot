@@ -1,17 +1,12 @@
 import React from 'react';
-import { motion } from 'motion/react';
 import {
-  Clapperboard, Users, FileText, Video, MessageSquare, AlertCircle,
-  CheckCircle2, Clock, Upload, X, Save, Film, HelpCircle, LogOut, Ban, ShieldAlert,
-  Download, Lock, ExternalLink, RefreshCw, FileCheck, BookOpen, Eye, Calendar, Bell, Copy, Info, Loader2, File,
-  Plus, Trash2, Edit, AlertOctagon, CheckSquare, Camera, PenTool, Printer, ShieldCheck,
-  Sparkles, ArrowRight, UploadCloud, Megaphone, Star, PartyPopper, User, RefreshCcw, Youtube, Trophy
+  Users, CheckCircle2, Clock, Lock, Info, Printer, Sparkles, ArrowRight, Trophy,
+  Bell, FileCheck,
 } from 'lucide-react';
-import { Category, Theme, ApplicationStatus, UserRole } from '../../../types';
-import { versesList, verseDetails } from '../../../data/verses';
+import { Theme } from '../../../types';
+import { verseDetails } from '../../../data/verses';
 import { AcademicJuryScorePanel } from '../../../components/AcademicJuryScorePanel';
 import { getJuryFeedback } from '../../../data/juryFeedback';
-import { CertificateGenerator } from '../../../components/CertificateGenerator';
 import { downloadCertificate } from '../../../lib/certificates';
 import { useDashboardUI } from '../DashboardUIContext';
 
@@ -19,17 +14,12 @@ import { useDashboardUI } from '../DashboardUIContext';
 export function DashboardStatusTab() {
   const {
     currentUser, currentApplication, myApplications, activeApplicationId, setActiveApplicationId,
-    systemSettings, cmsAcademy, IS_DEADLINE_PASSED, progress, missingDocsCount, remainingDays,
-    allVideoChecksPassed, pendingTheme, setPendingTheme, pendingVerse, setPendingVerse,
-    pendingTopic, setPendingTopic, isSavingTheme, hasThemeChanges, handleSaveTheme, renderVerseText,
-    uploadingDoc, selectedFiles, verifyCodes, declarationModal, declarationAccepted, setDeclarationAccepted,
-    handleOpenStudentModal, handleDeleteStudent, handleGenerateCode, copyCode,
-    handleOpenDeclarationModal, handleConfirmDeclaration, handleFileSelect, handleDocUpload, handleDeleteDoc,
-    videoChecklist, setVideoChecklist, videoLink, setVideoLink, confirmVideoSubmission,
-    handleActionRedirect, getCategoryStyle, getTeacherCertificateUrl, getStudentCertificateUrl,
-    TEMPLATE_PARENT_URL, TEMPLATE_CONSENT_URL,
-    showToast, setVerifyCodes,
+    systemSettings, missingDocsCount, remainingDays,
+    renderVerseText,
+    handleActionRedirect,
+    showToast,
   } = useDashboardUI();
+  const seasonLabel = systemSettings?.season?.label || 'Güncel sezon';
 
   return (
                     <div className="grid lg:grid-cols-2 gap-8">
@@ -179,7 +169,7 @@ export function DashboardStatusTab() {
                                         <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-500" />
                                         <div>
                                             <span className="font-bold block mb-0.5">Sertifikalarınız Hazır!</span>
-                                            <span>2025-2026 Sezonu için tüm katılım ve teşekkür belgeleri hazırlanmıştır. Hem kendiniz için danışman sertifikasını hem de öğrencilerinizin katılım belgelerini anında indirip kaydedebilirsiniz.</span>
+                                            <span>{seasonLabel} için tüm katılım ve teşekkür belgeleri hazırlanmıştır. Hem kendiniz için danışman sertifikasını hem de öğrencilerinizin katılım belgelerini anında indirip kaydedebilirsiniz.</span>
                                         </div>
                                     </div>
 

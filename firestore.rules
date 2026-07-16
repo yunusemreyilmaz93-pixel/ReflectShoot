@@ -48,7 +48,10 @@ service cloud.firestore {
     }
 
     function validApplicationCreate(appId) {
-      return request.resource.data.keys().hasOnly(['id', 'teacher', 'team', 'status', 'submittedAt', 'updatedAt']) &&
+      return request.resource.data.keys().hasOnly([
+          'id', 'teacher', 'team', 'status', 'submittedAt', 'updatedAt',
+          'seasonId', 'archived'
+        ]) &&
         request.resource.data.id == appId &&
         request.resource.data.teacher.id == request.auth.uid &&
         request.resource.data.status == 'Taslak' &&
@@ -56,8 +59,14 @@ service cloud.firestore {
         request.resource.data.team.name.size() >= 3 &&
         request.resource.data.team.name.size() <= 40 &&
         request.resource.data.team.students is list &&
-        request.resource.data.team.students.size() >= 1 &&
-        request.resource.data.team.students.size() <= 5;
+        request.resource.data.team.students.size() >= 3 &&
+        request.resource.data.team.students.size() <= 5 &&
+        // Season tags optional; client may not archive on create
+        (!('archived' in request.resource.data) || request.resource.data.archived == false) &&
+        (!('seasonId' in request.resource.data) ||
+          (request.resource.data.seasonId is string &&
+            request.resource.data.seasonId.size() >= 2 &&
+            request.resource.data.seasonId.size() <= 32));
     }
 
     function validOwnerApplicationUpdate() {
@@ -75,6 +84,7 @@ service cloud.firestore {
         request.resource.data.team.name.size() >= 3 &&
         request.resource.data.team.name.size() <= 40 &&
         request.resource.data.team.students is list &&
+        request.resource.data.team.students.size() >= 3 &&
         request.resource.data.team.students.size() <= 5 &&
         request.resource.data.status in [
           'Taslak', 'Ön Başvuru Yapıldı', 'Video İnceleniyor', 'Düzeltme Gerekli'

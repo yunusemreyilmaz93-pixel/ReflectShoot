@@ -122,7 +122,13 @@ export const AdminUsers = () => {
                         <tbody className="divide-y divide-slate-700">
                             {filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="p-8 text-center text-slate-500">Kullanıcı bulunamadı.</td>
+                                    <td colSpan={4} className="p-12 text-center">
+                                        <p className="text-slate-300 font-bold mb-1">Kullanıcı bulunamadı</p>
+                                        <p className="text-slate-500 text-sm max-w-md mx-auto">
+                                            Arama kutusunu temizleyin veya rol filtresini değiştirin. Jüri eklemek için
+                                            kullanıcıyı listeden seçip rolünü &quot;Jüri&quot; yapın.
+                                        </p>
+                                    </td>
                                 </tr>
                             ) : (
                                 filteredUsers.map(user => (

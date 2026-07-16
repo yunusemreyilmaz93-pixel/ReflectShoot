@@ -4,11 +4,7 @@ import {
   computeFinalScoreFromScores,
   CRITERIA_KEYS,
 } from '../../server/juryScoreValidate.js';
-import {
-  validatePublicVoteBody,
-  isVoteRateLimited,
-  isApplicationVoteEligible,
-} from '../../server/publicVoteValidate.js';
+import { validateAdminUserRoleBody } from '../../server/adminUserRoleValidate.js';
 
 describe('jury-score validation', () => {
   const good = {
@@ -52,30 +48,17 @@ describe('jury-score validation', () => {
   });
 });
 
-describe('public-vote validation', () => {
-  test('accepts valid body', () => {
-    const r = validatePublicVoteBody({
-      appId: 'film-abc',
-      fingerprint: 'abcdef0123456789',
-    });
-    expect(r.ok).toBe(true);
+describe('admin-user-role validation', () => {
+  test('accepts valid admin role payload', () => {
+    const r = validateAdminUserRoleBody({ uid: 'abc123xyz', role: 'JUDGE' });
+    expect(r.role).toBe('JUDGE');
   });
 
-  test('rejects short fingerprint', () => {
-    const r = validatePublicVoteBody({ appId: 'film-abc', fingerprint: 'short' });
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.code).toBe('invalid_fingerprint');
+  test('rejects invalid role', () => {
+    expect(() => validateAdminUserRoleBody({ uid: 'abc123xyz', role: 'HACKER' })).toThrow();
   });
 
-  test('rate limit', () => {
-    expect(isVoteRateLimited({ count: 50, lastVoteAtMs: 0 }, Date.now())).toBe(true);
-    expect(isVoteRateLimited({ count: 1, lastVoteAtMs: Date.now() - 100 }, Date.now())).toBe(true);
-    expect(isVoteRateLimited({ count: 1, lastVoteAtMs: Date.now() - 5000 }, Date.now())).toBe(false);
-  });
-
-  test('eligibility requires finalist + video', () => {
-    expect(isApplicationVoteEligible({ team: { isFinalist: true, videoUrl: 'https://youtube.com/x' } })).toBe(true);
-    expect(isApplicationVoteEligible({ team: { isFinalist: false, videoUrl: 'https://youtube.com/x' } })).toBe(false);
-    expect(isApplicationVoteEligible({ team: { isFinalist: true } })).toBe(false);
+  test('rejects short uid', () => {
+    expect(() => validateAdminUserRoleBody({ uid: 'ab', role: 'TEACHER' })).toThrow();
   });
 });

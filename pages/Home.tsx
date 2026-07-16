@@ -6,97 +6,9 @@ import { Timeline } from '../components/Timeline';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { useAppContext } from '../context/AppContext';
 import { motion, AnimatePresence } from 'motion/react';
-
-// Competition Schedule Configuration
-const COMPETITION_PHASES = [
-  { label: 'Başvuru ve Eser Gönderimi', date: '2026-05-04T23:59:59' },
-  { label: 'Ön Sonuçların Açıklanması', date: '2026-05-07T12:00:00' },
-  { label: 'Ödül Alan Takımların Açıklanması', date: '2026-05-08T12:00:00' },
-  { label: 'Büyük Final & Ödül Töreni', date: '2026-05-22T10:30:00' }
-];
-
-// Helper to find the next active phase
-const getNextPhase = (cmsTimeline: any[]) => {
-  const now = new Date();
-  
-  // Create a sorted list of phases from cmsTimeline that have a targetDate
-  // and are not part of the cancelled phases
-  const phases = cmsTimeline
-    .filter(item => item.targetDate && 
-      !item.title.toLowerCase().includes('akademi') && 
-      !item.title.toLowerCase().includes('eğitim') && 
-      !item.title.toLowerCase().includes('revize') &&
-      !item.title.toLowerCase().includes('nihai')
-    )
-    .map(item => ({ label: item.title, date: item.targetDate }))
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-  if (phases.length === 0) {
-    return COMPETITION_PHASES.find(phase => new Date(phase.date) > now) || COMPETITION_PHASES[COMPETITION_PHASES.length - 1];
-  }
-
-  const nextEvent = phases.find(phase => new Date(phase.date) > now);
-  return nextEvent || phases[phases.length - 1];
-};
-
-// Countdown Component
-const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    const target = new Date(targetDate).getTime();
-    const calculateTime = () => {
-      const now = new Date().getTime();
-      const difference = target - now;
-
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((difference % (1000 * 60)) / 1000),
-        });
-      } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      }
-    };
-    calculateTime();
-    const interval = setInterval(calculateTime, 1000);
-    return () => clearInterval(interval);
-  }, [targetDate]);
-
-  return (
-    <div className="flex gap-3 md:gap-6 justify-center text-white/90">
-      {[
-        { value: timeLeft.days, label: 'GÜN' },
-        { value: timeLeft.hours, label: 'SAAT' },
-        { value: timeLeft.minutes, label: 'DK' },
-        { value: timeLeft.seconds, label: 'SN' },
-      ].map((item, idx) => (
-        <div key={idx} className="flex flex-col items-center">
-          <div className="text-2xl md:text-4xl font-light tabular-nums tracking-tight bg-white/5 rounded-lg py-2 px-3 min-w-[3.5rem] md:min-w-[4.5rem] text-center backdrop-blur-sm border border-white/10 shadow-inner">
-             {item.value.toString().padStart(2, '0')}
-          </div>
-          <span className="text-[10px] font-bold tracking-widest opacity-60 mt-2 text-amber-500">{item.label}</span>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-interface CategoryData {
-  id: string;
-  title: string;
-  badge: string;
-  shortDesc: string;
-  icon: React.ElementType;
-  color: string;
-  techSpecs: { icon: React.ElementType, label: string }[];
-  details: {
-    description: string[];
-    warnings: string[];
-  }
-}
+import { getNextPhase } from './home/competitionPhases';
+import { CountdownTimer } from './home/CountdownTimer';
+import { HOME_CATEGORIES, type CategoryData } from './home/categoryCards';
 
 export const Home: React.FC = () => {
   const { cmsLinks, cmsTimeline } = useAppContext();
@@ -130,58 +42,7 @@ export const Home: React.FC = () => {
     ));
   };
 
-  const categories: CategoryData[] = [
-    {
-      id: 'live-action',
-      title: 'Canlı Çekim',
-      badge: 'SİNEMATOGRAFİ',
-      shortDesc: 'Gerçek oyuncular, set ışıkları ve kamera lensinin gücü ile fikrini filme dönüştür.',
-      icon: Film,
-      color: 'teal',
-      techSpecs: [
-        { icon: Clapperboard, label: 'Kurmaca / Belgesel' },
-        { icon: Layout, label: '1920x1080 FHD' },
-        { icon: CalendarDays, label: '3-8 Dakika' }
-      ],
-      details: {
-        description: [
-           "Geleneksel sinema teknikleri kullanılarak üretilmelidir.",
-           "Senaryo özgün olmalı ve belirlenen temalardan birini işlemelidir.",
-           "Oyuncu yönetimi, ışık kullanımı ve ses kalitesi değerlendirmede önemlidir."
-        ],
-        warnings: [
-          "Telif hakkı içeren müzik veya görüntü kullanılamaz.",
-          "Okul ve genel ahlak kurallarına aykırı içerikler diskalifiye sebebidir.",
-          "Filmin dili İngilizce, altyazılar Türkçe olmalıdır."
-        ]
-      }
-    },
-    {
-      id: 'ai-animation',
-      title: 'Yapay Zeka Animasyon',
-      badge: 'SENTETİK MEDYA',
-      shortDesc: 'Prompt mühendisliği ile oluşturulan dijital hikayeler ve görsel anlatım.',
-      icon: Cpu,
-      color: 'purple',
-      techSpecs: [
-        { icon: Layout, label: 'Yapay Zeka' },
-        { icon: Layout, label: '1920x1080 FHD' },
-        { icon: CalendarDays, label: '3-8 Dakika' }
-      ],
-      details: {
-        description: [
-           "Görüntü oluşturma ve video üretiminde Yapay Zeka araçları (Midjourney, Runway, Pika vb.) kullanılmalıdır.",
-           "Prompt mühendisliği ve görsel tutarlılık esas alınır.",
-           "Senaryo ve kurgu bütünlüğü teknik kapasite kadar önemlidir."
-        ],
-        warnings: [
-          "Tamamen stok görüntülerden oluşan kolajlar kabul edilmez.",
-          "Yapay zeka tarafından üretilen içeriklerin etik kullanımı esastır.",
-          "Filmin dili İngilizce (AI Seslendirme kabul edilir), altyazılar Türkçe olmalıdır."
-        ]
-      }
-    }
-  ];
+  const categories = HOME_CATEGORIES;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
