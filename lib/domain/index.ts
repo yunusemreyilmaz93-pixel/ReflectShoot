@@ -6,3 +6,4 @@ export * from './season';
 export * from './teacherDashboard';
 export * from './timeline';
 export * from './academy';
+export * from './adminOps';

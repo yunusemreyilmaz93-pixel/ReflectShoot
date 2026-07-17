@@ -1,39 +1,44 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   X,
   Shield,
   LayoutDashboard,
   Mail,
   Megaphone,
-  Clapperboard,
-  Trophy,
-  Award,
+  Medal,
+  GraduationCap,
   UserCheck,
-  Activity,
+  ListChecks,
   Users,
+  UsersRound,
   LayoutTemplate,
-  FileText,
+  ScrollText,
   Settings,
-  List,
+  History,
   LogOut,
   type LucideIcon,
 } from 'lucide-react';
-import { ADMIN_NAV_GROUPS, type AdminTabId } from './adminTabs';
+import { useAppContext } from '../../context/AppContext';
+import {
+  countUnassignedWithVideo,
+  countUnreadMessages,
+} from '../../lib/domain/adminOps';
+import { ADMIN_NAV_GROUPS, ADMIN_TAB_TITLES, type AdminTabId } from './adminTabs';
 
 const ICONS: Record<string, LucideIcon> = {
   LayoutDashboard,
   Mail,
   Megaphone,
-  Clapperboard,
-  Trophy,
-  Award,
+  UsersRound,
+  Medal,
+  GraduationCap,
   UserCheck,
-  Activity,
+  ListChecks,
   Users,
   LayoutTemplate,
-  FileText,
+  ScrollText,
   Settings,
-  List,
+  History,
 };
 
 interface SidebarProps {
@@ -44,7 +49,24 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-export const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }: SidebarProps) => {
+export const AdminSidebar = ({
+  activeTab,
+  setActiveTab,
+  onLogout,
+  isOpen,
+  onClose,
+}: SidebarProps) => {
+  const { allApplications, contactMessages } = useAppContext();
+
+  const badges = useMemo(() => {
+    const unread = countUnreadMessages(contactMessages || []);
+    const unassigned = countUnassignedWithVideo(allApplications || []);
+    const map: Partial<Record<AdminTabId, number>> = {};
+    if (unread > 0) map.INBOX = unread;
+    if (unassigned > 0) map.JURY_ASSIGN = unassigned;
+    return map;
+  }, [allApplications, contactMessages]);
+
   return (
     <>
       {isOpen && (
@@ -57,7 +79,7 @@ export const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClos
 
       <div
         className={`
-                fixed top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 
+                fixed top-0 left-0 h-full w-72 bg-slate-900 border-r border-slate-800 
                 flex flex-col z-50 transition-transform duration-300 ease-in-out
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
                 md:translate-x-0
@@ -66,7 +88,7 @@ export const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClos
         <div className="p-6 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-3">
             <div className="bg-rose-600 p-2 rounded-lg">
-              <Shield size={20} className="text-white" />
+              <Shield size={20} className="text-white" aria-hidden />
             </div>
             <div>
               <h1 className="font-bold text-white tracking-tight leading-tight">Yönetici</h1>
@@ -76,7 +98,7 @@ export const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClos
           <button
             type="button"
             onClick={onClose}
-            className="md:hidden text-slate-400 hover:text-white"
+            className="md:hidden text-slate-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/60 rounded-lg"
             aria-label="Menüyü kapat"
           >
             <X size={20} />
@@ -86,13 +108,18 @@ export const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClos
         <nav className="flex-1 p-4 space-y-5 overflow-y-auto" aria-label="Yönetici menü">
           {ADMIN_NAV_GROUPS.map((group) => (
             <div key={group.label}>
-              <p className="px-4 mb-2 text-[10px] font-black uppercase tracking-widest text-slate-600">
+              <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 {group.label}
               </p>
               <div className="space-y-1">
                 {group.items.map((item) => {
                   const Icon = ICONS[item.icon] || LayoutDashboard;
                   const isActive = activeTab === item.id;
+                  const label = ADMIN_TAB_TITLES[item.id];
+                  const badge = badges[item.id];
+                  const accessibleName =
+                    badge && badge > 0 ? `${label}, ${badge} bekleyen` : label;
+
                   return (
                     <button
                       type="button"
@@ -101,14 +128,30 @@ export const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClos
                         setActiveTab(item.id as AdminTabId);
                         onClose();
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                      aria-label={accessibleName}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/60 ${
                         isActive
                           ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20'
                           : 'text-slate-400 hover:text-white hover:bg-slate-800'
                       }`}
                     >
-                      <Icon size={18} />
-                      {item.label}
+                      <Icon size={18} className="shrink-0" aria-hidden />
+                      <span className="truncate whitespace-nowrap leading-none flex-1 text-left">
+                        {label}
+                      </span>
+                      {badge != null && badge > 0 && (
+                        <span
+                          className={`shrink-0 min-w-[1.25rem] h-5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center ${
+                            isActive
+                              ? 'bg-white/20 text-white'
+                              : 'bg-rose-600/90 text-white'
+                          }`}
+                          aria-hidden
+                        >
+                          {badge > 99 ? '99+' : badge}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -121,10 +164,10 @@ export const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, onClos
           <button
             type="button"
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+            className="w-full flex items-center gap-2.5 px-3 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/60"
           >
-            <LogOut size={18} />
-            Çıkış Yap
+            <LogOut size={18} className="shrink-0" aria-hidden />
+            <span className="leading-none">Çıkış Yap</span>
           </button>
         </div>
       </div>

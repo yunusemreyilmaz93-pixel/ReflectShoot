@@ -29,6 +29,7 @@ export const Admin: React.FC = () => {
     setSimulatedApplicationId,
     updateApplication,
     logAction,
+    systemSettings,
   } = useAppContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
@@ -72,6 +73,8 @@ export const Admin: React.FC = () => {
     }
   };
 
+  const seasonLabel = systemSettings?.season?.label?.trim();
+
   return (
     <div className="min-h-screen bg-slate-950 flex font-sans text-slate-200 selection:bg-rose-500 selection:text-white">
       <AdminSidebar
@@ -81,21 +84,29 @@ export const Admin: React.FC = () => {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
-      <main className="flex-1 md:ml-64 p-4 md:p-8 overflow-y-auto w-full transition-all duration-300">
-        <header className="flex justify-between items-center mb-6 md:mb-8">
+      <main className="flex-1 md:ml-72 p-4 md:p-8 overflow-y-auto w-full transition-all duration-300">
+        <header className="flex justify-between items-center gap-4 mb-6 md:mb-8">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={() => setIsSidebarOpen(true)}
-              className="md:hidden p-2 text-slate-400 hover:text-white bg-slate-800 rounded-lg shrink-0"
+              className="md:hidden p-2 text-slate-400 hover:text-white bg-slate-800 rounded-lg shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/60"
               aria-label="Menüyü aç"
             >
               <Menu size={24} />
             </button>
-            <h2 className="text-xl md:text-2xl font-black text-white tracking-tight truncate">
+            <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight truncate">
               {ADMIN_TAB_TITLES[activeTab]}
             </h2>
           </div>
+          {seasonLabel && (
+            <span
+              className="shrink-0 max-w-[40%] truncate text-xs font-medium px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-400"
+              title={seasonLabel}
+            >
+              {seasonLabel}
+            </span>
+          )}
         </header>
 
         <div className="w-full h-[calc(100vh-140px)]">
@@ -104,7 +115,11 @@ export const Admin: React.FC = () => {
           ) : (
             <>
               {activeTab === 'DASHBOARD' && (
-                <AdminDashboard apps={allApplications} onFilterCategory={handleFilterCategory} />
+                <AdminDashboard
+                  apps={allApplications}
+                  onFilterCategory={handleFilterCategory}
+                  onNavigateTab={setActiveTab}
+                />
               )}
               {activeTab === 'ANNOUNCEMENTS' && <AdminAnnouncements />}
               {activeTab === 'INBOX' && <AdminInbox />}

@@ -81,8 +81,8 @@ export const AdminAcademicResults = ({ apps }: AdminAcademicResultsProps) => {
         <div className="bg-slate-900/40 p-12 rounded-3xl border border-dashed border-slate-700 text-center">
           <p className="text-slate-400 font-bold mb-2">Sonuç yok</p>
           <p className="text-slate-500 text-sm max-w-md mx-auto">
-            Akademik jüri listesinde (`data/academicJuryScores`) eşleşen takım bulunamadı veya filtreler çok dar.
-            Listeyi sezon verisine göre güncelleyin.
+            Akademik jüri finalist listesinde eşleşen takım bulunamadı veya filtreler çok dar.
+            Sezon finalist verisini güncelleyip tekrar deneyin.
           </p>
         </div>
       ) : (
