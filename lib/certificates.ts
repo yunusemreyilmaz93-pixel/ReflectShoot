@@ -253,34 +253,27 @@ export async function downloadCertificate({
       throw new Error('Sertifika şablonu henüz yönetici tarafından yüklenmemiş.');
     }
     
-    // 2. Fetch template PDF signed URL
-    const viewResponse = await authenticatedFetch(`/api/view?key=${encodeURIComponent(config.templateKey)}`);
-    if (!viewResponse.ok) {
-      throw new Error('Sertifika şablonu indirme adresi alınamadı.');
-    }
-    const { signedUrl } = await viewResponse.json();
-    if (!signedUrl) {
-      throw new Error('Sertifika şablonu için geçerli bir adres bulunamadı.');
-    }
-    
-    // 3. Fetch template PDF content
-    const templateResponse = await fetch(signedUrl);
+    // 2. Fetch template PDF through the authenticated same-origin proxy.
+    // This avoids browser CORS failures when fetching a signed R2 URL directly.
+    const templateResponse = await authenticatedFetch(
+      `/api/view?key=${encodeURIComponent(config.templateKey)}&raw=1`
+    );
     if (!templateResponse.ok) {
-      throw new Error('Şablon PDF dosyası indirilemedi.');
+      throw new Error('Sertifika şablonu indirilemedi.');
     }
     const templateBytes = await templateResponse.arrayBuffer();
     
-    // 4. Fetch the font
+    // 3. Fetch the font
     const fontResponse = await fetch(config.fontPath || '/fonts/RTL-Romman-Regular.ttf');
     if (!fontResponse.ok) {
       throw new Error('Yazı tipi (Romman) dosyası indirilemedi.');
     }
     const fontBytes = await fontResponse.arrayBuffer();
     
-    // 5. Generate PDF
+    // 4. Generate PDF
     const pdfBytes = await generateCertificatePdfBytes(templateBytes, fontBytes, recipientName, config);
     
-    // 6. Trigger client side download
+    // 5. Trigger client side download
     const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     
