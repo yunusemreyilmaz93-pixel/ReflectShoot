@@ -14,6 +14,22 @@ export default async function handler(req, res) {
     const user = await requireUser(req);
     const key = await authorizePrivateViewKey(req.query?.key, user);
     const command = new GetObjectCommand({ Bucket: getPrivateBucketName(), Key: key });
+
+    // Some browser clients (notably certificate generation) need the file bytes.
+    // Proxying them through our same-origin authenticated endpoint avoids depending
+    // on the R2 bucket's browser CORS configuration.
+    if (req.query?.raw === '1') {
+      const object = await createR2Client().send(command);
+      if (!object.Body) {
+        throw new Error('Dosya içeriği alınamadı.');
+      }
+
+      const bytes = await object.Body.transformToByteArray();
+      res.setHeader('Content-Type', object.ContentType || 'application/octet-stream');
+      res.setHeader('Content-Length', String(bytes.byteLength));
+      return res.status(200).send(Buffer.from(bytes));
+    }
+
     const signedUrl = await getSignedUrl(createR2Client(), command, { expiresIn: 60 });
     return res.status(200).json({ signedUrl });
   } catch (error) {
