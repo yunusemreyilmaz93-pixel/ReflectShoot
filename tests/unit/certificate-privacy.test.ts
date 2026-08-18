@@ -47,6 +47,6 @@ describe('certificate privacy boundary', () => {
     expect(legacy).not.toContain('toTeamSlug');
     expect(legacy).not.toContain('toPascalUnderscore');
     expect(legacy).not.toContain('toSnakeCase');
-    expect(legacy).toContain('return null');
+    expect(legacy.match(/=> null;/g)?.length).toBe(2);
   });
 });
