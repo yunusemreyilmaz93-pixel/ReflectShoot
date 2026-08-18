@@ -8,6 +8,24 @@ ARCHIVED production fixes that must **never** auto-run on Admin mount or appear 
 - Run only manually in an emergency with admin credentials.
 - Prefer Firestore console / one-shot scripts over permanent UI patches.
 
+## Public legacy certificate purge
+
+`purge-public-legacy-certificates.mjs` removes the retired `certificates/` prefix from the **public** R2 bucket after the application has moved to authenticated/private certificate generation.
+
+Dry-run (default):
+
+```bash
+node scripts/ops-oneoffs/purge-public-legacy-certificates.mjs
+```
+
+Execute only after reviewing the listed keys:
+
+```bash
+CONFIRM_PUBLIC_CERTIFICATE_PURGE=YES node scripts/ops-oneoffs/purge-public-legacy-certificates.mjs --execute
+```
+
+The script requires the normal server-side R2 environment variables and refuses destructive execution unless both `--execute` and the explicit confirmation environment variable are present.
+
 ## Historical removals from Admin UI
 
 | Id | Notes |
