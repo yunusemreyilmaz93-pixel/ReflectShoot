@@ -6,4 +6,5 @@
 | `split-dashboard.mjs` | Dashboard widget ayırma |
 | `fix-admin-imports.mjs` / `fix-admin-exports.mjs` | Split sonrası path/export düzeltme |
 
-Root’taki `markWinners.ts`, `retrieve_*.ts`, `admin_retrieve_students.ts` ops script’leridir; Vite entry’ye bağlı değildir. İleride buraya taşınabilir.
+`scripts/ops-oneoffs/admin-list-winner-students.ts` Admin SDK ile çalışan, öğrenci kişisel verisi (telefon vb.) yazdıran manuel bir ops script’idir; yalnızca yetkili makinede, ADC/servis hesabıyla çalıştırın.
+İstemci SDK + sabit kimlik bilgisiyle çalışan eski `markWinners.ts` / `retrieve_*.ts` script’leri güvenlik nedeniyle kaldırıldı (kazanan işaretleme Admin panelinden yapılır).

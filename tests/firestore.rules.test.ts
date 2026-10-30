@@ -6,7 +6,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { afterAll, beforeAll, beforeEach, describe, test } from 'vitest';
 
 const projectId = 'reflect-and-shoot-test';
@@ -149,5 +149,103 @@ describe('Firestore security boundary', () => {
       applicationId: 'team-one', status: 'draft',
     }));
     await assertFails(getDoc(doc(userDb('other', 'TEACHER'), 'award_participations/team-one')));
+  });
+
+  describe('application lifecycle integrity', () => {
+    async function seedStatus(id: string, status: string, teamExtra: Record<string, unknown> = {}) {
+      await environment.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), `applications/${id}`), {
+          id,
+          teacher: { id: 'teacher', fullName: 'Öğretmen', email: 'teacher@example.com' },
+          team: { ...baseTeam, id, ...teamExtra },
+          status,
+          submittedAt: '2026-01-01T00:00:00.000Z',
+        });
+      });
+    }
+
+    test('owner cannot revive a rejected, disqualified or scored application by resetting its status', async () => {
+      const db = userDb('teacher', 'TEACHER');
+      for (const status of ['Reddedildi', 'Diskalifiye', 'Puanlandı', 'Değerlendiriliyor']) {
+        await seedStatus('locked', status);
+        await assertFails(updateDoc(doc(db, 'applications/locked'), { status: 'Taslak' }));
+        await assertFails(updateDoc(doc(db, 'applications/locked'), { status: 'Video İnceleniyor' }));
+      }
+    });
+
+    test('owner can still move an editable application forward', async () => {
+      await seedStatus('editable', 'Düzeltme Gerekli');
+      await assertSucceeds(
+        updateDoc(doc(userDb('teacher', 'TEACHER'), 'applications/editable'), { status: 'Video İnceleniyor' })
+      );
+    });
+
+    test('winner owner can submit the award participation flag on a scored application', async () => {
+      await seedStatus('winner', 'Puanlandı', { isWinner: true });
+      const ref = doc(userDb('teacher', 'TEACHER'), 'applications/winner');
+      await assertSucceeds(
+        updateDoc(ref, {
+          'team.participationFormStatus': 'submitted',
+          'team.participationSubmittedAt': new Date(),
+        })
+      );
+    });
+
+    test('participation flag path cannot be used by non-winners or to touch other fields', async () => {
+      await seedStatus('not-winner', 'Puanlandı', { isWinner: false });
+      await assertFails(
+        updateDoc(doc(userDb('teacher', 'TEACHER'), 'applications/not-winner'), {
+          'team.participationFormStatus': 'submitted',
+        })
+      );
+
+      await seedStatus('winner', 'Puanlandı', { isWinner: true });
+      const ref = doc(userDb('teacher', 'TEACHER'), 'applications/winner');
+      await assertFails(updateDoc(ref, { 'team.participationFormStatus': 'submitted', 'team.videoUrl': 'https://youtu.be/abc' }));
+      await assertFails(updateDoc(ref, { 'team.participationFormStatus': 'submitted', status: 'Taslak' }));
+      await assertFails(updateDoc(ref, { 'team.participationFormStatus': 'not_started' }));
+    });
+
+    test('owner cannot plant non-https logo or submission URLs', async () => {
+      const ref = doc(userDb('teacher', 'TEACHER'), 'applications/team-one');
+      await seedStatus('team-one', 'Taslak');
+      await assertFails(updateDoc(ref, { 'team.submissionDownloadUrl': 'javascript:alert(1)' }));
+      await assertFails(updateDoc(ref, { 'team.logoUrl': 'http://tracker.example/pixel.png' }));
+      await assertSucceeds(updateDoc(ref, { 'team.logoUrl': 'https://assets.example.com/logo.png' }));
+    });
+
+    test('admin can delete an application together with its jury scores', async () => {
+      await environment.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'applications/team-one/scores/judge'), { juryId: 'judge', total: 80 });
+      });
+      await assertSucceeds(deleteDoc(doc(userDb('admin', 'ADMIN'), 'applications/team-one/scores/judge')));
+      await assertFails(deleteDoc(doc(userDb('judge', 'JUDGE'), 'applications/team-one/scores/judge')));
+      await assertFails(deleteDoc(doc(userDb('teacher', 'TEACHER'), 'applications/team-one/scores/judge')));
+    });
+
+    test('panel message sender role cannot be spoofed', async () => {
+      const base = { senderId: 'teacher', senderName: 'Öğretmen', text: 'Merhaba', createdAt: '2026-01-01T00:00:00.000Z' };
+      const db = userDb('teacher', 'TEACHER');
+      await assertSucceeds(setDoc(doc(db, 'applications/team-one/messages/m1'), { ...base, senderRole: 'TEACHER' }));
+      await assertFails(setDoc(doc(db, 'applications/team-one/messages/m2'), { ...base, senderRole: 'ADMIN' }));
+    });
+
+    test('audit log entries require an existing profile', async () => {
+      const entry = {
+        action: 'TEST',
+        details: 'x',
+        performedBy: 'ghost@example.com',
+        performedByUid: 'ghost',
+        timestamp: '2026-01-01T00:00:00.000Z',
+      };
+      await assertFails(setDoc(doc(userDb('ghost', 'TEACHER'), 'logs/l1'), entry));
+      await assertSucceeds(
+        setDoc(doc(userDb('teacher', 'TEACHER'), 'logs/l2'), {
+          ...entry,
+          performedBy: 'teacher@example.com',
+          performedByUid: 'teacher',
+        })
+      );
+    });
   });
 });

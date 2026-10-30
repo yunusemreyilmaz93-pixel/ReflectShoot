@@ -35,7 +35,7 @@
 
 - [x] Mount one-off scriptleri kaldırıldı → `scripts/ops-oneoffs/`
 - [x] Header **TEST: Ödül Data Güncelle** butonu kaldırıldı
-- [x] Kazanan işareti: `markWinners.ts` (elle, bilinçli)
+- [x] Kazanan işareti: Admin paneli (eski `markWinners.ts` script’i kaldırıldı)
 
 ## P1 — Bilgi mimarisi + hız
 
@@ -87,7 +87,7 @@ pages/admin/
   AdminInboxSection.tsx
   ...
 scripts/ops-oneoffs/            # elle acil scriptler
-markWinners.ts                  # bilinçli ops script
+(markWinners.ts kaldırıldı)
 ```
 
 ---

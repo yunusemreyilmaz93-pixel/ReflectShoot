@@ -1,6 +1,13 @@
+/** Only https URLs may reach public surfaces (mirrors server/publicShowcase.js). */
+export function toPublicHttpsUrl(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return /^https:\/\/[^\s]+$/i.test(trimmed) ? trimmed : null;
+}
+
 /**
  * Pure projection of an application document for public surfaces.
- * Mirrors api/public-showcase.js — keep both in sync when fields change.
+ * Mirrors server/publicShowcase.js (used by api/public-showcase.js) — keep both in sync when fields change.
  */
 export function sanitizeApplicationForPublic(snapshot: {
   id: string;
@@ -23,14 +30,14 @@ export function sanitizeApplicationForPublic(snapshot: {
     team: {
       id: team.id || snapshot.id,
       name: team.name || '',
-      logoUrl: team.logoUrl || null,
+      logoUrl: toPublicHttpsUrl(team.logoUrl),
       logoKey: team.logoKey || null,
       category: team.category || '',
       theme: team.theme || '',
       selectedVerse: team.selectedVerse || null,
       selectedTopic: team.selectedTopic || null,
       students: [] as unknown[],
-      videoUrl: team.videoUrl || null,
+      videoUrl: toPublicHttpsUrl(team.videoUrl),
       videoStatus: team.videoStatus || 'PENDING',
       isPreliminaryStageComplete: false,
       isFinalStageComplete: false,

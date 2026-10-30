@@ -28,6 +28,7 @@ export default async function handler(req, res) {
       cmsTimeline,
       cmsPrizes,
       logsSnap,
+      scoresSnap,
     ] = await Promise.all([
       db.collection('users').get(),
       db.collection('applications').get(),
@@ -40,16 +41,16 @@ export default async function handler(req, res) {
       db.collection('cms_timeline').get(),
       db.collection('cms_prizes').get(),
       db.collection('logs').orderBy('timestamp', 'desc').limit(500).get(),
+      // One query for every score instead of one sequential round-trip per application
+      // (which exceeds the serverless time limit as the number of teams grows).
+      db.collectionGroup('scores').get(),
     ]);
 
-    const applications = [];
-    const scoresByApp = {};
-
-    for (const appDoc of appsSnap.docs) {
-      const data = { id: appDoc.id, ...appDoc.data() };
-      applications.push(data);
-      const scoresSnap = await appDoc.ref.collection('scores').get();
-      scoresByApp[appDoc.id] = scoresSnap.docs.map((s) => ({ id: s.id, ...s.data() }));
+    const applications = appsSnap.docs.map((appDoc) => ({ id: appDoc.id, ...appDoc.data() }));
+    const scoresByApp = Object.fromEntries(applications.map((app) => [app.id, []]));
+    for (const scoreDoc of scoresSnap.docs) {
+      const appId = scoreDoc.ref.parent.parent?.id;
+      if (appId && scoresByApp[appId]) scoresByApp[appId].push({ id: scoreDoc.id, ...scoreDoc.data() });
     }
 
     const payload = {

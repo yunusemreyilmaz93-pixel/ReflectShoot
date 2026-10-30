@@ -69,8 +69,36 @@ service cloud.firestore {
             request.resource.data.seasonId.size() <= 32));
     }
 
+    // Statuses in which the owner may still edit the application (mirrors OWNER_WRITABLE_STATUSES).
+    // Once an admin/jury has moved it elsewhere (approved, scored, rejected, disqualified...)
+    // the owner can no longer reset it back into the editable pipeline.
+    function ownerEditableStatus(status) {
+      return status in ['Taslak', 'Ön Başvuru Yapıldı', 'Video İnceleniyor', 'Düzeltme Gerekli'];
+    }
+
+    function isHttpsUrl(value) {
+      return value is string && value.matches('^https://[^\\s]+$');
+    }
+
+    // A URL field may stay as-is (legacy data) or be set to null/https only.
+    function urlFieldUnchangedOrSafe(field) {
+      return request.resource.data.team.get(field, null) == resource.data.team.get(field, null) ||
+        request.resource.data.team.get(field, null) == null ||
+        isHttpsUrl(request.resource.data.team.get(field, null));
+    }
+
+    // Winners flag their award participation form as submitted; nothing else may change.
+    function validOwnerParticipationFlagUpdate() {
+      return resource.data.team.get('isWinner', false) == true &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['team']) &&
+        request.resource.data.team.diff(resource.data.team).affectedKeys()
+          .hasOnly(['participationFormStatus', 'participationSubmittedAt']) &&
+        request.resource.data.team.participationFormStatus == 'submitted';
+    }
+
     function validOwnerApplicationUpdate() {
-      return request.resource.data.teacher == resource.data.teacher &&
+      return ownerEditableStatus(resource.data.status) &&
+        request.resource.data.teacher == resource.data.teacher &&
         request.resource.data.id == resource.data.id &&
         request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['team', 'status', 'submittedAt', 'updatedAt']) &&
@@ -90,7 +118,9 @@ service cloud.firestore {
           'Taslak', 'Ön Başvuru Yapıldı', 'Video İnceleniyor', 'Düzeltme Gerekli'
         ] &&
         (!('videoUrl' in request.resource.data.team) ||
-          request.resource.data.team.videoUrl.matches('^https://(www\\.)?(youtube\\.com|youtu\\.be)/.*$'));
+          request.resource.data.team.videoUrl.matches('^https://(www\\.)?(youtube\\.com|youtu\\.be)/.*$')) &&
+        urlFieldUnchangedOrSafe('logoUrl') &&
+        urlFieldUnchangedOrSafe('submissionDownloadUrl');
     }
 
 
@@ -149,7 +179,7 @@ service cloud.firestore {
       allow update: if isAdmin() ||
         ((isVerifiedRole('TEACHER') || isVerifiedRole('STUDENT')) &&
           isApplicationOwnerData(resource.data) && isNotRateLimited() &&
-          validOwnerApplicationUpdate());
+          (validOwnerApplicationUpdate() || validOwnerParticipationFlagUpdate()));
       allow delete: if isAdmin();
 
       match /scores/{juryId} {
@@ -157,7 +187,10 @@ service cloud.firestore {
           (isAssignedJudgeData(
             get(/databases/$(database)/documents/applications/$(appId)).data
           ) && juryId == request.auth.uid);
-        allow write: if false;
+        // Scores are written by the server transaction only; admin may delete them
+        // (deleting an application removes its scores in the same batch).
+        allow create, update: if false;
+        allow delete: if isAdmin();
       }
 
       match /messages/{messageId} {
@@ -167,6 +200,8 @@ service cloud.firestore {
             'senderId', 'senderName', 'senderRole', 'text', 'createdAt'
           ]) &&
           request.resource.data.senderId == request.auth.uid &&
+          request.resource.data.senderRole ==
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role &&
           request.resource.data.text is string &&
           request.resource.data.text.size() >= 1 &&
           request.resource.data.text.size() <= 3000;
@@ -217,7 +252,7 @@ service cloud.firestore {
 
     match /logs/{logId} {
       allow read: if isAdmin();
-      allow create: if isSignedIn() &&
+      allow create: if hasProfile() &&
         request.resource.data.performedBy == request.auth.token.email &&
         request.resource.data.performedByUid == request.auth.uid &&
         request.resource.data.keys().hasOnly([
@@ -226,7 +261,10 @@ service cloud.firestore {
         ]) &&
         request.resource.data.action is string && request.resource.data.action.size() >= 1 && request.resource.data.action.size() <= 100 &&
         request.resource.data.details is string && request.resource.data.details.size() >= 1 && request.resource.data.details.size() <= 2000 &&
-        request.resource.data.timestamp is string;
+        request.resource.data.timestamp is string &&
+        (!('ip' in request.resource.data) || (request.resource.data.ip is string && request.resource.data.ip.size() <= 100)) &&
+        (!('userAgent' in request.resource.data) ||
+          (request.resource.data.userAgent is string && request.resource.data.userAgent.size() <= 1000));
       allow update, delete: if false;
     }
 

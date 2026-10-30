@@ -3,6 +3,7 @@ import { getAdminServices } from '../server/firebaseAdmin.js';
 import { HttpError, noStore, requireUser, ROLES, sendError } from '../server/auth.js';
 import {
   CRITERIA_KEYS,
+  isScorableStatus,
   validateJuryScorePayload,
   computeFinalScoreFromScores,
 } from '../server/juryScoreValidate.js';
@@ -30,6 +31,9 @@ export default async function handler(req, res) {
       const application = appSnapshot.data();
       if (!Array.isArray(application.assignedJuryIds) || !application.assignedJuryIds.includes(user.uid)) {
         throw new HttpError(403, 'Bu eser size atanmadı.', 'jury_not_assigned');
+      }
+      if (!isScorableStatus(application.status)) {
+        throw new HttpError(409, 'Bu eser puanlamaya açık değil.', 'application_not_scorable');
       }
 
       const scoresSnapshot = await transaction.get(appRef.collection('scores'));

@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "postbuild": "CONFIRM_PUBLIC_CERTIFICATE_PURGE=YES node scripts/ops-oneoffs/purge-public-legacy-certificates.mjs --execute",
     "lint": "tsc --noEmit",
     "preview": "vite preview",
     "check": "npm run lint && npm run build",

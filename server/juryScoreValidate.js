@@ -3,6 +3,16 @@ import { HttpError } from './auth.js';
 export const CRITERIA_KEYS = ['story', 'technical', 'originality', 'themeFit'];
 
 /**
+ * Applications the jury must never touch: scoring would flip the status to
+ * "Puanlandı" and publish an excluded team on the public showcase.
+ */
+export const UNSCORABLE_STATUSES = Object.freeze(['Reddedildi', 'Diskalifiye']);
+
+export function isScorableStatus(status) {
+  return !UNSCORABLE_STATUSES.includes(status);
+}
+
+/**
  * Pure payload validation for POST /api/jury-score (no I/O).
  * @returns {{ appId: string, criteria: Record<string, number>, notes: string, isDraft: boolean, isRecused: boolean }}
  */

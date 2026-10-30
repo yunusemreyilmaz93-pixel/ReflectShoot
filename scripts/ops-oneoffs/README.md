@@ -45,4 +45,4 @@ export const ONEOFFS_REMOVED_FROM_ADMIN = [
 ] as const;
 ```
 
-See also: `markWinners.ts` for conscious winner-tagging ops.
+Winner tagging is done from the Admin panel; the old client-SDK `markWinners.ts` script was removed (it embedded credentials and cannot pass the current Firestore rules).
