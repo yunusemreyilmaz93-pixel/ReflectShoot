@@ -6,7 +6,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { deleteDoc, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { collectionGroup, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { afterAll, beforeAll, beforeEach, describe, test } from 'vitest';
 
 const projectId = 'reflect-and-shoot-test';
@@ -58,7 +58,7 @@ beforeEach(async () => {
       setDoc(doc(db, 'applications/team-one'), {
         id: 'team-one',
         teacher: { id: 'teacher', fullName: 'Öğretmen', email: 'teacher@example.com' },
-        team: { ...baseTeam, isFinalist: true, publicVotes: 12 },
+        team: { ...baseTeam, isFinalist: true },
         assignedJuryIds: ['judge'],
         status: 'Onaylandı',
         submittedAt: '2026-01-01T00:00:00.000Z',
@@ -113,9 +113,9 @@ describe('Firestore security boundary', () => {
     await assertFails(updateDoc(ref, { seasonId: '2099' }));
   });
 
-  test('teacher cannot promote an application to finalist or modify public vote totals', async () => {
+  test('teacher cannot promote an application to finalist or winner', async () => {
     const ref = doc(userDb('teacher', 'TEACHER'), 'applications/team-one');
-    await assertFails(updateDoc(ref, { 'team.publicVotes': 5000 }));
+    await assertFails(updateDoc(ref, { 'team.isWinner': true }));
     await assertFails(updateDoc(ref, { 'team.isFinalist': true }));
   });
 
@@ -138,13 +138,10 @@ describe('Firestore security boundary', () => {
       status: 'UNREAD',
     }));
   });
-  test('public voting collections reject direct browser access', async () => {
-    const db = environment.unauthenticatedContext().firestore();
-    await assertFails(setDoc(doc(db, 'public_votes/fake-vote'), { appId: 'team-one' }));
-    await assertFails(getDoc(doc(db, 'public_votes/fake-vote')));
-  });
-
   test('award participation is scoped to the application owner', async () => {
+    await environment.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'applications/team-one'), { 'team.isWinner': true });
+    });
     await assertSucceeds(setDoc(doc(userDb('teacher', 'TEACHER'), 'award_participations/team-one'), {
       applicationId: 'team-one', status: 'draft',
     }));
@@ -214,13 +211,33 @@ describe('Firestore security boundary', () => {
       await assertSucceeds(updateDoc(ref, { 'team.logoUrl': 'https://assets.example.com/logo.png' }));
     });
 
-    test('admin can delete an application together with its jury scores', async () => {
+    test('applications and users can only be deleted by the server (files and Auth account must go too)', async () => {
+      await assertFails(deleteDoc(doc(userDb('admin', 'ADMIN'), 'applications/team-one')));
+      await assertFails(deleteDoc(doc(userDb('teacher', 'TEACHER'), 'applications/team-one')));
+      await assertFails(deleteDoc(doc(userDb('admin', 'ADMIN'), 'users/other')));
+    });
+
+    test('judge reads only their own scores and never application documents', async () => {
       await environment.withSecurityRulesDisabled(async (context) => {
-        await setDoc(doc(context.firestore(), 'applications/team-one/scores/judge'), { juryId: 'judge', total: 80 });
+        const db = context.firestore();
+        await setDoc(doc(db, 'applications/team-one/scores/judge'), { juryId: 'judge', total: 80 });
+        await setDoc(doc(db, 'applications/team-one/scores/judge2'), { juryId: 'judge2', total: 60 });
       });
-      await assertSucceeds(deleteDoc(doc(userDb('admin', 'ADMIN'), 'applications/team-one/scores/judge')));
-      await assertFails(deleteDoc(doc(userDb('judge', 'JUDGE'), 'applications/team-one/scores/judge')));
-      await assertFails(deleteDoc(doc(userDb('teacher', 'TEACHER'), 'applications/team-one/scores/judge')));
+      const db = userDb('judge', 'JUDGE');
+      await assertSucceeds(getDocs(query(collectionGroup(db, 'scores'), where('juryId', '==', 'judge'))));
+      await assertSucceeds(getDoc(doc(db, 'applications/team-one/scores/judge')));
+      await assertFails(getDoc(doc(db, 'applications/team-one/scores/judge2')));
+      await assertFails(getDocs(query(collectionGroup(db, 'scores'), where('juryId', '==', 'judge2'))));
+      await assertFails(getDoc(doc(db, 'applications/team-one')));
+      await assertSucceeds(getDocs(collectionGroup(userDb('admin', 'ADMIN'), 'scores')));
+    });
+
+    test('award participation can only be created for a winning team', async () => {
+      await seedStatus('not-winner', 'Puanlandı', { isWinner: false });
+      await seedStatus('winner', 'Puanlandı', { isWinner: true });
+      const db = userDb('teacher', 'TEACHER');
+      await assertFails(setDoc(doc(db, 'award_participations/not-winner'), { applicationId: 'not-winner', status: 'draft' }));
+      await assertSucceeds(setDoc(doc(db, 'award_participations/winner'), { applicationId: 'winner', status: 'draft' }));
     });
 
     test('panel message sender role cannot be spoofed', async () => {
@@ -230,22 +247,18 @@ describe('Firestore security boundary', () => {
       await assertFails(setDoc(doc(db, 'applications/team-one/messages/m2'), { ...base, senderRole: 'ADMIN' }));
     });
 
-    test('audit log entries require an existing profile', async () => {
+    test('audit log entries cannot be written from the browser', async () => {
       const entry = {
         action: 'TEST',
         details: 'x',
-        performedBy: 'ghost@example.com',
-        performedByUid: 'ghost',
+        performedBy: 'teacher@example.com',
+        performedByUid: 'teacher',
         timestamp: '2026-01-01T00:00:00.000Z',
       };
-      await assertFails(setDoc(doc(userDb('ghost', 'TEACHER'), 'logs/l1'), entry));
-      await assertSucceeds(
-        setDoc(doc(userDb('teacher', 'TEACHER'), 'logs/l2'), {
-          ...entry,
-          performedBy: 'teacher@example.com',
-          performedByUid: 'teacher',
-        })
-      );
+      await assertFails(setDoc(doc(userDb('teacher', 'TEACHER'), 'logs/l1'), entry));
+      await assertFails(setDoc(doc(userDb('admin', 'ADMIN'), 'logs/l2'), { ...entry, performedBy: 'admin@example.com', performedByUid: 'admin' }));
+      await assertSucceeds(getDoc(doc(userDb('admin', 'ADMIN'), 'logs/l1')));
+      await assertFails(getDoc(doc(userDb('teacher', 'TEACHER'), 'logs/l1')));
     });
   });
 });

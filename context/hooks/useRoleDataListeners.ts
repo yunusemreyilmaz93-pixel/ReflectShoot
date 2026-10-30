@@ -8,6 +8,7 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { authenticatedFetch } from '../../lib/authenticatedFetch';
 import { UserProfile, UserRole, Application, Notification, ContactMessage, LogEntry } from '../../types';
 
 type Setters = {
@@ -78,15 +79,29 @@ export function useRoleDataListeners(
         })
       );
     } else if (currentUser.role === UserRole.JUDGE) {
-      const q = query(
-        collection(db, 'applications'),
-        where('assignedJuryIds', 'array-contains', currentUser.uid)
-      );
-      unsubs.push(
-        onSnapshot(q, (snap) => {
-          setAllApplications(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Application)));
-        })
-      );
+      // Jury members get a blind view (no student/advisor personal data) from the server.
+      let cancelled = false;
+      const loadAssigned = async () => {
+        try {
+          const response = await authenticatedFetch('/api/jury-applications');
+          if (!response.ok) throw new Error('Assigned works could not be loaded');
+          const data = await response.json();
+          if (!cancelled) setAllApplications((data.applications || []) as Application[]);
+        } catch (error) {
+          console.error('Jury applications fetch failed:', error);
+        }
+      };
+      const refreshWhenVisible = () => {
+        if (document.visibilityState === 'visible') loadAssigned();
+      };
+      loadAssigned();
+      const interval = window.setInterval(refreshWhenVisible, 60_000);
+      document.addEventListener('visibilitychange', refreshWhenVisible);
+      unsubs.push(() => {
+        cancelled = true;
+        window.clearInterval(interval);
+        document.removeEventListener('visibilitychange', refreshWhenVisible);
+      });
     }
 
     if (currentUser.role === UserRole.TEACHER || currentUser.role === UserRole.STUDENT) {

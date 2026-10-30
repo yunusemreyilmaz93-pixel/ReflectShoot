@@ -1,5 +1,5 @@
 import { getAdminServices } from '../server/firebaseAdmin.js';
-import { sanitizeApplication, sanitizeScore } from '../server/publicShowcase.js';
+import { buildPublicScores, sanitizeApplication } from '../server/publicShowcase.js';
 
 const PUBLIC_STATUSES = ['Onaylandı', 'Puanlandı'];
 
@@ -11,20 +11,32 @@ export default async function handler(req, res) {
 
   try {
     const { db } = getAdminServices();
-    const [applicationsSnapshot, scoresSnapshot] = await Promise.all([
+    const [applicationsSnapshot, publicScoresSnapshot] = await Promise.all([
       db.collection('applications').where('status', 'in', PUBLIC_STATUSES).get(),
-      db.collectionGroup('scores').get(),
+      db.collection('public_scores').get(),
     ]);
 
-    const publicApplicationIds = new Set(applicationsSnapshot.docs.map((doc) => doc.id));
     const scores = {};
-    scoresSnapshot.docs.forEach((scoreSnapshot) => {
-      const data = scoreSnapshot.data() || {};
-      if (data.isDraft || data.isRecused) return;
-      const applicationId = scoreSnapshot.ref.parent.parent?.id;
-      if (!applicationId || !publicApplicationIds.has(applicationId)) return;
-      if (!scores[applicationId]) scores[applicationId] = [];
-      scores[applicationId].push(sanitizeScore(data));
+    const aggregated = new Set();
+    publicScoresSnapshot.docs.forEach((doc) => {
+      aggregated.add(doc.id);
+      scores[doc.id] = doc.data()?.scores || [];
+    });
+
+    // Works scored before `public_scores` existed: read their score documents once (run
+    // scripts/ops-oneoffs/post-audit-maintenance.mjs to remove this fallback cost).
+    await Promise.all(
+      applicationsSnapshot.docs
+        .filter((doc) => !aggregated.has(doc.id) && Number(doc.data()?.juryCount || 0) > 0)
+        .map(async (doc) => {
+          const legacy = await doc.ref.collection('scores').get();
+          scores[doc.id] = buildPublicScores(legacy.docs.map((score) => score.data()));
+        })
+    );
+
+    const publicIds = new Set(applicationsSnapshot.docs.map((doc) => doc.id));
+    Object.keys(scores).forEach((id) => {
+      if (!publicIds.has(id)) delete scores[id];
     });
 
     res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=1800');

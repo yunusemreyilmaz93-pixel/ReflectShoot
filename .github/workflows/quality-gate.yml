@@ -21,8 +21,10 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - run: npm install
+      - run: npm install -g npm@11  # lockfile is written by npm 11; npm 10 cannot `npm ci` it
+      - run: npm ci
       - run: npm run lint
+      - run: npm run test:unit
       - run: npm run test:rules
       - run: npm run build
 
@@ -34,7 +36,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm install
+      - run: npm install -g npm@11  # lockfile is written by npm 11; npm 10 cannot `npm ci` it
+      - run: npm ci
       - run: npx playwright install chromium
       - run: npm run build
       - run: npm run test:visual

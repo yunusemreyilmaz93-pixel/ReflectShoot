@@ -44,5 +44,4 @@ Deploy veya push sonrası. Otomatik karşılık: `npm run test:e2e` + `npm run t
 
 ## Bilinçli yok
 
-- Halk oylaması (`/vote` yok)
 - Öğrenci login / LMS

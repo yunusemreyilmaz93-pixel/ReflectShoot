@@ -1,6 +1,8 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import { getAdminServices } from '../server/firebaseAdmin.js';
 import { HttpError, noStore, requireUser, ROLES, sendError } from '../server/auth.js';
+import { writeAuditLog } from '../server/auditLog.js';
+import { buildPublicScores } from '../server/publicShowcase.js';
 import {
   CRITERIA_KEYS,
   isScorableStatus,
@@ -44,7 +46,7 @@ export default async function handler(req, res) {
       const total = payload.isRecused
         ? 0
         : CRITERIA_KEYS.reduce((sum, key) => sum + payload.criteria[key], 0);
-      transaction.set(scoreRef, {
+      const scoreDocument = {
         juryId: user.uid,
         juryName: user.profile.fullName || user.email,
         total,
@@ -53,11 +55,18 @@ export default async function handler(req, res) {
         updatedAt: new Date().toISOString(),
         isDraft: payload.isDraft,
         isRecused: payload.isRecused,
-      });
+      };
+      transaction.set(scoreRef, scoreDocument);
 
-      scores.push({ total, isDraft: payload.isDraft, isRecused: payload.isRecused, juryId: user.uid });
+      scores.push(scoreDocument);
 
       const { finalScore, juryCount, gradedBy } = computeFinalScoreFromScores(scores);
+
+      // Anonymous aggregate for the public site: one document per work instead of one read per score.
+      transaction.set(db.collection('public_scores').doc(payload.appId), {
+        scores: buildPublicScores(scores),
+        updatedAt: new Date().toISOString(),
+      });
 
       transaction.update(appRef, {
         finalScore,
@@ -69,6 +78,14 @@ export default async function handler(req, res) {
 
       return { total, finalScore, juryCount };
     });
+
+    if (!payload.isDraft) {
+      await writeAuditLog(db, req, user, {
+        action: payload.isRecused ? 'RECUSE_SCORE' : 'SUBMIT_SCORE',
+        details: payload.isRecused ? 'Jüri çekimser kaldı.' : `Puan verildi: ${result.total}`,
+        targetId: payload.appId,
+      }).catch((error) => console.error('Audit log failed:', error));
+    }
 
     return res.status(200).json(result);
   } catch (error) {

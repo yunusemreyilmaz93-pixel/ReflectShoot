@@ -43,7 +43,6 @@ export function sanitizeApplicationForPublic(snapshot: {
       isFinalStageComplete: false,
       isFinalist: Boolean(team.isFinalist),
       finalistRank: team.finalistRank || null,
-      publicVotes: Number(team.publicVotes || 0),
       isWinner: Boolean(team.isWinner),
       awardCategory: team.awardCategory || null,
       awardTitle: team.awardTitle || null,

@@ -77,7 +77,6 @@ describe('sanitizePublic', () => {
           name: 'Team',
           students: [{ firstName: 'Ada', lastName: 'Y' }],
           isFinalist: true,
-          publicVotes: 3,
           videoUrl: 'https://youtube.com/watch?v=1',
         },
         status: 'Onaylandı',
@@ -91,7 +90,6 @@ describe('sanitizePublic', () => {
     expect(publicApp.teacher.fullName).toBe('');
     expect(publicApp.team.students).toEqual([]);
     expect(publicApp.team.name).toBe('Team');
-    expect(publicApp.team.publicVotes).toBe(3);
     expect(publicApp.teacher.school).toBe('School A');
   });
 });

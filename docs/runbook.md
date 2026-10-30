@@ -46,10 +46,6 @@ firebase deploy --only firestore:rules
 - Sınıf paylaşımı: öğretmen panelinden link/kod kopyala (öğrenci hesabı yok)
 - Sertifika: Admin → Sertifikalar (şablon R2)
 
-## Halk oylaması
-
-**Kaldırıldı.** Route/UI/API yok.
-
 ## React Doctor / test
 
 ```bash

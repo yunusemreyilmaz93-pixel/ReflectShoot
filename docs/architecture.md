@@ -21,20 +21,22 @@ lib/
   sanitize.ts           Firestore undefined temizliği
   cloudStorage.ts       R2 presigned upload
   authenticatedFetch.ts Bearer ID token
-api/                    Vercel serverless (jury-score, public-vote, upload, …)
+api/                    Vercel serverless (jury-score, jury-applications, public-showcase, upload, admin-delete-*, log, …)
 server/
   auth.js, firebaseAdmin.js, r2.js
   juryScoreValidate.js  Pure jüri payload / ortalama
-  publicVoteValidate.js Pure oy doğrulama / rate limit
+  auditLog*.js          Sunucu taraflı denetim kaydı
+  publicShowcase.js, juryView.js  Kişisel veriden arındırılmış projeksiyonlar
 ```
 
 ## Veri sınırları
 
 | Koleksiyon | Okuma | Yazma |
 |------------|-------|-------|
-| applications | owner / assigned jury / admin | owner (kısıtlı alan) veya admin |
+| applications | owner / admin (jüri: `/api/jury-applications`, kişisel veri yok) | owner (kısıtlı alan) veya admin; silme **yalnızca API** |
 | applications/*/scores | admin / kendi jüri | **yalnızca API** |
-| public_votes | — | **yalnızca API** |
+| public_scores | — | **yalnızca API** (vitrin için anonim puanlar) |
+| logs | admin | **yalnızca API** |
 | cms_* / system | herkese açık okuma | admin |
 | users | self / admin | self (rol değişmez) / admin |
 

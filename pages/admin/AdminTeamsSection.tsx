@@ -217,7 +217,12 @@ export const AdminTeams = ({ apps, onSelectApp, onToggleFinalist, initialCategor
 
     const handleDelete = async (appId: string) => {
         if (!window.confirm("Bu takımı ve tüm verilerini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.")) return;
-        await deleteApplication(appId);
+        try {
+            await deleteApplication(appId);
+        } catch (error) {
+            console.error(error);
+            showToast(error instanceof Error ? error.message : 'Takım silinemedi.', 'error');
+        }
     };
 
     const renderStatus = (status: ApplicationStatus) => {

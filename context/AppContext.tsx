@@ -19,6 +19,7 @@ import {
 import { auth, db } from '../lib/firebase';
 import { authenticatedFetch } from '../lib/authenticatedFetch';
 import { sanitizeData } from '../lib/sanitize';
+import { newId } from '../lib/id';
 import { teamNameError, MAX_TEAMS_PER_TEACHER } from '../lib/domain/teamValidation';
 import {
   canCreateApplication,
@@ -73,7 +74,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
   const [auditLogs, setAuditLogs] = useState<LogEntry[]>([]);
-  const [userIp, setUserIp] = useState<string>('unknown');
 
   // Public showcase when logged out
   useEffect(() => {
@@ -132,34 +132,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [currentUser, simulatedApplicationId, allApplications]);
 
-  useEffect(() => {
-    fetch('https://api.ipify.org?format=json')
-      .then((res) => res.json())
-      .then((data) => setUserIp(data.ip))
-      .catch(() => console.log('IP could not be fetched for logs'));
-  }, []);
-
   const logout = async () => {
     await authLogout();
     setAllApplications([]);
     setSimulatedApplicationId(null);
   };
 
+  // The server records who/when/from where; the browser only reports what happened.
   const logAction = async (action: string, details: string, targetId?: string, metadata?: any) => {
     if (!currentUser) return;
     try {
-      const payload: any = {
-        action,
-        details,
-        performedBy: currentUser.email,
-        performedByUid: currentUser.uid,
-        ip: userIp || '',
-        userAgent: navigator.userAgent || '',
-        timestamp: new Date().toISOString(),
-      };
-      if (targetId !== undefined) payload.targetId = targetId;
-      if (metadata !== undefined) payload.metadata = metadata;
-      await addDoc(collection(db, 'logs'), payload);
+      await authenticatedFetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, details, targetId, metadata }),
+      });
     } catch (err) {
       console.error('Failed to log action:', err);
     }
@@ -197,7 +184,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       throw new Error('Bu takım ismi zaten alınmış. Lütfen başka bir isim seçiniz.');
     }
 
-    const generatedId = Math.random().toString(36).substring(7);
+    const generatedId = newId();
     const team: Team = {
       id: generatedId,
       name: data.teamName,
@@ -206,7 +193,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       selectedVerse: data.selectedVerse,
       selectedTopic: data.selectedTopic,
       students: data.students.map((s: any) => ({
-        id: Math.random().toString(36).substring(7),
+        id: newId(),
         ...s,
         hasParentalConsent: false,
         hasKvkkConsent: false,
@@ -264,15 +251,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const deleteApplication = async (appId: string) => {
-    const batch = writeBatch(db);
-    const messagesSnap = await getDocs(collection(db, 'applications', appId, 'messages'));
-    messagesSnap.forEach((d) => batch.delete(d.ref));
-    const scoresSnap = await getDocs(collection(db, 'applications', appId, 'scores'));
-    scoresSnap.forEach((d) => batch.delete(d.ref));
-    batch.delete(doc(db, 'applications', appId));
-    await batch.commit();
-    await logAction('DELETE_APP', 'Başvuru ve tüm bağlı veriler (mesajlar, puanlar) silindi.', appId);
-    showToast('Takım ve tüm verileri silindi.', 'success');
+    const response = await authenticatedFetch('/api/admin-delete-application', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ appId }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || 'Takım silinemedi.');
+    showToast('Takım ve tüm verileri (belgeler dahil) silindi.', 'success');
   };
 
   const updateUserRole = async (uid: string, role: UserRole) => {
@@ -297,8 +283,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const deleteUser = async (uid: string) => {
-    await deleteDoc(doc(db, 'users', uid));
-    await logAction('DELETE_USER', 'Kullanıcı silindi.', uid);
+    const response = await authenticatedFetch('/api/admin-delete-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || 'Kullanıcı silinemedi.');
     showToast('Kullanıcı silindi.', 'success');
   };
 
@@ -383,10 +374,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     if (isRecused) {
       showToast('Bu eser için çekimser kaldınız.', 'warning');
-      await logAction('RECUSE_SCORE', 'Jüri çekimser kaldı.', appId);
     } else {
       showToast('Puan kaydedildi ve gönderildi.', 'success');
-      await logAction('SUBMIT_SCORE', `Puan verildi: ${result.total}`, appId);
     }
   };
 
@@ -682,7 +671,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       contactMessages,
       allUsers,
       auditLogs,
-      userIp,
     ]
   );
 

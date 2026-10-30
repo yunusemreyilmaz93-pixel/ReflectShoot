@@ -26,6 +26,17 @@ CONFIRM_PUBLIC_CERTIFICATE_PURGE=YES node scripts/ops-oneoffs/purge-public-legac
 
 The script requires the normal server-side R2 environment variables and refuses destructive execution unless both `--execute` and the explicit confirmation environment variable are present.
 
+## Post-audit maintenance (2026-10)
+
+`post-audit-maintenance.mjs` deletes the leaked test account (its password was committed to git history), nulls non-https `logoUrl` / `submissionDownloadUrl` / `videoUrl` values and backfills `public_scores` for works scored before that collection existed. Dry-run by default:
+
+```bash
+node scripts/ops-oneoffs/post-audit-maintenance.mjs
+node scripts/ops-oneoffs/post-audit-maintenance.mjs --execute
+```
+
+It needs the normal server-side Firebase Admin environment variables (`FIREBASE_SERVICE_ACCOUNT_JSON` or the three `FIREBASE_*` variables).
+
 ## Historical removals from Admin UI
 
 | Id | Notes |

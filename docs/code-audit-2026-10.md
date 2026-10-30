@@ -22,23 +22,36 @@ Doğrulama: `tsc --noEmit` temiz · `test:unit` 73/73 · `test:rules` (emülatö
 | 11 | Düşük | Kök dizinde sabit kimlik bilgili (`dummy12345@gmail.com` / `password123`) ve mevcut kurallarla zaten çalışamayan istemci-SDK scriptleri (`markWinners.ts`, `retrieve_*.ts`); kök `admin_retrieve_students.ts` öğrenci telefonlarını yazdırıyor. | İlk üçü silindi; Admin-SDK script'i `scripts/ops-oneoffs/` altına taşındı; README'ler güncellendi. |
 | 12 | Düşük | `.env.example` e-posta env'lerini içermiyordu. | Eklendi. |
 
-## Senin yapman gerekenler (kodla çözülemez)
+## Faz 2 — "dokunmadıklarım" da düzeltildi
 
-1. **`firebase deploy --only firestore:rules`** — kural değişiklikleri deploy edilmeden etkisizdir.
-2. **Vercel loglarında** `/api/internal-purge-legacy-certificates` isteklerini kontrol et: token git geçmişinde olduğu için başkası da tetiklemiş olabilir. Endpoint kalktığı için artık sömürülemez; şüphe varsa R2 anahtarlarını da rotasyona al.
-3. **`dummy12345@gmail.com` Firebase Auth kullanıcısını sil** — şifresi (`password123`) git geçmişinde.
-4. Mevcut verilerde `logoUrl`/`submissionDownloadUrl` içinde `http:`/`javascript:` değer var mı bir kez tara (kural yalnızca yeni yazımları kısıtlar; public API artık sızdırmaz).
+| Konu | Yapılan |
+|------|---------|
+| **Silme / KVKK** | `api/admin-delete-application`: R2'deki veli/KVKK PDF'leri + logo, sohbet, ödül formu, puanlar, başvuru (`recursiveDelete`) sunucuda silinir; dosya silinemezse kayıt silinmez (tekrar denenebilir). `api/admin-delete-user`: Firebase Auth hesabı + profil + bildirimler; takımı olan kullanıcı 409 ile reddedilir. Kurallar artık istemciden `applications`/`users` silmeyi **yasaklıyor**; arayüz API'ye bağlandı. |
+| **Maliyet** | Vitrin artık tüm `scores`'u taramıyor: jüri transaction'ı anonim `public_scores/{id}` yazıyor, vitrin onu okuyor (eski veriler için geçici fallback + backfill script'i). Admin listener'larına dokunulmadı: birkaç yüz doküman ölçeğinde `onSnapshot` ilk yüklemeden sonra yalnızca farkı okur; sayfalama arayüzü ciddi karmaşıklaştırır, kazanç şimdilik yok. |
+| **Jüri kör değerlendirme** | Jüri artık `applications` dokümanını okuyamaz; `GET /api/jury-applications` yalnızca takım adı/kategori/tema/video döndürür (öğrenci, okul, danışman iletişimi yok). `REPORTER` rolünün tüm başvuruları okuması kaldırıldı (arayüzde kullanılmıyordu). |
+| **Yeni hata (kural)** | Jüri panelinin `collectionGroup('scores')` sorgusu eski kuralda `{path=**}/scores` → `false` yüzünden reddediliyordu ("Puan verileri alınamadı"). Jüri yalnızca kendi `juryId`'li puanlarını okuyabilecek şekilde düzeltildi (emülatörde doğrulandı). |
+| **Başvuru kimliği** | `Math.random().toString(36).substring(7)` → `crypto.randomUUID()` (`lib/id.ts`). |
+| **Denetim kaydı** | `logs` istemciden yazılamaz. `POST /api/log` kimlik/IP/UA/zamanı sunucudan alır, rol başına izinli eylem listesi uygular (öğretmen yalnızca `CREATE_APP`, admin yalnızca yönetim eylemleri). Puan, rol, silme olayları kendi endpoint'lerinde sunucuca loglanır. Üçüncü taraf `api.ipify.org` çağrısı kaldırıldı. |
+| **Halk oylaması** | Kodda/kuralda/dokümanda/env'de tamamen silindi (`public_votes`, `vote_rate_limits`, `publicVotes`, `publicVoteStart/End`). `VOTE_HASH_SALT` → `CONTACT_HASH_SALT` (eski ad hâlâ kabul edilir; Vercel'de değiştirmek zorunda değilsin). |
+| **`view?raw=1`** | Bellekte tamponlamak yerine akıtılıyor (`pipeline`). Vercel'in 4,5 MB tamponlu yanıt sınırı akıtılan yanıtlara uygulanmıyorsa tamamen çözülür; yine de 6 MB'lık sahte dosyayla akış testi eklendi. |
+| **Index dosyası** | `firestore.indexes.json` (+ `firebase.json`): `notifications(userId, createdAt desc)` ve `scores.juryId` collection-group indeksi. |
+| **CI** | `npm ci` (npm 11 ile — mevcut lockfile npm 10 ile `npm ci` edilemiyordu), `react-doctor` artık lockfile'daki sürümle (`@latest` yok), `quality-gate` unit testleri de koşuyor. `deploy-firestore.yml`: `main`'e kural/indeks değişikliği düşünce testleri çalıştırıp deploy eder (secret yoksa atlar). |
+| **index.html** | `RNS_PURGE_BUILD_…` işaretçisi silindi. |
+| **Ödül formu / panel sohbeti** | `award_participations` yalnızca kazanan takım için; panel sohbetinde `email` token ile eşleşmeli, alan boyutları sınırlı. |
+| **npm audit** | 32 → 27 bulgu, **kritik 0** (lockfile yenilendi: dompurify, proxy-addr, websocket-driver, tar, picomatch… çözüldü). Kalanlar: `firebase@10` istemci SDK'sının Node-only `undici`/`grpc-js` bağımlılıkları (tarayıcı paketinde çalışmaz), `firebase-admin`/`firebase-tools` major yükseltme gerektiren `uuid`, `vite@5` dev-server `esbuild` açığı (yalnızca `npm run dev`), `react-router@6` (v7'ye geçiş arayüz riski), `xlsx` (npm'de yama yok; SheetJS CDN sürümü gerekir — kurulum erişim izni verilmediği için yapılmadı; uygulama yalnızca dosya *yazıyor*). |
 
-## Bilinçli olarak dokunulmayan (arayüz/ürün kararı gerektirir) — öncelik sırasıyla
+## Senin yapman gerekenler (kodla çözülemez / bu ortamda yetkim yok)
 
-1. **Silme akışı veri sızdırıyor (KVKK):** `deleteApplication` yalnızca Firestore'u siler; R2'deki veli/KVKK PDF'leri (reşit olmayanlara ait) ve `award_participations/{id}` kalıyor. `deleteUser` Firebase Auth hesabını silmiyor. Çözüm: admin-only bir `api/admin-delete-application` (+ R2 temizliği) ve arayüzün ona geçmesi.
-2. **Ölçeklenme / maliyet:** `api/public-showcase` her önbellek kaçışında *tüm* `scores` dokümanlarını okuyor (`collectionGroup`); admin istemcisi `applications` ve `users` koleksiyonlarının tamamına `onSnapshot` ile abone. Öneri: jüri transaction'ında kriter ortalamalarını başvuru dokümanına yaz, showcase'i oradan besle; admin listelerini sayfala.
-3. **Jüri kör değerlendirme değil:** atanmış jüri, `applications` dokümanının tamamını (öğrenci adları, öğretmen e-posta/telefon) okuyabiliyor; `REPORTER` rolü tüm başvuruları okuyabiliyor. Gerekliyse jüri için ayrı, PII'siz bir okuma modeli gerekir.
-4. **Başvuru kimliği zayıf:** `Math.random().toString(36).substring(7)` (≈5 karakter; nadiren boş/kısa çıkıp `jury-score` id regex'ini bozabilir, çakışma riski). `crypto.randomUUID()` önerilir (`context/AppContext.tsx`).
-5. **Denetim kaydı güvenilmez:** `logs.ip` istemciden (`api.ipify.org` — üçüncü taraf çağrı, KVKK açısından aydınlatma gerektirir) ve istemci tarafından yazılıyor; kimse kendi adına sahte kayıt yazabilir. Kritik olaylar (rol, silme, durum) sunucuda loglanmalı.
-6. **`api/view?raw=1`** dosyayı bellekte tamponlayıp döndürüyor; Vercel yanıt sınırı ≈4,5 MB, yükleme sınırı ise 10 MB. Büyük şablon/PDF'ler sessizce başarısız olur.
-7. **Docs ↔ kod uyumsuzluğu:** README/güvenlik notları "halk oylaması sunucu API'si"nden söz ediyor ama `api/` altında oy endpoint'i yok; `VOTE_HASH_SALT` yalnızca `contact.js` rate-limit'inde kullanılıyor. Özellik kaldırıldıysa dokümanı temizle, duruyorsa endpoint eksik.
-8. **Firestore index dosyası yok** (`firestore.indexes.json`): `notifications` (userId + createdAt) bileşik indeksi yalnızca konsolda; yeni ortamda sorgu patlar.
-9. **Bağımlılıklar:** `npm audit` 32 bulgu (2 kritik/7 yüksek; çoğu `firebase-tools` dev zincirinde). Üretim tarafında `xlsx@0.18.5` (npm'de yama yok; uygulama yalnızca *yazıyor*, bu yüzden risk düşük). CI'da `npm install` (lockfile'ı yok sayar) ve `npx react-doctor@latest` (sabitlenmemiş) kullanılıyor → `npm ci` + sürüm sabitleme önerilir.
-10. `index.html` içinde kalan `<span hidden>RNS_PURGE_BUILD_…</span>` deploy işaretçisi zararsız ama çöp; arayüz dosyası olduğu için dokunmadım.
-11. `award_participations` create kuralı kazanan olmayan takıma da izin veriyor ve alan listesi kısıtlamıyor; `contact_messages` (panel sohbeti) için oran sınırı yok.
+Bu oturumda Google/Firebase kimlik bilgisi yok (`gcloud`: "No credentialed accounts"), bu yüzden deploy ve Auth silme **burada çalıştırılamaz**. Vercel MCP bağlı ve `reflect-shoot` projesi görünüyor, ancak log API'si 403 döndü (token'da log izni yok).
+
+1. **Kuralları + indeksleri yayınla** — iki yoldan biri:
+   - Otomatik: GitHub → Settings → Secrets → `FIREBASE_SERVICE_ACCOUNT_JSON` (Firebase servis hesabı anahtarı; roller: *Firebase Rules Admin*, *Cloud Datastore Index Admin*). Sonra `main`'e birleştirince `deploy-firestore.yml` çalışır (Actions'tan elle de tetiklenir).
+   - Elle: `firebase login && firebase deploy --only firestore:rules,firestore:indexes --project reflectandshoot`
+   - **Sıra:** önce uygulamayı (Vercel) yayınla, hemen ardından kuralları. Yeni kurallar eski arayüzün doğrudan silme/log yazmasını reddeder.
+2. **Bakım script'i** (test hesabını siler, kötü URL'leri temizler, `public_scores` doldurur):
+   ```bash
+   node scripts/ops-oneoffs/post-audit-maintenance.mjs            # önce dry-run
+   node scripts/ops-oneoffs/post-audit-maintenance.mjs --execute
+   ```
+   Gerekli ortam: `FIREBASE_SERVICE_ACCOUNT_JSON` (veya üç `FIREBASE_*` değişkeni).
+3. **Vercel loglarında** `/api/internal-purge-legacy-certificates` isteklerine bak (Vercel → reflect-shoot → Logs → arama). Token git geçmişinde olduğu için başkası tetiklemiş olabilir; şüphe varsa R2 anahtarlarını yenile.

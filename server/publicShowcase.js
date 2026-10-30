@@ -41,7 +41,6 @@ export function sanitizeApplication(snapshot) {
       isFinalStageComplete: false,
       isFinalist: Boolean(team.isFinalist),
       finalistRank: team.finalistRank || null,
-      publicVotes: Number(team.publicVotes || 0),
       isWinner: Boolean(team.isWinner),
       awardCategory: team.awardCategory || null,
       awardTitle: team.awardTitle || null,
@@ -63,4 +62,14 @@ export function sanitizeScore(data) {
       themeFit: Number(data.criteria?.themeFit || 0),
     },
   };
+}
+
+/**
+ * Anonymous per-criterion scores for the public site (no jury identity, no drafts/recusals).
+ * Stored on `public_scores/{applicationId}` by the jury-score transaction.
+ */
+export function buildPublicScores(scoreData) {
+  return (scoreData || [])
+    .filter((score) => score && !score.isDraft && !score.isRecused)
+    .map(sanitizeScore);
 }

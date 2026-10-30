@@ -10,8 +10,6 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
     galaDate: '2026-05-22T10:30',
     finalistRevealStart: '2026-05-07T12:00',
     reviseUploadEnd: '2026-05-17T23:59',
-    publicVoteStart: '',
-    publicVoteEnd: '',
   },
   features: {
     judgeSystemActive: false,

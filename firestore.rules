@@ -35,12 +35,6 @@ service cloud.firestore {
         get(/databases/$(database)/documents/applications/$(appId)).data.teacher.id == request.auth.uid;
     }
 
-    function isAssignedJudgeData(data) {
-      return isVerifiedRole('JUDGE') &&
-        data.assignedJuryIds is list &&
-        request.auth.uid in data.assignedJuryIds;
-    }
-
     function isNotRateLimited() {
       return !hasProfile() ||
         !('lastActionAt' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data) ||
@@ -130,6 +124,10 @@ service cloud.firestore {
           'name', 'email', 'title', 'message', 'createdAt', 'status', 'source', 'applicationId'
         ]) &&
         request.resource.data.source == 'DASHBOARD_CHAT' &&
+        request.resource.data.email is string &&
+        request.resource.data.email.lower() == request.auth.token.email.lower() &&
+        request.resource.data.name is string && request.resource.data.name.size() <= 100 &&
+        request.resource.data.title is string && request.resource.data.title.size() <= 160 &&
         request.resource.data.status == 'UNREAD' &&
         ownsApplication(request.resource.data.applicationId) &&
         request.resource.data.message is string && request.resource.data.message.size() >= 1 && request.resource.data.message.size() <= 3000;
@@ -168,30 +166,23 @@ service cloud.firestore {
           request.resource.data.role == resource.data.role &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['fullName', 'school', 'city', 'phone', 'emailVerified', 'lastActionAt']));
-      allow delete: if isAdmin();
+      // Account removal (Auth user, notifications) runs on the server only: /api/admin-delete-user.
+      allow delete: if false;
     }
 
     match /applications/{appId} {
-      allow read: if isAdmin() || hasRole('REPORTER') ||
-        isApplicationOwnerData(resource.data) || isAssignedJudgeData(resource.data);
+      // Jury members never read application documents (student and advisor personal data):
+      // they receive a stripped view from /api/jury-applications.
+      allow read: if isAdmin() || isApplicationOwnerData(resource.data);
       allow create: if (isVerifiedRole('TEACHER') || isVerifiedRole('STUDENT')) &&
         isNotRateLimited() && validApplicationCreate(appId);
       allow update: if isAdmin() ||
         ((isVerifiedRole('TEACHER') || isVerifiedRole('STUDENT')) &&
           isApplicationOwnerData(resource.data) && isNotRateLimited() &&
           (validOwnerApplicationUpdate() || validOwnerParticipationFlagUpdate()));
-      allow delete: if isAdmin();
-
-      match /scores/{juryId} {
-        allow read: if isAdmin() ||
-          (isAssignedJudgeData(
-            get(/databases/$(database)/documents/applications/$(appId)).data
-          ) && juryId == request.auth.uid);
-        // Scores are written by the server transaction only; admin may delete them
-        // (deleting an application removes its scores in the same batch).
-        allow create, update: if false;
-        allow delete: if isAdmin();
-      }
+      // Deletion (files in R2, scores, chat, participation form) runs on the server only:
+      // /api/admin-delete-application.
+      allow delete: if false;
 
       match /messages/{messageId} {
         allow read: if isAdmin() || ownsApplication(appId);
@@ -209,13 +200,18 @@ service cloud.firestore {
       }
     }
 
+    // Scores are written by the server transaction only. A judge may read only their own score
+    // documents (this rule also covers the collection-group query on `juryId`).
     match /{path=**}/scores/{scoreDocId} {
-      allow read, write: if false;
+      allow read: if isAdmin() ||
+        (isVerifiedRole('JUDGE') && resource.data.juryId == request.auth.uid);
+      allow write: if false;
     }
 
     match /award_participations/{appId} {
       allow read: if isAdmin() || ownsApplication(appId);
       allow create: if ownsApplication(appId) &&
+        get(/databases/$(database)/documents/applications/$(appId)).data.team.get('isWinner', false) == true &&
         request.resource.data.applicationId == appId &&
         request.resource.data.status in ['draft', 'submitted'];
       allow update: if isAdmin() ||
@@ -234,13 +230,6 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
-    match /public_votes/{voteId} {
-      allow read, write: if false;
-    }
-
-    match /vote_rate_limits/{document=**} {
-      allow read, write: if false;
-    }
     match /contact_rate_limits/{document=**} {
       allow read, write: if false;
     }
@@ -250,22 +239,10 @@ service cloud.firestore {
       allow create: if validDashboardContact();
     }
 
+    // Audit entries are written by the server (identity, IP and time are not client-controlled).
     match /logs/{logId} {
       allow read: if isAdmin();
-      allow create: if hasProfile() &&
-        request.resource.data.performedBy == request.auth.token.email &&
-        request.resource.data.performedByUid == request.auth.uid &&
-        request.resource.data.keys().hasOnly([
-          'action', 'details', 'performedBy', 'performedByUid', 'timestamp',
-          'targetId', 'ip', 'userAgent', 'metadata'
-        ]) &&
-        request.resource.data.action is string && request.resource.data.action.size() >= 1 && request.resource.data.action.size() <= 100 &&
-        request.resource.data.details is string && request.resource.data.details.size() >= 1 && request.resource.data.details.size() <= 2000 &&
-        request.resource.data.timestamp is string &&
-        (!('ip' in request.resource.data) || (request.resource.data.ip is string && request.resource.data.ip.size() <= 100)) &&
-        (!('userAgent' in request.resource.data) ||
-          (request.resource.data.userAgent is string && request.resource.data.userAgent.size() <= 1000));
-      allow update, delete: if false;
+      allow write: if false;
     }
 
     match /{document=**} {

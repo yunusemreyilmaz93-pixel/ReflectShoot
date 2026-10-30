@@ -26,9 +26,10 @@ function getClientIp(req) {
 }
 
 function hashIp(req) {
-  const salt = process.env.VOTE_HASH_SALT;
+  // VOTE_HASH_SALT is the pre-rename name of the same secret; keep accepting it so deployed envs keep working.
+  const salt = process.env.CONTACT_HASH_SALT || process.env.VOTE_HASH_SALT;
   if (!salt || salt.length < 32) {
-    throw new Error('VOTE_HASH_SALT must contain at least 32 characters');
+    throw new Error('CONTACT_HASH_SALT must contain at least 32 characters');
   }
   return createHash('sha256').update(`${salt}:contact:${getClientIp(req)}`).digest('hex');
 }

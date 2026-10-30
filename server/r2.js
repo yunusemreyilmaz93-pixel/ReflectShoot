@@ -1,4 +1,4 @@
-import { S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectsCommand, ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3';
 import { HttpError, ROLES } from './auth.js';
 import { getAdminServices } from './firebaseAdmin.js';
 
@@ -133,4 +133,38 @@ export async function authorizePrivateViewKey(rawKey, user) {
   }
 
   return key;
+}
+
+/**
+ * Deletes every object under `prefix` (must end with "/"). Throws if R2 reports any failure so
+ * callers can abort before removing the database records that reference the files.
+ */
+export async function deleteObjectsByPrefix(client, bucket, prefix) {
+  if (typeof prefix !== 'string' || !prefix.endsWith('/') || prefix.length < 4) {
+    throw new Error('Refusing to delete with an unsafe prefix');
+  }
+
+  let continuationToken;
+  let deleted = 0;
+  do {
+    const page = await client.send(
+      new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: continuationToken })
+    );
+    const keys = (page.Contents || []).map((object) => object.Key).filter(Boolean);
+    if (keys.length > 0) {
+      const result = await client.send(
+        new DeleteObjectsCommand({
+          Bucket: bucket,
+          Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true },
+        })
+      );
+      if (result.Errors?.length) {
+        throw new Error(`R2 delete failed for ${result.Errors.length} object(s) under ${prefix}`);
+      }
+      deleted += keys.length;
+    }
+    continuationToken = page.IsTruncated ? page.NextContinuationToken : undefined;
+  } while (continuationToken);
+
+  return deleted;
 }

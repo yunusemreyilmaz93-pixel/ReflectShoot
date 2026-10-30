@@ -56,7 +56,7 @@ export const AdminUsers = () => {
             await deleteUser(uid);
         } catch (error) {
             console.error(error);
-            showToast('Kullanıcı silinemedi.', 'error');
+            showToast(error instanceof Error ? error.message : 'Kullanıcı silinemedi.', 'error');
         } finally {
             setProcessingId(null);
         }

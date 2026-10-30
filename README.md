@@ -1,6 +1,6 @@
 # Reflect & Shoot
 
-Öğrenci kısa film yarışması platformu: başvuru, belge yükleme, jüri puanlama, halk oylaması, finalist vitrini, CMS, sertifika ve ödül katılım formu.
+Öğrenci kısa film yarışması platformu: başvuru, belge yükleme, jüri puanlama, finalist vitrini, CMS, sertifika ve ödül katılım formu.
 
 **Stack:** React 18 · TypeScript · Vite · Firebase Auth/Firestore · Cloudflare R2 · Vercel serverless API
 
@@ -46,7 +46,7 @@ npm run dev
 - `FIREBASE_SERVICE_ACCOUNT_JSON` veya `FIREBASE_PROJECT_ID` + `FIREBASE_CLIENT_EMAIL` + `FIREBASE_PRIVATE_KEY`
 - `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`
 - `R2_PRIVATE_BUCKET_NAME`, `R2_PUBLIC_BUCKET_NAME`
-- `VOTE_HASH_SALT` (≥32 karakter)
+- `CONTACT_HASH_SALT` (≥32 karakter; eski adı `VOTE_HASH_SALT` de kabul edilir)
 
 Ayrıntı: [docs/security-deployment.md](docs/security-deployment.md)
 
@@ -55,11 +55,11 @@ Ayrıntı: [docs/security-deployment.md](docs/security-deployment.md)
 1. Env’leri Vercel Production/Preview/Development’a yaz
 2. `npm run check` (+ mümkünse `test:rules`, `test:visual`, `doctor`)
 3. `firebase deploy --only firestore:rules`
-4. Uygulamayı yayınla; smoke: belge yükleme, jüri puan, özel dosya görüntüleme, halk oyu
+4. Uygulamayı yayınla; smoke: belge yükleme, jüri puan, özel dosya görüntüleme
 
 ## Mimari notlar
 
-- **Güvenlik:** Jüri puanı ve halk oyu yalnızca sunucu API; Firestore client write kapalı. Public showcase PII strip.
+- **Güvenlik:** Jüri puanı, silme işlemleri ve denetim kayıtları yalnızca sunucu API; jüri öğrenci/danışman kişisel verisini görmez. Firestore client write kapalı. Public showcase PII strip.
 - **Depolama:** Özel belgeler R2 private + presigned URL; logolar public bucket.
 - **Admin / Dashboard:** Bölünmüş modüller (`pages/admin/*`, `pages/dashboard/*`).
 - **Domain:** `lib/domain/*` — isim/puan/status/sanitize pure fonksiyonlar.

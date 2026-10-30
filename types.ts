@@ -111,9 +111,6 @@ export interface Team {
   isFinalist?: boolean; // NEW: Flag for finalists
   finalistRank?: number; // NEW: Rank if applicable
   
-  // Public Voting
-  publicVotes?: number;
-
   // Additional Awards & Participation
   isWinner?: boolean;
   awardCategory?: string;
@@ -203,8 +200,6 @@ export interface SystemSettings {
         videoUploadEnd: string;
         academyStart: string;
         galaDate: string;
-        publicVoteStart?: string;
-        publicVoteEnd?: string;
         finalistRevealStart?: string;
         finalistRevealEnd?: string;
         reviseUploadStart?: string;

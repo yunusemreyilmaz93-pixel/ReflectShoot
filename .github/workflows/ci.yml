@@ -17,9 +17,9 @@ jobs:
           node-version: '22'
           cache: npm
 
+      - run: npm install -g npm@11  # lockfile is written by npm 11; npm 10 cannot `npm ci` it
       - name: Install
-        # npm install: lockfile generated with npm 11 / Node 24 locally; npm ci is stricter across platforms
-        run: npm install
+        run: npm ci
 
       - name: Typecheck
         run: npm run lint
@@ -37,5 +37,5 @@ jobs:
         run: npm run test:e2e
 
       - name: React Doctor (advisory)
-        run: npx react-doctor@latest --blocking none --no-telemetry
+        run: npx --no-install react-doctor --blocking none --no-telemetry
         continue-on-error: true
