@@ -1,5 +1,3 @@
-export const UNLOCK_DATE = new Date('2026-05-23T18:30:00+03:00');
-
 export const officialLiveActionWinners = [
     { rank: '1.', name: 'Sosyal Kızlar42', school: 'Konya Türk Telekom Sosyal Bilimler Lisesi', award: 'Birincilik Ödülü', type: 'gold' },
     { rank: '2.', name: 'Diriliş Perileri', school: 'Güngören İTO Kız Anadolu İmam Hatip Lisesi', award: 'İkincilik Ödülü', type: 'silver' },

@@ -1,5 +1,5 @@
 import { getAdminServices } from '../server/firebaseAdmin.js';
-import { buildPublicScores, sanitizeApplication } from '../server/publicShowcase.js';
+import { buildPublicScores, sanitizeApplication, seasonOf } from '../server/publicShowcase.js';
 
 const PUBLIC_STATUSES = ['Onaylandı', 'Puanlandı'];
 
@@ -10,11 +10,20 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Optional ?season=2027 narrows the showcase to one season (legacy applications count as 2026).
+    const season = typeof req.query?.season === 'string' ? req.query.season.trim() : '';
+    if (season && !/^[a-zA-Z0-9_-]{2,32}$/.test(season)) {
+      return res.status(400).json({ error: 'Geçersiz sezon.' });
+    }
+
     const { db } = getAdminServices();
-    const [applicationsSnapshot, publicScoresSnapshot] = await Promise.all([
+    const [allPublicSnapshot, publicScoresSnapshot] = await Promise.all([
       db.collection('applications').where('status', 'in', PUBLIC_STATUSES).get(),
       db.collection('public_scores').get(),
     ]);
+    const applicationsSnapshot = {
+      docs: allPublicSnapshot.docs.filter((doc) => !season || seasonOf(doc.data()) === season),
+    };
 
     const scores = {};
     const aggregated = new Set();

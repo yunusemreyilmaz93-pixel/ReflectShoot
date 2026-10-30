@@ -10,6 +10,7 @@ import {
   ChevronDown, ChevronUp, Loader2, Info
 } from 'lucide-react';
 import {
+  CEREMONY_FORM_OPEN,
   DEADLINE,
   TRANSPORTATION_OPTIONS,
   SPECIAL_CONDITIONS,
@@ -26,7 +27,7 @@ import {
   type ValidationErrors,
 } from './award-form/AwardFormUi';
 
-export const AwardParticipationForm = () => {
+const AwardParticipationFormInner = () => {
   const { teamId } = useParams();
   const navigate = useNavigate();
   const { currentUser, allApplications, myApplications } = useAppContext();
@@ -734,6 +735,32 @@ export const AwardParticipationForm = () => {
 
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * The ceremony for the 2026-27 season has no date or venue yet, so the participation form stays
+ * closed. Flip CEREMONY_FORM_OPEN (and update DEADLINE and the programme text) once it is planned.
+ */
+export const AwardParticipationForm = () => {
+  const navigate = useNavigate();
+  if (CEREMONY_FORM_OPEN) return <AwardParticipationFormInner />;
+  return (
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+      <div className="max-w-lg text-center bg-slate-900 border border-slate-800 rounded-3xl p-10">
+        <h1 className="text-2xl font-black text-white mb-3">Tören Bilgileri Yakında</h1>
+        <p className="text-slate-400 leading-relaxed mb-8">
+          Ödül töreninin tarihi ve yeri belli olduğunda katılım formu burada açılacak ve duyurulacaktır.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard')}
+          className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm uppercase tracking-wider rounded-xl py-3 px-6 transition-colors"
+        >
+          Panele Dön
+        </button>
       </div>
     </div>
   );

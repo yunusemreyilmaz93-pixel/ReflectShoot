@@ -48,6 +48,8 @@ export function sanitizeApplicationForPublic(snapshot: {
       awardTitle: team.awardTitle || null,
     },
     status: data.status || '',
+    seasonId: data.seasonId || '2026',
+    archived: Boolean(data.archived),
     submittedAt: data.submittedAt || '',
     finalScore: typeof data.finalScore === 'number' ? data.finalScore : null,
     juryCount: Number(data.juryCount || 0),

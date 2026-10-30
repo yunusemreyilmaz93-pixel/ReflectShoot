@@ -10,6 +10,13 @@ export function toPublicHttpsUrl(value) {
   return /^https:\/\/[^\s]+$/i.test(trimmed) ? trimmed : null;
 }
 
+/** Applications created before seasons existed (no seasonId) belong to the 2026 season. */
+export const LEGACY_SEASON_ID = '2026';
+
+export function seasonOf(data) {
+  return (data && data.seasonId) || LEGACY_SEASON_ID;
+}
+
 export function sanitizeApplication(snapshot) {
   const data = snapshot.data() || {};
   const team = data.team || {};
@@ -46,6 +53,8 @@ export function sanitizeApplication(snapshot) {
       awardTitle: team.awardTitle || null,
     },
     status: data.status || '',
+    seasonId: seasonOf(data),
+    archived: Boolean(data.archived),
     submittedAt: data.submittedAt || '',
     finalScore: typeof data.finalScore === 'number' ? data.finalScore : null,
     juryCount: Number(data.juryCount || 0),

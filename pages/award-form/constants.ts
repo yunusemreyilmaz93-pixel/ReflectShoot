@@ -1,3 +1,6 @@
+/** Participation form is closed until the 2026-27 ceremony date and venue are announced. */
+export const CEREMONY_FORM_OPEN = false;
+
 export const DEADLINE = new Date('2026-05-11T13:00:00');
 
 export const TRANSPORTATION_OPTIONS = [

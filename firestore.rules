@@ -49,12 +49,15 @@ service cloud.firestore {
         request.resource.data.id == appId &&
         request.resource.data.teacher.id == request.auth.uid &&
         request.resource.data.status == 'Taslak' &&
+        // 2026-27 season: a single category and theme.
+        request.resource.data.team.category == 'Yapay Zeka Animasyon' &&
+        request.resource.data.team.theme == 'Asr ve Beled Sureleri' &&
         request.resource.data.team.name is string &&
         request.resource.data.team.name.size() >= 3 &&
         request.resource.data.team.name.size() <= 40 &&
         request.resource.data.team.students is list &&
-        request.resource.data.team.students.size() >= 3 &&
-        request.resource.data.team.students.size() <= 5 &&
+        request.resource.data.team.students.size() >= 2 &&
+        request.resource.data.team.students.size() <= 4 &&
         // Season tags optional; client may not archive on create
         (!('archived' in request.resource.data) || request.resource.data.archived == false) &&
         (!('seasonId' in request.resource.data) ||
@@ -97,8 +100,7 @@ service cloud.firestore {
         request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['team', 'status', 'submittedAt', 'updatedAt']) &&
         request.resource.data.team.diff(resource.data.team).affectedKeys().hasOnly([
-          'name', 'logoUrl', 'logoKey', 'category', 'theme', 'selectedVerse',
-          'selectedTopic', 'students', 'submissionDownloadUrl', 'videoUrl',
+          'name', 'logoUrl', 'logoKey', 'students', 'submissionDownloadUrl', 'videoUrl',
           'videoStatus', 'isPreliminaryStageComplete', 'isFinalStageComplete',
           'participationFormStatus', 'participationSubmittedAt'
         ]) &&
@@ -106,8 +108,8 @@ service cloud.firestore {
         request.resource.data.team.name.size() >= 3 &&
         request.resource.data.team.name.size() <= 40 &&
         request.resource.data.team.students is list &&
-        request.resource.data.team.students.size() >= 3 &&
-        request.resource.data.team.students.size() <= 5 &&
+        request.resource.data.team.students.size() >= 2 &&
+        request.resource.data.team.students.size() <= 4 &&
         request.resource.data.status in [
           'Taslak', 'Ön Başvuru Yapıldı', 'Video İnceleniyor', 'Düzeltme Gerekli'
         ] &&

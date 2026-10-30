@@ -22,9 +22,10 @@ export const AdminSeasonWizard: React.FC = () => {
   const nextYear = String(Number(current.id.replace(/\D/g, '') || new Date().getFullYear()) + 1 || new Date().getFullYear() + 1);
 
   const [newId, setNewId] = useState(nextYear.length === 4 ? nextYear : `${current.id}-next`);
-  const [newLabel, setNewLabel] = useState(`Reflect & Shoot ${nextYear}`);
+  const [newLabel, setNewLabel] = useState(`${current.id}-${nextYear.slice(-2)}`);
   const [archivePrevious, setArchivePrevious] = useState(true);
-  const [openApplications, setOpenApplications] = useState(true);
+  const [openApplications, setOpenApplications] = useState(false);
+  const [clearDates, setClearDates] = useState(true);
   const [busy, setBusy] = useState(false);
   const [backedUp, setBackedUp] = useState(false);
   const [seasonJustOpened, setSeasonJustOpened] = useState(false);
@@ -58,6 +59,7 @@ export const AdminSeasonWizard: React.FC = () => {
         id: newId.trim(),
         label: newLabel.trim(),
         shiftYears: 1,
+        clearDates,
         openApplications,
         resetVideoUpload: true,
         archivePrevious,
@@ -133,12 +135,21 @@ export const AdminSeasonWizard: React.FC = () => {
           />
           Yeni kayıt ve başvurulari aç
         </label>
+        <label className="flex items-center gap-2 text-slate-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={clearDates}
+            onChange={(e) => setClearDates(e.target.checked)}
+            className="accent-rose-600"
+          />
+          Tarihleri temizle (sonradan açıklanacak)
+        </label>
       </div>
 
       <div className="bg-amber-900/20 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-100/90 flex gap-2 mb-4">
         <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
         <span>
-          Tarihler otomatik +1 yıl kayar. Video yükleme ve jüri sistemi kapanır; gala/sonuç ilanı
+          Tarihler temizlenir (kutu işaretliyse) ya da otomatik +1 yıl kayar. Video yükleme ve jüri sistemi kapanır; gala/sonuç ilanı
           kapanır. CMS timeline’ı ayrıca güncelleyin.
         </span>
       </div>

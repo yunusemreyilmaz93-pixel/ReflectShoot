@@ -129,14 +129,15 @@ describe('teacherDashboard progress & next action', () => {
 });
 
 describe('student limits', () => {
-  test('min 3 max 5', () => {
-    expect(MIN_STUDENTS_PER_TEAM).toBe(3);
-    expect(MAX_STUDENTS_PER_TEAM).toBe(5);
-    expect(isValidStudentCount(3)).toBe(true);
-    expect(isValidStudentCount(5)).toBe(true);
-    expect(isValidStudentCount(2)).toBe(false);
-    expect(isValidStudentCount(6)).toBe(false);
-    expect(studentCountError(6)).not.toBeNull();
+  test('min 2 max 4', () => {
+    expect(MIN_STUDENTS_PER_TEAM).toBe(2);
+    expect(MAX_STUDENTS_PER_TEAM).toBe(4);
+    expect(isValidStudentCount(2)).toBe(true);
+    expect(isValidStudentCount(4)).toBe(true);
+    expect(isValidStudentCount(1)).toBe(false);
+    expect(isValidStudentCount(5)).toBe(false);
+    expect(studentCountError(5)).not.toBeNull();
+    expect(studentCountError(1)).not.toBeNull();
   });
 });
 

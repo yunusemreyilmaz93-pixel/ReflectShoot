@@ -55,8 +55,8 @@ export const CityGuide: React.FC = () => {
               KONYA
            </h1>
            <p className="text-xl md:text-2xl text-slate-200 max-w-2xl mx-auto font-light leading-relaxed drop-shadow-lg">
-              Konya Bekliyor! <span className="text-amber-400 font-medium">Büyük Ödül Töreni</span> için hazırız. <br/>
-              İşte tören süresince şehri tam anlamıyla yaşamak için bir rehber.
+              Konya Bekliyor! <span className="text-amber-400 font-medium">Reflect&amp;Shoot</span> etkinlikleri için hazırız. <br/>
+              İşte şehri tam anlamıyla yaşamak için bir rehber.
            </p>
 
            {/* Quick Nav */}
@@ -65,8 +65,6 @@ export const CityGuide: React.FC = () => {
                   { id: 'weather', label: 'Bavul & Hava', icon: CloudSun },
                   { id: 'story', label: 'Şehrin Ruhu', icon: History },
                   { id: 'itineraries', label: 'Hazır Rotalar', icon: Footprints },
-                  { id: 'transfer', label: 'Tören Transfer', icon: Bus },
-                  { id: 'tas-bina', label: 'Tören Merkezi', icon: Trophy },
                   { id: 'locations', label: 'Gezilecek Yerler', icon: Map },
                   { id: 'tasks', label: 'Gezgin Checklist', icon: CheckSquare },
                   { id: 'survival', label: 'Pratik Bilgiler', icon: Info },
@@ -89,9 +87,9 @@ export const CityGuide: React.FC = () => {
           <section id="weather" className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 scroll-mt-32">
               <div className="flex-1 text-center md:text-left">
                   <h3 className="text-2xl font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-3">
-                      <Thermometer className="text-amber-500"/> Mayıs'ta Konya
+                      <Thermometer className="text-amber-500"/> İlkbaharda Konya
                   </h3>
-                  <p className="text-slate-400 text-sm">Ödül töreni zamanı (Mayıs sonu) Konya baharın en güzel zamanlarını yaşar.</p>
+                  <p className="text-slate-400 text-sm">Aşağıdaki değerler ilkbahar ortalamalarıdır; etkinlik tarihi belli olduğunda güncellenecektir.</p>
               </div>
               
               <div className="flex gap-8 items-center border-x border-slate-800 px-8 w-full md:w-auto justify-center md:justify-start">
@@ -113,7 +111,7 @@ export const CityGuide: React.FC = () => {
                       <div>
                           <h4 className="text-white font-bold text-sm mb-1">Bavul Tavsiyesi</h4>
                           <p className="text-xs text-slate-400 leading-relaxed">
-                              Ödül töreni için şık kıyafetlerinizi (takım elbise/elbise) unutmayın. Ancak akşamları serin olabilir, şehir turu için yanınıza mutlaka bir <strong>hırka veya ince mont</strong> alın.
+                              Etkinlik için şık kıyafetlerinizi (takım elbise/elbise) unutmayın. Ancak akşamları serin olabilir, şehir turu için yanınıza mutlaka bir <strong>hırka veya ince mont</strong> alın.
                           </p>
                       </div>
                   </div>
@@ -178,199 +176,6 @@ export const CityGuide: React.FC = () => {
               </div>
           </section>
 
-          {/* 4.5 TRANSFER INFO (Tören Day) */}
-          <section id="transfer" className="scroll-mt-32">
-              <div className="relative rounded-[2.5rem] bg-gradient-to-r from-slate-900 to-slate-950 border border-amber-500/20 shadow-2xl overflow-hidden group">
-                  {/* Decorative Elements */}
-                  <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-amber-600/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none"></div>
-                  <div className="absolute inset-y-0 left-0 w-2 bg-amber-500"></div>
-                  
-                  <div className="p-8 md:p-14 relative z-10 flex flex-col md:flex-row gap-12 items-center">
-                      
-                      {/* Ticket Header */}
-                      <div className="flex-1 text-center md:text-left space-y-6">
-                          <div className="inline-flex items-center gap-3 text-amber-500 font-black tracking-[0.2em] uppercase text-xs border border-amber-500/30 px-4 py-2 rounded-full bg-amber-500/5">
-                              <Ticket size={16} /> Resmi Transfer Programı
-                          </div>
-                          <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
-                              Ödül Töreni Günü <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-500 to-amber-200">Transfer Planı</span>
-                          </h2>
-                          <p className="text-slate-400 text-lg font-light leading-relaxed">
-                              İl dışından gelecek olan finalist ekiplerimiz için pansiyondan tören merkezine transfer organize edilecektir.
-                              Lütfen belirtilen saatte "Sete Hazır" olunuz.
-                          </p>
-                      </div>
-
-                      {/* Ticket Body / Schedule */}
-                      <div className="flex-1 w-full bg-slate-900/80 backdrop-blur-md rounded-2xl border-2 border-dashed border-slate-700 p-6 md:p-8 relative">
-                          {/* Holes */}
-                          <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-950 rounded-full border-r border-slate-700 hidden md:block"></div>
-                          <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-950 rounded-full border-l border-slate-700 hidden md:block"></div>
-
-                          <div className="space-y-8">
-                              {/* Row 1 */}
-                              <div className="flex flex-col md:flex-row justify-between items-center border-b border-slate-800 pb-6 gap-4 text-center md:text-left">
-                                  <div>
-                                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">KALKIŞ</span>
-                                      <span className="text-3xl font-black text-white flex items-center justify-center md:justify-start gap-2">
-                                          09:30 <Clock className="text-amber-500" size={20}/>
-                                      </span>
-                                  </div>
-                                  <div className="md:text-right">
-                                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">TARİH</span>
-                                      <span className="text-xl font-bold text-white">22 Mayıs 2026</span>
-                                  </div>
-                              </div>
-
-                              {/* Row 2: Route */}
-                              <div className="flex flex-col sm:flex-row items-center gap-4">
-                                  <div className="flex sm:flex-col items-center gap-1 sm:gap-0">
-                                      <div className="w-3 h-3 bg-slate-500 rounded-full"></div>
-                                      <div className="w-10 h-0.5 sm:h-10 sm:w-0.5 bg-slate-700 sm:border-l border-b border-dashed border-slate-500"></div>
-                                      <div className="w-3 h-3 bg-amber-500 rounded-full shadow-[0_0_10px_#f59e0b]"></div>
-                                  </div>
-                                  <div className="flex-1 space-y-6 text-center sm:text-left">
-                                      <div>
-                                          <h4 className="text-slate-300 font-bold text-sm">Konya İHL Pansiyonu</h4>
-                                          <p className="text-slate-500 text-xs">Toplanma Alanı</p>
-                                      </div>
-                                      <div>
-                                          <h4 className="text-white font-bold text-lg">Taş Bina</h4>
-                                          <p className="text-amber-500 text-xs font-bold uppercase tracking-wider">Kültür Sanat</p>
-                                      </div>
-                                  </div>
-                                  <div className="bg-amber-500/10 p-4 rounded-xl text-amber-500 border border-amber-500/20">
-                                      <Bus size={32} />
-                                  </div>
-                              </div>
-
-                              {/* Footer */}
-                              <div className="pt-4 flex items-center justify-center gap-2 text-xs text-slate-500 font-mono">
-                                  <Info size={12}/> Tören 10:30'da Başlayacaktır.
-                              </div>
-                          </div>
-                      </div>
-
-                  </div>
-              </div>
-          </section>
-
-          {/* 4.7 TAŞ BİNA Section (Tören Venue) */}
-          <section id="tas-bina" className="scroll-mt-32">
-              <div className="flex flex-col lg:flex-row gap-12 items-center">
-                  <div className="flex-1 space-y-8 order-2 lg:order-1">
-                      <div className="inline-flex items-center gap-2 text-amber-500 font-bold uppercase tracking-widest text-xs">
-                          <Trophy size={14}/> Ödül Töreni Alanı
-                      </div>
-                      <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
-                          Tarihin Dijitalle <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-amber-200">Buluşma Noktası</span>
-                      </h2>
-                      <p className="text-lg text-slate-300 leading-relaxed font-light">
-                          1917 yılında Mimar Muzaffer tarafından Darülmuallimat olarak temelleri atılan bu görkemli yapı, bugün Konya'nın hafızasını dijital dünyayla birleştiriyor. 
-                          Kız Öğretmen Okulu ve Rektörlük binası olarak şehre hizmet eden Taş Bina, şimdi büyük finalimize ev sahipliği yapıyor.
-                      </p>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {[
-                              { label: 'Dijital Deneyim Merkezi', icon: Cpu },
-                              { label: 'Kültür Sanat Alanları', icon: Aperture },
-                              { label: 'Konferans Salonu', icon: UsersIcon },
-                              { label: 'Kitap & Hediyelik Ofisi', icon: ShoppingBag }
-                          ].map((item, idx) => (
-                              <div key={idx} className="flex items-center gap-3 p-4 bg-slate-900/50 rounded-2xl border border-slate-800 backdrop-blur-sm shadow-inner group">
-                                  <div className="p-2 bg-slate-950 rounded-lg text-amber-500 group-hover:scale-110 transition-transform">
-                                      <item.icon size={18} />
-                                  </div>
-                                  <span className="text-sm text-slate-300 font-medium">{item.label}</span>
-                              </div>
-                          ))}
-                      </div>
-
-                      <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-3xl space-y-4">
-                          <h4 className="text-white font-bold text-sm flex items-center gap-2 uppercase tracking-wider">
-                              <Info size={16} className="text-blue-500"/> Dijital Keşif Yolculuğu
-                          </h4>
-                          <p className="text-xs text-slate-400 leading-relaxed">
-                              Binanın ana girişinden itibaren koridorun sağında ve solunda 7 oda yer alır. İlk oda satış ofisiyken, diğer 6 oda dijital tanıtım merkezidir: 
-                              <strong> Tarih Odası, Go Konya, Kültürel Mozaik, Yaşayan Kültür, Tarihe Açılan Kapılar</strong> ve <strong>Benim Şehrim</strong>. Her oda Konya'nın farklı bir yönünü anlatır.
-                          </p>
-                      </div>
-
-                      <div className="flex flex-col sm:flex-row gap-6 pt-6 border-t border-slate-800/50">
-                          <div className="flex items-center gap-3 text-slate-500 text-xs font-medium">
-                              <div className="p-2 bg-rose-500/10 rounded-full text-rose-500"><MapPin size={14}/></div>
-                              Şemsitebrizi, Ankara Cd. No:6
-                          </div>
-                          <div className="flex items-center gap-3 text-slate-500 text-xs font-medium">
-                              <div className="p-2 bg-blue-500/10 rounded-full text-blue-500"><Phone size={14}/></div>
-                              (0332) 221 14 05
-                          </div>
-                      </div>
-                  </div>
-
-                  <div className="flex-1 relative w-full order-1 lg:order-2">
-                      <div className="absolute inset-0 bg-amber-500 blur-[120px] opacity-10 rounded-full"></div>
-                      <div className="grid grid-cols-2 gap-4 relative">
-                          <div className="space-y-4 pt-12">
-                              <div 
-                                className="relative h-64 md:h-72 rounded-[2rem] overflow-hidden border border-slate-700 shadow-2xl group cursor-zoom-in"
-                                onClick={() => setSelectedImage("https://assets.reflectandshoot.com/city_guide/tas_bina_2.jpg")}
-                              >
-                                  <img 
-                                    src="https://assets.reflectandshoot.com/city_guide/tas_bina_2.jpg" 
-                                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
-                                    alt="Taş Bina Dış Cephe"
-                                  />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent"></div>
-                                  <div className="absolute bottom-4 left-4">
-                                      <p className="text-white font-bold text-xs">Orijinal Cephe</p>
-                                  </div>
-                              </div>
-                              <div 
-                                className="relative h-48 md:h-56 rounded-[2rem] overflow-hidden border border-slate-700 shadow-2xl group cursor-zoom-in"
-                                onClick={() => setSelectedImage("https://assets.reflectandshoot.com/city_guide/tas_bina_1.jpg")}
-                              >
-                                  <img 
-                                    src="https://assets.reflectandshoot.com/city_guide/tas_bina_1.jpg" 
-                                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
-                                    alt="Taş Bina Detay"
-                                  />
-                                  <div className="absolute inset-0 bg-amber-500/10 group-hover:bg-transparent transition-colors"></div>
-                              </div>
-                          </div>
-                          <div className="space-y-4">
-                              <div className="relative h-48 md:h-56 rounded-[2rem] overflow-hidden border border-slate-700 shadow-2xl group bg-slate-900">
-                                  <img 
-                                    src="https://assets.reflectandshoot.com/city_guide/tas_bina_1.jpg" 
-                                    className="w-full h-full object-cover opacity-30 grayscale cursor-zoom-in" 
-                                    alt="Taş Bina Arka Plan"
-                                    onClick={() => setSelectedImage("https://assets.reflectandshoot.com/city_guide/tas_bina_1.jpg")}
-                                  />
-                                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center pointer-events-none">
-                                      <span className="text-[10px] text-amber-500 font-black uppercase tracking-[0.4em] mb-2">Kuruluş</span>
-                                      <span className="text-2xl font-black text-white">1917</span>
-                                  </div>
-                              </div>
-                              <div 
-                                className="relative h-64 md:h-72 rounded-[2rem] overflow-hidden border border-slate-700 shadow-2xl group cursor-zoom-in"
-                                onClick={() => setSelectedImage("https://assets.reflectandshoot.com/city_guide/tas_bina_2.jpg")}
-                              >
-                                  <img 
-                                    src="https://assets.reflectandshoot.com/city_guide/tas_bina_2.jpg" 
-                                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
-                                    alt="Taş Bina Gece"
-                                  />
-                                  <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-slate-950 to-transparent">
-                                      <p className="text-amber-500 font-black text-[10px] uppercase tracking-widest mb-1">Kültür Havzası</p>
-                                      <p className="text-white font-bold text-sm leading-tight">Ödül Heyecanı Burada Yaşanacak</p>
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </section>
-
           {/* 5. Locations (Interactive Modal) */}
           <section id="locations" className="scroll-mt-32">
               <div className="mb-16 text-center">
@@ -378,7 +183,7 @@ export const CityGuide: React.FC = () => {
                       <Map className="text-rose-500" /> Gezi Rotaları
                   </h2>
                   <p className="text-slate-400 mt-4 text-lg font-light max-w-2xl mx-auto">
-                      Ödül töreni öncesi veya sonrası keşfedebileceğiniz en popüler noktalar. Detaylar için kartlara tıklayın.
+                      Etkinlik öncesi veya sonrası keşfedebileceğiniz en popüler noktalar. Detaylar için kartlara tıklayın.
                   </p>
               </div>
 

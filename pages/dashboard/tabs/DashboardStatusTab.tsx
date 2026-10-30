@@ -1,10 +1,10 @@
 import React from 'react';
 import {
-  Users, CheckCircle2, Clock, Lock, Info, Printer, Sparkles, ArrowRight, Trophy,
+  Users, CheckCircle2, Clock, Lock, Info, Printer, BookOpen, ArrowRight, Trophy,
   Bell, FileCheck,
 } from 'lucide-react';
 import { Theme } from '../../../types';
-import { verseDetails } from '../../../data/verses';
+import { verseDetails, versesList } from '../../../data/verses';
 import { AcademicJuryScorePanel } from '../../../components/AcademicJuryScorePanel';
 import { getJuryFeedback } from '../../../data/juryFeedback';
 import { downloadCertificate } from '../../../lib/certificates';
@@ -115,7 +115,24 @@ export function DashboardStatusTab() {
 
                                     {/* Display Area */}
                                     <div className="mt-6">
-                                        {currentApplication.team.theme === Theme.AYET && currentApplication.team.selectedVerse && verseDetails[currentApplication.team.selectedVerse] ? (
+                                        {currentApplication.team.theme === Theme.ASR_BELED ? (
+                                            <div className="space-y-6">
+                                                {versesList.map((key) => verseDetails[key] && (
+                                                    <div key={key} className="p-6 bg-slate-950/50 border border-slate-800 rounded-2xl space-y-4 shadow-inner relative">
+                                                        <div className="absolute -top-3 left-4 px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-[10px] font-black text-amber-500 tracking-wider">
+                                                            {key}
+                                                        </div>
+                                                        <p className="text-right text-2xl font-serif text-amber-400 leading-loose pt-2" dir="rtl">
+                                                            {renderVerseText(verseDetails[key].arabic, true)}
+                                                        </p>
+                                                        <div className="w-full h-px bg-slate-800"></div>
+                                                        <p className="text-sm text-slate-300 italic leading-relaxed">
+                                                            "{renderVerseText(verseDetails[key].turkish, false)}"
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : currentApplication.team.theme === Theme.AYET && currentApplication.team.selectedVerse && verseDetails[currentApplication.team.selectedVerse] ? (
                                             <div className="p-6 bg-slate-950/50 border border-slate-800 rounded-2xl space-y-4 shadow-inner relative group/verse">
                                                 <div className="absolute -top-3 left-4 px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-[10px] font-black text-amber-500 tracking-wider">
                                                     {currentApplication.team.selectedVerse}
@@ -131,7 +148,7 @@ export function DashboardStatusTab() {
                                         ) : (currentApplication.team.theme === Theme.HADITH || currentApplication.team.theme === Theme.SAHABE) ? (
                                             <div className="p-8 bg-slate-950/50 border border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center gap-4">
                                                 <div className={`w-16 h-16 ${currentApplication.team.theme === Theme.HADITH ? 'bg-amber-500/10 text-amber-500' : 'bg-teal-500/10 text-teal-500'} rounded-full flex items-center justify-center`}>
-                                                    {currentApplication.team.theme === Theme.HADITH ? <Sparkles size={32} /> : <Users size={32} />}
+                                                    {currentApplication.team.theme === Theme.HADITH ? <BookOpen size={32} /> : <Users size={32} />}
                                                 </div>
                                                 <div>
                                                     <h4 className="text-white font-bold mb-2">{currentApplication.team.selectedTopic || (currentApplication.team.theme === Theme.HADITH ? 'Hadis-i Şerif' : 'Sahabe Hikayesi')}</h4>

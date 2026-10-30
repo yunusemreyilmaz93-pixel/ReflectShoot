@@ -1,8 +1,8 @@
 export const TEAM_NAME_MIN = 3;
 export const TEAM_NAME_MAX = 40;
-export const MAX_STUDENTS_PER_TEAM = 5;
-/** Official competition rule: teams must have at least 3 students. */
-export const MIN_STUDENTS_PER_TEAM = 3;
+export const MAX_STUDENTS_PER_TEAM = 4;
+/** Official competition rule (2026-27): teams have 2 to 4 students. */
+export const MIN_STUDENTS_PER_TEAM = 2;
 export const MAX_TEAMS_PER_TEACHER = 5;
 
 export function isValidTeamName(name: unknown): name is string {

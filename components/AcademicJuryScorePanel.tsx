@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Category } from '../types';
 import { getAcademicResult } from '../data/academicJuryScores';
-import { Award, ChevronDown, ChevronUp, Star, TrendingUp, Sparkles, BookOpen } from 'lucide-react';
+import { Award, ChevronDown, ChevronUp, Star, TrendingUp,  BookOpen } from 'lucide-react';
 
 interface AcademicJuryScorePanelProps {
   teamName: string;
@@ -39,7 +39,7 @@ export const AcademicJuryScorePanel: React.FC<AcademicJuryScorePanelProps> = ({
             <div>
               <span className="text-[10px] uppercase font-black tracking-widest text-slate-500">Kategori</span>
               <h4 className="text-sm font-bold text-white leading-tight">
-                {result.category === Category.LIVE_ACTION ? '🎬 Canlı Çekim' : '✨ Yapay Zekâ Animasyon'}
+                {result.category === Category.LIVE_ACTION ? '🎬 Canlı Çekim' : 'Yapay Zekâ Animasyon'}
               </h4>
             </div>
             <div className="sm:text-right">
@@ -172,7 +172,7 @@ export const AcademicJuryScorePanel: React.FC<AcademicJuryScorePanelProps> = ({
                       <div className="space-y-1.5">
                         <div className="flex justify-between font-bold text-slate-300">
                           <span className="flex items-center gap-1.5">
-                            <Sparkles size={12} className="text-amber-400" /> Tema & Kaynaklara Uygunluk
+                            <BookOpen size={12} className="text-amber-400" /> Tema & Kaynaklara Uygunluk
                           </span>
                           <span className="text-amber-400 font-mono font-black">{jury.criteria.themeFit} <span className="text-slate-550 font-normal">/ 20</span></span>
                         </div>

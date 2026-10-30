@@ -4,10 +4,10 @@ import {
   ShieldCheck,
   CheckSquare,
   Trophy,
-  ArrowRight,
-  Sparkles,
+  ArrowRight, 
   PartyPopper,
   Clapperboard,
+  Info,
 } from 'lucide-react';
 import type { Application, Student } from '../../types';
 import { useModalA11y } from './useModalA11y';
@@ -274,7 +274,7 @@ export function DashboardModals({
           </button>
           <div className="relative z-10 flex flex-col items-center">
             <div className="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center mb-6">
-              <Sparkles size={40} className="text-blue-400" />
+              <Info size={40} className="text-blue-400" />
             </div>
             <h2
               id="modal-thanks-title"

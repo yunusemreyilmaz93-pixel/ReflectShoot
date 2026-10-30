@@ -17,7 +17,6 @@ import {
   Scissors,
   Trophy,
   Camera,
-  Sparkles,
   Lock,
   Clock,
   Hourglass
@@ -42,7 +41,6 @@ const iconMap: Record<string, React.ElementType> = {
   MonitorPlay,
   Scissors,
   Camera,
-  Sparkles,
   Lock,
   Clock,
   Hourglass
@@ -56,48 +54,56 @@ interface TimelineEvent {
   color?: string; // 'rose' | 'teal' | 'amber'
 }
 
-// Fallback when CMS is empty (admin henüz kayıt eklememişse)
+// Fallback when the CMS timeline is empty: 2026-27 steps, dates to be announced.
 const STATIC_EVENTS: ResolvedTimelineEvent[] = [
   {
-    date: '20 Ocak 2026',
-    title: 'Başvuru ve Eser Gönderimi Başlıyor',
-    description: 'Yarışma süreci resmen başlıyor. Sisteme kayıt ol, takımını kur ve filmini çekmeye başla.',
+    date: 'Açıklanacak',
+    title: 'Şartname ve Takvim İlanı',
+    description: 'Yeni sezona dair katılım koşulları, teknik yönergeler ve resmi takvim web sitemizde yayınlanacaktır.',
     icon: 'Clapperboard',
-    color: 'teal',
+    color: 'amber',
     order: 1,
   },
   {
-    date: '4 Mayıs 2026',
-    title: 'Başvuru ve Eser Teslim (Son Gün)',
-    description: 'Sisteme video yüklemek veya link göndermek için son gün. Bu tarihten sonra yapılan başvurular kabul edilmeyecektir.',
+    date: 'Açıklanacak',
+    title: 'Başvuruların Başlaması',
+    description: 'Danışman öğretmen üyeliklerinin açılması ve takımların kurulması.',
     icon: 'Upload',
-    color: 'rose',
+    color: 'teal',
     order: 2,
   },
   {
-    date: '7 Mayıs 2026',
-    title: 'Ön Sonuçlar',
-    description: 'Jüri ön değerlendirmesi sonucu finale kalan takımların web sitesi üzerinden duyurulması.',
-    icon: 'Star',
+    date: 'Açıklanacak',
+    title: 'Yapay Zekâ Eğitimleri',
+    description: 'Yapay zekâ animasyon üretimine dair eğitim ve rehber içerikleri.',
+    icon: 'BookOpen',
     color: 'amber',
     order: 3,
   },
   {
-    date: '8 Mayıs 2026',
-    title: 'Ödül Alan Takımların Açıklanması',
-    description: 'Değerlendirme sonucunda ödül almaya hak kazanan takımlar duyurulacaktır.',
-    icon: 'CheckCircle2',
-    color: 'teal',
+    date: 'Açıklanacak',
+    title: 'Eser Gönderimi ve Son Teslim',
+    description: 'Asr ve Beled surelerinden ilham alan yapay zekâ animasyon filmlerinin sisteme yüklenmesi.',
+    icon: 'Video',
+    color: 'rose',
     order: 4,
   },
   {
-    date: '22 Mayıs 2026',
-    title: 'Büyük Ödül Töreni',
-    description: 'Konya\'da düzenlenecek görkemli törenle kazananların açıklanması ve ödüllerin takdimi.',
+    date: 'Açıklanacak',
+    title: 'Jüri Değerlendirmesi',
+    description: 'Akademik ve sektörel jürilerin eserleri teknik, senaryo ve anlatım yönünden değerlendirmesi.',
+    icon: 'Star',
+    color: 'teal',
+    order: 5,
+  },
+  {
+    date: 'Açıklanacak',
+    title: 'Sonuçların İlanı',
+    description: 'Değerlendirme sonuçlarının web sitemizde duyurulması.',
     icon: 'Trophy',
     color: 'rose',
-    order: 5,
-  }
+    order: 6,
+  },
 ];
 
 const TimelineItem: React.FC<{ event: TimelineEvent; index: number }> = ({ event, index }) => {
@@ -205,66 +211,11 @@ const MobileTimelineItem: React.FC<{ event: TimelineEvent; index: number }> = ({
   );
 };
 
-const FUTURE_EVENTS_DRAFT: ResolvedTimelineEvent[] = [
-  {
-    date: 'Planlama Aşamasında',
-    title: 'Şartname ve Kategori İlanı',
-    description: 'Yeni sezona dair detaylı katılım koşulları, teknik yönergeler ve kategori kuralları web sitemizde ilan edilecektir.',
-    icon: 'Clapperboard',
-    color: 'amber',
-    order: 1,
-  },
-  {
-    date: 'Planlama Aşamasında',
-    title: 'Kayıtların & Başvuruların Başlaması',
-    description: 'Öğrenci ve danışman öğretmen üyeliklerinin açılması, takımların kurulması ve heyecanın resmen başlaması.',
-    icon: 'Upload',
-    color: 'teal',
-    order: 2,
-  },
-  {
-    date: 'Planlama Aşamasında',
-    title: 'Sinema Atölyeleri & Yapay Zeka Eğitimleri',
-    description: 'Kış dönemi kurgu teknikleri ve yeni nesil generative AI animasyon araçlarına dair özel akademisyen eğitimleri.',
-    icon: 'BookOpen',
-    color: 'amber',
-    order: 3,
-  },
-  {
-    date: 'Planlama Aşamasında',
-    title: 'Eser Gönderimleri ve Son Teslim',
-    description: 'Sisteme video yüklemek, canlı çekim ve yapay zeka tasarımlarını kurula iletmek için son gün.',
-    icon: 'Video',
-    color: 'rose',
-    order: 4,
-  },
-  {
-    date: 'Planlama Aşamasında',
-    title: 'Seçici Kurul Değerlendirmesi',
-    description: 'Akademik ve sektörel jürilerimizin eserleri teknik, senaryo ve sinematografi yönünden değerlendirme aşaması.',
-    icon: 'Star',
-    color: 'teal',
-    order: 5,
-  },
-  {
-    date: 'Planlama Aşamasında',
-    title: 'Büyük Gala ve Kazananların İlanı',
-    description: 'Konya Tarihi Taş Bina veya sinema salonunda gerçekleşecek görkemli kırmızı halı geçişi ve kupa törenleri.',
-    icon: 'Trophy',
-    color: 'rose',
-    order: 6,
-  }
-];
-
 export const Timeline: React.FC = () => {
   const { cmsTimeline, systemSettings } = useAppContext();
-  // Default = CMS-driven live calendar (admin panel edits land here)
-  const [selectedSeason, setSelectedSeason] = useState<'live' | 'draft'>('live');
-
-  const liveEvents = resolvePublicTimelineEvents(cmsTimeline, STATIC_EVENTS);
-  const events = selectedSeason === 'live' ? liveEvents : FUTURE_EVENTS_DRAFT;
+  // CMS-driven calendar (admin panel edits land here); static placeholders until it is filled.
+  const events = resolvePublicTimelineEvents(cmsTimeline, STATIC_EVENTS);
   const seasonLabel = systemSettings?.season?.label || 'Güncel Takvim';
-  const fromCms = (cmsTimeline?.length || 0) > 0;
 
   return (
     <section className="bg-slate-950 py-24 overflow-hidden relative border-t border-white/5">
@@ -280,98 +231,22 @@ export const Timeline: React.FC = () => {
              Yolculuğun <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500">Aşamaları</span>
           </h2>
           <p className="text-lg text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
-            Fikir aşamasından büyük ödül gecesine kadar takip etmeniz gereken tüm sinematik duraklar.
+            Fikir aşamasından sonuçların ilanına kadar takip etmeniz gereken tüm duraklar.
           </p>
         </div>
 
-        {/* Season Switcher & Announcement Frame */}
-        <div className="max-w-5xl mx-auto mb-16 space-y-8">
-          
-          {/* Tabs */}
-          <div className="flex flex-col md:flex-row justify-between items-center bg-slate-900/60 p-5 rounded-[2rem] border border-slate-800/80 gap-6">
-            <div className="flex items-center gap-3">
-              <span className="p-2.5 bg-amber-500/10 text-amber-500 rounded-xl border border-amber-500/20">
-                <Calendar size={18} />
-              </span>
-              <div className="text-left">
-                <h3 className="text-white font-bold text-sm">Yarışma Takvimi</h3>
-                <p className="text-xs text-slate-400 font-medium">Sezonlar arasında geçiş yaparak takvimleri inceleyin</p>
-              </div>
+        <div className="max-w-5xl mx-auto mb-16">
+          <div className="bg-gradient-to-r from-amber-950/20 via-slate-900/80 to-amber-950/20 backdrop-blur-xl border border-amber-500/10 rounded-[2.5rem] p-8 md:p-10 text-center">
+            <div className="inline-flex p-3.5 bg-amber-500/10 rounded-xl text-amber-500 mb-4 border border-amber-500/20">
+              <Calendar size={24} />
             </div>
-
-            <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-850 w-full md:w-auto">
-              <button type="button"
-                onClick={() => setSelectedSeason('live')}
-                className={`flex-1 md:flex-none px-6 py-3 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center gap-2 ${
-                  selectedSeason === 'live'
-                    ? 'bg-amber-500 text-slate-950 font-bold shadow-lg shadow-amber-500/10'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
-                }`}
-              >
-                <CheckCircle2 size={12} /> {seasonLabel}
-              </button>
-              <button type="button"
-                onClick={() => setSelectedSeason('draft')}
-                className={`flex-1 md:flex-none px-6 py-3 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap cursor-pointer flex items-center justify-center gap-2 ${
-                  selectedSeason === 'draft'
-                    ? 'bg-rose-500 text-white font-bold shadow-lg shadow-rose-500/10'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
-                }`}
-              >
-                <Sparkles size={12} className="animate-pulse" /> Sonraki Sezon (Taslak)
-              </button>
-            </div>
+            <h3 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">{seasonLabel}</h3>
+            <p className="text-slate-300 text-sm md:text-base font-light leading-relaxed max-w-2xl mx-auto">
+              Takvim netleştikçe bu sayfada güncellenecektir.
+            </p>
           </div>
-
-          {/* Announcement card placed in front of/above the timeline */}
-          {selectedSeason === 'draft' ? (
-            <div className="bg-gradient-to-r from-rose-950/40 via-slate-900/80 to-rose-950/40 backdrop-blur-xl border border-rose-500/20 rounded-[2.5rem] p-8 md:p-10 text-center shadow-2xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-[40px] pointer-events-none"></div>
-              
-              <div className="inline-flex p-3.5 bg-rose-500/10 rounded-xl text-rose-500 mb-4 border border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.15)] animate-pulse">
-                <Hourglass size={24} className="animate-spin" style={{ animationDuration: '6s' }} />
-              </div>
-              
-              <h3 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">
-                Sonraki Sezon Yolculuk Aşamaları Hazırlanıyor
-              </h3>
-              
-              <p className="text-slate-300 text-sm md:text-base font-light leading-relaxed max-w-2xl mx-auto">
-                Reflect&Shoot Kısa Film Yarışması’nın bir sonraki sezonu hazırlıkları devam etmektedir. Resmi başvuru takvimi ve kesin süreç adımları yakında açıklanacaktır. Aşağıda tahmini süreç taslağını inceleyebilirsiniz.
-              </p>
-
-              <div className="mt-6 flex flex-wrap justify-center gap-3">
-                <span className="px-3.5 py-1.5 rounded-full bg-slate-950 border border-slate-800 text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
-                  ŞARTNAME GÜNCELLEMESİ
-                </span>
-                <span className="px-3.5 py-1.5 rounded-full bg-slate-950 border border-slate-800 text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
-                  YAPAY ZEKA ENTEGRASYONU
-                </span>
-                <span className="px-3.5 py-1.5 rounded-full bg-slate-950 border border-slate-800 text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
-                  SİNEMA ATÖLYELERİ
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-gradient-to-r from-amber-950/20 via-slate-900/80 to-amber-950/20 backdrop-blur-xl border border-amber-500/10 rounded-[2.5rem] p-8 md:p-10 text-center shadow-xl relative overflow-hidden">
-              <div className="inline-flex p-3.5 bg-amber-500/10 rounded-xl text-amber-500 mb-4 border border-amber-500/20">
-                <CheckCircle2 size={24} />
-              </div>
-              
-              <h3 className="text-2xl md:text-3xl font-black text-white mb-3 tracking-tight">
-                {seasonLabel}
-              </h3>
-              
-              <p className="text-slate-300 text-sm md:text-base font-light leading-relaxed max-w-2xl mx-auto">
-                {fromCms
-                  ? 'Bu takvim Yönetici paneli → İçerik Yönetimi → Zaman Çizelgesi üzerinden güncellenir. Aşağıdaki adımlar canlı CMS verisidir.'
-                  : 'Canlı CMS kaydı henüz yok; varsayılan takvim gösteriliyor. Admin panelinden adım eklediğinizde burası otomatik güncellenir.'}
-              </p>
-            </div>
-          )}
-
         </div>
-        
+
         {/* Step List Visual Tree */}
         <div className="hidden md:block relative wrap overflow-hidden p-10 h-full">
           <div className="absolute left-1/2 transform -translate-x-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-slate-800 to-transparent"></div>

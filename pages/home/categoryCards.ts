@@ -15,7 +15,7 @@ export interface CategoryData {
 }
 
 /** Home category cards — content/presentation contract (do not change copy lightly). */
-export const HOME_CATEGORIES: CategoryData[] = [
+const ALL_CATEGORIES: CategoryData[] = [
   {
     id: 'live-action',
     title: 'Canlı Çekim',
@@ -68,3 +68,6 @@ export const HOME_CATEGORIES: CategoryData[] = [
     },
   },
 ];
+
+/** 2026-27 season: AI animation only. The live-action card stays above for the archived season. */
+export const HOME_CATEGORIES: CategoryData[] = ALL_CATEGORIES.filter((c) => c.id === 'ai-animation');

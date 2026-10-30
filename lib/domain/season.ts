@@ -75,6 +75,13 @@ function shiftIsoDate(value: string | undefined, years: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+/** Blank every competition date field (dates announced later). */
+export function clearSystemDates(dates: SystemSettings['dates']): SystemSettings['dates'] {
+  const next = { ...dates } as Record<string, unknown>;
+  for (const key of Object.keys(next)) next[key] = '';
+  return next as SystemSettings['dates'];
+}
+
 /** Shift all competition date fields by N years (for new-season template). */
 export function shiftSystemDates(
   dates: SystemSettings['dates'],
@@ -96,6 +103,8 @@ export type NewSeasonInput = {
   label: string;
   /** Shift all dates by this many years (default 1). */
   shiftYears?: number;
+  /** Blank every competition date (to be announced later) instead of shifting them. */
+  clearDates?: boolean;
   /** Open teacher registrations / applications for the new season. */
   openApplications?: boolean;
   /** Turn video upload off until admin re-enables. */
@@ -119,7 +128,7 @@ export function buildNewSeasonSettings(
   return {
     ...current,
     season: { id, label },
-    dates: shiftSystemDates(current.dates, years),
+    dates: input.clearDates ? clearSystemDates(current.dates) : shiftSystemDates(current.dates, years),
     features: {
       ...current.features,
       blockNewApplications: !open,

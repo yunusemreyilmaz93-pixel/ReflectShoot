@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   BookOpen, Film, Video, Link as LinkIcon, FileText, Search, Sprout, Star, PlayCircle, ChevronRight, Bookmark, Library,
   CheckCircle2, Lock, Camera, MonitorPlay, Scissors, Download, Calendar, Mic2, Palette, Cpu, Layers, Zap, Clock,
-  Clapperboard, Aperture, Bot, Rocket, Sparkles, MoveRight, ArrowRight, ExternalLink
+  Clapperboard, Aperture, Bot, Rocket,  MoveRight, ArrowRight, ExternalLink
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
@@ -101,7 +101,7 @@ export const Academy: React.FC = () => {
   // -- Finalist Masterclass Data --
   const masterclassSchedule = [
       {
-          date: '10 Mayıs',
+          date: 'Açıklanacak',
           type: 'ORTAK',
           title: 'Sinematik Anlatı & Kurgu Mantığı',
           desc: 'Kurgu masasında hikâyenin duygusal yeniden inşası: Ritim, zamanlama ve izleyiciyle kurulan o görünmez bağın matematiği.',
@@ -110,25 +110,16 @@ export const Academy: React.FC = () => {
           shadow: 'shadow-blue-500/20'
       },
       {
-          date: '11 Mayıs',
-          type: 'CANLI ÇEKİM',
-          title: 'Color Grading & Ses Miksajı',
-          desc: 'DaVinci Resolve ile sinematik atmosferin inşası ve festival standartlarında "Final Look" için ses-görüntü tasarımı.',
-          icon: Palette, // Premium Icon
-          color: 'from-emerald-500 to-teal-400',
-          shadow: 'shadow-emerald-500/20'
-      },
-      {
-          date: '12 Mayıs',
+          date: 'Açıklanacak',
           type: 'YAPAY ZEKA',
           title: 'AI Tutarlılık & Motion Brush',
           desc: 'Hikâye evreninde görsel bütünlük: Karakter tutarlılığını koruma ve yapay zeka ile sahneler arası akışkanlık sanatı.',
-          icon: Sparkles, // Premium Icon
+          icon: Bot, // Premium Icon
           color: 'from-purple-600 to-fuchsia-500',
           shadow: 'shadow-purple-500/20'
       },
       {
-          date: '12 Mayıs',
+          date: 'Açıklanacak',
           type: 'ORTAK',
           title: 'Final Export & Dağıtım',
           desc: 'Filminizin ekran yolculuğunu profesyonelce planlamak: DCP hazırlığı, teknik teslimat standartları ve festival stratejileri.',

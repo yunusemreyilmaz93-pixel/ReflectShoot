@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Clapperboard, Users, AlertCircle, X, Sparkles, Ban } from 'lucide-react';
-import { Category, Theme, type Application } from '../../types';
+import { Clapperboard, Users, AlertCircle, Plus, Trash2, Ban, X } from 'lucide-react';
+import { type Category, type Theme, type Application } from '../../types';
 import { versesList, verseDetails } from '../../data/verses';
+import { ACTIVE_CATEGORY, ACTIVE_THEME } from '../../lib/domain/competition';
+import { MAX_STUDENTS_PER_TEAM, MIN_STUDENTS_PER_TEAM } from '../../lib/domain/teamValidation';
 import { validateCreateTeamForm } from '../../lib/domain/teacherDashboard';
 import { TeamSwitcher } from './DashboardWidgets';
 import { renderVerseText } from './dashboardUiUtils';
@@ -17,15 +19,12 @@ export type TeamFormState = {
 
 const emptyForm = (): TeamFormState => ({
   teamName: '',
-  category: Category.LIVE_ACTION,
-  theme: Theme.AYET,
-  selectedVerse: versesList[0],
+  category: ACTIVE_CATEGORY,
+  theme: ACTIVE_THEME,
+  // One film combining both surahs: no single verse is chosen.
+  selectedVerse: '',
   selectedTopic: '',
-  students: [
-    { firstName: '', lastName: '', grade: '' },
-    { firstName: '', lastName: '', grade: '' },
-    { firstName: '', lastName: '', grade: '' },
-  ],
+  students: Array.from({ length: MIN_STUDENTS_PER_TEAM }, () => ({ firstName: '', lastName: '', grade: '' })),
 });
 
 type Props = {
@@ -150,135 +149,39 @@ export function DashboardCreateTeamForm({
               )}
             </div>
             <div>
-              <label
-                htmlFor="category"
-                className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider"
-              >
-                Kategori
-              </label>
-              <select
-                name="category"
-                id="category"
-                value={teamForm.category}
-                onChange={(e) =>
-                  setTeamForm({ ...teamForm, category: e.target.value as Category })
-                }
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold transition-colors"
-              >
-                {Object.values(Category).map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+              <p className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Kategori</p>
+              <div className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-white text-lg font-bold">
+                {ACTIVE_CATEGORY}
+              </div>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            <div>
-              <label
-                htmlFor="theme"
-                className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider"
-              >
-                Proje Teması
-              </label>
-              <select
-                name="theme"
-                id="theme"
-                value={teamForm.theme}
-                onChange={(e) => setTeamForm({ ...teamForm, theme: e.target.value as Theme })}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold transition-colors"
-              >
-                {Object.values(Theme).map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+          <div>
+            <p className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">Proje Teması</p>
+            <div className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-white text-lg font-bold">
+              {ACTIVE_THEME}
             </div>
-            {teamForm.theme === Theme.AYET && (
-              <div>
-                <label
-                  htmlFor="selectedVerse"
-                  className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider"
-                >
-                  Seçilen Ayet
-                </label>
-                <select
-                  name="selectedVerse"
-                  id="selectedVerse"
-                  value={teamForm.selectedVerse}
-                  onChange={(e) => setTeamForm({ ...teamForm, selectedVerse: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold transition-colors"
-                >
-                  {versesList.map((v) => (
-                    <option key={v} value={v}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            {(teamForm.theme === Theme.HADITH || teamForm.theme === Theme.SAHABE) && (
-              <div>
-                <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">
-                  {teamForm.theme === Theme.HADITH ? 'Seçilen Hadis' : 'Seçilen Sahabe'}
-                </label>
-                <input
-                  type="text"
-                  placeholder={
-                    teamForm.theme === Theme.HADITH
-                      ? 'Örn: Ameller niyetlere göredir'
-                      : "Örn: Hz. Mus'ab b. Umeyr"
-                  }
-                  value={teamForm.selectedTopic}
-                  onChange={(e) => setTeamForm({ ...teamForm, selectedTopic: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-white focus:border-rose-500 outline-none text-lg font-bold transition-colors"
-                />
-              </div>
-            )}
+            <p className="text-xs text-slate-500 mt-2">
+              Filminizde Asr ve Beled surelerini birlikte işleyin; iki sureyi tek bir yapay zekâ filminde buluşturun.
+            </p>
           </div>
 
-          {teamForm.theme === Theme.AYET &&
-            teamForm.selectedVerse &&
-            verseDetails[teamForm.selectedVerse] && (
-              <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 animate-fadeIn">
-                <p
-                  className="text-right text-xl font-serif text-amber-400 leading-loose mb-4"
-                  dir="rtl"
-                >
-                  {renderVerseText(verseDetails[teamForm.selectedVerse].arabic, true)}
-                </p>
-                <div className="w-full h-px bg-slate-800 mb-4" />
-                <p className="text-sm text-slate-300 italic">
-                  &quot;{renderVerseText(verseDetails[teamForm.selectedVerse].turkish, false)}&quot;
-                </p>
-              </div>
+          <div className="grid gap-4">
+            {versesList.map((key) =>
+              verseDetails[key] ? (
+                <div key={key} className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6">
+                  <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">{key}</p>
+                  <p className="text-right text-xl font-serif text-amber-400 leading-loose mb-4" dir="rtl">
+                    {renderVerseText(verseDetails[key].arabic, true)}
+                  </p>
+                  <div className="w-full h-px bg-slate-800 mb-4" />
+                  <p className="text-sm text-slate-300 italic">
+                    &quot;{renderVerseText(verseDetails[key].turkish, false)}&quot;
+                  </p>
+                </div>
+              ) : null
             )}
-
-          {teamForm.theme === Theme.HADITH && (
-            <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 animate-fadeIn flex flex-col items-center text-center gap-3">
-              <Sparkles className="text-amber-500" size={24} />
-              <p className="text-amber-400 font-serif text-lg" dir="rtl">
-                إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ
-              </p>
-              <p className="text-sm text-slate-300 italic">
-                &quot;Ameller niyetlere göredir.&quot; (Buhârî, Bed’ü’l-vahy, 1)
-              </p>
-            </div>
-          )}
-
-          {teamForm.theme === Theme.SAHABE && (
-            <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 animate-fadeIn flex flex-col items-center text-center gap-3">
-              <Users className="text-teal-500" size={24} />
-              <h5 className="text-white font-bold">Sahabe-i Kiram&apos;ın İzinde</h5>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                İslam&apos;ın ilk sancaktarları, fedakarlık ve sadakat timsalleri. Hz. Mus&apos;ab
-                b. Umeyr&apos;in daveti, Hz. Bilal&apos;in sabrı ve Hz. Hatice&apos;nin desteği gibi
-                nice hikmetli hayatlar...
-              </p>
-            </div>
-          )}
+          </div>
 
           <div className="flex items-center gap-3 p-4 bg-amber-900/10 border border-amber-500/20 rounded-xl">
             <AlertCircle className="text-amber-500 flex-shrink-0" size={20} />
@@ -293,11 +196,11 @@ export function DashboardCreateTeamForm({
 
           <div className="bg-slate-950/50 p-6 rounded-2xl border border-slate-800">
             <h4 className="text-white font-bold mb-4 flex items-center gap-2">
-              <Users size={18} className="text-teal-500" /> İlk 3 Öğrenci (Zorunlu)
+              <Users size={18} className="text-teal-500" /> Öğrenciler (en az {MIN_STUDENTS_PER_TEAM}, en fazla {MAX_STUDENTS_PER_TEAM})
             </h4>
             <div className="grid gap-4">
               {teamForm.students.map((s, i) => (
-                <div key={i} className="grid grid-cols-3 gap-4">
+                <div key={i} className="grid grid-cols-3 gap-4 relative">
                   <input
                     placeholder="Ad"
                     value={s.firstName}
@@ -330,6 +233,31 @@ export function DashboardCreateTeamForm({
                   />
                 </div>
               ))}
+            </div>
+            <div className="flex flex-wrap gap-3 mt-4">
+              {teamForm.students.length < MAX_STUDENTS_PER_TEAM && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setTeamForm({
+                      ...teamForm,
+                      students: [...teamForm.students, { firstName: '', lastName: '', grade: '' }],
+                    })
+                  }
+                  className="inline-flex items-center gap-2 text-xs font-bold text-teal-400 hover:text-teal-300 border border-teal-500/30 rounded-lg px-3 py-2"
+                >
+                  <Plus size={14} /> Öğrenci ekle
+                </button>
+              )}
+              {teamForm.students.length > MIN_STUDENTS_PER_TEAM && (
+                <button
+                  type="button"
+                  onClick={() => setTeamForm({ ...teamForm, students: teamForm.students.slice(0, -1) })}
+                  className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-rose-400 border border-slate-700 rounded-lg px-3 py-2"
+                >
+                  <Trash2 size={14} /> Son öğrenciyi çıkar
+                </button>
+              )}
             </div>
           </div>
           <button

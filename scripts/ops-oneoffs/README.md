@@ -37,6 +37,10 @@ node scripts/ops-oneoffs/post-audit-maintenance.mjs --execute
 
 It needs the normal server-side Firebase Admin environment variables (`FIREBASE_SERVICE_ACCOUNT_JSON` or the three `FIREBASE_*` variables).
 
+## 2025-26 season clean-up
+
+`season-2026-cleanup.mjs` is the KVKK clean-up for the closed 2025-26 season (stored as season `2026`), plus helpers to list and delete CMS items (guides, FAQ, prizes, timeline, gallery). Every purge is a separate flag and everything is a dry run until `--execute`. Take the Admin backup first; deletions are irreversible. See the header of the script for all flags.
+
 ## Historical removals from Admin UI
 
 | Id | Notes |

@@ -96,6 +96,7 @@ export interface AppContextType {
     id: string;
     label: string;
     shiftYears?: number;
+    clearDates?: boolean;
     openApplications?: boolean;
     resetVideoUpload?: boolean;
     archivePrevious?: boolean;

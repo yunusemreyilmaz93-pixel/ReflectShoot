@@ -22,8 +22,7 @@ import {
   Clock,
   FileCheck,
   Info,
-  X,
-  Sparkles,
+  X, 
   Smartphone,
   Volume2,
   ShieldAlert,
@@ -67,7 +66,7 @@ export const About: React.FC = () => {
         "Hikâye başı–ortası–sonu olan anlamlı bir bütünlük sunuyor mu?",
         "İzleyiciyi düşünmeye sevk eden bir anlatı derinliği var mı?",
         "Olaylar veya sahneler arasında mantıklı bir akış bulunuyor mu?",
-        "Anlatım, seçilen ayet/hadis/sahabe hikâyesini yüzeysel değil, yorumlayarak ele alıyor mu?"
+        "Anlatım, Asr ve Beled surelerini yüzeysel değil, yorumlayarak ele alıyor mu?"
       ],
       highScore: "Derinlikli, düşündüren, mesajı aceleye getirmeyen anlatılar.",
       lowScore: "Sadece mesajı söyleyen, hikâye kurmadan ilerleyen veya kopuk anlatılar."
@@ -79,7 +78,7 @@ export const About: React.FC = () => {
       icon: BookOpen,
       desc: "Bu kriter, eserin seçilen dini/manevi kaynağa sadakatini ve doğru yorumunu ölçer.",
       questions: [
-        "Seçilen ayet, hadis veya sahabe hikâyesi doğru bağlamda kullanılmış mı?",
+        "Asr ve Beled sureleri doğru bağlamda kullanılmış mı?",
         "Kaynak, anlamı çarpıtılmadan ve saygılı bir üslupla ele alınmış mı?",
         "Film, kaynağın verdiği ana mesajla uyumlu bir sonuç üretiyor mu?",
         "Metin, slogana indirgenmeden anlamlandırılmış mı?"
@@ -266,7 +265,7 @@ export const About: React.FC = () => {
 
           <div className="bg-amber-900/20 border-l-4 border-amber-500 p-4 mb-12 text-amber-200/80 text-sm font-medium">
               <Info size={16} className="inline mr-2 -mt-0.5"/>
-              Aşağıdaki temalardan yalnızca biri seçilmelidir. Projeniz seçtiğiniz tema etrafında şekillenmelidir.
+              2026-2027 sezonunun teması Asr ve Beled surelerinin birlikte işlenmesidir: tek bir yapay zekâ filminde iki sureden ilham alın.
           </div>
 
           <div className="space-y-12">
@@ -281,8 +280,8 @@ export const About: React.FC = () => {
                            <BookOpen className="text-amber-500" size={32} />
                        </div>
                        <div>
-                           <h3 className="text-3xl font-black text-white">Kur'an'dan Ayetler</h3>
-                           <p className="text-slate-400 font-medium">Senaryo Temeli: Vahiy</p>
+                           <h3 className="text-3xl font-black text-white">Asr ve Beled Sureleri</h3>
+                           <p className="text-slate-400 font-medium">İki sureden ilham alan tek bir film</p>
                        </div>
                    </div>
                    
@@ -317,56 +316,6 @@ export const About: React.FC = () => {
                </div>
             </div>
 
-            {/* Hadith & Sahabe - Cinematic Cards */}
-            <div className="grid md:grid-cols-2 gap-8">
-                {/* Hadisler */}
-                <div className="bg-slate-800 p-8 md:p-10 rounded-2xl shadow-2xl border border-slate-700 hover:border-teal-500/50 transition-colors group relative flex flex-col">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="bg-teal-900/30 p-4 rounded-xl text-teal-400 border border-teal-500/30 group-hover:scale-110 transition-transform">
-                            <ScrollText size={32} />
-                        </div>
-                        <h3 className="text-2xl font-black text-white">Hadisler</h3>
-                    </div>
-                    <p className="text-slate-400 leading-relaxed mb-6 font-light">
-                        Peygamber Efendimiz'in (s.a.v) sözlerinden, hayatından ve tavsiyelerinden yola çıkarak günümüze ışık tutan hikayeler.
-                    </p>
-                    <div className="bg-slate-900/50 p-4 rounded border-l-2 border-teal-500 text-xs text-slate-400 italic mb-6 flex-1">
-                        "En güvenilir kaynaklardan seçilen rivayetler esastır."
-                    </div>
-                    <div className="pt-4 border-t border-slate-700">
-                        <button type="button" 
-                            onClick={() => setThemeModal({ title: "Hadislerden Örnek Fikirler", color: "teal", examples: themeExamples.hadith })}
-                            className="text-teal-500 text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:text-teal-400 transition-colors"
-                        >
-                            Bu temadan örnek fikirler <ArrowRight size={12}/>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Sahabeler */}
-                <div className="bg-slate-800 p-8 md:p-10 rounded-2xl shadow-2xl border border-slate-700 hover:border-rose-500/50 transition-colors group relative flex flex-col">
-                    <div className="flex items-center gap-4 mb-6">
-                         <div className="bg-rose-900/30 p-4 rounded-xl text-rose-400 border border-rose-500/30 group-hover:scale-110 transition-transform">
-                            <Users size={32} />
-                        </div>
-                        <h3 className="text-2xl font-black text-white">Sahabelerden Hikayeler</h3>
-                    </div>
-                    <p className="text-slate-400 leading-relaxed mb-6 font-light">
-                        Asr-ı Saadet'in yıldızları olan sahabelerin hayatlarından, fedakarlıklarından ve erdemli duruşlarından kesitler.
-                    </p>
-                    <div className="bg-slate-900/50 p-4 rounded border-l-2 border-rose-500 text-xs text-slate-400 italic mb-6 flex-1">
-                        "Tarihsel gerçekliğe sadık kalınarak dramatize edilmelidir."
-                    </div>
-                    <div className="pt-4 border-t border-slate-700">
-                        <button type="button" 
-                            onClick={() => setThemeModal({ title: "Sahabelerden Örnek Fikirler", color: "rose", examples: themeExamples.sahabe })}
-                            className="text-rose-500 text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:text-rose-400 transition-colors"
-                        >
-                            Bu temadan örnek fikirler <ArrowRight size={12}/>
-                        </button>
-                    </div>
-                </div>
-            </div>
           </div>
         </div>
       </section>
@@ -387,7 +336,7 @@ export const About: React.FC = () => {
                     <ul className="space-y-6 flex-1">
                         {[
                             { key: "Kapsam:", text: "Bu yarışma, Türkiye genelindeki tüm lise öğrencilerine açıktır." },
-                            { key: "Takım Yapısı:", text: "Takımlar en az 3, en fazla 5 öğrenciden oluşmalıdır. Bireysel başvuru kabul edilmez." },
+                            { key: "Takım Yapısı:", text: "Takımlar en az 2, en fazla 4 öğrenciden oluşmalıdır. Bireysel başvuru kabul edilmez." },
                             { key: "Danışman Öğretmen:", text: "Her takımın, başvuru sürecini ve çalışmaları takip eden bir Danışman Öğretmeni bulunması zorunludur. Danışman Öğretmen, sistem üzerinden takım adına işlem yapar." },
                             { key: "Katılım Hakkı:", text: "Her öğrenci yalnızca bir (1) projede görev alabilir. Birden fazla projede yer aldığı tespit edilen öğrencilerin başvuruları değerlendirme dışı bırakılır." },
                             { key: "Dil & Altyazı:", text: "Proje dili İngilizce olmalıdır. Videolarda Türkçe altyazı kullanılması zorunludur." },
@@ -615,7 +564,7 @@ export const About: React.FC = () => {
                             <div>
                                 <h4 className="font-bold text-slate-400 text-base">Katılım Belgesi</h4>
                                 <p className="text-xs text-slate-500 font-medium mt-1 leading-tight">
-                                    22 Mayıs 2026'dan sonra Danışman Öğretmen Paneli üzerinden erişime açılır.
+                                    Yarışma sonuçlandıktan sonra Danışman Öğretmen Paneli üzerinden erişime açılır.
                                 </p>
                             </div>
                         </div>
@@ -665,7 +614,7 @@ export const About: React.FC = () => {
               <div className="bg-slate-900 w-full max-w-2xl rounded-2xl border border-slate-700 shadow-2xl relative overflow-hidden flex flex-col">
                   <div className={`p-6 border-b border-slate-700 ${themeModal.color === 'teal' ? 'bg-teal-900/20' : 'bg-rose-900/20'} flex justify-between items-center`}>
                       <h3 className={`text-xl font-bold ${themeModal.color === 'teal' ? 'text-teal-400' : 'text-rose-400'} flex items-center gap-2`}>
-                          <Sparkles size={20} /> {themeModal.title}
+                          <BookOpen size={20} /> {themeModal.title}
                       </h3>
                       <button type="button" onClick={() => setThemeModal(null)} className="text-slate-400 hover:text-white transition-colors p-2 rounded-full hover:bg-slate-800">
                           <X size={20} />

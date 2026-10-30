@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, ZoomIn, Camera, Film, Sparkles, Layers, ListFilter } from 'lucide-react';
+import { X, ZoomIn, Camera, Film,  Layers, ListFilter } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 interface GalleryImage {

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Trophy, Film, Zap, Award, Cpu, ArrowRight, FileText, Gift, Crown, Sparkles, Star, Lock, Calendar, Medal, Gem, Scroll } from 'lucide-react';
+import { Trophy, Film, Zap, Award, Cpu, ArrowRight, FileText, Gift, Crown, Star, Lock, Calendar, Medal, Gem, Scroll } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 
@@ -340,16 +340,13 @@ export const Finals: React.FC = () => {
                       <Calendar size={32} />
                   </div>
                   
-                  <h3 className="text-3xl font-black text-white mb-4 tracking-tight">2026-2027 Ödül & Şartname Detayları</h3>
+                  <h3 className="text-3xl font-black text-white mb-4 tracking-tight">2026-2027 Sezonu Şartname Detayları</h3>
                   
                   <p className="text-xl text-slate-300 font-light leading-relaxed max-w-2xl mx-auto">
-                    Kıyasıya bir mücadelenin yaşanacağı yeni sezon için heyecanlı ödül havuzu planlamaları başlamıştır. Başvurular açıldığında aşağıdaki prestij ödülleri sahiplerini bulacaktır.
+                    Yeni sezonda yalnızca yapay zekâ animasyon kategorisinde yarışılacak ve eserler Asr ile Beled surelerinden ilham alacak. Ödül ve takvim bilgileri belli olduğunda burada duyurulacaktır.
                   </p>
 
                   <div className="mt-8 flex justify-center gap-4">
-                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-teal-500 bg-teal-900/20 px-4 py-2 rounded-full border border-teal-500/20">
-                          <Film size={14}/> Canlı Çekim
-                      </div>
                       <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-purple-500 bg-purple-900/20 px-4 py-2 rounded-full border border-purple-500/20">
                           <Cpu size={14}/> Yapay Zeka
                       </div>
@@ -357,126 +354,8 @@ export const Finals: React.FC = () => {
               </div>
           </div>
 
-          {/* 4. Upcoming Prize Columns */}
+          {/* 4. Preparation notice (prizes are not announced yet) */}
           <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-32">
-            <div className="grid xl:grid-cols-2 gap-12 xl:gap-20 items-start">
-                
-                {/* COLUMN 1: LIVE ACTION FUTURE */}
-                <div className="relative">
-                    <div className="flex items-center gap-6 mb-10 border-b border-teal-500/30 pb-6">
-                        <div className="w-20 h-20 bg-teal-900/20 text-teal-400 rounded-3xl flex items-center justify-center border border-teal-500/20 shadow-[0_0_30px_rgba(20,184,166,0.2)]">
-                            <Film size={40} />
-                        </div>
-                        <div>
-                            <h2 className="text-4xl font-black text-white mb-1 tracking-tight">Canlı Çekim</h2>
-                            <p className="text-teal-500 font-bold uppercase tracking-widest text-sm">Sinematografi Kategorisi</p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <PrizeCard 
-                            rank={1}
-                            title="Birincilik Ödülü"
-                            desc="Yaratıcılığı, anlatı gücü ve teknik başarısıyla öne çıkan birinci takıma verilir."
-                            theme="gold"
-                            isGold={true}
-                        />
-                        <div className="pl-4 border-l-2 border-slate-800 ml-4 md:ml-10 space-y-2">
-                            <PrizeCard 
-                                rank={2}
-                                title="İkincilik Ödülü"
-                                desc="Kurgusal bütünlüğü ve sinematografik diliyle dikkat çeken ikinci takıma verilir."
-                                theme="silver"
-                            />
-                            <PrizeCard 
-                                rank={3}
-                                title="Üçüncülük Ödülü"
-                                desc="Teknik yeterliliği ve anlatım başarısıyla öne çıkan üçüncü takıma verilir."
-                                theme="bronze"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* COLUMN 2: AI ANIMATION FUTURE */}
-                <div className="relative">
-                    <div className="flex items-center gap-6 mb-10 border-b border-purple-500/30 pb-6">
-                        <div className="w-20 h-20 bg-purple-900/20 text-purple-400 rounded-3xl flex items-center justify-center border border-purple-500/20 shadow-[0_0_30px_rgba(168,85,247,0.2)]">
-                            <Cpu size={40} />
-                        </div>
-                        <div>
-                            <h2 className="text-4xl font-black text-white mb-1 tracking-tight">Yapay Zekâ</h2>
-                            <p className="text-purple-500 font-bold uppercase tracking-widest text-sm">Sentetik Medya Kategorisi</p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <PrizeCard 
-                            rank={1}
-                            title="Birincilik Ödülü"
-                            desc="Yapay zekâ araçlarını yaratıcı, tutarlı ve özgün biçimde kullanan birinci takıma verilir."
-                            theme="gold"
-                            isGold={true}
-                        />
-                        <div className="pl-4 border-l-2 border-slate-800 ml-4 md:ml-10 space-y-2">
-                            <PrizeCard 
-                                rank={2}
-                                title="İkincilik Ödülü"
-                                desc="Teknik uygulama ve anlatım bütünlüğü açısından başarılı ikinci takıma verilir."
-                                theme="silver"
-                            />
-                            <PrizeCard 
-                                rank={3}
-                                title="Üçüncülük Ödülü"
-                                desc="Yapay zekâ kullanımında yenilikçi yaklaşımıyla öne çıkan üçüncü takıma verilir."
-                                theme="bronze"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            {/* Special Prestiges */}
-            <div className="mt-24 border-t border-slate-800 pt-24">
-                <div className="text-center mb-20">
-                    <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-slate-900 border border-slate-800 text-slate-300 text-xs font-bold tracking-[0.25em] uppercase mb-6 shadow-xl">
-                        <Sparkles size={14} className="text-amber-500" /> Prestij Ödülleri
-                    </div>
-                    <h2 className="text-4xl md:text-5xl font-black text-white">Özel Ödüller (Gelecek Sezon)</h2>
-                </div>
-                
-                <div className="max-w-7xl mx-auto space-y-10">
-                    <div className="group bg-gradient-to-r from-slate-900 via-slate-900 to-teal-950/30 p-10 md:p-14 rounded-[3rem] border border-slate-800 hover:border-teal-500/50 transition-all duration-500 shadow-2xl relative overflow-hidden">
-                        <div className="flex flex-col md:flex-row items-center md:items-start gap-10">
-                            <div className="w-32 h-32 md:w-40 md:h-40 bg-teal-900/10 text-teal-400 rounded-[2rem] flex items-center justify-center flex-shrink-0 border border-teal-500/20">
-                                <Award size={64} strokeWidth={1.5} />
-                            </div>
-                            <div className="text-center md:text-left flex-1">
-                                <h3 className="text-3xl font-black text-white mb-2">Mansiyon Ödülü</h3>
-                                <p className="text-slate-300 text-lg">
-                                  Gelecek vadeden, özgün yaklaşımı, cesur denemeleri ve sanatsal diliyle öne çıkan projelere takdim edilir.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="group bg-gradient-to-r from-slate-900 via-slate-900 to-rose-950/30 p-10 md:p-14 rounded-[3rem] border border-slate-800 hover:border-rose-500/50 transition-all duration-500 shadow-2xl relative overflow-hidden">
-                        <div className="flex flex-col md:flex-row items-center md:items-start gap-10">
-                            <div className="w-32 h-32 md:w-40 md:h-40 bg-rose-900/10 text-rose-400 rounded-[2rem] flex items-center justify-center flex-shrink-0 border border-rose-500/20">
-                                <Zap size={64} strokeWidth={1.5} />
-                            </div>
-                            <div className="text-center md:text-left flex-1">
-                                <h3 className="text-3xl font-black text-white mb-2">Jüri Özel Ödülü</h3>
-                                <p className="text-slate-300 text-lg">
-                                  Anlatım gücü, estetik risk alma cesareti veya işlediği temanın derinliği jürimiz tarafından takdir edilen eserlere verilir.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             {/* Preparation notice */}
             <div className="mt-24 max-w-4xl mx-auto text-center">
               <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-12 rounded-[3rem] relative overflow-hidden shadow-2xl">

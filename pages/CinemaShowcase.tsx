@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Film, Trophy, Lock, Unlock, Eye, Clock, Calendar, 
-  Play, X, Zap, Star, Award, ShieldAlert, Sparkles,
+  Play, X, Zap, Star, Award, ShieldAlert, Cpu,
   Search, SlidersHorizontal, MonitorPlay, ExternalLink, RotateCw
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { UserRole, Application, Category } from '../types';
+import { Application, Category } from '../types';
+import { getActiveSeason } from '../lib/domain/season';
+import { splitShowcaseBySeason } from './cinema/showcaseSeasons';
 import { getJuryFeedback } from '../data/juryFeedback';
 import { AcademicJuryScorePanel } from '../components/AcademicJuryScorePanel';
 import {
-  UNLOCK_DATE,
   officialLiveActionWinners,
   officialAiWinners,
   LIVE_ACTION_WINNER_NAMES,
@@ -17,10 +18,9 @@ import {
 } from './cinema/showcaseData';
 
 export const CinemaShowcase: React.FC = () => {
-  const { currentUser } = useAppContext();
-  const [now, setNow] = useState<Date>(new Date());
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [applications, setApplications] = useState<Application[]>([]);
+  const { systemSettings } = useAppContext();
+  const activeSeasonId = getActiveSeason(systemSettings).id;
+  const [publicApps, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [allJuryScores, setAllJuryScores] = useState<Record<string, any[]>>({});
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
@@ -31,29 +31,11 @@ export const CinemaShowcase: React.FC = () => {
   const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({});
   const [selectedSeason, setSelectedSeason] = useState<'2025-2026' | '2026-2027'>('2025-2026');
 
-  // Live countdown update
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setNow(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Calculate countdown time left
-  useEffect(() => {
-    const difference = UNLOCK_DATE.getTime() - now.getTime();
-    if (difference <= 0) {
-      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      return;
-    }
-
-    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-    const minutes = Math.floor((difference / 1000 / 60) % 60);
-    const seconds = Math.floor((difference / 1000) % 60);
-
-    setTimeLeft({ days, hours, minutes, seconds });
-  }, [now]);
+  // Archived 2025-26 films keep the full results view; the active season lists only AI films.
+  const { archive: applications, current: currentFilms } = useMemo(
+    () => splitShowcaseBySeason(publicApps, activeSeasonId),
+    [publicApps, activeSeasonId]
+  );
 
   // Fetch all applications & jury scores in a single clean load flow
   useEffect(() => {
@@ -76,10 +58,6 @@ export const CinemaShowcase: React.FC = () => {
 
     fetchAppsAndScores();
   }, []);
-
-  const isLocked = now < UNLOCK_DATE;
-  const isAdmin = currentUser?.role === UserRole.ADMIN;
-  const showContent = !isLocked || isAdmin;
 
   // Helper to toggle flipped card state
   const toggleCardFlip = (teamName: string) => {
@@ -269,96 +247,11 @@ export const CinemaShowcase: React.FC = () => {
 
   const finalCards = getFilteredList();
 
-  // Lock Page view
-  if (!showContent) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-white font-sans relative overflow-hidden flex flex-col justify-between pt-32 pb-16">
-        {/* Cinematic Backdrop / Grid */}
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none"></div>
-        <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-rose-500/5 blur-[150px] rounded-full pointer-events-none mix-blend-screen"></div>
-        <div className="absolute bottom-[10%] right-[10%] w-[400px] h-[400px] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none"></div>
-        
-        <div className="max-w-4xl mx-auto px-4 text-center relative z-10 my-auto animate-fadeIn">
-          {/* Logo Alignment */}
-          <div className="flex justify-center items-center gap-6 mb-12">
-            <img src="https://assets.reflectandshoot.com/Reflect_Shoot_Logo.png" alt="R&S" className="h-16 w-16 object-contain drop-shadow-[0_0_20px_rgba(245,158,11,0.2)]" />
-            <div className="h-10 w-px bg-slate-800"></div>
-            <img src="https://assets.reflectandshoot.com/20113118_yeni_logo_konyaihl.png" alt="Konya İHL" className="h-16 w-16 object-contain" />
-          </div>
-
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-black tracking-[0.2em] uppercase mb-8 shadow-lg shadow-amber-500/5">
-            <Lock size={14} className="animate-pulse" /> ÖDÜL TÖRENİ SONRASINDA AÇILACAKTIR
-          </div>
-          
-          <h1 className="text-4xl sm:text-6xl font-black mb-6 tracking-tight leading-none">
-            Gala Salonu & <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-500 to-amber-300 drop-shadow-[0_0_25px_rgba(245,158,11,0.35)]">
-              Resmi Derece Listesi
-            </span>
-          </h1>
-          
-          <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto font-light leading-relaxed mb-12">
-            Reflect & Shoot Yarışması ödül alan ekipler ve tüm festival katılımcılarının kısa filmleri, 
-            görkemli ödül töreninin ardından <strong>23 Mayıs Cumartesi günü saat 18:30&apos;da</strong> bu adreste yayına girecektir.
-          </p>
-
-          {/* Countdown Clock */}
-          <div className="grid grid-cols-4 gap-4 max-w-xl mx-auto mb-12">
-            {[
-              { val: timeLeft.days, label: 'Gün' },
-              { val: timeLeft.hours, label: 'Saat' },
-              { val: timeLeft.minutes, label: 'Dakika' },
-              { val: timeLeft.seconds, label: 'Saniye' }
-            ].map((unit, idx) => (
-              <div key={idx} className="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl relative group overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
-                <div className="text-3xl sm:text-5xl font-black text-amber-400 font-mono tracking-tight">{String(unit.val).padStart(2, '0')}</div>
-                <div className="text-[10px] sm:text-xs text-slate-500 font-black uppercase tracking-wider mt-2">{unit.label}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex justify-center gap-6 text-sm text-slate-500 border-t border-slate-900 pt-8 max-w-md mx-auto">
-            <div className="flex items-center gap-2 font-bold">
-              <Calendar size={15} className="text-amber-500/60" /> 23 Mayıs 2026
-            </div>
-            <div className="w-px h-4 bg-slate-800"></div>
-            <div className="flex items-center gap-2 font-bold">
-              <Clock size={15} className="text-amber-500/60" /> 18:30 (TSİ)
-            </div>
-          </div>
-        </div>
-
-        {/* Humility Footer */}
-        <div className="text-center text-xs text-slate-600 font-bold uppercase tracking-[0.2em] relative z-10 px-4">
-          © REFLECT & SHOOT GALA SALONU
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans relative overflow-hidden pb-32">
       {/* Background Graphic Effects */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-5 pointer-events-none"></div>
       <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-amber-500/5 blur-[150px] rounded-full pointer-events-none mix-blend-screen"></div>
-
-      {/* Admin Mode Bypass Alert Banner */}
-      {isAdmin && isLocked && (
-        <div className="bg-amber-500/10 border-b border-amber-500/30 backdrop-blur-md sticky top-20 z-40">
-          <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-amber-400 text-xs font-black uppercase tracking-wider">
-              <ShieldAlert size={16} className="animate-pulse" /> Yönetici Ön İzleme Modu Aktif
-            </div>
-            <p className="text-[11px] text-slate-300">
-              Bu sayfa şu anda halka kilitlidir (Açılış: 23 Mayıs 18:30). Ancak siz tasarım ve dereceleri önceden inceleyebilirsiniz.
-            </p>
-            <div className="flex items-center gap-1 bg-amber-500 text-slate-950 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest shadow-md">
-              <Eye size={12} /> Görünür
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Cinematic Hero Header Section - Aligned with FAQ style, logo free */}
       <div className="bg-gradient-to-b from-rose-950 via-slate-900 to-slate-950 text-white pt-32 pb-32 relative overflow-hidden shadow-2xl z-10 border-b border-slate-900">
@@ -401,7 +294,7 @@ export const CinemaShowcase: React.FC = () => {
                   : 'text-slate-400 hover:text-white hover:bg-slate-900'
               }`}
             >
-              <Trophy size={14} /> 2025-2026 Sezonu
+              <Trophy size={14} /> 2025-2026 Sezonu (Arşiv)
             </button>
             
             <button type="button"
@@ -412,7 +305,7 @@ export const CinemaShowcase: React.FC = () => {
                   : 'text-slate-400 hover:text-white hover:bg-slate-900'
               }`}
             >
-              <Sparkles size={13} className="text-amber-500 animate-pulse" /> 2026-2027 Sezonu
+              <Film size={13} /> 2026-2027 Sezonu
             </button>
           </div>
         </div>
@@ -420,34 +313,51 @@ export const CinemaShowcase: React.FC = () => {
 
       {/* Dynamic Seasonal Layout conditional */}
       {selectedSeason === '2026-2027' ? (
-        <div className="max-w-4xl mx-auto px-4 mt-16 text-center py-24 bg-slate-900/40 rounded-[2.5rem] border border-slate-800/80 backdrop-blur-sm relative overflow-hidden group">
-          <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-amber-500/5 blur-[100px] rounded-full pointer-events-none mix-blend-screen"></div>
-          
-          <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-3xl w-16 h-16 flex items-center justify-center mx-auto mb-8 shadow-2xl relative">
-            <Sparkles size={32} className="animate-pulse" />
-          </div>
-          
-          <h3 className="text-3xl font-black text-white mb-4 tracking-tight leading-none">
-            2026-2027 Sezonu Yolculuk Aşamaları Hazırlanıyor
-          </h3>
-          
-          <p className="text-slate-300 text-base md:text-lg font-light leading-relaxed max-w-2xl mx-auto mb-10">
-            Yeni sezon heyecanı başladı! Reflect & Shoot 2026-2027 sinema yolculuğu hazırlık aşamasındadır. 
-            Eser fikirlerinizi olgunlaştırmaya ve çekim planlarınızı tasarlamaya şimdiden başlayabilirsiniz. 
-            Yeni sezona ait film gönderim ve jüri puanlama süreçleri tamamlandığında, resmi kürsü sıralamaları, 
-            puanlama detayları ve değerlendirme raporları bu sayfada muhteşem sinematik kartlarla listelenecektir.
-          </p>
-          
-          <div className="flex flex-wrap justify-center gap-8 text-sm text-slate-400 border-t border-slate-900/60 pt-8 max-w-lg mx-auto">
-            <div className="flex items-center gap-2 font-bold">
-              <Calendar size={15} className="text-amber-500" /> Tahmini Başvuru: Kasım 2026
+        currentFilms.length > 0 ? (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+            <h3 className="text-2xl font-black text-white mb-2">2026-2027 Sezonu Yapay Zekâ Filmleri</h3>
+            <p className="text-sm text-slate-400 mb-8">Asr ve Beled surelerinden ilham alan yapay zekâ animasyon filmleri.</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentFilms.map((film) => (
+                <div key={film.id} className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 flex flex-col gap-4">
+                  <div>
+                    <h4 className="text-lg font-black text-white leading-tight">{film.team.name}</h4>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {[film.teacher?.school, film.teacher?.city].filter(Boolean).join(' • ')}
+                    </p>
+                  </div>
+                  {film.team.videoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedVideo(film.team.videoUrl || null);
+                        setSelectedTeamName(film.team.name);
+                      }}
+                      className="mt-auto inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl py-3 transition-colors"
+                    >
+                      <Play size={14} /> Filmi İzle
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
-            <div className="w-px h-5 bg-slate-800 hidden sm:block"></div>
-            <div className="flex items-center gap-2 font-bold">
-              <Trophy size={15} className="text-amber-500" /> Ödül Töreni: Mayıs 2027
-            </div>
           </div>
-        </div>
+        ) : (
+          <div className="max-w-4xl mx-auto px-4 mt-16 text-center py-24 bg-slate-900/40 rounded-[2.5rem] border border-slate-800/80 backdrop-blur-sm relative overflow-hidden">
+            <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-3xl w-16 h-16 flex items-center justify-center mx-auto mb-8 shadow-2xl">
+              <Film size={32} />
+            </div>
+
+            <h3 className="text-3xl font-black text-white mb-4 tracking-tight leading-none">
+              2026-2027 Sezonu Filmleri Burada Yer Alacak
+            </h3>
+
+            <p className="text-slate-300 text-base md:text-lg font-light leading-relaxed max-w-2xl mx-auto">
+              Yeni sezonda yalnızca yapay zekâ animasyon filmleri yarışacak ve eserler Asr ile Beled surelerinden ilham alacak.
+              Başvuru ve sonuç tarihleri yakında açıklanacaktır. Bu sırada 2025-2026 sezonu filmlerini arşivden izleyerek ilham alabilirsiniz.
+            </p>
+          </div>
+        )
       ) : (
         <>
           {/* Navigation Subbar / Tabs */}
@@ -479,7 +389,7 @@ export const CinemaShowcase: React.FC = () => {
                   : 'text-slate-400 hover:text-white hover:bg-slate-900'
               }`}
             >
-              <Sparkles size={14} /> Yapay Zekâ
+              <Cpu size={14} /> Yapay Zekâ
             </button>
           </div>
 

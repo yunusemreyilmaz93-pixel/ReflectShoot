@@ -66,6 +66,18 @@ describe('season domain', () => {
     expect(r.ok).toBe(false);
   });
 
+  test('buildNewSeasonSettings can blank all dates (announced later)', () => {
+    const next = buildNewSeasonSettings(DEFAULT_SYSTEM_SETTINGS, {
+      id: '2027',
+      label: '2026-27',
+      clearDates: true,
+      openApplications: false,
+    });
+    expect(next.season).toEqual({ id: '2027', label: '2026-27' });
+    expect(Object.values(next.dates).every((v) => v === '')).toBe(true);
+    expect(next.features.blockNewApplications).toBe(true);
+  });
+
   test('buildNewSeasonSettings shifts year and opens apps', () => {
     const next = buildNewSeasonSettings(DEFAULT_SYSTEM_SETTINGS, {
       id: '2027',

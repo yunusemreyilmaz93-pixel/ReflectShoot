@@ -7,32 +7,10 @@ export interface VerseDetail {
 
 export const VERSE_SPLITTER = "|||";
 
+/** Surahs offered in the 2026-27 season. Earlier seasons' verses stay in `verseDetails` so archived teams still render. */
 export const versesList: string[] = [
-  "Âl-i İmrân: 92",
-  "Âl-i İmrân: 103",
-  "Âl-i İmrân: 190-191",
-  "Ankebût: 41",
   "Asr: 1-3",
-  "Bakara: 138",
-  "Bakara: 168",
-  "Enfâl: 46",
-  "Furkân: 63",
-  "Hac: 46",
-  "Hucurât: 10-11",
-  "İbrâhîm: 24-25",
-  "İsrâ: 23-24",
-  "İsrâ: 82",
-  "İnşirâh: 6-8",
-  "Kasas: 72-73",
-  "Lokman: 18",
-  "Mâide: 2",
-  "Nahl: 90",
-  "Yâsîn: 82",
-  "Yûnus: 57",
-  "Zâriyât: 50",
-  "Zâriyât: 55",
-  "Duha: 3",
-  "Ra'd: 28"
+  "Beled: 1-20"
 ];
 
 export const verseDetails: Record<string, VerseDetail> = {
@@ -55,6 +33,12 @@ export const verseDetails: Record<string, VerseDetail> = {
     arabic: "مَثَلُ الَّذٖينَ اتَّخَذُوا مِنْ دُونِ اللّٰهِ اَوْلِيَٓاءَ كَمَثَلِ الْعَنْكَبُوتِۚ اِتَّخَذَتْ بَيْتاًؕ وَاِنَّ اَوْهَنَ الْبُيُوتِ لَبَيْتُ الْعَنْكَبُوتِۘ لَوْ كَانُوا يَعْلَمُونَ",
     turkish: "Allah’tan başka varlıkların korumasına sığınanların durumu, örümceğin durumuna benzer: Örümcek, (ağını) kendine bir yuva edinir, ama yuvaların en çürüğü de örümceğin yuvasıdır. Keşke bilselerdi!",
     english: "The parable of those who take protectors other than Allah is that of a spider spinning a shelter. And the weakest of all homes is certainly that of a spider, if only they knew."
+  },
+  "Beled: 1-20": {
+    arabic: "لَآ أُقْسِمُ بِهَٰذَا ٱلْبَلَدِ" + VERSE_SPLITTER + "وَأَنتَ حِلٌّۢ بِهَٰذَا ٱلْبَلَدِ" + VERSE_SPLITTER + "وَوَالِدٍۢ وَمَا وَلَدَ" + VERSE_SPLITTER + "لَقَدْ خَلَقْنَا ٱلْإِنسَٰنَ فِى كَبَدٍ" + VERSE_SPLITTER + "أَيَحْسَبُ أَن لَّن يَقْدِرَ عَلَيْهِ أَحَدٌۭ" + VERSE_SPLITTER + "يَقُولُ أَهْلَكْتُ مَالًۭا لُّبَدًا" + VERSE_SPLITTER + "أَيَحْسَبُ أَن لَّمْ يَرَهُۥٓ أَحَدٌ" + VERSE_SPLITTER + "أَلَمْ نَجْعَل لَّهُۥ عَيْنَيْنِ" + VERSE_SPLITTER + "وَلِسَانًۭا وَشَفَتَيْنِ" + VERSE_SPLITTER + "وَهَدَيْنَٰهُ ٱلنَّجْدَيْنِ" + VERSE_SPLITTER + "فَلَا ٱقْتَحَمَ ٱلْعَقَبَةَ" + VERSE_SPLITTER + "وَمَآ أَدْرَىٰكَ مَا ٱلْعَقَبَةُ" + VERSE_SPLITTER + "فَكُّ رَقَبَةٍ" + VERSE_SPLITTER + "أَوْ إِطْعَٰمٌۭ فِى يَوْمٍۢ ذِى مَسْغَبَةٍۢ" + VERSE_SPLITTER + "يَتِيمًۭا ذَا مَقْرَبَةٍ" + VERSE_SPLITTER + "أَوْ مِسْكِينًۭا ذَا مَتْرَبَةٍۢ" + VERSE_SPLITTER + "ثُمَّ كَانَ مِنَ ٱلَّذِينَ ءَامَنُوا۟ وَتَوَاصَوْا۟ بِٱلصَّبْرِ وَتَوَاصَوْا۟ بِٱلْمَرْحَمَةِ" + VERSE_SPLITTER + "أُو۟لَٰٓئِكَ أَصْحَٰبُ ٱلْمَيْمَنَةِ" + VERSE_SPLITTER + "وَٱلَّذِينَ كَفَرُوا۟ بِـَٔايَٰتِنَا هُمْ أَصْحَٰبُ ٱلْمَشْـَٔمَةِ" + VERSE_SPLITTER + "عَلَيْهِمْ نَارٌۭ مُّؤْصَدَةٌۢ",
+    // Diyanet İşleri meali (bazı ayetler tek cümlede birleştirilmiştir; bu yüzden Türkçe satır sayısı Arapçadan azdır).
+    turkish: "Bu şehre (Mekke'ye) yemin ederim; ki sen bu şehirde oturmuşsun." + VERSE_SPLITTER + "Doğurana ve doğurduğuna and olsun ki;" + VERSE_SPLITTER + "İnsanoğlunu, zorluklara katlanacak şekilde yarattık." + VERSE_SPLITTER + "İnsanoğlu, kendisine kimsenin güç yetiremeyeceğini mi sanıyor?" + VERSE_SPLITTER + "\"Yığın yığın mal tüketmişimdir\" diyor." + VERSE_SPLITTER + "O, kimsenin kendisini görmediğini mi zannediyor?" + VERSE_SPLITTER + "Biz onun için iki göz, bir dil ve iki dudak var etmedik mi?" + VERSE_SPLITTER + "Biz ona eğri ve doğru iki yolu da göstermedik mi?" + VERSE_SPLITTER + "Ama o, zor geçidi aşmaya girişemedi." + VERSE_SPLITTER + "O zor geçidin ne olduğunu sen bilir misin?" + VERSE_SPLITTER + "O geçit, bir köle ve esir azadetmek," + VERSE_SPLITTER + "Yahut, açlık gününde, yakını olan bir öksüzü, yahut toprağa serilmiş bir yoksulu doyurmaktır." + VERSE_SPLITTER + "Sonra, inanıp birbirlerine sabır tavsiye edenlerden, merhametlilerden olmayı tavsiye edenlerden olmaktır." + VERSE_SPLITTER + "İşte bunlar amel defterleri sağdan verilenlerdir." + VERSE_SPLITTER + "Ayetlerimizi inkar edenler, işte onlar amel defterleri sollarından verilenlerdir." + VERSE_SPLITTER + "Onlar her yönden ateşle kapatılacaklardır.",
+    english: "I swear by this city, Makkah -" + VERSE_SPLITTER + "And you, [O Muhammad], are free of restriction in this city -" + VERSE_SPLITTER + "And [by] the father and that which was born [of him]," + VERSE_SPLITTER + "We have certainly created man into hardship." + VERSE_SPLITTER + "Does he think that never will anyone overcome him?" + VERSE_SPLITTER + "He says, \"I have spent wealth in abundance.\"" + VERSE_SPLITTER + "Does he think that no one has seen him?" + VERSE_SPLITTER + "Have We not made for him two eyes?" + VERSE_SPLITTER + "And a tongue and two lips?" + VERSE_SPLITTER + "And have shown him the two ways?" + VERSE_SPLITTER + "But he has not broken through the difficult pass." + VERSE_SPLITTER + "And what can make you know what is [breaking through] the difficult pass?" + VERSE_SPLITTER + "It is the freeing of a slave" + VERSE_SPLITTER + "Or feeding on a day of severe hunger" + VERSE_SPLITTER + "An orphan of near relationship" + VERSE_SPLITTER + "Or a needy person in misery" + VERSE_SPLITTER + "And then being among those who believed and advised one another to patience and advised one another to compassion." + VERSE_SPLITTER + "Those are the companions of the right." + VERSE_SPLITTER + "But they who disbelieved in Our signs - those are the companions of the left." + VERSE_SPLITTER + "Over them will be fire closed in."
   },
   "Asr: 1-3": {
     arabic: "وَالْعَصْرِۙ" + VERSE_SPLITTER + "اِنَّ الْاِنْسَانَ لَفٖي خُسْرٍۙ" + VERSE_SPLITTER + "اِلَّا الَّذٖينَ اٰمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ",

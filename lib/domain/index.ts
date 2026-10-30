@@ -7,3 +7,4 @@ export * from './teacherDashboard';
 export * from './timeline';
 export * from './academy';
 export * from './adminOps';
+export * from './competition';

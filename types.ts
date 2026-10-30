@@ -26,6 +26,8 @@ export enum Category {
 }
 
 export enum Theme {
+  /** 2026-27 season: a single film that combines the Asr and Beled surahs. */
+  ASR_BELED = 'Asr ve Beled Sureleri',
   AYET = "Kur'an'dan Ayetler",
   HADITH = 'Hadisler',
   SAHABE = 'Sahabelerden Hikayeler'

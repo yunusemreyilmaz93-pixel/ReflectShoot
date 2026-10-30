@@ -15,8 +15,8 @@ let environment: RulesTestEnvironment;
 const baseTeam = {
   id: 'team-one',
   name: 'Işık Takımı',
-  category: 'Canlı Çekim',
-  theme: "Kur'an'dan Ayetler",
+  category: 'Yapay Zeka Animasyon',
+  theme: 'Asr ve Beled Sureleri',
   students: [
     { id: 'student-one', firstName: 'Ada', lastName: 'Y.', grade: '10-A', hasParentalConsent: false, hasKvkkConsent: false },
     { id: 'student-two', firstName: 'Can', lastName: 'K.', grade: '10-B', hasParentalConsent: false, hasKvkkConsent: false },
@@ -107,6 +107,29 @@ describe('Firestore security boundary', () => {
     }));
   });
 
+  test('teams must have between 2 and 4 students', async () => {
+    const db = userDb('teacher', 'TEACHER');
+    const create = (id: string, count: number) =>
+      setDoc(doc(db, `applications/${id}`), {
+        id,
+        teacher: { id: 'teacher', fullName: 'Öğretmen', email: 'teacher@example.com' },
+        team: {
+          ...baseTeam,
+          id,
+          name: 'Yeni Takım',
+          students: Array.from({ length: count }, (_, i) => ({ id: `s${i}`, firstName: 'A', lastName: 'B', grade: '10-A' })),
+        },
+        status: 'Taslak',
+        submittedAt: '2026-01-01T00:00:00.000Z',
+        seasonId: '2027',
+        archived: false,
+      });
+    await assertFails(create('size-1', 1));
+    await assertSucceeds(create('size-2', 2));
+    await assertSucceeds(create('size-4', 4));
+    await assertFails(create('size-5', 5));
+  });
+
   test('teacher cannot archive or re-season an application via client update', async () => {
     const ref = doc(userDb('teacher', 'TEACHER'), 'applications/team-one');
     await assertFails(updateDoc(ref, { archived: true }));
@@ -168,6 +191,24 @@ describe('Firestore security boundary', () => {
         await assertFails(updateDoc(doc(db, 'applications/locked'), { status: 'Taslak' }));
         await assertFails(updateDoc(doc(db, 'applications/locked'), { status: 'Video İnceleniyor' }));
       }
+    });
+
+    test('only the 2026-27 category and theme can be used, and they cannot be changed afterwards', async () => {
+      const db = userDb('teacher', 'TEACHER');
+      const base = {
+        teacher: { id: 'teacher', fullName: 'Öğretmen', email: 'teacher@example.com' },
+        status: 'Taslak',
+        submittedAt: '2026-01-01T00:00:00.000Z',
+        seasonId: '2027',
+        archived: false,
+      };
+      await assertFails(setDoc(doc(db, 'applications/old-cat'), { ...base, id: 'old-cat', team: { ...baseTeam, id: 'old-cat', category: 'Canlı Çekim' } }));
+      await assertFails(setDoc(doc(db, 'applications/old-theme'), { ...base, id: 'old-theme', team: { ...baseTeam, id: 'old-theme', theme: 'Hadisler' } }));
+
+      await seedStatus('locked-meta', 'Taslak');
+      const ref = doc(db, 'applications/locked-meta');
+      await assertFails(updateDoc(ref, { 'team.category': 'Canlı Çekim' }));
+      await assertFails(updateDoc(ref, { 'team.theme': 'Hadisler' }));
     });
 
     test('owner can still move an editable application forward', async () => {

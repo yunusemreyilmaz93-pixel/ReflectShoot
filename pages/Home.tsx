@@ -1,32 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool, Target, HelpCircle, MapPin, Compass, Instagram, Sparkles, PartyPopper, Lock } from 'lucide-react';
+import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool, Target, HelpCircle, MapPin, Compass, Instagram,  PartyPopper, Lock } from 'lucide-react';
 import { Timeline } from '../components/Timeline';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { useAppContext } from '../context/AppContext';
-import { motion, AnimatePresence } from 'motion/react';
-import { getNextPhase } from './home/competitionPhases';
-import { CountdownTimer } from './home/CountdownTimer';
 import { HOME_CATEGORIES, type CategoryData } from './home/categoryCards';
 
 export const Home: React.FC = () => {
-  const { cmsLinks, cmsTimeline } = useAppContext();
-  const [activePhase, setActivePhase] = useState(getNextPhase(cmsTimeline));
+  const { cmsLinks } = useAppContext();
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
-  const [showCountdownPopup, setShowCountdownPopup] = useState(false);
-
-  const closePopup = () => {
-    setShowCountdownPopup(false);
-  };
-
-  useEffect(() => {
-    setActivePhase(getNextPhase(cmsTimeline));
-    const interval = setInterval(() => {
-      setActivePhase(getNextPhase(cmsTimeline));
-    }, 60000); 
-    return () => clearInterval(interval);
-  }, [cmsTimeline]);
 
   const renderVerseText = (text: string, isArabic: boolean) => {
     if (!text) return null;
@@ -68,83 +51,9 @@ export const Home: React.FC = () => {
       
       {/* 2025-2026 Sezonu Sertifika Duyuru Bandı */}
       <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-slate-950 text-center py-2.5 px-4 font-bold text-xs md:text-sm flex items-center justify-center gap-2 relative z-50 shadow-md">
-        <Sparkles size={16} className="text-slate-950 animate-pulse shrink-0" />
         <span>2025-2026 Sezonu Tüm Sertifikalar Hazırdır! Öğretmenlerimiz hem kendi danışman sertifikalarına hem de öğrencilerinin katılım sertifikalarına panellerinden kolaylıkla ulaşabilirler.</span>
-        <Sparkles size={16} className="text-slate-950 animate-pulse shrink-0" />
       </div>
       
-      <AnimatePresence>
-        {showCountdownPopup && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closePopup}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="relative w-full max-w-lg bg-slate-900 border border-amber-500/30 rounded-[2rem] shadow-[0_0_50px_rgba(245,158,11,0.2)] p-8 overflow-hidden"
-            >
-              <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600" />
-              
-              <button type="button" 
-                onClick={closePopup}
-                className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors z-10"
-                aria-label="Kapat"
-              >
-                <X size={24} />
-              </button>
-
-              <div className="relative z-10 flex flex-col items-center text-center gap-6">
-                <div className="relative w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center border border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.1)] mb-2 mt-2">
-                  <div className="absolute -inset-2 bg-amber-500/20 blur-xl rounded-full animate-pulse"></div>
-                  <PartyPopper className="text-amber-500 relative z-10" size={40} />
-                  <Sparkles className="absolute -top-2 -right-2 text-amber-300 animate-bounce" size={20} />
-                </div>
-                
-                <div className="space-y-4 w-full">
-                  <h3 className="text-3xl font-black text-white tracking-tight">
-                    Büyük Gün <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-amber-300">Yaklaşıyor!</span>
-                  </h3>
-                  <p className="text-slate-300 leading-relaxed font-light text-lg">
-                    Ödüller Sahiplerini Buluyor... Muhteşem Ödül Töreni için geri sayım başladı.
-                  </p>
-                  
-                  <div className="bg-slate-950/50 border border-white/5 rounded-2xl py-4 pb-0 mt-4 mb-2">
-                     <CountdownTimer targetDate="2026-05-22T10:30:00" />
-                     <p className="mt-4 text-xs font-medium text-slate-500 tracking-widest uppercase border-t border-white/5 py-3">22 Mayıs 2026 • 10:30</p>
-                  </div>
-                </div>
-
-                <a
-                  href="https://www.instagram.com/konyaaihl1951/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={closePopup}
-                  className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold transition-all duration-300 shadow-lg hover:shadow-pink-500/25 hover:-translate-y-0.5 mt-2"
-                >
-                  <Instagram size={20} />
-                  Instagram'da Takip Et
-                </a>
-
-                <Link
-                  to="/finals"
-                  onClick={closePopup}
-                  className="text-slate-400 hover:text-white text-sm font-medium transition-colors underline decoration-slate-600 underline-offset-4"
-                >
-                  Tören detaylarını incele
-                </Link>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
       {/* Global Cinematic Grain */}
       <div className="fixed inset-0 pointer-events-none z-[100] mix-blend-overlay opacity-5" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }}></div>
 
@@ -286,7 +195,7 @@ export const Home: React.FC = () => {
                 </h3>
                 
                 <p className="text-slate-300 text-base md:text-lg leading-relaxed font-light">
-                  Reflect&Shoot Kısa Film Yarışması’nın 2025-2026 sezonu ödül töreniyle tamamlandı. Yarışmaya katılan filmler hafta boyunca Gala Salonu’nda izleyiciyle buluşacak. 2026-2027 sezonu için hazırlıklarımız ise şimdiden başladı.
+                  Reflect&Shoot Kısa Film Yarışması’nın 2025-2026 sezonu tamamlandı. Yarışmaya katılan filmleri Gala Salonu’ndaki arşivden izleyerek ilham alabilirsiniz. 2026-2027 sezonu için hazırlıklarımız ise şimdiden başladı.
                 </p>
               </div>
 
@@ -327,7 +236,7 @@ export const Home: React.FC = () => {
 
               <div className="flex items-center gap-2.5 bg-slate-900/50 border border-slate-800 p-4 rounded-2xl mt-8 pt-4 pb-4">
                 <div className="p-2.5 bg-rose-500/10 rounded-xl text-rose-400 font-extrabold border border-rose-500/20">
-                  <Sparkles size={18} className="animate-spin" style={{ animationDuration: '6s' }} />
+                  <CalendarDays size={18} />
                 </div>
                 <div>
                   <h4 className="text-white text-xs font-black uppercase tracking-wider">Takipte Kalın</h4>
@@ -348,14 +257,14 @@ export const Home: React.FC = () => {
                  <Clapperboard size={14} /> Kategori Seçimi
              </div>
              <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-4">
-               Hikâyeni Hangi Yolla <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600">Sahneye Taşıyacaksın?</span>
+               Hikâyeni Yapay Zekâ ile <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600">Sahneye Taşıyacaksın</span>
              </h2>
              <p className="mt-6 text-xl text-slate-500 max-w-2xl mx-auto font-light leading-relaxed">
-               İster kamera lensinden, ister kodların gücünden. Senin sahnen hangisi?
+               2026-2027 sezonunda yalnızca yapay zekâ animasyon kategorisinde yarışılır.
              </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
+          <div className="grid gap-8 lg:gap-16 max-w-3xl mx-auto">
             {categories.map((cat) => (
               <div 
                 key={cat.id} 
@@ -415,7 +324,7 @@ export const Home: React.FC = () => {
                     Yarışma <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500">Temaları</span>
                 </h2>
                 <p className="text-slate-400 text-lg font-light leading-relaxed max-w-2xl">
-                    Kutsal kaynaklardan beslenen, sinema diliyle günümüze taşınan özgün hikayeler.
+                    2026-2027 sezonunun teması: Asr ve Beled surelerini tek bir yapay zekâ filminde buluşturun.
                 </p>
              </div>
              <div className="bg-slate-900 px-5 py-3 rounded-xl border border-slate-800 text-slate-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
@@ -435,8 +344,8 @@ export const Home: React.FC = () => {
                            <BookOpen className="text-amber-500" size={36} />
                        </div>
                        <div>
-                           <h3 className="text-3xl font-black text-white">Kur'an'dan Ayetler</h3>
-                           <p className="text-slate-400 font-medium mt-1">Senaryo Temeli: Vahiy</p>
+                           <h3 className="text-3xl font-black text-white">Asr ve Beled Sureleri</h3>
+                           <p className="text-slate-400 font-medium mt-1">İki sureden ilham alan tek bir film</p>
                        </div>
                    </div>
                    
@@ -469,41 +378,6 @@ export const Home: React.FC = () => {
                        ))}
                    </div>
                </div>
-            </div>
-
-            {/* Hadith & Sahabe */}
-            <div className="grid md:grid-cols-2 gap-8">
-                {/* Hadisler */}
-                <div className="bg-slate-900 p-10 rounded-[2rem] shadow-2xl border border-slate-800 hover:border-teal-500/30 transition-all duration-300 group hover:-translate-y-1">
-                    <div className="flex items-center gap-5 mb-8">
-                        <div className="bg-teal-900/20 p-5 rounded-2xl text-teal-400 border border-teal-500/20 group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(20,184,166,0.1)]">
-                            <ScrollText size={32} />
-                        </div>
-                        <h3 className="text-2xl font-black text-white">Hadisler</h3>
-                    </div>
-                    <p className="text-slate-400 leading-relaxed mb-8 font-light text-lg">
-                        Peygamber Efendimiz'in (s.a.v) sözlerinden, hayatından ve tavsiyelerinden yola çıkarak günümüze ışık tutan hikayeler.
-                    </p>
-                    <div className="bg-slate-950 p-5 rounded-xl border-l-4 border-teal-500 text-xs text-slate-400 italic">
-                        "En güvenilir kaynaklardan seçilen rivayetler esastır."
-                    </div>
-                </div>
-
-                {/* Sahabeler */}
-                <div className="bg-slate-900 p-10 rounded-[2rem] shadow-2xl border border-slate-800 hover:border-rose-500/30 transition-all duration-300 group hover:-translate-y-1">
-                    <div className="flex items-center gap-5 mb-8">
-                         <div className="bg-rose-900/20 p-5 rounded-2xl text-rose-400 border border-rose-500/20 group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(225,29,72,0.1)]">
-                            <Users size={32} />
-                        </div>
-                        <h3 className="text-2xl font-black text-white">Sahabelerden Hikayeler</h3>
-                    </div>
-                    <p className="text-slate-400 leading-relaxed mb-8 font-light text-lg">
-                        Asr-ı Saadet'in yıldızları olan sahabelerin hayatlarından, fedakarlıklarından ve erdemli duruşlarından kesitler.
-                    </p>
-                    <div className="bg-slate-950 p-5 rounded-xl border-l-4 border-rose-500 text-xs text-slate-400 italic">
-                        "Tarihsel gerçekliğe sadık kalınarak dramatize edilmelidir."
-                    </div>
-                </div>
             </div>
 
           </div>
@@ -600,37 +474,6 @@ export const Home: React.FC = () => {
                   <Compass size={20} /> Rehbere Git <ArrowRight size={16}/>
               </Link>
           </div>
-      </section>
-
-      {/* 6. Ceremony & Prizes CTA */}
-      <section className="relative py-32 overflow-hidden bg-black text-white">
-        {/* ... existing ceremony section ... */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-slate-900/50 to-slate-950"></div>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-rose-600/10 blur-[150px] pointer-events-none mix-blend-screen"></div>
-        
-        {/* Spotlight Effect */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[100px] border-r-[100px] border-b-[500px] border-l-transparent border-r-transparent border-b-white/5 blur-3xl transform rotate-180"></div>
-
-        <div className="max-w-4xl mx-auto px-4 relative z-10 text-center">
-          <div className="mb-10 relative inline-block">
-             <div className="absolute -inset-6 bg-amber-500/20 blur-2xl rounded-full animate-pulse"></div>
-             <Trophy size={100} className="relative text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.8)]" />
-          </div>
-          
-          <h2 className="text-5xl md:text-7xl font-black mb-8 tracking-tight">
-             Büyük <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500">Ödül Töreni</span>
-          </h2>
-          <p className="text-2xl text-rose-100/80 mb-12 max-w-3xl mx-auto font-light leading-relaxed">
-             Toplam <span className="text-white font-bold border-b border-white/30">200.000₺</span>'yi aşan ödül havuzu, teknoloji çekleri ve Altın Kamera heykelciği sahiplerini bekliyor.
-          </p>
-          
-          <Link 
-            to="/finals" 
-            className="inline-flex items-center gap-3 bg-white text-slate-950 font-black py-5 px-12 rounded-full hover:bg-amber-400 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:shadow-[0_0_60px_rgba(245,158,11,0.5)] group"
-          >
-             Ödül Kürsüsünü İncele <ArrowRight className="group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
       </section>
 
       {/* 7. Partners Section */}
