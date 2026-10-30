@@ -49,14 +49,6 @@ export const Home: React.FC = () => {
   return (
     <div className="bg-slate-950 min-h-screen relative overflow-x-hidden font-sans">
       
-      {/* 2025-2026 Sezonu Sertifika Duyuru Bandı */}
-      <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-slate-950 text-center py-2.5 px-4 font-bold text-xs md:text-sm flex items-center justify-center gap-2 relative z-50 shadow-md">
-        <span>2025-2026 Sezonu Tüm Sertifikalar Hazırdır! Öğretmenlerimiz hem kendi danışman sertifikalarına hem de öğrencilerinin katılım sertifikalarına panellerinden kolaylıkla ulaşabilirler.</span>
-      </div>
-      
-      {/* Global Cinematic Grain */}
-      <div className="fixed inset-0 pointer-events-none z-[100] mix-blend-overlay opacity-5" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/stardust.png")' }}></div>
-
       {/* 1. Cinematic Hero Section - MATCHING OTHER PAGES */}
       <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-rose-950 via-slate-900 to-slate-950 overflow-hidden text-center px-4 pt-32 pb-24">
         

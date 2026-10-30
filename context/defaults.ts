@@ -36,10 +36,10 @@ export const DEFAULT_CMS_GENERAL: CMSGeneral = {
   footerText: '',
 };
 
+// 2026-27: the 2025-26 Sartname / Veli Izin / KVKK PDFs are retired; new ones are added from Admin -> CMS.
 export const DEFAULT_CMS_LINKS: CMSLinks = {
-  specUrl:
-    'https://assets.reflectandshoot.com/Reflect%20And%20Shoot%20Yar%C4%B1%C5%9Fma%20%C5%9Eartnamesi.pdf',
-  parentalUrl: 'https://assets.reflectandshoot.com/veli_izin_belgesi.pdf',
-  kvkkUrl: 'https://assets.reflectandshoot.com/acik_riza_metni.pdf',
+  specUrl: '',
+  parentalUrl: '',
+  kvkkUrl: '',
   posterUrl: '',
 };

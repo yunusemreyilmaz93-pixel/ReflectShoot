@@ -12,6 +12,8 @@
  *   --student-identities replace student first/last names (and e-mail) of 2026 teams with
  *                        initials and blank the advisor e-mail/phone.  WARNING: teachers can no
  *                        longer generate student certificates for 2026 after this.
+ *   --clear-forms-links  blank the old Sartname / Veli Izin / KVKK form links in cms/links (new ones
+ *                        are added later from Admin -> CMS; the public site then says "Link henuz eklenmemis").
  *   --list-cms           print CMS items (academy, faq, prizes, timeline, gallery) with their ids.
  *   --delete-cms=<collection>:<id>[,<collection>:<id>...]   delete the listed CMS documents
  *                        (collections: cms_academy, cms_faq, cms_prizes, cms_timeline, cms_gallery).
@@ -128,6 +130,16 @@ if (has('--student-identities')) {
     });
   }
   console.log(`[student-identities] ${execute ? 'anonymised' : 'would anonymise'} ${students} student record(s)\n`);
+}
+
+if (has('--clear-forms-links')) {
+  const ref = db.collection('cms').doc('links');
+  const snapshot = await ref.get();
+  const links = snapshot.exists ? snapshot.data() : {};
+  const fields = ['specUrl', 'parentalUrl', 'kvkkUrl'].filter((key) => links[key]);
+  console.log(`[clear-forms-links] links to clear: ${fields.length ? fields.join(', ') : 'none'}`);
+  if (execute && fields.length) await ref.update(Object.fromEntries(fields.map((key) => [key, ''])));
+  console.log('');
 }
 
 if (has('--list-cms')) {

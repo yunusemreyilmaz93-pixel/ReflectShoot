@@ -4,38 +4,29 @@ import {
   Play, X, Zap, Star, Award, ShieldAlert, Cpu,
   Search, SlidersHorizontal, MonitorPlay, ExternalLink, RotateCw
 } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
 import { Application, Category } from '../types';
-import { getActiveSeason } from '../lib/domain/season';
 import { splitShowcaseBySeason } from './cinema/showcaseSeasons';
 import { getJuryFeedback } from '../data/juryFeedback';
 import { AcademicJuryScorePanel } from '../components/AcademicJuryScorePanel';
 import {
-  officialLiveActionWinners,
   officialAiWinners,
   LIVE_ACTION_WINNER_NAMES,
   getCinemaEmbedUrl,
 } from './cinema/showcaseData';
 
 export const CinemaShowcase: React.FC = () => {
-  const { systemSettings } = useAppContext();
-  const activeSeasonId = getActiveSeason(systemSettings).id;
   const [publicApps, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [allJuryScores, setAllJuryScores] = useState<Record<string, any[]>>({});
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const [selectedTeamName, setSelectedTeamName] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<Category>(Category.LIVE_ACTION);
+  // Only the AI animation films of the archived season are shown (live-action films were retired).
+  const activeCategory = Category.AI_ANIMATION;
   const [searchQuery, setSearchQuery] = useState('');
   const [filterWinnerStatus, setFilterWinnerStatus] = useState<'all' | 'winners' | 'others'>('all');
   const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({});
-  const [selectedSeason, setSelectedSeason] = useState<'2025-2026' | '2026-2027'>('2025-2026');
 
-  // Archived 2025-26 films keep the full results view; the active season lists only AI films.
-  const { archive: applications, current: currentFilms } = useMemo(
-    () => splitShowcaseBySeason(publicApps, activeSeasonId),
-    [publicApps, activeSeasonId]
-  );
+  const applications = useMemo(() => splitShowcaseBySeason(publicApps).archive, [publicApps]);
 
   // Fetch all applications & jury scores in a single clean load flow
   useEffect(() => {
@@ -148,7 +139,7 @@ export const CinemaShowcase: React.FC = () => {
   }, [applications, allJuryScores]);
 
   // Get current category official top 5
-  const officialWinners = activeCategory === Category.LIVE_ACTION ? officialLiveActionWinners : officialAiWinners;
+  const officialWinners = officialAiWinners;
 
   // Match database applications with the official winners to extract actual video urls and logos
   const getRichWinnerData = () => {
@@ -275,124 +266,20 @@ export const CinemaShowcase: React.FC = () => {
         </div>
       </div>
 
-      {/* Season Selector */}
+      {/* Archive notice: only the 2025-2026 AI films are online, for inspiration */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 relative z-20">
-        <div className="flex flex-col sm:flex-row justify-between items-center bg-slate-900/60 p-6 rounded-[2rem] border border-slate-800/80 gap-6">
-          <div className="flex items-center gap-4">
-            <span className="text-amber-500 bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider">
-              Sezon Seçimi
-            </span>
-            <p className="text-sm text-slate-300 font-medium">Yarışma sezonları arasında geçiş yapın:</p>
-          </div>
-          
-          <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-850 w-full sm:w-auto">
-            <button type="button"
-              onClick={() => setSelectedSeason('2025-2026')}
-              className={`flex-1 sm:flex-none px-6 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 ${
-                selectedSeason === '2025-2026'
-                  ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/10 font-bold'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <Trophy size={14} /> 2025-2026 Sezonu (Arşiv)
-            </button>
-            
-            <button type="button"
-              onClick={() => setSelectedSeason('2026-2027')}
-              className={`flex-1 sm:flex-none px-6 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 ${
-                selectedSeason === '2026-2027'
-                  ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/10 font-bold'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <Film size={13} /> 2026-2027 Sezonu
-            </button>
-          </div>
+        <div className="flex items-center gap-4 bg-slate-900/60 p-6 rounded-[2rem] border border-slate-800/80">
+          <span className="text-amber-500 bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider">
+            2025-2026 Sezonu Arşivi
+          </span>
+          <p className="text-sm text-slate-300 font-medium">Yapay zekâ animasyon filmlerini izleyerek yeni fikirler için ilham alın.</p>
         </div>
       </div>
 
-      {/* Dynamic Seasonal Layout conditional */}
-      {selectedSeason === '2026-2027' ? (
-        currentFilms.length > 0 ? (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
-            <h3 className="text-2xl font-black text-white mb-2">2026-2027 Sezonu Yapay Zekâ Filmleri</h3>
-            <p className="text-sm text-slate-400 mb-8">Asr ve Beled surelerinden ilham alan yapay zekâ animasyon filmleri.</p>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {currentFilms.map((film) => (
-                <div key={film.id} className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 flex flex-col gap-4">
-                  <div>
-                    <h4 className="text-lg font-black text-white leading-tight">{film.team.name}</h4>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {[film.teacher?.school, film.teacher?.city].filter(Boolean).join(' • ')}
-                    </p>
-                  </div>
-                  {film.team.videoUrl && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedVideo(film.team.videoUrl || null);
-                        setSelectedTeamName(film.team.name);
-                      }}
-                      className="mt-auto inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl py-3 transition-colors"
-                    >
-                      <Play size={14} /> Filmi İzle
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-4xl mx-auto px-4 mt-16 text-center py-24 bg-slate-900/40 rounded-[2.5rem] border border-slate-800/80 backdrop-blur-sm relative overflow-hidden">
-            <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-3xl w-16 h-16 flex items-center justify-center mx-auto mb-8 shadow-2xl">
-              <Film size={32} />
-            </div>
-
-            <h3 className="text-3xl font-black text-white mb-4 tracking-tight leading-none">
-              2026-2027 Sezonu Filmleri Burada Yer Alacak
-            </h3>
-
-            <p className="text-slate-300 text-base md:text-lg font-light leading-relaxed max-w-2xl mx-auto">
-              Yeni sezonda yalnızca yapay zekâ animasyon filmleri yarışacak ve eserler Asr ile Beled surelerinden ilham alacak.
-              Başvuru ve sonuç tarihleri yakında açıklanacaktır. Bu sırada 2025-2026 sezonu filmlerini arşivden izleyerek ilham alabilirsiniz.
-            </p>
-          </div>
-        )
-      ) : (
-        <>
+      <>
           {/* Navigation Subbar / Tabs */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
         <div className="flex flex-col sm:flex-row gap-6 justify-between items-center bg-slate-900/40 p-4 rounded-3xl border border-slate-900 backdrop-blur-sm">
-          {/* Category Switches */}
-          <div className="flex p-1 bg-slate-950 rounded-2xl border border-slate-800 w-full sm:w-auto">
-            <button type="button"
-              onClick={() => {
-                setActiveCategory(Category.LIVE_ACTION);
-                setFilterWinnerStatus('all');
-              }}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 whitespace-nowrap cursor-pointer ${
-                activeCategory === Category.LIVE_ACTION
-                  ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-slate-950 shadow-lg shadow-teal-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <Film size={14} /> Canlı Çekim
-            </button>
-            <button type="button"
-              onClick={() => {
-                setActiveCategory(Category.AI_ANIMATION);
-                setFilterWinnerStatus('all');
-              }}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 whitespace-nowrap cursor-pointer ${
-                activeCategory === Category.AI_ANIMATION
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-slate-950 shadow-lg shadow-purple-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <Cpu size={14} /> Yapay Zekâ
-            </button>
-          </div>
-
           {/* Winner Filter Buttons */}
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <span className="text-[10px] uppercase font-black text-slate-500 mr-2 tracking-widest hidden md:inline">SÜREÇ:</span>
@@ -772,7 +659,6 @@ export const CinemaShowcase: React.FC = () => {
         )}
       </div>
       </>
-      )}
 
       {/* Cinematic Modal Video Player Overlay */}
       {selectedVideo && (

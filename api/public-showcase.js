@@ -1,5 +1,5 @@
 import { getAdminServices } from '../server/firebaseAdmin.js';
-import { buildPublicScores, sanitizeApplication, seasonOf } from '../server/publicShowcase.js';
+import { buildPublicScores, sanitizeApplication, seasonOf, SHOWCASE_CATEGORY } from '../server/publicShowcase.js';
 
 const PUBLIC_STATUSES = ['Onaylandı', 'Puanlandı'];
 
@@ -22,7 +22,10 @@ export default async function handler(req, res) {
       db.collection('public_scores').get(),
     ]);
     const applicationsSnapshot = {
-      docs: allPublicSnapshot.docs.filter((doc) => !season || seasonOf(doc.data()) === season),
+      docs: allPublicSnapshot.docs.filter((doc) => {
+        const data = doc.data();
+        return data.team?.category === SHOWCASE_CATEGORY && (!season || seasonOf(data) === season);
+      }),
     };
 
     const scores = {};

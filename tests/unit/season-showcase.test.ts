@@ -16,16 +16,10 @@ describe('showcase seasons', () => {
     app('new-live', '2027', 'Canlı Çekim'),
   ];
 
-  test('legacy (untagged) applications belong to the archived 2026 season', () => {
+  test('the gala lists only the archived 2026 season, AI films only', () => {
     expect(seasonOf({})).toBe('2026');
     expect(seasonOf({ seasonId: '2027' })).toBe('2027');
-    const { archive } = splitShowcaseBySeason(apps, '2027');
-    expect(archive.map((a) => a.id)).toEqual(['old-live', 'old-ai']);
-  });
-
-  test('the active season lists AI films only; nothing is "current" while 2026 is still active', () => {
-    expect(splitShowcaseBySeason(apps, '2027').current.map((a) => a.id)).toEqual(['new-ai']);
-    expect(splitShowcaseBySeason(apps, '2026').current).toEqual([]);
+    expect(splitShowcaseBySeason(apps).archive.map((a) => a.id)).toEqual(['old-ai']);
   });
 
   test('server projection exposes the season', () => {

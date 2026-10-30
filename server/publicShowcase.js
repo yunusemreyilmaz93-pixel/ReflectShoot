@@ -13,6 +13,9 @@ export function toPublicHttpsUrl(value) {
 /** Applications created before seasons existed (no seasonId) belong to the 2026 season. */
 export const LEGACY_SEASON_ID = '2026';
 
+/** Only AI animation films are public; live-action films were retired in 2026-27. */
+export const SHOWCASE_CATEGORY = 'Yapay Zeka Animasyon';
+
 export function seasonOf(data) {
   return (data && data.seasonId) || LEGACY_SEASON_ID;
 }
