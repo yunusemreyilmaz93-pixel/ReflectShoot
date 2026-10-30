@@ -83,7 +83,7 @@ export function useRoleDataListeners(
       let cancelled = false;
       const loadAssigned = async () => {
         try {
-          const response = await authenticatedFetch('/api/jury-applications');
+          const response = await authenticatedFetch('/api/jury-score');
           if (!response.ok) throw new Error('Assigned works could not be loaded');
           const data = await response.json();
           if (!cancelled) setAllApplications((data.applications || []) as Application[]);

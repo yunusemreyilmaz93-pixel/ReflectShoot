@@ -21,7 +21,7 @@ lib/
   sanitize.ts           Firestore undefined temizliği
   cloudStorage.ts       R2 presigned upload
   authenticatedFetch.ts Bearer ID token
-api/                    Vercel serverless (jury-score, jury-applications, public-showcase, upload, admin-delete-*, log, …)
+api/                    Vercel serverless (jury-score [GET: atanan eserler], public-showcase, upload [özel belge + herkese açık logo], admin-delete, log, …; Vercel Hobby planı en fazla 12 fonksiyon)
 server/
   auth.js, firebaseAdmin.js, r2.js
   juryScoreValidate.js  Pure jüri payload / ortalama

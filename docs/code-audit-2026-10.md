@@ -40,6 +40,10 @@ Doğrulama: `tsc --noEmit` temiz · `test:unit` 73/73 · `test:rules` (emülatö
 | **Ödül formu / panel sohbeti** | `award_participations` yalnızca kazanan takım için; panel sohbetinde `email` token ile eşleşmeli, alan boyutları sınırlı. |
 | **npm audit** | 32 → 27 bulgu, **kritik 0** (lockfile yenilendi: dompurify, proxy-addr, websocket-driver, tar, picomatch… çözüldü). Kalanlar: `firebase@10` istemci SDK'sının Node-only `undici`/`grpc-js` bağımlılıkları (tarayıcı paketinde çalışmaz), `firebase-admin`/`firebase-tools` major yükseltme gerektiren `uuid`, `vite@5` dev-server `esbuild` açığı (yalnızca `npm run dev`), `react-router@6` (v7'ye geçiş arayüz riski), `xlsx` (npm'de yama yok; SheetJS CDN sürümü gerekir — kurulum erişim izni verilmediği için yapılmadı; uygulama yalnızca dosya *yazıyor*). |
 
+## Not: Vercel Hobby fonksiyon sınırı
+
+İlk Faz 2 push'u 15 fonksiyona çıkarıp Vercel'de `exceeded_serverless_functions_per_deployment` (Hobby: en fazla 12) ile başarısız oldu; canlı site eski sürümde kaldı. Fonksiyonlar birleştirilerek 11'e indirildi: `admin-delete` (`{appId}` veya `{uid}`), `jury-score` (GET = atanan eserler, POST = puan), `upload` (`scope: 'public-logo'` ile logo); kullanılmayan `proxy` kaldırıldı. Test, `api/` altında 12'den fazla dosya olmasını engeller.
+
 ## Senin yapman gerekenler (kodla çözülemez / bu ortamda yetkim yok)
 
 Bu oturumda Google/Firebase kimlik bilgisi yok (`gcloud`: "No credentialed accounts"), bu yüzden deploy ve Auth silme **burada çalıştırılamaz**. Vercel MCP bağlı ve `reflect-shoot` projesi görünüyor, ancak log API'si 403 döndü (token'da log izni yok).

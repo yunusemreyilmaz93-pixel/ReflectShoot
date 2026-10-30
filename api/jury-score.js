@@ -2,6 +2,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getAdminServices } from '../server/firebaseAdmin.js';
 import { HttpError, noStore, requireUser, ROLES, sendError } from '../server/auth.js';
 import { writeAuditLog } from '../server/auditLog.js';
+import { toJuryView } from '../server/juryView.js';
 import { buildPublicScores } from '../server/publicShowcase.js';
 import {
   CRITERIA_KEYS,
@@ -10,15 +11,27 @@ import {
   computeFinalScoreFromScores,
 } from '../server/juryScoreValidate.js';
 
+/**
+ * GET  -> the jury member's assigned works, stripped of student and advisor personal data.
+ * POST -> record a score. (One function for both keeps the project under the Hobby plan's
+ *         12-function limit.)
+ */
 export default async function handler(req, res) {
   noStore(res);
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const user = await requireUser(req, { roles: [ROLES.JUDGE] });
+
+    if (req.method === 'GET') {
+      const { db } = getAdminServices();
+      const snapshot = await db.collection('applications').where('assignedJuryIds', 'array-contains', user.uid).get();
+      return res.status(200).json({ applications: snapshot.docs.map((doc) => toJuryView(doc, user.uid)) });
+    }
+
     const payload = validateJuryScorePayload(req.body);
     const { db } = getAdminServices();
     const appRef = db.collection('applications').doc(payload.appId);

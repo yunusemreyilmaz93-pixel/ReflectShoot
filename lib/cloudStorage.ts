@@ -122,10 +122,11 @@ export const uploadPublicLogo = async (file: File, teamId: string): Promise<stri
     try {
         const contentType = file.type || 'image/png';
 
-        const apiResponse = await authenticatedFetch('/api/public-upload', {
+        const apiResponse = await authenticatedFetch('/api/upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                scope: 'public-logo',
                 contentType: contentType,
                 teamId,
                 fileSize: file.size

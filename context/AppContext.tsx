@@ -251,7 +251,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const deleteApplication = async (appId: string) => {
-    const response = await authenticatedFetch('/api/admin-delete-application', {
+    const response = await authenticatedFetch('/api/admin-delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ appId }),
@@ -283,7 +283,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const deleteUser = async (uid: string) => {
-    const response = await authenticatedFetch('/api/admin-delete-user', {
+    const response = await authenticatedFetch('/api/admin-delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ uid }),

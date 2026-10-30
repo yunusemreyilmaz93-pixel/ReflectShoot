@@ -27,6 +27,14 @@ describe('build and deploy safety', () => {
   });
 });
 
+describe('Vercel plan limits', () => {
+  test('api/ stays within the Hobby plan limit of 12 serverless functions', () => {
+    // Every file under api/ becomes a function; a 13th makes the whole production deploy fail.
+    const files = readdirSync(resolve('api')).filter((file) => /\.(js|mjs|ts)$/.test(file));
+    expect(files.length).toBeLessThanOrEqual(12);
+  });
+});
+
 describe('jury scoring eligibility', () => {
   test('excluded applications cannot be scored back into the public showcase', () => {
     expect(isScorableStatus('Reddedildi')).toBe(false);
