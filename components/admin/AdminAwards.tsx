@@ -65,7 +65,7 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                 <div className="p-6 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-950/40">
                     <div className="flex items-center gap-3">
                         <div className="bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
-                            <Trophy className="text-amber-500 animate-pulse" size={22} />
+                            <Trophy className="text-amber-500" size={22} />
                         </div>
                         <div>
                             <h3 className="text-lg font-black text-white flex items-center gap-2">
@@ -466,7 +466,8 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                                                     <div>
                                                         <span className="text-slate-500 text-xs font-bold block mb-2 uppercase">Tanımlanan YouTube Yayını</span>
                                                         <div className="rounded-xl overflow-hidden border border-slate-700 aspect-video">
-                                                            <iframetitle="Video önizleme" 
+                                                            <iframe
+title="Video önizleme" 
                                                                 src={getYouTubeEmbedUrl(app.team.videoUrl) || ""}
                                                                 className="w-full h-full"
                                                                 allowFullScreen
@@ -543,7 +544,7 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                     <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-3xl w-full flex flex-col shadow-2xl overflow-hidden animate-scaleIn">
                         <div className="p-4 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
                             <h4 className="font-bold text-white text-sm flex items-center gap-2">
-                                <Video className="text-rose-500 animate-pulse" size={16} /> Film Ön İzleme
+                                <Video className="text-rose-500" size={16} /> Film Ön İzleme
                             </h4>
                             <button type="button" 
                                 onClick={() => setPreviewVideoUrl(null)} 
@@ -553,7 +554,8 @@ export const AdminAwards = ({ apps }: { apps: Application[] }) => {
                             </button>
                         </div>
                         <div className="aspect-video w-full bg-black">
-                            <iframetitle="Video önizleme" 
+                            <iframe
+title="Video önizleme" 
                                 src={getYouTubeEmbedUrl(previewVideoUrl) || ""}
                                 className="w-full h-full"
                                 allowFullScreen

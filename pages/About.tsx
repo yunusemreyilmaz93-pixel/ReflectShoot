@@ -562,7 +562,7 @@ export const About: React.FC = () => {
           
           <div className="max-w-4xl mx-auto px-4 relative z-10 text-center">
              
-             <div className="mb-10 animate-bounce">
+             <div className="mb-10">
                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-600 shadow-[0_0_40px_rgba(225,29,72,0.6)]">
                      <Clock size={32} className="text-white"/>
                  </div>

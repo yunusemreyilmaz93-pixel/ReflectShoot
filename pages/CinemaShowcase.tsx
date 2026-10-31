@@ -344,7 +344,7 @@ export const CinemaShowcase: React.FC = () => {
         <div className="mt-4 p-5 bg-amber-500/[0.03] border border-amber-500/15 rounded-3xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none"></div>
           <div className="flex gap-4 items-start">
-            <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-2xl shrink-0 animate-pulse">
+            <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-2xl shrink-0">
               <ShieldAlert size={18} />
             </div>
             <div>

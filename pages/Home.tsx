@@ -174,7 +174,7 @@ export const Home: React.FC = () => {
               
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-black uppercase tracking-widest">
-                  <Trophy size={14} className="animate-pulse" /> 2025-2026 SEZONU
+                  <Trophy size={14} /> 2025-2026 SEZONU
                 </div>
                 
                 <h3 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">

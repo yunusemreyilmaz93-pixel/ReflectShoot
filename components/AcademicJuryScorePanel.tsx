@@ -55,7 +55,7 @@ export const AcademicJuryScorePanel: React.FC<AcademicJuryScorePanelProps> = ({
         {/* Award Plate */}
         <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/[0.02] border border-amber-500/30 p-5 rounded-2xl flex items-center gap-4">
           <div className="p-3 bg-amber-500/20 text-amber-400 rounded-xl border border-amber-500/30">
-            <Award size={24} className="animate-spin-slow" />
+            <Award size={24} />
           </div>
           <div>
             <span className="text-[10px] uppercase font-black tracking-widest text-amber-500 block">NİHAİ KÜRSÜ / DERECE</span>
@@ -211,7 +211,7 @@ export const AcademicJuryScorePanel: React.FC<AcademicJuryScorePanelProps> = ({
                       <div className="space-y-1.5 sm:col-span-2">
                         <div className="flex justify-between font-bold text-slate-300">
                           <span className="flex items-center gap-1.5">
-                            <Star size={12} className="text-purple-400 animate-pulse" /> Jüri Öznel Değerlendirmesi
+                            <Star size={12} className="text-purple-400" /> Jüri Öznel Değerlendirmesi
                           </span>
                           <span className="text-purple-400 font-mono font-black">{jury.criteria.subjectiveEval} <span className="text-slate-550 font-normal">/ 20</span></span>
                         </div>
