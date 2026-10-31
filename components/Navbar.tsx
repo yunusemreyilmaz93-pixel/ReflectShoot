@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Film, LogOut, LayoutDashboard, UserCircle, UserPlus, Clapperboard, Video, Vote, MapPin } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, UserCircle, UserPlus, Video } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { UserRole } from '../types';
 import { NotificationBell } from './NotificationBell';

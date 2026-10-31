@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  FileText, Upload, Save, Settings, Play, Sliders, Layout, RefreshCw, 
-  Eye, FileDown, Type, AlertCircle, HelpCircle, CheckCircle2, ChevronRight
+  FileText, Upload, Save, Sliders, Layout, RefreshCw, 
+  Eye, CheckCircle2
 } from 'lucide-react';
 import { 
   CertificateConfig, getCertificateConfig, saveCertificateConfig, 
-  generateCertificatePdfBytes, DEFAULT_ATTENDANCE_CONFIG, DEFAULT_APPRECIATION_CONFIG
+  generateCertificatePdfBytes, DEFAULT_ATTENDANCE_CONFIG
 } from '../../lib/certificates';
 import { uploadFileToR2 } from '../../lib/cloudStorage';
 import { useAppContext } from '../../context/AppContext';

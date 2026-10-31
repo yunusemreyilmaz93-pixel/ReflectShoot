@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import {
-  FileText, CheckCircle2, Download, Copy, Info, Loader2, Plus, Trash2, Edit, AlertOctagon,
+import { CheckCircle2, Download, Copy, Info, Loader2, Plus, Trash2, Edit, AlertOctagon,
   RefreshCw, PenTool, Camera, Upload, ExternalLink, CheckSquare, Clock, UploadCloud,
 } from 'lucide-react';
 import { useDashboardUI } from '../DashboardUIContext';

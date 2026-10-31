@@ -12,7 +12,6 @@ import { ApplicationStatus, Category, type Application } from '../../types';
 
 function mockApp(partial: Partial<Application> & { id: string }): Application {
   return {
-    id: partial.id,
     status: partial.status ?? ApplicationStatus.APPROVED,
     submittedAt: partial.submittedAt ?? '2026-06-01T12:00:00.000Z',
     assignedJuryIds: partial.assignedJuryIds,

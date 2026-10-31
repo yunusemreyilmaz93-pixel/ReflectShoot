@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Camera, Train, Utensils, Bed, Compass, Landmark, Bus, Info, CloudSun, ShoppingBag, Thermometer, Shirt, Map, Clock, Navigation, Wifi, BatteryCharging, Phone, X, AlertCircle, Footprints, History, Coffee, Moon, ExternalLink, Aperture, CheckSquare, Share2, Ticket, ArrowRight, MapPin, Trophy, Cpu, Users as UsersIcon } from 'lucide-react';
+import { Utensils, Bed, Compass, Landmark, Bus, Info, CloudSun, ShoppingBag, Thermometer, Shirt, Map, Clock, Navigation, Wifi, BatteryCharging, X, AlertCircle, Footprints, History, Coffee, ExternalLink, Aperture, CheckSquare, Share2 } from 'lucide-react';
 import {
   touristLocations,
   itineraries,

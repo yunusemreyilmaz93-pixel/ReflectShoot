@@ -1,11 +1,7 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
 import { 
-    Search, Check, X, Eye, Award, FileText, Shield, Inbox, Download, 
-    Users, Film, School, Mail, AlertTriangle, Send, Clapperboard, Video, 
-    Cpu, Activity, PieChart, BarChart3, Clock, UserCheck, Star, Plus, Lock, 
-    Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog, MessageSquare, ExternalLink, Link as LinkIcon, Save, Youtube, PenTool, LayoutTemplate, HelpCircle, Bell, Image as ImageIcon, Megaphone, BookOpen, Calendar, Trophy, CheckCircle2, AlertOctagon, Info, ToggleRight, ToggleLeft, Power, Globe, Upload, LayoutGrid, Filter, TrendingUp,  Square, CheckSquare, MailOpen, Database, Construction, ChevronDown, Copy, AlertCircle
+    Search
 } from 'lucide-react';
 import { Category, Application } from '../../types';
 import { AcademicJuryScorePanel } from '../../components/AcademicJuryScorePanel';

@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Cpu, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, School, Layout, X, CheckCircle2, AlertTriangle, ExternalLink, FileText, Trophy, Film, PenTool, Target, HelpCircle, MapPin, Compass, Instagram,  PartyPopper, Lock } from 'lucide-react';
+import { ArrowRight, Clapperboard, BookOpen, ScrollText, Users, CalendarDays, Download, ChevronDown, PlayCircle, X, CheckCircle2, AlertTriangle, Trophy, PenTool, Target, HelpCircle, MapPin, Compass, Lock } from 'lucide-react';
 import { Timeline } from '../components/Timeline';
 import { versesList, verseDetails, VERSE_SPLITTER } from '../data/verses';
 import { useAppContext } from '../context/AppContext';
@@ -26,10 +26,6 @@ export const Home: React.FC = () => {
   };
 
   const categories = HOME_CATEGORIES;
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-  };
 
   const handleDownload = (link: string) => {
     if (link) {

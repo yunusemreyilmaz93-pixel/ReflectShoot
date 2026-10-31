@@ -2,24 +2,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-    Search, Check, X, Eye, Award, FileText, Shield, Inbox, Download, 
-    Users, Film, School, Mail, AlertTriangle, Send, Clapperboard, Video, 
-    Cpu, Activity, PieChart, BarChart3, Clock, UserCheck, Star, Plus, Lock, 
-    Menu, LayoutDashboard, Settings, LogOut, FileDown, Trash2, MapPin, List, RefreshCw, ChevronRight, UserCog, MessageSquare, ExternalLink, Link as LinkIcon, Save, Youtube, PenTool, LayoutTemplate, HelpCircle, Bell, Image as ImageIcon, Megaphone, BookOpen, Calendar, Trophy, CheckCircle2, AlertOctagon, Info, ToggleRight, ToggleLeft, Power, Globe, Upload, LayoutGrid, Filter, TrendingUp,  Square, CheckSquare, MailOpen, Database, Construction, ChevronDown, Copy, AlertCircle
+    Search, X, Eye, Download, 
+    Users, Star, LayoutDashboard, Trash2, List, Globe, CheckSquare, Database, Copy
 } from 'lucide-react';
-import { ApplicationStatus, Category, Theme, Application, UserRole, LogEntry, SystemSettings, ScoreDocument, CMSGeneral, CMSFaqItem, FAQCategory, NotificationTarget, CMSGalleryItem, CMSAcademyItem, CMSTimelineItem, CMSPrize, CMSLinks, ContactMessage } from '../../types';
+import { ApplicationStatus, Category, Theme, Application } from '../../types';
 import { useAppContext } from '../../context/AppContext';
-import { ChatArea } from '../../components/ChatArea';
-import { getYouTubeEmbedUrl } from '../../lib/videoUtils';
-import { AdminCMS } from '../../components/admin/AdminCMS';
 import { TurkeyMap } from '../../components/TurkeyMap';
-import { AdminJuryStatus } from '../../components/admin/AdminJuryStatus';
-import { AdminAwards } from '../../components/admin/AdminAwards';
-import { AcademicJuryScorePanel } from '../../components/AcademicJuryScorePanel';
-import { AdminCertificates } from '../../components/admin/AdminCertificates';
-import { writeBatch, doc, collection } from 'firebase/firestore'; // Import needed for direct batch writing
-import { db } from '../../lib/firebase'; // Import db
-import { authenticatedFetch } from '../../lib/authenticatedFetch';
+// Import needed for direct batch writing
+// Import db
 import { countMissingDocs } from '../../lib/adminExport';
 
 // Removed CSV Export function since we use xlsx and jspdf now

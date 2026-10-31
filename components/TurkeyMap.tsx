@@ -3,9 +3,7 @@ import React, { useMemo } from 'react';
 import { 
   ComposableMap, 
   Geographies, 
-  Geography, 
-  Sphere, 
-  Graticule 
+  Geography 
 } from "react-simple-maps";
 import { scaleLinear } from "d3-scale";
 
@@ -42,7 +40,7 @@ export const TurkeyMap: React.FC<TurkeyMapProps> = ({ data, onCityClick }) => {
 
   const maxCount = Math.max(...Object.values(data), 1);
 
-  const colorScale = scaleLinear<string>()
+  const colorScale = (scaleLinear as any)()
     .domain([0, maxCount])
     .range(["#1e293b", "#f59e0b"]); // From slate-800 to amber-500
 
@@ -66,8 +64,8 @@ export const TurkeyMap: React.FC<TurkeyMapProps> = ({ data, onCityClick }) => {
         className="w-full h-full animate-fadeIn"
       >
         <Geographies geography={GEO_URL}>
-          {({ geographies }) =>
-            geographies.map((geo) => {
+          {({ geographies }: { geographies: any[] }) =>
+            geographies.map((geo: any) => {
               const cityName = geo.properties.name || geo.properties.NAME_1 || geo.properties.province;
               const normalizedName = normalizeCityName(cityName);
               const count = normalizedData[normalizedName] || 0;

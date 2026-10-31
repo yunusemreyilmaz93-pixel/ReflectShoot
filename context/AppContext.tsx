@@ -2,18 +2,12 @@ import React, { createContext, useContext, useState, useEffect, useMemo, ReactNo
 import {
   doc,
   getDoc,
-  setDoc,
   updateDoc,
   collection,
-  query,
-  where,
-  onSnapshot,
   addDoc,
   getDocs,
   deleteDoc,
-  orderBy,
   serverTimestamp,
-  limit,
   writeBatch,
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -648,7 +642,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       seedAcademyContent,
       tagLegacySeasons,
       startNewSeason,
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+       
     }),
     [
       currentUser,

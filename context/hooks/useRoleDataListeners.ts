@@ -122,6 +122,6 @@ export function useRoleDataListeners(
     }
 
     return () => unsubs.forEach((u) => u());
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- match previous AppContext deps (uid/role only)
+     
   }, [currentUser?.uid, currentUser?.role]);
 }

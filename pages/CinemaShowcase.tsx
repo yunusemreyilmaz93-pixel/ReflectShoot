@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  Film, Trophy, Lock, Unlock, Eye, Clock, Calendar, 
-  Play, X, Zap, Star, Award, ShieldAlert, Cpu,
+  Film, Trophy, 
+  Play, X, Award, ShieldAlert,
   Search, SlidersHorizontal, MonitorPlay, ExternalLink, RotateCw
 } from 'lucide-react';
 import { Application, Category } from '../types';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Application, EvaluationCriteria, Theme, Category, ScoreDocument } from '../types';
-import { Video, Play, X, Sliders, CheckCircle, Clock, Save, AlertCircle, RefreshCw, AlertTriangle, FileEdit, Ban, Info, Filter, LayoutGrid, CheckSquare, Loader2, ChevronLeft, ChevronRight, CloudOff, RefreshCcw } from 'lucide-react';
+import { Video, Play, X, Sliders, CheckCircle, Clock, Save, AlertCircle, AlertTriangle, FileEdit, Ban, Filter, LayoutGrid, CheckSquare, Loader2, ChevronLeft, ChevronRight, CloudOff, RefreshCcw } from 'lucide-react';
 import { getYouTubeEmbedUrl } from '../lib/videoUtils';
 import { collectionGroup, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';

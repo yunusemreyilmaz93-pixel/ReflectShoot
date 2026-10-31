@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, AlertTriangle, Loader2, Calendar, BookOpen, Video, ExternalLink, PlayCircle } from 'lucide-react';
+import { ArrowLeft, Download, AlertTriangle, Loader2, ExternalLink, PlayCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { CMSAcademyItem } from '../types';
 import { getYouTubeEmbedUrl } from '../lib/videoUtils';

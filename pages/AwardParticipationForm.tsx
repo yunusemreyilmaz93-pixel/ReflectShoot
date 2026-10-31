@@ -5,15 +5,13 @@ import { AwardParticipation } from '../types';
 import { db } from '../lib/firebase';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import {
-  ShieldCheck, Save, Clock, AlertTriangle, Send,
-  User, Compass, Home, CheckCircle2, Trash2,
-  ChevronDown, ChevronUp, Loader2, Info
+  ShieldCheck, Clock, AlertTriangle, Send,
+  User, Compass, Home, CheckCircle2, Loader2, Info
 } from 'lucide-react';
 import {
   CEREMONY_FORM_OPEN,
   DEADLINE,
   TRANSPORTATION_OPTIONS,
-  SPECIAL_CONDITIONS,
   inputCls,
   readonlyCls,
   type SaveStatus,

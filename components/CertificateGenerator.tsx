@@ -1,5 +1,4 @@
 import React from 'react';
-import { Award,  Printer, User, Users, ShieldCheck } from 'lucide-react';
 
 interface CertificateData {
   recipientName: string;

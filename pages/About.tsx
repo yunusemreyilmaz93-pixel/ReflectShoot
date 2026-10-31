@@ -11,8 +11,6 @@ import {
   ArrowRight,
   ScrollText,
   PenTool,
-  MessageCircle,
-  Mail,
   Film,
   Subtitles,
   Lightbulb,
@@ -37,23 +35,6 @@ export const About: React.FC = () => {
   
   // Theme Modal State
   const [themeModal, setThemeModal] = useState<{ title: string; color: string; examples: string[] } | null>(null);
-
-  const themeExamples = {
-      hadith: [
-          "Kolaylaştırınız, zorlaştırmayınız; müjdeleyiniz, nefret ettirmeyiniz.",
-          "Ameller niyetlere göredir: Bir iyiliğin arkasındaki gizli niyetleri sorgulayan bir hikaye.",
-          "Komşusu açken tok yatan bizden değildir: Modern şehir hayatında duyarsızlık ve sosyal sorumluluk.",
-          "İşçiye ücretini teri kurumadan veriniz: Emek, hak ve adalet kavramı üzerine dramatik bir kurgu.",
-          "Güzel söz sadakadır: İletişimsizliğin çözümü olarak nezaket ve üslup."
-      ],
-      sahabe: [
-          "Mus'ab b. Umeyr: Lüksü ve konforu bir dava uğruna terk ediş (Modern uyarlama: Kariyer vs. İdealizm).",
-          "Hz. Ömer'in Adaleti: Kendi yakınına bile taviz vermeyen bir adalet anlayışının günümüze yansıması.",
-          "Hz. Ebu Bekir'in Sadakati: En zor zamanlarda dostunun yanında durabilmek (Sıddık olmak).",
-          "Selman-ı Farisi'nin Arayışı: Hakikati bulmak için diyar diyar gezen bir gencin yolculuğu.",
-          "Hz. Hatice'nin Vefası: Toplum dışlasa bile inandığı doğrunun ve eşinin yanında duran güçlü duruş."
-      ]
-  };
 
   const detailedCriteria = [
     {

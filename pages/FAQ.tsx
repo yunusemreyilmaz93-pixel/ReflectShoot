@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ChevronDown, Search, MessageCircle, HelpCircle, PenTool, Award, Users, MapPin, Phone, Mail, Send, CheckCircle2, AlertCircle, Cpu, Clock, Trophy, LayoutGrid } from 'lucide-react';
+import { ChevronDown, Search, MessageCircle, HelpCircle, PenTool, Users, MapPin, Phone, Mail, Send, CheckCircle2, AlertCircle, Cpu, Clock, Trophy, LayoutGrid } from 'lucide-react';
 import { send } from '@emailjs/browser';
 import { useAppContext } from '../context/AppContext';
 import { FAQCategory } from '../types';

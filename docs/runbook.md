@@ -16,7 +16,7 @@ Admin → Sistem Ayarları → `maintenanceMode`. Admin `/login` ile girebilir; 
 
 1. **Yedek İndir** (zorunlu öneri)
 2. Sistem Ayarları → **Yeni Sezon Oluştur**
-3. Önceki sezon arşivlenir; tarihler +1 yıl; video/jüri kapanır
+3. Önceki sezon arşivlenir; tarihler temizlenir (ya da +1 yıl kayar); video/jüri kapanır
 4. CMS timeline + tarihler gözden geçir
 5. Zamanı gelince video / jüri bayraklarını aç
 6. Öğretmenler yeni sezonda takım açabilir (eski arşiv limit sayılmaz)
@@ -37,7 +37,7 @@ npm run test:rules
 firebase deploy --only firestore:rules
 ```
 
-Öğrenci sayısı: min 3, max 5 (rules + domain).
+Öğrenci sayısı: min 2, max 4 (rules + domain).
 
 ## Akademi
 

@@ -43,8 +43,8 @@ export type DashboardUI = {
   // nav helpers
   handleActionRedirect: (tab: string) => void;
   getCategoryStyle: (category: string) => { badge: string; btn: string; title: string };
-  getTeacherCertificateUrl: () => string;
-  getStudentCertificateUrl: (student: { firstName: string; lastName: string }) => string;
+  getTeacherCertificateUrl: () => string | null;
+  getStudentCertificateUrl: (student: { firstName: string; lastName: string }) => string | null;
   TEMPLATE_PARENT_URL: string;
   TEMPLATE_CONSENT_URL: string;
   showToast: (msg: string, type?: 'success' | 'error' | 'info' | 'warning') => void;

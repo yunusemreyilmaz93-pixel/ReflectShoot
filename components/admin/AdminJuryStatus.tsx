@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Application, UserProfile, ScoreDocument, ApplicationStatus } from '../../types';
+import { Application, ScoreDocument, ApplicationStatus } from '../../types';
 import { useAppContext } from '../../context/AppContext';
 import { collectionGroup, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Activity, CheckCircle, Clock, Search, XCircle, AlertCircle, FileEdit, UserCheck } from 'lucide-react';
+import { Activity, CheckCircle, Clock, Search } from 'lucide-react';
 
 interface Props {
     apps: Application[];

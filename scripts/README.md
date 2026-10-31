@@ -1,10 +1,7 @@
 # Scripts
 
-| Dosya | Amaç |
-|-------|------|
-| `split-admin.mjs` | `pages/Admin.tsx` → `pages/admin/*` (tek seferlik refactor) |
-| `split-dashboard.mjs` | Dashboard widget ayırma |
-| `fix-admin-imports.mjs` / `fix-admin-exports.mjs` | Split sonrası path/export düzeltme |
+Only manual operations live here (see `ops-oneoffs/README.md`). The one-off refactoring scripts that
+split the old `Admin.tsx` / `Dashboard.tsx` were removed after the split was finished; they remain in git history.
 
-`scripts/ops-oneoffs/admin-list-winner-students.ts` Admin SDK ile çalışan, öğrenci kişisel verisi (telefon vb.) yazdıran manuel bir ops script’idir; yalnızca yetkili makinede, ADC/servis hesabıyla çalıştırın.
-İstemci SDK + sabit kimlik bilgisiyle çalışan eski `markWinners.ts` / `retrieve_*.ts` script’leri güvenlik nedeniyle kaldırıldı (kazanan işaretleme Admin panelinden yapılır).
+`ops-oneoffs/admin-list-winner-students.ts` is an Admin-SDK script that prints personal data of students
+(phones etc.). Run it only on an authorised machine with ADC/a service account.

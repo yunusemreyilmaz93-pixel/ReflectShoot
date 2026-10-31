@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Download, Trophy, Calendar, CheckSquare, XSquare, HelpCircle, Clock, Video, ExternalLink, Youtube, Play, Eye, ChevronDown } from 'lucide-react';
+import { Search, Download, Trophy, CheckSquare, XSquare, Clock, Video, ExternalLink, Play, Eye, ChevronDown } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { Application, AwardParticipation } from '../../types';

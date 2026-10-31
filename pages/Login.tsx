@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
-import { Lock, Mail, ArrowRight, AlertCircle, ShieldCheck, CheckCircle, X } from 'lucide-react';
+import { Lock, Mail, ArrowRight, CheckCircle, X } from 'lucide-react';
 import { UserRole } from '../types';
 
 export const Login: React.FC = () => {

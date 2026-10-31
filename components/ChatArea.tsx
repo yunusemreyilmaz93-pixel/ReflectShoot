@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, UserCircle, ShieldCheck, MessageSquare, HelpCircle } from 'lucide-react';
+import { Send, ShieldCheck, MessageSquare, HelpCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { ChatMessage, UserRole } from '../types';
-import { collection, query, orderBy, onSnapshot, getFirestore } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Link } from 'react-router-dom';
 

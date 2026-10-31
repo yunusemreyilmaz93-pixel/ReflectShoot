@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  BookOpen, Film, Video, Link as LinkIcon, FileText, Search, Sprout, Star, PlayCircle, ChevronRight, Bookmark, Library,
-  CheckCircle2, Lock, Camera, MonitorPlay, Scissors, Download, Calendar, Mic2, Palette, Cpu, Layers, Zap, Clock,
-  Clapperboard, Aperture, Bot, Rocket,  MoveRight, ArrowRight, ExternalLink
+  BookOpen, Film, Search, Sprout, Star, ChevronRight,
+  CheckCircle2, Lock, ExternalLink
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
@@ -99,36 +98,6 @@ export const Academy: React.FC = () => {
   ];
 
   // -- Finalist Masterclass Data --
-  const masterclassSchedule = [
-      {
-          date: 'Açıklanacak',
-          type: 'ORTAK',
-          title: 'Sinematik Anlatı & Kurgu Mantığı',
-          desc: 'Kurgu masasında hikâyenin duygusal yeniden inşası: Ritim, zamanlama ve izleyiciyle kurulan o görünmez bağın matematiği.',
-          icon: Film, // Premium Icon
-          color: 'from-blue-600 to-cyan-500',
-          shadow: 'shadow-blue-500/20'
-      },
-      {
-          date: 'Açıklanacak',
-          type: 'YAPAY ZEKA',
-          title: 'AI Tutarlılık & Motion Brush',
-          desc: 'Hikâye evreninde görsel bütünlük: Karakter tutarlılığını koruma ve yapay zeka ile sahneler arası akışkanlık sanatı.',
-          icon: Bot, // Premium Icon
-          color: 'from-purple-600 to-fuchsia-500',
-          shadow: 'shadow-purple-500/20'
-      },
-      {
-          date: 'Açıklanacak',
-          type: 'ORTAK',
-          title: 'Final Export & Dağıtım',
-          desc: 'Filminizin ekran yolculuğunu profesyonelce planlamak: DCP hazırlığı, teknik teslimat standartları ve festival stratejileri.',
-          icon: Rocket, // Premium Icon
-          color: 'from-amber-500 to-orange-600',
-          shadow: 'shadow-amber-500/20'
-      }
-  ];
-
   return (
     <div className="bg-slate-900 min-h-screen font-sans selection:bg-rose-500 selection:text-white pb-24">
       
