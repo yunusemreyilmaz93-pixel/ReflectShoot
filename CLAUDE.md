@@ -64,6 +64,13 @@ When a UI change **is** requested, avoid the usual AI-generated-UI mistakes (thi
 - Copy: only words that help people use the page; explain errors and the fix; empty states invite an action.
 - Keep class lists readable: extract repeated markup into a small component instead of 300-character class strings.
 
+## Dependency decisions (do not "fix" these blindly)
+
+- **Firebase client stays on 10.x.** Versions 11-13 grow the browser bundle from ~333 KB to ~570 KB (gzip 102 -> 170 KB) and the advisories left in `npm audit` for it are Node-only code that the browser bundle never runs. Re-check the size before upgrading.
+- **firebase-admin stays on 13.x** (API backbone, no live integration tests); 14.x only removes a few moderate advisories.
+- **Vite 7** (Rollup-based). Vite 8 switches to Rolldown and changes `manualChunks`; Tailwind 4 and React 19 are rewrites that change the look and are design decisions, not maintenance.
+- `npm audit` also counts dev-only tooling (ESLint, Playwright, firebase-tools); judge findings by whether the code ships to users or to the API.
+
 ## Testing notes
 
 - New API behaviour gets a handler test under `tests/unit` (mock `server/auth.js` and `server/firebaseAdmin.js`; see `tests/unit/admin-delete-api.test.ts`).
