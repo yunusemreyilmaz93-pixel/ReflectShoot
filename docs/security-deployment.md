@@ -19,3 +19,7 @@ Firebase Admin anahtarı ve R2 gizli anahtarı istemciye açık `VITE_` değişk
 4. Uygulamayı yayınlayın ve öğretmen belge yükleme, jüri puanlama, özel belge görüntüleme ve takım silme için kısa bir kabul testi yapın.
 
 Kurallar ile uygulama aynı bakım penceresinde yayınlanmalıdır. Yeni kurallar eski istemcinin doğrudan jüri puanı, silme ve log yazmasını kasıtlı olarak reddeder.
+
+## Hız sınırı
+
+`server/rateLimit.js` kimlikli uçlarda (belge yükleme, takım adı kontrolü, denetim kaydı, dosya görüntüleme) kullanıcı başına saatlik sınır uygular (`rate_limits` koleksiyonu, istemciye kapalı). Firestore kendisi hata verirse istek geçer (fail-open). Eski kayıtları temizlemek için isteğe bağlı olarak Firestore TTL politikası eklenebilir; kayıt sayısı kullanıcı × uç kadardır, bu yüzden zorunlu değildir.

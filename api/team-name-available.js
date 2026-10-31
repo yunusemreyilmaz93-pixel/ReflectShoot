@@ -1,5 +1,6 @@
 import { HttpError, noStore, requireUser, ROLES, sendError } from '../server/auth.js';
 import { getAdminServices } from '../server/firebaseAdmin.js';
+import { enforceRateLimit, LIMITS } from '../server/rateLimit.js';
 
 export default async function handler(req, res) {
   noStore(res);
@@ -9,7 +10,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    await requireUser(req, { roles: [ROLES.TEACHER, ROLES.STUDENT] });
+    const user = await requireUser(req, { roles: [ROLES.TEACHER, ROLES.STUDENT] });
+    await enforceRateLimit(getAdminServices().db, { ...LIMITS.teamName, key: user.uid });
     const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
     if (name.length < 3 || name.length > 40) {
       throw new HttpError(400, 'Takım adı 3 ile 40 karakter arasında olmalıdır.', 'invalid_team_name');

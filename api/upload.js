@@ -1,6 +1,8 @@
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { noStore, requireUser, ROLES, sendError } from '../server/auth.js';
+import { getAdminServices } from '../server/firebaseAdmin.js';
+import { enforceRateLimit, LIMITS } from '../server/rateLimit.js';
 import {
   authorizePrivateUploadKey,
   authorizePublicLogoKey,
@@ -22,6 +24,7 @@ export default async function handler(req, res) {
 
   try {
     const user = await requireUser(req, { roles: [ROLES.TEACHER, ROLES.ADMIN] });
+    await enforceRateLimit(getAdminServices().db, { ...LIMITS.upload, key: user.uid });
     const { contentType, customKey, fileSize, scope, teamId } = req.body || {};
 
     // Team logo -> public bucket (same function as private documents to stay under the plan's function limit).

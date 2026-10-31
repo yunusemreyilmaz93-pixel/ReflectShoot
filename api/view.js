@@ -2,6 +2,8 @@ import { pipeline } from 'node:stream/promises';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { noStore, requireUser, sendError } from '../server/auth.js';
+import { getAdminServices } from '../server/firebaseAdmin.js';
+import { enforceRateLimit, LIMITS } from '../server/rateLimit.js';
 import { authorizePrivateViewKey, createR2Client, getPrivateBucketName } from '../server/r2.js';
 
 export default async function handler(req, res) {
@@ -13,6 +15,7 @@ export default async function handler(req, res) {
 
   try {
     const user = await requireUser(req);
+    await enforceRateLimit(getAdminServices().db, { ...LIMITS.view, key: user.uid });
     const key = await authorizePrivateViewKey(req.query?.key, user);
     const command = new GetObjectCommand({ Bucket: getPrivateBucketName(), Key: key });
 

@@ -9,6 +9,8 @@ vi.mock('../../server/auth.js', () => ({
   noStore: () => undefined,
   sendError: (res: any) => res.status(500).json({}),
 }));
+vi.mock('../../server/firebaseAdmin.js', () => ({ getAdminServices: () => ({ db: {}, auth: {} }) }));
+vi.mock('../../server/rateLimit.js', () => ({ enforceRateLimit: async () => undefined, LIMITS: { view: {} } }));
 vi.mock('../../server/r2.js', () => ({
   authorizePrivateViewKey: async (key: string) => key,
   getPrivateBucketName: () => 'bucket',

@@ -288,6 +288,14 @@ describe('Firestore security boundary', () => {
       await assertFails(setDoc(doc(db, 'applications/team-one/messages/m2'), { ...base, senderRole: 'ADMIN' }));
     });
 
+    test('server-only collections (rate limits, public scores) are closed to every client', async () => {
+      for (const path of ['rate_limits/x', 'public_scores/team-one']) {
+        await assertFails(getDoc(doc(userDb('admin', 'ADMIN'), path)));
+        await assertFails(setDoc(doc(userDb('admin', 'ADMIN'), path), { count: 0 }));
+        await assertFails(getDoc(doc(userDb('teacher', 'TEACHER'), path)));
+      }
+    });
+
     test('audit log entries cannot be written from the browser', async () => {
       const entry = {
         action: 'TEST',
