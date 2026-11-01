@@ -10,6 +10,7 @@ import { HOME_CATEGORIES, type CategoryData } from './home/categoryCards';
 export const Home: React.FC = () => {
   const { cmsLinks } = useAppContext();
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
+  const [openVerses, setOpenVerses] = useState<Record<string, boolean>>({});
 
   const renderVerseText = (text: string, isArabic: boolean) => {
     if (!text) return null;
@@ -113,6 +114,13 @@ export const Home: React.FC = () => {
                 <p className="text-lg md:text-xl font-light italic text-slate-500 tracking-wide">
                    "The word descends, thought awakens, <span className="font-bold text-slate-300 border-b-2 border-amber-500/80">meaning unfolds</span>."
                 </p>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-6">
+                  {['2026-2027 sezonu', 'Yapay zekâ animasyon', 'Asr ve Beled sureleri', '2–4 kişilik takımlar', 'Başvuru tarihleri açıklanacak'].map((chip) => (
+                    <span key={chip} className="px-4 py-2 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300 text-sm font-semibold">
+                      {chip}
+                    </span>
+                  ))}
+                </div>
             </div>
           </div>
 
@@ -237,67 +245,39 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. Categories Section */}
-      <section id="categories" className="py-24 bg-slate-50 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16">
-             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-200 text-slate-600 text-xs font-bold tracking-widest uppercase mb-6">
-                 <Clapperboard size={14} /> Kategori Seçimi
-             </div>
-             <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-4">
-               Hikâyeni Yapay Zekâ ile <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600">Sahneye Taşıyacaksın</span>
-             </h2>
-             <p className="mt-6 text-xl text-slate-500 max-w-2xl mx-auto font-light leading-relaxed">
-               2026-2027 sezonunda yalnızca yapay zekâ animasyon kategorisinde yarışılır.
-             </p>
-          </div>
-
-          <div className="grid gap-8 lg:gap-16 max-w-3xl mx-auto">
-            {categories.map((cat) => (
-              <div 
-                key={cat.id} 
-                className="group relative bg-white rounded-[2rem] p-2 overflow-hidden transition-all duration-500 hover:-translate-y-2 shadow-2xl hover:shadow-[0_20px_50px_rgba(0,0,0,0.15)]"
-              >
-                <div className="bg-slate-50 h-full rounded-[1.5rem] p-8 md:p-12 flex flex-col relative overflow-hidden">
-                    <div className="absolute inset-0 opacity-40 bg-[url('https://www.transparenttextures.com/patterns/concrete-wall.png')] mix-blend-multiply"></div>
-                    
-                    <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-8">
-                            <span className={`inline-block px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] border ${cat.color === 'teal' ? 'bg-teal-900 text-teal-100 border-teal-700' : 'bg-purple-900 text-purple-100 border-purple-700'}`}>
-                                {cat.badge}
-                            </span>
-                            <div className={`p-5 rounded-2xl bg-white shadow-xl border border-slate-100 group-hover:scale-110 transition-transform duration-300 ${cat.color === 'teal' ? 'text-teal-600' : 'text-purple-600'}`}>
-                                <cat.icon size={36} />
-                            </div>
-                        </div>
-
-                        <h3 className="text-3xl font-black text-slate-900 mb-4 group-hover:text-amber-600 transition-colors">
-                            {cat.title}
-                        </h3>
-                        <p className="text-slate-600 text-lg leading-relaxed mb-10 font-medium">
-                            {cat.shortDesc}
-                        </p>
-
-                        <div className="grid grid-cols-3 gap-4 mb-10">
-                            {cat.techSpecs.map((spec, i) => (
-                                <div key={i} className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-slate-200 text-center group-hover:border-amber-500/30 transition-colors shadow-sm">
-                                    <spec.icon size={20} className="mx-auto mb-2 text-slate-400 group-hover:text-slate-800" />
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block">{spec.label}</span>
-                                </div>
-                            ))}
-                        </div>
-
-                        <button type="button" 
-                            onClick={() => setSelectedCategory(cat)}
-                            className="w-full py-5 bg-slate-900 text-white font-bold rounded-xl hover:bg-rose-600 transition-colors flex items-center justify-center gap-2 group-hover:shadow-lg text-sm tracking-wide uppercase"
-                        >
-                            Teknik Detayları İncele <ArrowRight size={18} />
-                        </button>
-                    </div>
+      {/* 2. Category (single category in 2026-27: compact strip) */}
+      <section id="categories" className="py-14 bg-slate-50 relative">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {categories.map((cat) => (
+            <div key={cat.id} className="bg-white rounded-[2rem] p-2 shadow-2xl">
+              <div className="bg-slate-50 rounded-[1.5rem] p-8 md:p-10 flex flex-col lg:flex-row lg:items-center gap-8 lg:gap-12">
+                <div className="flex items-center gap-5 lg:w-[34%]">
+                  <div className="p-5 rounded-2xl bg-white shadow-xl border border-slate-100 text-purple-600 shrink-0">
+                    <cat.icon size={32} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">{cat.title}</h2>
+                    <p className="mt-2 text-slate-600 font-medium leading-snug">{cat.shortDesc}</p>
+                  </div>
                 </div>
+                <div className="grid grid-cols-3 gap-4 flex-1">
+                  {cat.techSpecs.map((spec, i) => (
+                    <div key={i} className="bg-white/80 p-4 rounded-xl border border-slate-200 text-center shadow-sm">
+                      <spec.icon size={20} className="mx-auto mb-2 text-slate-400" />
+                      <span className="text-xs font-bold text-slate-500 block">{spec.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className="lg:w-60 py-4 px-6 bg-slate-900 text-white font-bold rounded-xl hover:bg-rose-600 transition-colors flex items-center justify-center gap-2 text-sm"
+                >
+                  Teknik Detayları İncele <ArrowRight size={18} />
+                </button>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -337,33 +317,35 @@ export const Home: React.FC = () => {
                        </div>
                    </div>
                    
-                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                       {versesList.map((verse, idx) => (
-                           <div key={idx} className="bg-slate-950 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-900 transition-all cursor-default p-6 rounded-xl flex items-center justify-center text-center shadow-lg group relative overflow-visible hover:z-50">
-                               <span className="font-bold text-slate-400 text-sm group-hover:text-white transition-colors">{verse}</span>
-                               
-                               {/* Tooltip for specific verses */}
-                               {verseDetails[verse] && (
-                                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-[90vw] md:w-[400px] p-6 bg-slate-900/95 backdrop-blur-md rounded-2xl border border-amber-500/40 shadow-[0_0_40px_rgba(245,158,11,0.25)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto z-50 text-center transform -translate-y-2 mb-2">
-                                       <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-slate-900 border-r border-b border-amber-500/40 rotate-45"></div>
-                                       <div className="relative z-10 flex flex-col gap-4">
-                                           <p className="font-serif text-xl text-amber-400 leading-loose drop-shadow-sm" dir="rtl">
-                                              {renderVerseText(verseDetails[verse].arabic, true)}
-                                           </p>
-                                           <div className="w-16 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent mx-auto"></div>
-                                           <p className="text-slate-200 text-sm italic font-light leading-relaxed font-serif">
-                                             "{renderVerseText(verseDetails[verse].turkish, false)}"
-                                           </p>
-                                            {verseDetails[verse].english && (
-                                               <p className="text-slate-400 text-xs italic font-light leading-relaxed opacity-80">
-                                                 "{renderVerseText(verseDetails[verse].english, false)}"
-                                               </p>
-                                            )}
-                                       </div>
-                                   </div>
-                               )}
-                           </div>
-                       ))}
+                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                       {versesList.map((verse) => {
+                           const detail = verseDetails[verse];
+                           if (!detail) return null;
+                           const long = detail.arabic.split(VERSE_SPLITTER).length > 3;
+                           const open = !long || openVerses[verse];
+                           const cut = (text: string) => (open ? text : text.split(VERSE_SPLITTER).slice(0, 3).join(VERSE_SPLITTER));
+                           return (
+                               <div key={verse} className="bg-slate-950 border border-slate-800 p-6 md:p-8 rounded-2xl flex flex-col gap-5">
+                                   <span className="font-bold text-slate-400 text-sm">{verse}</span>
+                                   <p className="text-xl md:text-2xl text-amber-400 leading-loose" dir="rtl" lang="ar" style={{ fontFamily: "'Amiri', serif" }}>
+                                       {renderVerseText(cut(detail.arabic), true)}
+                                   </p>
+                                   <div className="w-16 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+                                   <p className="text-slate-200 text-base italic font-light leading-relaxed font-serif">
+                                       "{renderVerseText(cut(detail.turkish), false)}"
+                                   </p>
+                                   {long && (
+                                       <button
+                                           type="button"
+                                           onClick={() => setOpenVerses((prev) => ({ ...prev, [verse]: !prev[verse] }))}
+                                           className="self-start text-sm font-bold text-amber-400 hover:text-amber-300 underline underline-offset-4"
+                                       >
+                                           {open ? 'Kısalt' : 'Surenin tamamını göster'}
+                                       </button>
+                                   )}
+                               </div>
+                           );
+                       })}
                    </div>
                </div>
             </div>

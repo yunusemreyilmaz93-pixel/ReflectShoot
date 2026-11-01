@@ -216,6 +216,8 @@ export const Timeline: React.FC = () => {
   // CMS-driven calendar (admin panel edits land here); static placeholders until it is filled.
   const events = resolvePublicTimelineEvents(cmsTimeline, STATIC_EVENTS);
   const seasonLabel = systemSettings?.season?.label || 'Güncel Takvim';
+  // While no step has a real date, show a compact row instead of the full alternating timeline.
+  const pendingOnly = events.every((event) => !event.date || event.date === 'Açıklanacak');
 
   return (
     <section className="bg-slate-950 py-24 overflow-hidden relative border-t border-white/5">
@@ -247,6 +249,23 @@ export const Timeline: React.FC = () => {
           </div>
         </div>
 
+        {pendingOnly ? (
+          <ol className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {events.map((event, index) => {
+              const Icon = (typeof event.icon === 'string' ? iconMap[event.icon] : event.icon) || Calendar;
+              return (
+                <li key={index} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex flex-col gap-3">
+                  <span className="w-11 h-11 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-amber-500">
+                    <Icon size={20} />
+                  </span>
+                  <span className="text-white font-bold leading-snug">{event.title}</span>
+                  <span className="text-slate-500 text-sm">{event.date || 'Açıklanacak'}</span>
+                </li>
+              );
+            })}
+          </ol>
+        ) : (
+        <>
         {/* Step List Visual Tree */}
         <div className="hidden md:block relative wrap overflow-hidden p-10 h-full">
           <div className="absolute left-1/2 transform -translate-x-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-slate-800 to-transparent"></div>
@@ -261,6 +280,8 @@ export const Timeline: React.FC = () => {
             <MobileTimelineItem key={index} event={event} index={index} />
           ))}
         </div>
+        </>
+        )}
       </div>
     </section>
   );
